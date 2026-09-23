@@ -24,7 +24,12 @@ button is plainly **Start Workout**.
    workout (which unlocks your apps) is *Hold to finish*. Collapsing the
    logger is a tap.
 5. **Honest numbers only.** No sample data, no invented stats. Onboarding
-   reveals are plain arithmetic on the user's own three answers.
+   reveals are plain arithmetic on the user's own answers.
+6. **Say less.** A screen gets one title (about 6 words or fewer) and at
+   most one short supporting line. If something needs a paragraph, it
+   needs a different design. Lists of benefits become one sentence.
+   Explainers inside rows get cut. The user found an earlier pass "too
+   many texts in a given moment", so hold this line.
 
 > **Retired directions** (don't bring these back):
 > - **"Load the bar":** a barbell whose plates loaded per workout. It was
@@ -56,8 +61,16 @@ button is plainly **Start Workout**.
 | `danger` | `#C8372D` | destructive actions |
 | `warmup` | `#D89A00` | the "W" set marker (a label, not an accent) |
 
-v1 is **light only** (`UIUserInterfaceStyle = Light`). Tokens are
-centralised so dark mode can be added later without touching views.
+**Dark mode:** every token is dynamic (`GBColor`), and the same roles
+flip onto a warm near-black: paper `#0E0E0F`, card `#1A1A1C`, ink
+`#F2F1EC`, steel `#9A9DA3`, mist `#2F2F32`. Orange doesn't change; it's the
+brand. `onInk` is for text on ink-filled surfaces (ink flips, so text on
+it must flip too). Never write `Color.white` or `.black` for surfaces;
+use `card` and `glassTint`. White text is fine on **orange** only.
+Settings → Appearance offers System / Light / Dark (default System). The
+shield, the Live Activity Lock Screen banner, and the app icon (orange
+lock on near-black) all have dark variants. Light is still the brand's
+first impression: marketing and screenshots use light.
 
 ## Typography (`GBFont`)
 
@@ -162,35 +175,45 @@ as faded text requiring "delete" typed).
 
 ## Sign-up flow
 
-Ask → reveal, the same rhythm as SleepBlock. The steps crossfade (they
-don't slide).
+The flow exists to make the problem felt before the product is offered.
+Everything is asked in the user's own terms, then handed back to them.
 
-> welcome → days/week → session length → phone minutes → *one session,
-> split* → *the year* → goal → the plan → name + units → shield demo →
+> welcome → days/week → session length → phone minutes → **what pulls you
+> in** (apps) → **what it costs you** → *one session, split* → *the year* →
+> **Sound familiar?** → *here's the fix* → name + units → shield demo →
 > **Hold to commit** → account → paywall → Screen Time + notifications
 
-- **Three inputs derive everything** (`PhoneMath`): phone minutes ×
-  days × 52 = hours a year, then divided by session length = "whole
-  workouts you showed up for and didn't do".
-- *One session* shows a bar splitting lifting (ink) from phone (orange).
-- *The year* is a grid of every session in a year, with the lost ones
-  lighting orange one by one from the bottom.
-- The plan shows the week strip plus the starter templates generated for
-  the chosen days (≤3 Full body A/B, 4 Upper/Lower, 5+ Push/Pull/Legs).
-- The shield demo is a looping illustration with **generic** app icons,
-  never real brands.
-- *Hold to commit* (1.6s): "I'll train N days a week, and my phone stays
-  locked until each workout's done."
-- Account: Sign in with Apple first, email as the alternative.
+- **Ask cheap, in their words.** Numbers (days, minutes), then plain-name
+  app chips (TikTok, Instagram… no logos), then costs phrased as things
+  they'd say: "My 90s rest turns into 5 minutes", "I cut sets short".
+- **Reveal with arithmetic** (`PhoneMath`): "15 of every 60 minutes. Gone
+  to TikTok." (a bar of ink vs orange); "52 hours a year. 52 workouts you
+  showed up for. And didn't do." (the year's sessions, the lost ones
+  lighting orange).
+- **Mirror:** their chosen costs come back as quotes, one by one, then
+  the reframe: "It's not discipline. *TikTok is built to win.*" It removes
+  shame and names the enemy, so the fix feels necessary rather than
+  optional. CTA: **Fix it**.
+- **The fix:** the week strip, plus three short rows (`TikTok locks when
+  you start` / `Unlocks when you finish` / `Your streak counts weeks, not
+  days`).
+- The shield demo names their app ("TikTok can wait.").
+- The paywall headline closes the loop: **"Take your 52 hours back from
+  TikTok."**
+- The goal question was cut. It drove nothing, and every step must earn
+  its place.
 
 ## Paywall
 
-A hard wall with no ✕. The headline hands back the onboarding number:
-**"Get your 52 hours back."** Then three feature lines, a trial timeline
-(Today: full access → Day N−2: reminder → Day N: billed), and plan cards
-(yearly first, "Save N%" badge, per-week price on the right). CTA: *Start
-7-day free trial*. The Day N−2 reminder is a real local notification,
-scheduled on purchase.
+A hard wall with no ✕. The headline hands back the onboarding number and
+their app: **"Take your 52 hours back from TikTok."** Then one supporting
+sentence (not a feature list), a trial timeline (Today · Full access, free
+→ Day N−2 · We remind you → Day N · price), and plan cards (yearly first,
+"Save N%", per-week price on the right). CTA: *Start 7-day free trial*.
+The reminder is a real notification. It's scheduled at purchase if
+notifications are already allowed; otherwise it's held (`TrialReminder`)
+until the notification primer gets permission, so there's never a cold
+system prompt on top of a purchase.
 
 ## The block
 
