@@ -252,7 +252,7 @@ struct RestTimerPill: View {
             .foregroundStyle(GBColor.ink)
             .padding(.horizontal, GBSpace.sm)
             .padding(.vertical, GBSpace.xs)
-            .glassEffect(.regular.tint(.white.opacity(0.6)), in: Capsule())
+            .glassEffect(.regular.tint(GBColor.glassTint), in: Capsule())
             .animation(.snappy, value: remaining)
         }
         .accessibilityElement(children: .contain)

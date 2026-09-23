@@ -24,8 +24,8 @@ struct ShieldDemoStep: View {
     private var phone: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 38, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.08), radius: 24, y: 10)
+                .fill(GBColor.card)
+                .shadow(color: GBColor.shadow, radius: 24, y: 10)
 
             homeScreen
                 .opacity(phase == 2 ? 0 : 1)
@@ -100,7 +100,7 @@ struct ShieldDemoStep: View {
             Spacer()
             Text("Back to the workout")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(GBColor.onInk)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
                 .background(GBColor.ink, in: RoundedRectangle(cornerRadius: 14, style: .continuous))

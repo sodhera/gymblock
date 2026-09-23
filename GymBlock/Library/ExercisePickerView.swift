@@ -131,10 +131,10 @@ struct ExercisePickerView: View {
         } label: {
             Text(title)
                 .font(GBFont.label(14))
-                .foregroundStyle(selected ? .white : GBColor.ink)
+                .foregroundStyle(selected ? GBColor.onInk : GBColor.ink)
                 .padding(.horizontal, 14)
                 .frame(height: 34)
-                .background(Capsule().fill(selected ? GBColor.ink : Color.white))
+                .background(Capsule().fill(selected ? GBColor.ink : GBColor.card))
         }
         .buttonStyle(ScaleOnPress())
     }

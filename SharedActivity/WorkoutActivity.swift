@@ -79,8 +79,17 @@ nonisolated struct SkipRestIntent: LiveActivityIntent {
 
 nonisolated enum ActivityPalette {
     static let orange = Color(red: 1, green: 0x5B / 255, blue: 0x1A / 255)
-    static let paper = Color(red: 0xF4 / 255, green: 0xF2 / 255, blue: 0xED / 255)
-    static let ink = Color(red: 0x11 / 255, green: 0x12 / 255, blue: 0x14 / 255)
-    static let steel = Color(red: 0x6E / 255, green: 0x71 / 255, blue: 0x78 / 255)
-    static let mist = Color(red: 0xD9 / 255, green: 0xD6 / 255, blue: 0xCF / 255)
+    // Lock Screen banner colors follow light/dark like the app.
+    static let paper = dynamic(0xF4F2ED, 0x1A1A1C)
+    static let card = dynamic(0xFFFFFF, 0x2A2A2D)
+    static let ink = dynamic(0x111214, 0xF2F1EC)
+    static let onInk = dynamic(0xFFFFFF, 0x111214)
+    static let steel = dynamic(0x6E7178, 0x9A9DA3)
+
+    private static func dynamic(_ light: UInt32, _ dark: UInt32) -> Color {
+        func rgb(_ h: UInt32) -> UIColor {
+            UIColor(red: CGFloat((h >> 16) & 0xFF) / 255, green: CGFloat((h >> 8) & 0xFF) / 255, blue: CGFloat(h & 0xFF) / 255, alpha: 1)
+        }
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? rgb(dark) : rgb(light) })
+    }
 }

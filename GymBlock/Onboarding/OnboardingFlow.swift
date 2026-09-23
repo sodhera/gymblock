@@ -250,12 +250,12 @@ private struct DaysStep: View {
                         } label: {
                             Text("\(n)")
                                 .font(GBFont.number(20, weight: .bold))
-                                .foregroundStyle(draft.daysPerWeek == n ? .white : GBColor.ink)
+                                .foregroundStyle(draft.daysPerWeek == n ? GBColor.onInk : GBColor.ink)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 56)
                                 .background(
                                     RoundedRectangle(cornerRadius: GBRadius.sm, style: .continuous)
-                                        .fill(draft.daysPerWeek == n ? GBColor.ink : Color.white)
+                                        .fill(draft.daysPerWeek == n ? GBColor.ink : GBColor.card)
                                 )
                         }
                         .buttonStyle(ScaleOnPress())

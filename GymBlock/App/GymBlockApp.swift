@@ -3,11 +3,12 @@ import SwiftUI
 @main
 struct GymBlockApp: App {
     @State private var store = AppStore()
+    @AppStorage(Appearance.storageKey) private var appearance: Appearance = .system
 
     init() {
         // Navigation titles in the brand's expanded width, so pushed screens
         // ("History", "Legs") speak the same type as the heroes.
-        let ink = UIColor(red: 0x11 / 255, green: 0x12 / 255, blue: 0x14 / 255, alpha: 1)
+        let ink = UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: 0xF2F1EC) : UIColor(hex: 0x111214) }
         func expanded(_ size: CGFloat, _ weight: UIFont.Weight) -> UIFont {
             let base = UIFont.systemFont(ofSize: size, weight: weight)
             let descriptor = base.fontDescriptor.addingAttributes([
@@ -27,9 +28,32 @@ struct GymBlockApp: App {
                 .environment(store.screenTime)
                 .environment(store.rest)
                 .tint(GBColor.ink) // chrome is ink; orange is applied explicitly where earned
-                .preferredColorScheme(.light)
+                .preferredColorScheme(appearance.colorScheme)
                 .task { await store.start() }
                 .onOpenURL { store.handle(url: $0) }
+        }
+    }
+}
+
+/// System / Light / Dark, chosen in Settings. System is the default.
+enum Appearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    static let storageKey = "appearance"
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
         }
     }
 }

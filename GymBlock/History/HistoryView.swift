@@ -168,7 +168,7 @@ struct EmptyState: View {
                 .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(GBColor.steel)
                 .frame(width: 52, height: 52)
-                .background(Color.white, in: Circle())
+                .background(GBColor.card, in: Circle())
             Text(title).font(GBFont.headline(17)).foregroundStyle(GBColor.ink)
             Text(message).font(GBFont.body(15)).foregroundStyle(GBColor.steel).multilineTextAlignment(.center)
         }

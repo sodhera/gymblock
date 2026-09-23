@@ -2,35 +2,61 @@ import SwiftUI
 
 // GymBlock's design tokens. See DESIGN.md → "Palette" and "Typography".
 //
-// The brand is light-first: warm bone paper, near-black ink, and one accent —
+// The brand is light-first (with a matching dark mode): warm bone paper, near-black ink, and one accent —
 // safety orange — reserved for "locked in" moments (starting a workout, days
 // trained, finished sets, PRs). Everything else is ink and greys. If you are
 // reaching for orange to decorate something, don't: color is earned.
 
 enum GBColor {
+    // Light values are the brand; dark values keep the same roles on a warm
+    // near-black ("paper at night") so the app reads as one system in both.
+
     // Grounds
-    static let paper = Color(hex: 0xF4F2ED)        // app background (warm bone)
-    static let paperDeep = Color(hex: 0xEAE7E0)    // pressed / sunken wells
-    static let surface = Color.white               // glass tint base, sheets
-    static let shieldWhite = Color(hex: 0xFFFFFF)
+    static let paper = dynamic(0xF4F2ED, 0x0E0E0F)        // app background
+    static let paperDeep = dynamic(0xEAE7E0, 0x1E1E20)    // pressed rows, input wells
+    static let card = dynamic(0xFFFFFF, 0x1A1A1C)         // cards, tiles, chips
+    /// Tint for Liquid Glass surfaces: frosted white by day, smoke by night.
+    static let glassTint = dynamic(0xFFFFFF, 0x2A2A2D, lightAlpha: 0.55, darkAlpha: 0.45)
 
     // Ink
-    static let ink = Color(hex: 0x111214)          // primary text, primary dark buttons
-    static let ink2 = Color(hex: 0x3A3C40)         // strong secondary
-    static let steel = Color(hex: 0x6E7178)        // secondary text
-    static let fog = Color(hex: 0xA3A5AA)          // tertiary text, placeholders
-    static let mist = Color(hex: 0xD9D6CF)         // empty states, untrained days
-    static let hairline = Color.black.opacity(0.07)
+    static let ink = dynamic(0x111214, 0xF2F1EC)          // primary text, ink buttons
+    static let ink2 = dynamic(0x3A3C40, 0xCDCCC7)         // strong secondary
+    static let steel = dynamic(0x6E7178, 0x9A9DA3)        // secondary text, kickers
+    static let fog = dynamic(0xA3A5AA, 0x66696F)          // tertiary, placeholders
+    static let mist = dynamic(0xD9D6CF, 0x2F2F32)         // untrained days, empty bars
+    static let hairline = dynamic(0x000000, 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.09)
+    /// Text on an ink-filled surface (flips with ink).
+    static let onInk = dynamic(0xF4F2ED, 0x111214)
+    static let shadow = dynamic(0x000000, 0x000000, lightAlpha: 0.05, darkAlpha: 0.0)
 
-    // Accent
-    static let orange = Color(hex: 0xFF5B1A)       // safety orange — the only accent
-    static let orangeDeep = Color(hex: 0xE24A0E)   // pressed accent
-    static let orangeSoft = Color(hex: 0xFF5B1A, opacity: 0.12) // finished-set row tint
-    static let orangeWash = Color(hex: 0xFF5B1A, opacity: 0.06)
+    // Accent — identical in both modes; it's the brand.
+    static let orange = Color(hex: 0xFF5B1A)
+    static let orangeDeep = Color(hex: 0xE24A0E)
+    static let orangeSoft = dynamic(0xFF5B1A, 0xFF5B1A, lightAlpha: 0.12, darkAlpha: 0.20) // finished-set row
+    static let orangeWash = dynamic(0xFF5B1A, 0xFF5B1A, lightAlpha: 0.06, darkAlpha: 0.12)
 
     // Semantic
-    static let danger = Color(hex: 0xC8372D)
-    static let warmup = Color(hex: 0xD89A00)       // "W" set marker (a label, not an accent)
+    static let danger = dynamic(0xC8372D, 0xFF6B5E)
+    static let warmup = dynamic(0xD89A00, 0xF2B634)       // "W" set marker (a label, not an accent)
+
+    private static func dynamic(_ light: UInt32, _ dark: UInt32, lightAlpha: CGFloat = 1, darkAlpha: CGFloat = 1) -> Color {
+        Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(hex: dark, alpha: darkAlpha)
+                : UIColor(hex: light, alpha: lightAlpha)
+        })
+    }
+}
+
+extension UIColor {
+    convenience init(hex: UInt32, alpha: CGFloat = 1) {
+        self.init(
+            red: CGFloat((hex >> 16) & 0xFF) / 255,
+            green: CGFloat((hex >> 8) & 0xFF) / 255,
+            blue: CGFloat(hex & 0xFF) / 255,
+            alpha: alpha
+        )
+    }
 }
 
 extension Color {

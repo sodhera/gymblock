@@ -168,7 +168,7 @@ struct PaywallView: View {
                 }
             }
             .padding(GBSpace.md)
-            .background(RoundedRectangle(cornerRadius: GBRadius.md, style: .continuous).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: GBRadius.md, style: .continuous).fill(GBColor.card))
             .overlay(
                 RoundedRectangle(cornerRadius: GBRadius.md, style: .continuous)
                     .strokeBorder(isSelected ? GBColor.orange : .clear, lineWidth: 2)

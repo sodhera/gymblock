@@ -77,7 +77,7 @@ struct ScreenTimePrimerView: View {
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(GBColor.ink)
                 .frame(width: 32, height: 32)
-                .background(Color.white, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .background(GBColor.card, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             Text(text).font(GBFont.body(16)).foregroundStyle(GBColor.ink)
         }
     }
@@ -108,7 +108,7 @@ struct ScreenTimePrimerView: View {
             Spacer()
             Image(systemName: "timer")
                 .font(.system(size: 30, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(GBColor.onInk)
                 .frame(width: 64, height: 64)
                 .background(GBColor.ink, in: RoundedRectangle(cornerRadius: 19, style: .continuous))
             Text("Know when rest is over.")

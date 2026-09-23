@@ -31,10 +31,21 @@ nonisolated class ShieldConfigProvider: ShieldConfigurationDataSource {
 
     // MARK: - Palette (mirrors GBColor in Theme.swift)
 
-    private static let ink = UIColor(red: 0x11 / 255, green: 0x12 / 255, blue: 0x14 / 255, alpha: 1)
-    private static let steel = UIColor(red: 0x6E / 255, green: 0x71 / 255, blue: 0x78 / 255, alpha: 1)
-    private static let orange = UIColor(red: 0xFF / 255, green: 0x5B / 255, blue: 0x1A / 255, alpha: 1)
-    private static let paper = UIColor(red: 0xF4 / 255, green: 0xF2 / 255, blue: 0xED / 255, alpha: 1)
+    // Dynamic, so the shield follows the phone's light/dark setting like the app.
+    private static let ink = dynamic(0x111214, 0xF2F1EC)
+    private static let onInk = dynamic(0xFFFFFF, 0x111214)
+    private static let steel = dynamic(0x6E7178, 0x9A9DA3)
+    private static let orange = rgb(0xFF5B1A)
+    private static let paper = dynamic(0xF4F2ED, 0x0E0E0F)
+
+    private static func rgb(_ hex: UInt32) -> UIColor {
+        UIColor(red: CGFloat((hex >> 16) & 0xFF) / 255, green: CGFloat((hex >> 8) & 0xFF) / 255,
+                blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+    }
+
+    private static func dynamic(_ light: UInt32, _ dark: UInt32) -> UIColor {
+        UIColor { $0.userInterfaceStyle == .dark ? rgb(dark) : rgb(light) }
+    }
 
     private func make(appName: String?) -> ShieldConfiguration {
         let reach = SharedWorkoutState.recordReach()
@@ -42,12 +53,12 @@ nonisolated class ShieldConfigProvider: ShieldConfigurationDataSource {
         let name = appName ?? "That"
 
         return ShieldConfiguration(
-            backgroundBlurStyle: .systemUltraThinMaterialLight,
+            backgroundBlurStyle: .systemUltraThinMaterial,
             backgroundColor: Self.paper,
             icon: Self.lockIcon,
             title: .init(text: title(reach: reach), color: Self.ink),
             subtitle: .init(text: subtitle(appName: name, snapshot: snapshot), color: Self.steel),
-            primaryButtonLabel: .init(text: "Back to the workout", color: .white),
+            primaryButtonLabel: .init(text: "Back to the workout", color: Self.onInk),
             primaryButtonBackgroundColor: Self.ink,
             secondaryButtonLabel: nil
         )

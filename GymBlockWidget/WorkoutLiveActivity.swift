@@ -178,7 +178,7 @@ private struct IslandButton<I: AppIntent>: View {
         Button(intent: intent) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(filled ? ActivityPalette.ink : .white)
+                .foregroundStyle(filled ? Color.black : .white)
                 .frame(width: 52, height: 36)
                 .background(filled ? ActivityPalette.orange : .white.opacity(0.16), in: Capsule())
         }
@@ -244,9 +244,9 @@ private struct LockButton<I: AppIntent>: View {
         Button(intent: intent) {
             Text(label)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(filled ? .white : ActivityPalette.ink)
+                .foregroundStyle(filled ? ActivityPalette.onInk : ActivityPalette.ink)
                 .frame(width: 58, height: 40)
-                .background(filled ? ActivityPalette.ink : .white, in: Capsule())
+                .background(filled ? ActivityPalette.ink : ActivityPalette.card, in: Capsule())
         }
         .buttonStyle(.plain)
     }

@@ -79,7 +79,7 @@ struct FriendsView: View {
                     .foregroundStyle(GBColor.ink)
                     .padding(.horizontal, 16)
                     .frame(height: 40)
-                    .glassEffect(.regular.tint(.white.opacity(0.6)).interactive(), in: Capsule())
+                    .glassEffect(.regular.tint(GBColor.glassTint).interactive(), in: Capsule())
             }
         }
         .padding(GBSpace.md)

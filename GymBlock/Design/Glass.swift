@@ -13,8 +13,8 @@ extension View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         return self.glassEffect(
             interactive
-                ? .regular.tint(.white.opacity(0.55)).interactive()
-                : .regular.tint(.white.opacity(0.55)),
+                ? .regular.tint(GBColor.glassTint).interactive()
+                : .regular.tint(GBColor.glassTint),
             in: shape
         )
     }
@@ -24,8 +24,8 @@ extension View {
     func solidCard(cornerRadius: CGFloat = GBRadius.lg) -> some View {
         background(
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color.white)
-                .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+                .fill(GBColor.card)
+                .shadow(color: GBColor.shadow, radius: 12, y: 4)
         )
     }
 }
@@ -75,7 +75,7 @@ struct GlassButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: height)
             .contentShape(Capsule())
-            .glassEffect(.regular.tint(.white.opacity(0.6)).interactive(), in: Capsule())
+            .glassEffect(.regular.tint(GBColor.glassTint).interactive(), in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.spring(response: 0.28, dampingFraction: 0.6), value: configuration.isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
@@ -128,7 +128,7 @@ struct GlassIconButton: View {
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.tint(.white.opacity(0.5)).interactive(), in: Circle())
+        .glassEffect(.regular.tint(GBColor.glassTint).interactive(), in: Circle())
     }
 }
 
@@ -356,7 +356,7 @@ struct OptionTile: View {
             .frame(minHeight: 64)
             .background(
                 RoundedRectangle(cornerRadius: GBRadius.md, style: .continuous)
-                    .fill(Color.white)
+                    .fill(GBColor.card)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: GBRadius.md, style: .continuous)

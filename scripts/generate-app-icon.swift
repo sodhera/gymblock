@@ -4,7 +4,10 @@
 import AppKit
 
 let size: CGFloat = 1024
-let out = "GymBlock/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+let dir = "GymBlock/Resources/Assets.xcassets/AppIcon.appiconset/"
+
+/// Light: white lock on orange. Dark: orange lock on near-black (iOS dark icon).
+func render(dark: Bool, to name: String) {
 
 let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size), pixelsHigh: Int(size),
                            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -13,13 +16,13 @@ NSGraphicsContext.saveGraphicsState()
 NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
 
 // Field: safety orange with a whisper of vertical light (top a touch warmer).
-let top = NSColor(srgbRed: 1.0, green: 0.42, blue: 0.16, alpha: 1)
-let bottom = NSColor(srgbRed: 0.96, green: 0.33, blue: 0.08, alpha: 1)
+let top = dark ? NSColor(srgbRed: 0.10, green: 0.10, blue: 0.11, alpha: 1) : NSColor(srgbRed: 1.0, green: 0.42, blue: 0.16, alpha: 1)
+let bottom = dark ? NSColor(srgbRed: 0.04, green: 0.04, blue: 0.05, alpha: 1) : NSColor(srgbRed: 0.96, green: 0.33, blue: 0.08, alpha: 1)
 NSGradient(starting: top, ending: bottom)!.draw(in: NSRect(x: 0, y: 0, width: size, height: size), angle: -90)
 
 // Lock glyph.
 let config = NSImage.SymbolConfiguration(pointSize: 520, weight: .bold)
-    .applying(.init(paletteColors: [.white]))
+    .applying(.init(paletteColors: [dark ? NSColor(srgbRed: 1, green: 0.357, blue: 0.102, alpha: 1) : .white]))
 if let lock = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: nil)?.withSymbolConfiguration(config) {
     let s = lock.size
     let rect = NSRect(x: (size - s.width) / 2, y: (size - s.height) / 2 - 10, width: s.width, height: s.height)
@@ -32,5 +35,9 @@ if let lock = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: n
     lock.draw(in: rect)
 }
 NSGraphicsContext.restoreGraphicsState()
-try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: out))
-print("Wrote \(out)")
+try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: dir + name))
+print("Wrote \(dir + name)")
+}
+
+render(dark: false, to: "AppIcon.png")
+render(dark: true, to: "AppIcon-Dark.png")

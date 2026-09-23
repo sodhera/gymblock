@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var confirmDelete = false
     @State private var deleteText = ""
     @State private var deleteError: String?
+    @AppStorage(Appearance.storageKey) private var appearance: Appearance = .system
 
     var body: some View {
         NavigationStack {
@@ -127,6 +128,14 @@ struct SettingsView: View {
                 Menu(Format.rest(store.profile.defaultRestSeconds)) {
                     ForEach([0, 60, 90, 120, 150, 180, 240], id: \.self) { s in
                         Button(Format.rest(s)) { store.profile.defaultRestSeconds = s }
+                    }
+                }
+                .foregroundStyle(GBColor.ink)
+            }
+            GlassRow(icon: "circle.lefthalf.filled", title: "Appearance") {
+                Menu(appearance.title) {
+                    Picker("Appearance", selection: $appearance) {
+                        ForEach(Appearance.allCases) { Text($0.title).tag($0) }
                     }
                 }
                 .foregroundStyle(GBColor.ink)
