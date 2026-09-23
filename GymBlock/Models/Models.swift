@@ -145,13 +145,16 @@ struct SetEntry: Codable, Identifiable, Hashable {
     var seconds: Int?
     var distanceMeters: Double?
     var isDone = false
+    /// The template's rep target — shown as a placeholder, never logged.
+    var targetReps: Int?
 
-    init(kind: SetKind = .normal, weight: Double? = nil, reps: Int? = nil, seconds: Int? = nil, isDone: Bool = false) {
+    init(kind: SetKind = .normal, weight: Double? = nil, reps: Int? = nil, seconds: Int? = nil, isDone: Bool = false, targetReps: Int? = nil) {
         self.kind = kind
         self.weight = weight
         self.reps = reps
         self.seconds = seconds
         self.isDone = isDone
+        self.targetReps = targetReps
     }
 
     init(from decoder: Decoder) throws {
@@ -163,6 +166,7 @@ struct SetEntry: Codable, Identifiable, Hashable {
         seconds = try c.decodeIfPresent(Int.self, forKey: .seconds)
         distanceMeters = try c.decodeIfPresent(Double.self, forKey: .distanceMeters)
         isDone = try c.decodeIfPresent(Bool.self, forKey: .isDone) ?? false
+        targetReps = try c.decodeIfPresent(Int.self, forKey: .targetReps)
     }
 
     /// Weight × reps, for volume. Warm-ups don't count toward volume.

@@ -2,7 +2,7 @@ name: GymBlock
 options:
   bundleIdPrefix: com.sulav
   deploymentTarget:
-    iOS: "26.0"
+    iOS: "26.1"
   developmentLanguage: en
   createIntermediateGroups: true
   groupSortPosition: top

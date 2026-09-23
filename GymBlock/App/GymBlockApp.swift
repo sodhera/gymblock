@@ -13,6 +13,7 @@ struct GymBlockApp: App {
                 .tint(GBColor.orange)
                 .preferredColorScheme(.light)
                 .task { await store.start() }
+                .onOpenURL { store.handle(url: $0) }
         }
     }
 }

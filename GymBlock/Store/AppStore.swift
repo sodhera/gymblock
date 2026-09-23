@@ -53,6 +53,9 @@ final class AppStore {
     var finishedRecords: [PersonalRecord] = []
     var friends = FriendsSnapshot()
     var myPublicProfile: PublicProfile?
+    /// Username from a `gymblock://add/<username>` invite link, waiting for
+    /// the Friends tab to offer the request.
+    var pendingInvite: String?
 
     let rest = RestTimer()
 
@@ -227,14 +230,10 @@ final class AppStore {
             isShared: profile.shareWorkoutsByDefault
         )
         if let template {
+            // Sets start empty: last time's numbers show as placeholders and
+            // fill in when the set is checked (one tap per set).
             workout.exercises = template.exercises.map { item in
-                let previous = previousSets(for: item.exerciseID).filter { $0.kind != .warmup }
-                let sets = (0..<max(1, item.sets)).map { index -> SetEntry in
-                    // Pre-fill from last time so logging is one tap per set;
-                    // untouched values render as placeholders until confirmed.
-                    let prior = index < previous.count ? previous[index] : previous.last
-                    return SetEntry(weight: prior?.weight, reps: prior?.reps ?? item.reps)
-                }
+                let sets = (0..<max(1, item.sets)).map { _ in SetEntry(targetReps: item.reps.flatMap { $0 > 0 ? $0 : nil }) }
                 return ExerciseLog(exerciseID: item.exerciseID, sets: sets, restSeconds: item.restSeconds)
             }
             if let i = templates.firstIndex(where: { $0.id == template.id }) {
@@ -313,14 +312,11 @@ final class AppStore {
     func addExercises(_ ids: [String]) {
         guard activeWorkout != nil else { return }
         for id in ids {
-            let previous = previousSets(for: id).filter { $0.kind != .warmup }
-            let count = max(3, min(previous.count, 5))
-            let sets = (0..<count).map { i -> SetEntry in
-                let prior = i < previous.count ? previous[i] : previous.last
-                return SetEntry(weight: prior?.weight, reps: prior?.reps)
-            }
+            let count = min(max(previousSets(for: id).filter { $0.kind != .warmup }.count, 3), 5)
+            let sets = (0..<count).map { _ in SetEntry() }
             activeWorkout?.exercises.append(ExerciseLog(exerciseID: id, sets: sets, restSeconds: profile.defaultRestSeconds))
         }
+        Haptics.tap()
     }
 
     func removeExercise(_ logID: UUID) {
@@ -334,7 +330,7 @@ final class AppStore {
     func addSet(to logID: UUID) {
         guard let e = activeWorkout?.exercises.firstIndex(where: { $0.id == logID }) else { return }
         let last = activeWorkout?.exercises[e].sets.last
-        activeWorkout?.exercises[e].sets.append(SetEntry(weight: last?.weight, reps: last?.reps))
+        activeWorkout?.exercises[e].sets.append(SetEntry(targetReps: last?.targetReps))
         Haptics.tap()
     }
 
@@ -434,6 +430,13 @@ final class AppStore {
         let p = try await friendsService.claimUsername(username, displayName: profile.name, weeklyTarget: profile.weeklyTarget)
         myPublicProfile = p
         profile.username = p.username
+    }
+
+    /// `gymblock://add/<username>` — a friend's invite link.
+    func handle(url: URL) {
+        guard url.scheme == "gymblock", url.host == "add" else { return }
+        let username = Usernames.sanitize(url.lastPathComponent)
+        if Usernames.isValid(username) { pendingInvite = username }
     }
 
     // MARK: - Shield mirror
