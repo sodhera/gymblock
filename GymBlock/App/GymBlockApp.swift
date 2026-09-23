@@ -26,7 +26,7 @@ struct GymBlockApp: App {
                 .environment(store)
                 .environment(store.screenTime)
                 .environment(store.rest)
-                .tint(GBColor.orange)
+                .tint(GBColor.ink) // chrome is ink; orange is applied explicitly where earned
                 .preferredColorScheme(.light)
                 .task { await store.start() }
                 .onOpenURL { store.handle(url: $0) }

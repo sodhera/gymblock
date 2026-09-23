@@ -134,7 +134,7 @@ struct ExerciseCard: View {
                 Text("Rest \(Format.rest(log.restSeconds))")
             }
             .font(GBFont.label(13))
-            .foregroundStyle(log.restSeconds > 0 ? GBColor.orange : GBColor.fog)
+            .foregroundStyle(log.restSeconds > 0 ? GBColor.steel : GBColor.fog)
         }
     }
 
