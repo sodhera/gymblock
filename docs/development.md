@@ -57,10 +57,11 @@ includes the gitignored `Config.xcconfig`. Copy
 
 ### Supabase
 
-1. Create a project and run `supabase/migrations/001_init.sql`.
-2. Enable the Apple provider (Auth → Providers) with bundle ID
-   `com.sulav.gymblock`.
-3. Deploy the deletion function: `supabase functions deploy delete-account`.
+Create the project in the dashboard, then run
+`scripts/setup-supabase.sh <project-ref>`. It links the repo, pushes
+migrations and auth config, deploys `delete-account`, and writes
+`Config.xcconfig`. The full launch checklist (Apple, App Store Connect,
+RevenueCat) is in `docs/setup-checklist.md`.
 
 The schema's RLS enforces the privacy model: friends see summaries and PRs
 always, and workout details only when the workout is shared.
