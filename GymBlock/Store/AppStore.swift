@@ -35,6 +35,7 @@ final class AppStore {
         didSet {
             Persistence.save(activeWorkout, to: .activeWorkout)
             publishWorkoutToShield()
+            syncLiveActivity()
         }
     }
     var flags: AppFlags { didSet { Persistence.save(flags, to: .flags) } }
@@ -58,6 +59,7 @@ final class AppStore {
     var pendingInvite: String?
 
     let rest = RestTimer()
+    private let liveActivity = WorkoutActivityController()
 
     // MARK: Services
 
@@ -86,6 +88,11 @@ final class AppStore {
         account = Persistence.load(AppAccount.self, from: .account)
         ExerciseLibrary.shared.custom = customExercises
 
+        // Rest changes drive the Live Activity; its +15/Skip buttons drive rest.
+        rest.onChange = { [weak self] in self?.syncLiveActivity() }
+        RestIntentBridge.addSeconds = { [weak self] seconds in self?.rest.add(seconds) }
+        RestIntentBridge.skip = { [weak self] in self?.rest.stop() }
+
         #if DEBUG
         applyDebugLaunchArguments()
         #endif
@@ -108,6 +115,9 @@ final class AppStore {
             account = nil
         }
         isRestoringSession = false
+
+        liveActivity.endOrphans(hasWorkout: activeWorkout != nil)
+        syncLiveActivity()
 
         // A workout survived a relaunch: keep the block honest.
         if activeWorkout != nil, profile.blockingEnabled, !screenTime.isLocked {
@@ -242,6 +252,7 @@ final class AppStore {
         }
         activeWorkout = workout
         if profile.blockingEnabled { screenTime.lock() }
+        syncLiveActivity()
         Haptics.lock()
         isWorkoutPresented = true
     }
@@ -439,6 +450,28 @@ final class AppStore {
         if Usernames.isValid(username) { pendingInvite = username }
     }
 
+    // MARK: - Live Activity
+
+    private func syncLiveActivity() {
+        guard let workout = activeWorkout else {
+            liveActivity.sync(workout: nil, state: nil)
+            return
+        }
+        let current = workout.exercises.first { $0.sets.contains { !$0.isDone } }
+        let nextIndex = current?.sets.firstIndex { !$0.isDone }
+        let state = WorkoutActivityAttributes.ContentState(
+            restStart: rest.isRunning ? rest.startedAt : nil,
+            restEnd: rest.isRunning ? rest.endsAt : nil,
+            exercise: current.flatMap { exercise($0.exerciseID)?.name },
+            setNumber: (nextIndex ?? 0) + 1,
+            setCount: current?.sets.count ?? 0,
+            setsDone: workout.completedSetCount,
+            setsTotal: workout.totalSetCount,
+            appsLocked: screenTime.isLocked
+        )
+        liveActivity.sync(workout: workout, state: state)
+    }
+
     // MARK: - Shield mirror
 
     /// Mirrors the facts the shield shows ("3 sets of Bench Press left") into
@@ -493,7 +526,11 @@ final class AppStore {
 @Observable
 final class RestTimer {
     private(set) var endsAt: Date?
+    /// When this rest began — the start of the Live Activity's progress bar.
+    private(set) var startedAt: Date?
     private(set) var total: Int = 0
+    /// Fired on start / adjust / stop / natural end (drives the Live Activity).
+    var onChange: (() -> Void)?
     private var tickTask: Task<Void, Never>?
     private static let notificationID = "rest-timer"
 
@@ -506,9 +543,11 @@ final class RestTimer {
 
     func start(seconds: Int) {
         total = seconds
-        endsAt = Date().addingTimeInterval(TimeInterval(seconds))
+        startedAt = Date()
+        endsAt = startedAt?.addingTimeInterval(TimeInterval(seconds))
         scheduleNotification(in: seconds)
         runTicks()
+        onChange?()
     }
 
     func add(_ seconds: Int) {
@@ -519,12 +558,16 @@ final class RestTimer {
         total = max(total + seconds, remaining())
         scheduleNotification(in: remaining())
         Haptics.tap()
+        onChange?()
     }
 
     func stop() {
         tickTask?.cancel()
+        let wasRunning = endsAt != nil
         endsAt = nil
+        startedAt = nil
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [Self.notificationID])
+        if wasRunning { onChange?() }
     }
 
     private func runTicks() {
@@ -541,6 +584,8 @@ final class RestTimer {
                 if left == 0 {
                     Haptics.restEnd()
                     self.endsAt = nil
+                    self.startedAt = nil
+                    self.onChange?()
                     return
                 }
                 try? await Task.sleep(for: .milliseconds(250))

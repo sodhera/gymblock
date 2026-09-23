@@ -16,6 +16,10 @@ streak you can share with friends.
    Press left."
 4. **Hold to finish.** Apps unlock, today's circle fills in, and PRs land.
 
+Throughout, a Live Activity keeps the workout in the Dynamic Island and on
+the Lock Screen. It shows the clock while lifting and a rest countdown with
++15 / Skip after each set, so the phone never needs unlocking mid-workout.
+
 ## Rules
 
 - **Streak = weeks.** The user picks a weekly target (1–7 days). A week
@@ -45,7 +49,6 @@ billing.
 
 ## Not in v1 (candidates)
 
-- Rest timer Live Activity / Dynamic Island
 - Auto-start the block on arriving at the gym (geofence)
 - Apple Watch logging
 - Push notifications for nudges and friend requests (the table exists)

@@ -27,9 +27,14 @@ xcodebuild test -project GymBlock.xcodeproj -scheme GymBlock \
 | `GymBlockShieldConfig` | draws the shield over blocked apps ("3 sets of Bench Press left") |
 | `GymBlockShieldAction` | handles the shield button (closes the app; no escape hatch) |
 | `GymBlockMonitor` | safety cap: clears the shield if a workout outlives 4h |
+| `GymBlockWidget` | the workout Live Activity (Dynamic Island + Lock Screen) |
 | `GymBlockTests` | streak / PR / onboarding-math / catalog tests |
 
-`Shared/` is compiled into all four targets. It holds the app-group mirror
+`SharedActivity/` (the activity attributes, the +15/Skip intents, and a
+tiny palette) is compiled into the app and the widget only. The intents
+reach the running store through `RestIntentBridge`, which the app installs
+at launch. `Shared/` is compiled into the app and the three Screen Time
+extensions. It holds the app-group mirror
 of the running workout (`SharedWorkoutState`), the named settings store
 (`.gymblock`), and the safety activity name. App group:
 `group.com.sulav.gymblock`.

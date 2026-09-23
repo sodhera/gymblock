@@ -207,6 +207,36 @@ scheduled on purchase.
   escape hatch on the shield.
 - Blocking settings are disabled while a workout runs.
 
+## Live Activity (Dynamic Island + Lock Screen)
+
+`GymBlockWidget/WorkoutLiveActivity.swift`, with shared attributes and
+intents in `SharedActivity/WorkoutActivity.swift`. **One activity runs for
+the whole workout** (started by Start Workout, ended by finishing or
+discarding) and has two states:
+
+- **Lifting:** a lock glyph, the workout clock, `SETS 6/18`, and the next
+  set ("Bench Press · set 3 of 4").
+- **Resting** (after every checked set): an orange countdown, a thin orange
+  progress bar, and **+15** / **Skip** buttons. The buttons are
+  `LiveActivityIntent`s that run in the app and adjust the same `RestTimer`
+  the logger uses, so the pill, the island, and the notification always
+  agree.
+
+| Surface | Lifting | Resting |
+| --- | --- | --- |
+| Compact | orange lock · white clock | orange timer glyph · orange countdown |
+| Minimal | orange lock | circular orange countdown ring |
+| Expanded | title kicker, big clock · SETS n/m · next set | REST, big orange countdown · +15 / Skip · bar · next set |
+| Lock Screen | bone paper + ink (like the app) | same, orange countdown + buttons + bar |
+
+The island is always black, so text there is white and orange carries the
+countdown. The Lock Screen banner uses the app's paper and ink. All timers
+are system-rendered (`Text(timerInterval:)`, `ProgressView(timerInterval:)`),
+with no per-second updates from the app. The activity's `staleDate` is the
+rest end: if the app is suspended when rest runs out, the system flips it
+to "Rest's over. Next: Bench Press" by itself. The local "Rest's over"
+notification still provides the sound.
+
 ## App icon
 
 A white padlock on a safety-orange field

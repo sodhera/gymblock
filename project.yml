@@ -33,6 +33,7 @@ targets:
     sources:
       - path: GymBlock
       - path: Shared
+      - path: SharedActivity
     configFiles:
       Debug: GymBlock/Config/Secrets.xcconfig
       Release: GymBlock/Config/Secrets.xcconfig
@@ -55,6 +56,7 @@ targets:
       - target: GymBlockShieldConfig
       - target: GymBlockShieldAction
       - target: GymBlockMonitor
+      - target: GymBlockWidget
       - sdk: FamilyControls.framework
       - sdk: ManagedSettings.framework
       - sdk: DeviceActivity.framework
@@ -108,6 +110,23 @@ targets:
     dependencies:
       - sdk: DeviceActivity.framework
       - sdk: ManagedSettings.framework
+
+  GymBlockWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: GymBlockWidget
+      - path: SharedActivity
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.widget
+        INFOPLIST_FILE: GymBlockWidget/Info.plist
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+      - sdk: ActivityKit.framework
 
   GymBlockTests:
     type: bundle.unit-test
