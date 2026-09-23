@@ -31,10 +31,6 @@ enum GBColor {
     // Semantic
     static let danger = Color(hex: 0xC8372D)
     static let warmup = Color(hex: 0xD89A00)       // "W" set marker (a label, not an accent)
-
-    // Muscle map
-    static let bodyBase = Color(hex: 0x111214, opacity: 0.10)
-    static let muscleSecondary = Color(hex: 0xFF5B1A, opacity: 0.38)
 }
 
 extension Color {

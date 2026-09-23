@@ -2,8 +2,9 @@ import Foundation
 
 // The built-in exercise library. Hand-curated to the lifts people actually do,
 // named the way lifters say them ("Bench Press (Barbell)"). Muscle mappings
-// follow the usual primary/secondary conventions and drive the muscle-map
-// icons (`MuscleMapIcon`). Users add their own with `Exercise.isCustom`.
+// follow the usual primary/secondary conventions and power the library's
+// muscle filters and the "Chest · Barbell" subtitles. Users add their own
+// with `Exercise.isCustom`.
 //
 // IDs are stable forever — they are stored in every workout and template.
 // Rename freely; never change an id.
