@@ -132,7 +132,7 @@ struct FriendsView: View {
     private var friendsSection: some View {
         if store.friends.friends.isEmpty {
             VStack(spacing: GBSpace.md) {
-                EmptyState(icon: "person.2", title: "Lift with friends", message: "See each other's week, streak and PRs.\nInvite someone who'll keep you honest.")
+                EmptyState(icon: "person.2", title: "Lift with friends", message: "See each other's weeks.")
                 Button("Add friend") { adding = true }
                     .buttonStyle(.primary)
             }
@@ -222,7 +222,7 @@ struct ClaimUsernameCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: GBSpace.md) {
             Text("Pick a username").font(GBFont.title(22)).foregroundStyle(GBColor.ink)
-            Text("It's how friends find you. Letters, numbers and underscores.")
+            Text("How friends find you.")
                 .font(GBFont.body(15)).foregroundStyle(GBColor.steel)
             HStack(spacing: 2) {
                 Text("@").font(GBFont.headline(18)).foregroundStyle(GBColor.fog)

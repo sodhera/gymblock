@@ -8,6 +8,7 @@ struct AuthView: View {
     enum Mode { case signUp, signIn }
 
     @Environment(AppStore.self) private var store
+    @Environment(\.colorScheme) private var colorScheme
     var mode: Mode
     var draft: OnboardingDraft
     var onComplete: (AuthResult) async -> Void
@@ -27,9 +28,7 @@ struct AuthView: View {
                 Text(mode == .signUp ? "Save your progress." : "Welcome back.")
                     .font(GBFont.hero(32))
                     .foregroundStyle(GBColor.ink)
-                Text(mode == .signUp
-                     ? "An account keeps your workouts, streak and friends safe across phones."
-                     : "Sign in to pick up your streak where you left it.")
+                Text(mode == .signUp ? "Keeps your streak safe." : "Pick up your streak.")
                     .font(GBFont.body(17))
                     .foregroundStyle(GBColor.steel)
             }
@@ -55,7 +54,7 @@ struct AuthView: View {
                 } onCompletion: { result in
                     handleApple(result)
                 }
-                .signInWithAppleButtonStyle(.black)
+                .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
                 .frame(height: 58)
                 .clipShape(Capsule())
                 .disabled(busy)

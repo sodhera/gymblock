@@ -11,7 +11,7 @@ struct ShieldDemoStep: View {
 
     var body: some View {
         StepScaffold(
-            title: "This is your phone at the gym now.",
+            title: "Your phone at the gym. Now.",
             buttonTitle: "That's what I want",
             action: next
         ) {
@@ -92,7 +92,7 @@ struct ShieldDemoStep: View {
                 .font(.system(size: 19, weight: .bold))
                 .foregroundStyle(GBColor.ink)
                 .padding(.top, 18)
-            Text("Scrolling can wait.\n3 sets of Bench Press left.")
+            Text("\(draft.mainDistraction == "your phone" ? "Scrolling" : draft.mainDistraction) can wait.\n3 sets of Bench Press left.")
                 .font(.system(size: 13))
                 .foregroundStyle(GBColor.steel)
                 .multilineTextAlignment(.center)

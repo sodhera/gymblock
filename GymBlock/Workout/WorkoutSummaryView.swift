@@ -177,10 +177,7 @@ struct WorkoutSummaryView: View {
                 Haptics.tap()
             }
         )) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Share this workout").font(GBFont.headline(16)).foregroundStyle(GBColor.ink)
-                Text("Friends see your exercises and sets.").font(GBFont.body(13)).foregroundStyle(GBColor.steel)
-            }
+            Text("Share with friends").font(GBFont.headline(16)).foregroundStyle(GBColor.ink)
         }
         .tint(GBColor.orange)
         .padding(GBSpace.md)

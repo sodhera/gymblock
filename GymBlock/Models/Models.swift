@@ -364,6 +364,8 @@ struct Profile: Codable, Equatable {
     var onboarded: Bool = false
     /// Block the chosen apps when a workout starts.
     var blockingEnabled: Bool = true
+    /// From onboarding: the apps that pull them in (names only).
+    var distractions: [String] = []
 
     init() {}
 
@@ -381,5 +383,6 @@ struct Profile: Codable, Equatable {
         shareWorkoutsByDefault = try c.decodeIfPresent(Bool.self, forKey: .shareWorkoutsByDefault) ?? d.shareWorkoutsByDefault
         onboarded = try c.decodeIfPresent(Bool.self, forKey: .onboarded) ?? d.onboarded
         blockingEnabled = try c.decodeIfPresent(Bool.self, forKey: .blockingEnabled) ?? d.blockingEnabled
+        distractions = try c.decodeIfPresent([String].self, forKey: .distractions) ?? []
     }
 }

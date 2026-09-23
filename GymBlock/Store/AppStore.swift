@@ -156,6 +156,7 @@ final class AppStore {
         profile.sessionMinutes = draft.sessionMinutes
         profile.phoneMinutes = draft.phoneMinutes
         profile.unit = draft.unit
+        profile.distractions = draft.distractions
         if templates.isEmpty {
             templates = StarterTemplates.templates(forDaysPerWeek: draft.daysPerWeek)
         }

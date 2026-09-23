@@ -25,7 +25,6 @@ struct PaywallView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: GBSpace.xl) {
                 header
-                features
                 if let plan = selected, plan.trialDays > 0 { timeline(plan) }
                 plansSection
             }
@@ -48,45 +47,33 @@ struct PaywallView: View {
                 Text("GymBlock Pro").kicker(GBColor.orange)
             }
             Group {
-                if hoursBack > 0 {
-                    Text("Get your \(hoursBack) hours back.")
+                if hoursBack > 0, let app = store.profile.distractions.first, app != "Other" {
+                    Text("Take your \(hoursBack) hours back from \(app).")
+                } else if hoursBack > 0 {
+                    Text("Take your \(hoursBack) hours back.")
                 } else {
-                    Text("Keep it that way.")
+                    Text("Keep your phone out of your workout.")
                 }
             }
             .font(GBFont.hero(34))
             .foregroundStyle(GBColor.ink)
             .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private var features: some View {
-        VStack(alignment: .leading, spacing: GBSpace.md) {
-            feature("lock.fill", "Apps lock until your workout's done")
-            feature("list.bullet.rectangle", "Unlimited templates, logs and records")
-            feature("person.2.fill", "Train with friends — weeks, streaks, PRs")
-        }
-    }
-
-    private func feature(_ icon: String, _ text: String) -> some View {
-        HStack(spacing: GBSpace.sm) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(GBColor.orange)
-                .frame(width: 32, height: 32)
-                .background(GBColor.orangeSoft, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-            Text(text).font(GBFont.body(16)).foregroundStyle(GBColor.ink)
+            Text("Apps locked while you train. Every set logged. Friends who keep you honest.")
+                .font(GBFont.body(16))
+                .foregroundStyle(GBColor.steel)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private func timeline(_ plan: Plan) -> some View {
         let reminderDay = max(1, plan.trialDays - 2)
         return VStack(alignment: .leading, spacing: 0) {
-            timelineRow("lock.open.fill", "Today", "Full access. Nothing charged.", isFirst: true)
-            timelineRow("bell.fill", "Day \(reminderDay)", "We remind you before the trial ends.")
-            timelineRow("creditcard.fill", "Day \(plan.trialDays)", "\(plan.priceString)/\(plan.periodUnit) starts. Cancel before and pay nothing.", isLast: true)
+            timelineRow("lock.open.fill", "Today", "Full access, free", isFirst: true)
+            timelineRow("bell.fill", "Day \(reminderDay)", "We remind you")
+            timelineRow("creditcard.fill", "Day \(plan.trialDays)", "\(plan.priceString)/\(plan.periodUnit). Cancel anytime before.", isLast: true)
         }
         .padding(GBSpace.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .solidCard(cornerRadius: GBRadius.md)
     }
 
@@ -268,16 +255,38 @@ struct PaywallView: View {
     }
 
     /// The reminder the timeline promises: two days before the trial bills.
+    /// Scheduled now if notifications are already allowed; otherwise held
+    /// until the notification primer (right after this) gets permission —
+    /// never a cold system prompt on top of the purchase.
     private func scheduleTrialReminder(_ plan: Plan) {
+        let fireDate = Date().addingTimeInterval(TimeInterval(max(1, plan.trialDays - 2) * 86_400))
+        TrialReminder.remember(fireDate: fireDate, priceLine: "\(plan.priceString)/\(plan.periodUnit)")
+        Task { await TrialReminder.scheduleIfAllowed() }
+    }
+}
+
+/// The pending trial reminder, persisted so the notification primer can
+/// schedule it once permission exists.
+enum TrialReminder {
+    private static let dateKey = "trialReminder.fireDate"
+    private static let priceKey = "trialReminder.price"
+
+    static func remember(fireDate: Date, priceLine: String) {
+        UserDefaults.standard.set(fireDate, forKey: dateKey)
+        UserDefaults.standard.set(priceLine, forKey: priceKey)
+    }
+
+    static func scheduleIfAllowed() async {
         let center = UNUserNotificationCenter.current()
-        Task {
-            _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
-            let content = UNMutableNotificationContent()
-            content.title = "Your trial ends in 2 days"
-            content.body = "\(plan.priceString)/\(plan.periodUnit) starts then. Cancel any time in Settings → Subscriptions."
-            let seconds = TimeInterval(max(1, plan.trialDays - 2) * 86_400)
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
-            try? await center.add(UNNotificationRequest(identifier: "trial-reminder", content: content, trigger: trigger))
-        }
+        guard await center.notificationSettings().authorizationStatus == .authorized,
+              let fireDate = UserDefaults.standard.object(forKey: dateKey) as? Date,
+              fireDate > .now
+        else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Your trial ends in 2 days"
+        content.body = "\(UserDefaults.standard.string(forKey: priceKey) ?? "Your plan") starts then. Cancel anytime in Settings → Subscriptions."
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: fireDate.timeIntervalSinceNow, repeats: false)
+        try? await center.add(UNNotificationRequest(identifier: "trial-reminder", content: content, trigger: trigger))
+        UserDefaults.standard.removeObject(forKey: dateKey)
     }
 }

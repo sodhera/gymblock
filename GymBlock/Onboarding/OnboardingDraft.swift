@@ -11,6 +11,35 @@ struct OnboardingDraft: Codable, Equatable {
     var goal: TrainingGoal = .muscle
     var unit: WeightUnit = Locale.current.measurementSystem == .us ? .lb : .kg
     var name: String = ""
+    /// Apps that pull them in, in the order tapped ("TikTok", "Instagram").
+    var distractions: [String] = []
+    /// What scrolling costs them, as chosen (`OnboardingCost` raw values).
+    var costs: [String] = []
+
+    /// The app to name in reveals: their first pick, else "your phone".
+    var mainDistraction: String { distractions.first ?? "your phone" }
+}
+
+/// The costs someone can admit to. Phrased in their voice, because the
+/// mirror step plays them back as quotes.
+enum OnboardingCost: String, CaseIterable, Identifiable {
+    case longRests, lostFocus, shortSets, dragOn, forget
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .longRests: "My 90s rest turns into 5 minutes"
+        case .lostFocus: "I lose my focus"
+        case .shortSets: "I cut sets short"
+        case .dragOn: "My workouts drag on"
+        case .forget: "I forget what I lifted last time"
+        }
+    }
+}
+
+enum OnboardingApps {
+    /// Plain names, no logos.
+    static let all = ["TikTok", "Instagram", "YouTube", "X", "Snapchat", "Reddit", "WhatsApp", "Messages", "Email", "News", "Games", "Other"]
 }
 
 enum PhoneMath {

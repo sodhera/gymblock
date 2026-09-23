@@ -35,20 +35,15 @@ struct ScreenTimePrimerView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer()
             BrandMark(size: 64)
-            Text("Choose what gets locked.")
+            Text("Pick what gets locked.")
                 .font(GBFont.hero(32))
                 .foregroundStyle(GBColor.ink)
                 .padding(.top, GBSpace.xl)
-            Text("GymBlock uses Screen Time to lock the apps you pick — only while a workout is running.")
-                .font(GBFont.body(17))
-                .foregroundStyle(GBColor.steel)
-                .padding(.top, GBSpace.sm)
 
             VStack(alignment: .leading, spacing: GBSpace.md) {
-                point("lock.fill", "Locks when you tap Start Workout")
-                point("lock.open.fill", "Unlocks the moment you finish")
-                point("phone.fill", "Calls and messages always work")
-                point("eye.slash.fill", "Apple keeps your app list private — we never see it")
+                point("lock.fill", "Locks when you start")
+                point("lock.open.fill", "Unlocks when you finish")
+                point("phone.fill", "Calls always work")
             }
             .padding(.top, GBSpace.xl)
 
@@ -115,7 +110,7 @@ struct ScreenTimePrimerView: View {
                 .font(GBFont.hero(32))
                 .foregroundStyle(GBColor.ink)
                 .padding(.top, GBSpace.xl)
-            Text("Your phone will be locked in your pocket. We'll tap you when it's time for the next set — and when a friend nudges you.")
+            Text("We'll tap you for the next set.")
                 .font(GBFont.body(17))
                 .foregroundStyle(GBColor.steel)
                 .padding(.top, GBSpace.sm)
@@ -124,6 +119,7 @@ struct ScreenTimePrimerView: View {
             Button("Allow notifications") {
                 Task {
                     _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+                    await TrialReminder.scheduleIfAllowed()
                     finish()
                 }
             }

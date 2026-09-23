@@ -1,9 +1,11 @@
 import SwiftUI
 
-/// Sign-up: ask, reveal, ask, reveal — then commit, then account. Three cheap
-/// inputs (days/week, session length, phone minutes) derive every reveal;
-/// nothing is modelled or invented. Steps crossfade; one primary button per
-/// step, plus the commitment hold. See DESIGN.md → "Sign-up flow".
+/// Sign-up is built to make the problem felt before the product is offered:
+/// cheap questions in their own terms (days, session, phone minutes, which
+/// apps, what it costs them), then their answers handed back as arithmetic
+/// and quotes, then the fix, the commitment and the account. Nothing is
+/// modelled or invented. Short copy, one primary button per step.
+/// See DESIGN.md → "Sign-up flow".
 struct OnboardingFlow: View {
     @Environment(AppStore.self) private var store
     @State private var step: Step = .welcome
@@ -11,7 +13,7 @@ struct OnboardingFlow: View {
     @State private var authMode: AuthView.Mode = .signUp
 
     enum Step: Int, CaseIterable {
-        case welcome, days, session, phone, sessionReveal, yearReveal, goal, plan, name, demo, commit, account
+        case welcome, days, session, phone, apps, costs, sessionReveal, yearReveal, mirror, plan, name, demo, commit, account
     }
 
     /// Steps that show the progress bar (questionnaire through commit).
@@ -78,13 +80,17 @@ struct OnboardingFlow: View {
         case .session:
             SessionStep(draft: $draft) { go(.phone) }
         case .phone:
-            PhoneStep(draft: $draft) { go(.sessionReveal) }
+            PhoneStep(draft: $draft) { go(.apps) }
+        case .apps:
+            AppsStep(draft: $draft) { go(.costs) }
+        case .costs:
+            CostsStep(draft: $draft) { go(.sessionReveal) }
         case .sessionReveal:
             SessionRevealStep(draft: draft) { go(.yearReveal) }
         case .yearReveal:
-            YearRevealStep(draft: draft) { go(.goal) }
-        case .goal:
-            GoalStep(draft: $draft) { go(.plan) }
+            YearRevealStep(draft: draft) { go(.mirror) }
+        case .mirror:
+            MirrorStep(draft: draft) { go(.plan) }
         case .plan:
             PlanStep(draft: draft) { go(.name) }
         case .name:
@@ -232,8 +238,7 @@ private struct DaysStep: View {
 
     var body: some View {
         StepScaffold(
-            title: "How many days a week do you want to train?",
-            subtitle: "Your streak counts weeks, so rest days never break it.",
+            title: "How many days a week?",
             action: next
         ) {
             VStack(spacing: GBSpace.xl) {
@@ -278,7 +283,7 @@ private struct SessionStep: View {
     var next: () -> Void
 
     var body: some View {
-        StepScaffold(title: "How long is a typical session?", action: next) {
+        StepScaffold(title: "How long do you train?", action: next) {
             VStack(spacing: GBSpace.sm) {
                 ForEach([45, 60, 75, 90], id: \.self) { minutes in
                     OptionTile(
@@ -299,8 +304,7 @@ private struct PhoneStep: View {
 
     var body: some View {
         StepScaffold(
-            title: "Be honest. How much of it is on your phone?",
-            subtitle: "Scrolling between sets, replying, “just checking”.",
+            title: "Be honest. How much is on your phone?",
             action: next
         ) {
             VStack(spacing: GBSpace.xl) {
@@ -312,6 +316,10 @@ private struct PhoneStep: View {
                     Text("min").font(GBFont.title(24)).foregroundStyle(GBColor.steel)
                 }
                 .animation(.snappy(duration: 0.2), value: draft.phoneMinutes)
+                Text("of every \(draft.sessionMinutes)-minute session")
+                    .font(GBFont.label(15))
+                    .foregroundStyle(GBColor.steel)
+                    .padding(.top, -GBSpace.lg)
 
                 Slider(
                     value: Binding(
@@ -348,7 +356,7 @@ private struct SessionRevealStep: View {
         let share = PhoneMath.share(draft)
         StepScaffold(
             title: "\(draft.phoneMinutes) of every \(draft.sessionMinutes) minutes.",
-            subtitle: shareSentence(share),
+            subtitle: share > 0 ? "Gone to \(draft.mainDistraction)." : "Keep it that way.",
             buttonTitle: "Keep going",
             action: next
         ) {
@@ -370,7 +378,7 @@ private struct SessionRevealStep: View {
                 HStack {
                     Label("Lifting", systemImage: "circle.fill").foregroundStyle(GBColor.ink)
                     Spacer()
-                    Label("Phone", systemImage: "circle.fill").foregroundStyle(GBColor.orange)
+                    Label(draft.distractions.first ?? "Phone", systemImage: "circle.fill").foregroundStyle(GBColor.orange)
                 }
                 .font(GBFont.label(14))
                 .labelStyle(DotLabelStyle())
@@ -380,15 +388,6 @@ private struct SessionRevealStep: View {
             try? await Task.sleep(for: .seconds(0.4))
             withAnimation(.spring(response: 0.9, dampingFraction: 0.85)) { filled = true }
             Haptics.soft(0.7)
-        }
-    }
-
-    private func shareSentence(_ share: Double) -> String {
-        switch share {
-        case 0: return "Not a minute? Then the block keeps it that way."
-        case ..<0.15: return "Small, until you add it up."
-        case ..<0.3: return "Roughly a quarter of every workout, gone to scrolling."
-        default: return "A third of every workout, spent on a screen."
         }
     }
 }
@@ -414,15 +413,15 @@ private struct YearRevealStep: View {
         let hours = PhoneMath.yearlyHours(draft)
         let total = draft.daysPerWeek * 52
         StepScaffold(
-            title: "That's \(hours) hours a year.",
+            title: "\(hours) hours a year.",
             subtitle: sessions == 1
-                ? "One whole workout you showed up for and didn't do."
-                : "\(sessions) whole workouts you showed up for and didn't do.",
+                ? "A whole workout you showed up for. And didn't do."
+                : "\(sessions) workouts you showed up for. And didn't do.",
             buttonTitle: "I want them back",
             action: next
         ) {
             VStack(alignment: .leading, spacing: GBSpace.sm) {
-                Text("\(total) sessions a year").kicker()
+                Text("Your \(total) sessions this year").kicker()
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 16), spacing: 4) {
                     ForEach(0..<total, id: \.self) { i in
                         RoundedRectangle(cornerRadius: 2.5, style: .continuous)
@@ -430,9 +429,6 @@ private struct YearRevealStep: View {
                             .aspectRatio(1, contentMode: .fit)
                     }
                 }
-                Text("Orange: time spent on your phone, as full sessions.")
-                    .font(GBFont.body(13))
-                    .foregroundStyle(GBColor.fog)
             }
         }
         .task {
@@ -447,25 +443,6 @@ private struct YearRevealStep: View {
     }
 }
 
-// MARK: - Goal
-
-private struct GoalStep: View {
-    @Binding var draft: OnboardingDraft
-    var next: () -> Void
-
-    var body: some View {
-        StepScaffold(title: "What are you training for?", action: next) {
-            VStack(spacing: GBSpace.sm) {
-                ForEach(TrainingGoal.allCases) { goal in
-                    OptionTile(title: goal.title, icon: goal.icon, isSelected: draft.goal == goal) {
-                        draft.goal = goal
-                    }
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Plan
 
 private struct PlanStep: View {
@@ -473,34 +450,36 @@ private struct PlanStep: View {
     var next: () -> Void
 
     var body: some View {
-        let templates = StarterTemplates.templates(forDaysPerWeek: draft.daysPerWeek)
         let week = WeekProgress(
             days: TrainingCalendar.weekDays(containing: .now),
             trained: Set(planDays(draft.daysPerWeek)),
             target: draft.daysPerWeek
         )
         StepScaffold(
-            title: "Here's your plan.",
-            subtitle: "\(draft.daysPerWeek) days a week, \(StarterTemplates.splitName(forDaysPerWeek: draft.daysPerWeek)). Every workout locks your distracting apps until you finish.",
+            title: "Here's the fix.",
+            subtitle: "\(draft.daysPerWeek) days a week. \(StarterTemplates.splitName(forDaysPerWeek: draft.daysPerWeek)).",
             action: next
         ) {
-            VStack(alignment: .leading, spacing: GBSpace.lg) {
+            VStack(alignment: .leading, spacing: GBSpace.xl) {
                 WeekStrip(week: week, now: .distantPast)
                     .padding(GBSpace.lg)
                     .solidCard()
-                VStack(alignment: .leading, spacing: GBSpace.xs) {
-                    Text("Starter templates").kicker()
-                    ForEach(templates) { t in
-                        HStack {
-                            Text(t.name).font(GBFont.headline(16)).foregroundStyle(GBColor.ink)
-                            Spacer()
-                            Text("\(t.exercises.count) exercises").font(GBFont.body(14)).foregroundStyle(GBColor.steel)
-                        }
-                        .padding(.vertical, 6)
-                    }
-                    Text("Edit them any time.").font(GBFont.body(13)).foregroundStyle(GBColor.fog)
+                VStack(alignment: .leading, spacing: GBSpace.md) {
+                    row("lock.fill", "\(draft.distractions.first ?? "Your apps") locks when you start")
+                    row("lock.open.fill", "Unlocks when you finish")
+                    row("calendar", "Your streak counts weeks, not days")
                 }
             }
+        }
+    }
+
+    private func row(_ icon: String, _ text: String) -> some View {
+        HStack(spacing: GBSpace.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(GBColor.orange)
+                .frame(width: 22)
+            Text(text).font(GBFont.label(16)).foregroundStyle(GBColor.ink)
         }
     }
 
@@ -526,7 +505,6 @@ private struct NameStep: View {
     var body: some View {
         StepScaffold(
             title: "What should we call you?",
-            subtitle: "Friends see this.",
             buttonEnabled: !draft.name.trimmingCharacters(in: .whitespaces).isEmpty,
             action: next
         ) {
@@ -574,7 +552,7 @@ private struct CommitStep: View {
                 .font(GBFont.hero(40))
                 .foregroundStyle(GBColor.ink)
                 .padding(.top, GBSpace.lg)
-            Text("I'll train \(draft.daysPerWeek) days a week, and my phone stays locked until each workout's done.")
+            Text("\(draft.daysPerWeek) days a week.\nPhone locked till I'm done.")
                 .font(GBFont.title(20))
                 .foregroundStyle(GBColor.ink2)
                 .fixedSize(horizontal: false, vertical: true)
