@@ -1,157 +1,48 @@
 name: GymBlock
 options:
-  bundleIdPrefix: com.sulav
   deploymentTarget:
-    iOS: "26.1"
-  developmentLanguage: en
-  createIntermediateGroups: true
-  groupSortPosition: top
-
+    iOS: '17.0'
 settings:
   base:
-    DEVELOPMENT_TEAM: 6LYZDNCM4M
-    CODE_SIGN_STYLE: Automatic
-    SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.0"
-    CURRENT_PROJECT_VERSION: "1"
-    TARGETED_DEVICE_FAMILY: "1"
-    ENABLE_USER_SCRIPT_SANDBOXING: YES
-    STRING_CATALOG_GENERATE_SYMBOLS: YES
-
-packages:
-  Supabase:
-    url: https://github.com/supabase/supabase-swift.git
-    from: 2.0.0
-  RevenueCat:
-    url: https://github.com/RevenueCat/purchases-ios-spm.git
-    from: 5.0.0
-
+    SWIFT_VERSION: '5.0'
+    DEVELOPMENT_TEAM: ''
+    CODE_SIGNING_ALLOWED: NO
+    TARGETED_DEVICE_FAMILY: '1'
 targets:
   GymBlock:
     type: application
     platform: iOS
-    sources:
-      - path: GymBlock
-      - path: Shared
-      - path: SharedActivity
-    configFiles:
-      Debug: GymBlock/Config/Secrets.xcconfig
-      Release: GymBlock/Config/Secrets.xcconfig
+    sources: [GymBlock]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock
-        PRODUCT_NAME: GymBlock
-        INFOPLIST_FILE: GymBlock/Info.plist
-        CODE_SIGN_ENTITLEMENTS: GymBlock/GymBlock.entitlements
-        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": GymBlock/GymBlock-device.entitlements
+        PRODUCT_BUNDLE_IDENTIFIER: com.sirish.gymblock.prototype
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: GymBlock
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        MARKETING_VERSION: '0.1.0'
+        CURRENT_PROJECT_VERSION: '1'
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        ENABLE_PREVIEWS: YES
-        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
-        SWIFT_APPROACHABLE_CONCURRENCY: YES
-    dependencies:
-      - package: Supabase
-      - package: RevenueCat
-        product: RevenueCat
-      - target: GymBlockShieldConfig
-      - target: GymBlockShieldAction
-      - target: GymBlockMonitor
-      - target: GymBlockWidget
-      - sdk: FamilyControls.framework
-      - sdk: ManagedSettings.framework
-      - sdk: DeviceActivity.framework
-
-  GymBlockShieldConfig:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: GymBlockShieldConfig
-      - path: Shared
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.shield-config
-        INFOPLIST_FILE: GymBlockShieldConfig/Info.plist
-        CODE_SIGN_ENTITLEMENTS: GymBlockShieldConfig/GymBlockShieldConfig.entitlements
-        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": GymBlockShieldConfig/GymBlockShieldConfig-device.entitlements
-        SKIP_INSTALL: YES
-    dependencies:
-      - sdk: ManagedSettings.framework
-      - sdk: ManagedSettingsUI.framework
-
-  GymBlockShieldAction:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: GymBlockShieldAction
-      - path: Shared
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.shield-action
-        INFOPLIST_FILE: GymBlockShieldAction/Info.plist
-        CODE_SIGN_ENTITLEMENTS: GymBlockShieldAction/GymBlockShieldAction.entitlements
-        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": GymBlockShieldAction/GymBlockShieldAction-device.entitlements
-        SKIP_INSTALL: YES
-    dependencies:
-      - sdk: ManagedSettings.framework
-
-  GymBlockMonitor:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: GymBlockMonitor
-      - path: Shared
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.monitor
-        INFOPLIST_FILE: GymBlockMonitor/Info.plist
-        CODE_SIGN_ENTITLEMENTS: GymBlockMonitor/GymBlockMonitor.entitlements
-        "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": GymBlockMonitor/GymBlockMonitor-device.entitlements
-        SKIP_INSTALL: YES
-    dependencies:
-      - sdk: DeviceActivity.framework
-      - sdk: ManagedSettings.framework
-
-  GymBlockWidget:
-    type: app-extension
-    platform: iOS
-    sources:
-      - path: GymBlockWidget
-      - path: SharedActivity
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.widget
-        INFOPLIST_FILE: GymBlockWidget/Info.plist
-        SKIP_INSTALL: YES
-        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
-    dependencies:
-      - sdk: WidgetKit.framework
-      - sdk: SwiftUI.framework
-      - sdk: ActivityKit.framework
-
   GymBlockTests:
     type: bundle.unit-test
     platform: iOS
-    sources:
-      - path: GymBlockTests
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.sulav.gymblock.tests
-        GENERATE_INFOPLIST_FILE: YES
-        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/GymBlock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GymBlock"
-        BUNDLE_LOADER: "$(TEST_HOST)"
+    sources: [GymBlockTests]
     dependencies:
       - target: GymBlock
-
+  GymBlockUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [GymBlockUITests]
+    dependencies:
+      - target: GymBlock
 schemes:
   GymBlock:
     build:
       targets:
         GymBlock: all
+    test:
+      targets: [GymBlockTests, GymBlockUITests]
     run:
       config: Debug
-    test:
-      config: Debug
-      targets:
-        - GymBlockTests
-    archive:
-      config: Release
+      commandLineArguments:
+        --demo: true

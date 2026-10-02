@@ -1,27 +1,14 @@
-# AGENTS.md
+# GymBlock workspace instructions
 
-GymBlock: a native SwiftUI iOS app (iOS 26.1+) that locks distracting apps
-during gym workouts, logs training, and keeps a weekly streak with friends.
-
-Before changing anything:
-
-- Read `DESIGN.md` before touching UI, and update it when design decisions
-  change.
-- `docs/development.md` covers setup, architecture, and debug flags.
-  `docs/product-brief.md` covers product rules.
-- The project is generated: run `xcodegen generate` after adding or removing
-  files. Never hand-edit `GymBlock.xcodeproj`.
-- Keep documentation current and commit frequently.
-
-Hard product decisions (don't re-litigate without the owner):
-
-- Light-first brand: bone paper, ink, a single safety-orange accent.
-- No exercise figures, muscle maps, or exercise illustrations anywhere.
-- The CTA reads "Start Workout". The streak counts weeks against a weekly
-  target.
-- Hard paywall after sign-up. The block runs from Start to Hold-to-finish,
-  with a 4h safety cap.
-
-Sibling reference app: `../Sulav-Sleep` (SleepBlock). It uses the same
-stack (Supabase, RevenueCat, Screen Time extensions) and the same
-documentation habits.
+- Native Swift/SwiftUI only. `project.yml` is the XcodeGen source of truth; regenerate when adding files or changing configuration.
+- Keep the app extremely simple and local-only. No accounts, backend, analytics or network SDKs.
+- Preserve onboarding order: language, name, broad training multi-select, favorites by body area, blocking choice, prototype paywall, Home.
+- Home offers an optional split choice; Start workout activates the simulated block and immediately opens exercise selection. Finish clears it before summary.
+- Keep splits optional, preserve their IDs on edits and compare progress only within the same split, exercise and rep count.
+- Demo loading must be explicit, idempotent and never overwrite existing local work. Keep the sample-history marker visible on Home.
+- Blocking and purchases are prototype representations. Keep honest visible labels; do not claim real enforcement or billing.
+- Read DESIGN.md before visual edits. Keep README.md and VALIDATION.md current for material changes.
+- Prove visual changes with actual simulator screenshots or Device Hub. Build/install/launch alone is insufficient.
+- Preserve read-only boundaries around SleepBlock and Speaking Coach reference sources.
+- User has authorized local implementation and simulator validation. External publishing, purchases, release, account changes or consequential external actions require explicit approval.
+- Personal identity: sirishjoshi24@gmail.com. Company identity: admin@sodhera.com. Never claim authentication without current verification.

@@ -1,8 +1,8 @@
 .DS_Store
 build/
+work/
 DerivedData/
-*.xcuserstate
+*.xcresult/
 xcuserdata/
-GymBlock.xcodeproj/
-GymBlock/Config/Config.xcconfig
-.claude/worktrees/
+*.xcuserstate
+build-log.txt

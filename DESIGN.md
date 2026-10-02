@@ -1,276 +1,29 @@
-# GymBlock Design System — Lock In
+# GymBlock design
 
-GymBlock locks your distracting apps while you train, logs the workout, and
-counts the weeks you showed up. The interface should feel like good gym
-equipment: plain, heavy where it matters, and precise. It's a tool you use
-between sets with chalky hands and a raised heart rate, so everything
-important is **big, one tap, and at the thumb**.
+The home screen puts weekly consistency and one Start workout action first. A compact chooser underneath selects Free workout or an optional split. There is no required workout setup step after starting: focus simulation is active as soon as the exercise search appears.
 
-The voice and the double meaning of **"locked in"** carry the personality:
-you're focused, and your phone is literally locked. It names the streak
-("12 weeks locked in") and the shield ("You're locked in."). The main
-button is plainly **Start Workout**.
+## Red and blue
 
-## Principles
+Neutral ground, blue ink, blue primary actions and red progress/rest accents. Primary action blue is #2452B5 and finish-set red is #C2263B with white labels. Light and dark semantic surfaces adapt to system appearance. No gradients, background textures, decorative outlines, large motivational cards or social navigation. System typography, 24-point page margins, 14–18-point corners, 56-point primary actions and 44-point secondary targets.
 
-1. **Color is earned.** The app is ink on bone paper. Safety orange appears
-   only for "locked in" moments: starting a workout, days trained, finished
-   sets, PRs, the lock itself. If you want orange to decorate something,
-   don't.
-2. **One glance.** Anything shown on Today or a friend row must read in
-   under a second with no legend. That's why the week is seven circles.
-3. **One primary action per screen**, pinned at the bottom.
-4. **Consequential exits are holds, harmless ones are taps.** Finishing a
-   workout (which unlocks your apps) is *Hold to finish*. Collapsing the
-   logger is a tap.
-5. **Honest numbers only.** No sample data, no invented stats. Onboarding
-   reveals are plain arithmetic on the user's own answers.
-6. **Say less.** A screen gets one title (about 6 words or fewer) and at
-   most one short supporting line. If something needs a paragraph, it
-   needs a different design. Lists of benefits become one sentence.
-   Explainers inside rows get cut. The user found an earlier pass "too
-   many texts in a given moment", so hold this line.
+## Workout loop
 
-> **Retired directions** (don't bring these back):
-> - **"Load the bar":** a barbell whose plates loaded per workout. It was
->   clever but needed a legend (plate colors and loading order), so it
->   failed the one-glance rule.
-> - **The dark graphite theme:** the user found it too dark. A gym is
->   bright, so GymBlock is light-first.
-> - **"Lock in" as the CTA label:** replaced by "Start Workout".
-> - **Exercise figures / muscle-map pictograms / exercise photos:** tried
->   and rejected. Exercises are identified by **name + muscle text**
->   ("Bench Press (Barbell)", "Chest · Triceps"). There are no figures
->   anywhere in the app.
+Start workout → search or choose an exercise in the selected split → adjust weight → Start set → adjust reps and Finish set → automatic 60-second rest. Start next set can interrupt rest at any time. Change exercise is available between sets. Reps and weights carry forward from the last logged set of that exercise. A picker and manual input share the same number; fractional weights are supported. The displayed weight range is 0–500 kg or lb, with zero reserved for bodyweight. The wheel advances by 0.5; typing allows hundredths. Reps are 1–100. Cardio and stretching log minutes.
 
-## Palette (`Theme.swift → GBColor`)
+The exercise list initially shows the split or recent/favorite exercises. Typing "dum" filters dumbbell exercises. Search can add exercises outside the split without altering its saved template. Custom exercise entry remains available.
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `paper` | `#F4F2ED` | app background (warm bone) |
-| `paperDeep` | `#EAE7E0` | pressed rows, input wells |
-| white | `#FFFFFF` | cards, tiles |
-| `ink` | `#111214` | primary text, ink buttons |
-| `ink2` | `#3A3C40` | strong secondary |
-| `steel` | `#6E7178` | secondary text, kickers |
-| `fog` | `#A3A5AA` | tertiary, placeholders, "Previous" |
-| `mist` | `#D9D6CF` | untrained days, empty bars |
-| `hairline` | black 7% | dividers |
-| `orange` | `#FF5B1A` | **the only accent** |
-| `orangeSoft` | orange 12% | finished-set row tint |
-| `danger` | `#C8372D` | destructive actions |
-| `warmup` | `#D89A00` | the "W" set marker (a label, not an accent) |
+## Splits and progress
 
-**Dark mode:** every token is dynamic (`GBColor`), and the same roles
-flip onto a warm near-black: paper `#0E0E0F`, card `#1A1A1C`, ink
-`#F2F1EC`, steel `#9A9DA3`, mist `#2F2F32`. Orange doesn't change; it's the
-brand. `onInk` is for text on ink-filled surfaces (ink flips, so text on
-it must flip too). Never write `Color.white` or `.black` for surfaces;
-use `card` and `glassTint`. White text is fine on **orange** only.
-Settings → Appearance offers System / Light / Dark (default System). The
-shield, the Live Activity Lock Screen banner, and the app icon (orange
-lock on near-black) all have dark variants. Light is still the brand's
-first impression: marketing and screenshots use light.
+Settings → Splits supports naming, adding, removing and reordering exercises. Each split has a stable ID: renaming or editing it preserves its session links. Deleting a split retains workout history. Splits are optional; Free workout is always available.
 
-## Typography (`GBFont`)
+Home shows the three heaviest logged lifts with reps alongside. These are historical max-weight sets, not estimated strength or a combined score.
 
-SF Pro only, with no bundled fonts.
+Progress starts at a split and opens each exercise. Compare the first and latest sessions at the latest set's rep count. Only sessions launched from the same split count. Different exercises, different rep counts and freestyle sessions are excluded from that comparison. One observation is a baseline, not evidence of improvement. An existing split's past exercises remain in History if removed from its template.
 
-- **Heroes, titles, kickers:** SF Pro **Expanded** width. It reads like
-  lettering stamped on equipment. Navigation bar titles use it too (set in
-  `GymBlockApp.init`).
-- **Body:** SF Pro regular width.
-- **Numbers in columns** (weights, reps, timers, stats): monospaced digits,
-  so logs line up like a logbook.
-- Kickers are uppercase, tracked 1.2, steel: `WEDNESDAY · WEEK 39`.
+Progress animation keeps the first result still and moves the latest bar and number over 0.55 seconds, followed by an accessible date/weight chart. Replay is optional. Reduce Motion shows final values immediately. This is a chosen design, not a tested claim about universal user preference.
 
-## Containers
+## Sample data and boundaries
 
-- **Liquid Glass** (native `glassEffect`, iOS 26.1+) is for things you
-  touch or that float: primary/secondary buttons, icon buttons, the rest
-  timer pill, the tab bar and its workout accessory.
-- **Solid white cards** (`solidCard`) hold dense content: set tables,
-  lists, settings groups. Glass refraction behind numbers hurts legibility
-  mid-set.
-- Static text sits directly on paper. Never nest cards.
-- 20pt screen margins, 8pt grid, 58pt primary actions, ≥44pt targets.
+The debug --demo argument or Settings → Load sample workouts seeds Arms, Push and Legs with approximately six weeks of sample history, only when local history, splits and active session are empty. The seeded marker is visible on Home. New workouts save normally and relaunch preserves them. A repeat seed never overwrites existing data. --ui-reset is a debug-only test reset.
 
-## Haptics (`Haptics.swift`)
-
-One pattern per physical moment. The same feeling always means the same
-thing.
-
-| Pattern | Moment | Feel |
-| --- | --- | --- |
-| `tap` | toggles, chips, steppers, tab switch | selection tick |
-| `press` | every button (wired into button styles) | medium impact |
-| `setDone` | set checked | crisp rigid double |
-| `lock` | Start Workout, apps locked, week circle fills | heavy hit + low rumble: a shackle snapping shut |
-| `unlock` | workout finished, purchase complete | two rising taps + soft bloom |
-| `ratchet` | each tick of a hold | intensity climbs with progress |
-| `countdown` | last 3s of rest | soft tick |
-| `restEnd` | rest over | double knock |
-| `pr` | personal record | swelling rumble into one big hit |
-| `warning` | guarded / refused actions | rigid then soft |
-
-## Signature element: the week strip
-
-`WeekStrip.swift`. Monday to Sunday as seven circles. Trained days are
-filled orange with a white check, today is outlined in ink, and every other
-day is mist. The large version (labelled) is on Today and the summary; the
-compact version (14pt, no labels) is on friend rows. Weeks are ISO (Monday
-start) everywhere so friends agree on "this week".
-
-## Screens
-
-**Today:** kicker (weekday · week number), hero `3 of 4 / this week.`
-(second line in fog; `Week's done.` in orange when complete), a week card
-(strip + `12 weeks locked in`), then templates as selectable rows. Pinned
-bottom: **Start {Template}** (the least-recently-used template is
-suggested, so a split rotates on its own), a blocking status line ("6 apps
-lock when you start", or a tappable fix), and a quiet *Empty workout*.
-
-**Workout logger** (full-screen cover; the chevron collapses it into the
-tab bar accessory): a stats row (time, volume, sets, apps locked), then
-one card per exercise. The column grammar is borrowed from Hevy because
-lifters already know it: **SET · PREVIOUS · KG · REPS · ✓**.
-- Sets start empty. Last session's numbers show as fog placeholders and
-  fill in when the set is checked, so logging is one tap per set.
-- Tap *Previous* to copy it into the row. Tap the set number to mark
-  warm-up (W, amber), drop (D), failure (F), or delete.
-- A checked row tints `orangeSoft` and its check turns solid orange.
-- A PR replaces the Previous cell with an orange **PR** tag and fires the
-  `pr` haptic. A first-ever set is a baseline, not a PR.
-- Checking a set starts the rest timer: a glass pill above the Finish
-  button with −15 / +15 / Skip and a thin orange progress bar. A local
-  notification fires at zero when the app is backgrounded.
-- **Hold to finish** (ink capsule, 1.2s, ratchet haptics). With fewer than
-  3 completed sets it asks "Finish early?": the workout won't count toward
-  the week. With none, it offers to discard.
-
-**Summary:** "Apps unlocked" kicker, the week hero, and the strip with
-today's circle filling in after a beat (with the `lock` haptic). Then
-stats, new records (orange-washed card), exercises with best set, and a
-share toggle. *Save as template* for workouts that didn't start from one.
-
-**History:** segmented *Workouts / Records*. Workouts are grouped by
-training week with "n of target" per week (orange when hit). Detail shows
-every set, the share toggle, save as template, and delete.
-
-**Friends:** a list of weeks, not a feed. Each row shows avatar initials,
-name, streak, last workout, n/target, and the compact strip. Detail shows
-the big strip, streak / consistency / workouts, records, and recent
-workouts (shared ones open; private ones show a lock). The only social verb
-is **Nudge**, offered when their week isn't done. No likes, no comments.
-Invites are `gymblock://add/<username>` via the share sheet.
-
-**Profile:** name, @username, a stats band (workouts, streak, 12-week
-consistency), a 12-week bar chart (orange bars hit the target, dashed
-target line), and best lifts. The gear opens Settings.
-
-**Settings:** kicker-titled groups: Profile, Training (weekly target,
-units, default rest, share by default), Blocking (toggle, apps; locked
-while a workout runs), Subscription, Account (sign out; *Delete account*
-as faded text requiring "delete" typed).
-
-## Sign-up flow
-
-The flow exists to make the problem felt before the product is offered.
-Everything is asked in the user's own terms, then handed back to them.
-
-> welcome → days/week → session length → phone minutes → **what pulls you
-> in** (apps) → **what it costs you** → *one session, split* → *the year* →
-> **Sound familiar?** → *here's the fix* → name + units → shield demo →
-> **Hold to commit** → account → paywall → Screen Time + notifications
-
-- **Ask cheap, in their words.** Numbers (days, minutes), then plain-name
-  app chips (TikTok, Instagram… no logos), then costs phrased as things
-  they'd say: "My 90s rest turns into 5 minutes", "I cut sets short".
-- **Reveal with arithmetic** (`PhoneMath`): "15 of every 60 minutes. Gone
-  to TikTok." (a bar of ink vs orange); "52 hours a year. 52 workouts you
-  showed up for. And didn't do." (the year's sessions, the lost ones
-  lighting orange).
-- **Mirror:** their chosen costs come back as quotes, one by one, then
-  the reframe: "It's not discipline. *TikTok is built to win.*" It removes
-  shame and names the enemy, so the fix feels necessary rather than
-  optional. CTA: **Fix it**.
-- **The fix:** the week strip, plus three short rows (`TikTok locks when
-  you start` / `Unlocks when you finish` / `Your streak counts weeks, not
-  days`).
-- The shield demo names their app ("TikTok can wait.").
-- The paywall headline closes the loop: **"Take your 52 hours back from
-  TikTok."**
-- The goal question was cut. It drove nothing, and every step must earn
-  its place.
-
-## Paywall
-
-A hard wall with no ✕. The headline hands back the onboarding number and
-their app: **"Take your 52 hours back from TikTok."** Then one supporting
-sentence (not a feature list), a trial timeline (Today · Full access, free
-→ Day N−2 · We remind you → Day N · price), and plan cards (yearly first,
-"Save N%", per-week price on the right). CTA: *Start 7-day free trial*.
-The reminder is a real notification. It's scheduled at purchase if
-notifications are already allowed; otherwise it's held (`TrialReminder`)
-until the notification primer gets permission, so there's never a cold
-system prompt on top of a purchase.
-
-## The block
-
-- **Earn your unlock.** Start Workout shields the chosen apps in the named
-  `ManagedSettingsStore(.gymblock)`. Finishing (or discarding) clears it.
-- **Safety cap:** a 4-hour DeviceActivity interval. If a session is never
-  finished, `GymBlockMonitor` clears the shield when the interval ends.
-  Nobody's phone stays locked overnight.
-- **Shield** (`ShieldConfigProvider`): paper background, orange lock
-  square, title "You're locked in." (then "Still locked in." / "Third
-  time. Still no." / "You know the answer." on repeat reaches), and a
-  subtitle with *this* workout's progress: "Instagram can wait. 3 sets of
-  Bench Press left." There's one button, *Back to the workout*, and no
-  escape hatch on the shield.
-- Blocking settings are disabled while a workout runs.
-
-## Live Activity (Dynamic Island + Lock Screen)
-
-`GymBlockWidget/WorkoutLiveActivity.swift`, with shared attributes and
-intents in `SharedActivity/WorkoutActivity.swift`. **One activity runs for
-the whole workout** (started by Start Workout, ended by finishing or
-discarding) and has two states:
-
-- **Lifting:** a lock glyph, the workout clock, `SETS 6/18`, and the next
-  set ("Bench Press · set 3 of 4").
-- **Resting** (after every checked set): an orange countdown, a thin orange
-  progress bar, and **+15** / **Skip** buttons. The buttons are
-  `LiveActivityIntent`s that run in the app and adjust the same `RestTimer`
-  the logger uses, so the pill, the island, and the notification always
-  agree.
-
-| Surface | Lifting | Resting |
-| --- | --- | --- |
-| Compact | orange lock · white clock | orange timer glyph · orange countdown |
-| Minimal | orange lock | circular orange countdown ring |
-| Expanded | title kicker, big clock · SETS n/m · next set | REST, big orange countdown · +15 / Skip · bar · next set |
-| Lock Screen | bone paper + ink (like the app) | same, orange countdown + buttons + bar |
-
-The island is always black, so text there is white and orange carries the
-countdown. The Lock Screen banner uses the app's paper and ink. All timers
-are system-rendered (`Text(timerInterval:)`, `ProgressView(timerInterval:)`),
-with no per-second updates from the app. The activity's `staleDate` is the
-rest end: if the app is suspended when rest runs out, the system flips it
-to "Rest's over. Next: Bench Press" by itself. The local "Rest's over"
-notification still provides the sound.
-
-## App icon
-
-A white padlock on a safety-orange field
-(`scripts/generate-app-icon.swift`). It uses the same shape as the
-in-app `BrandMark` and the shield icon.
-
-## What to avoid
-
-- Orange as decoration, gradients as decoration, confetti.
-- Exercise figures or illustrations of any kind.
-- Exclamation marks and "Great job!" copy. The voice is dry and terse.
-- A second primary button on a screen.
-- Disabled toggles as "locks". Remove or disable the whole control with a
-  line saying when it opens.
+Preserve the six-step onboarding, English/Spanish selection, local-only storage, no accounts, backend, analytics or SDKs. Blocking and purchases are explicitly simulated. Real system restriction, StoreKit and release delivery remain outside this prototype.
