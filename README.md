@@ -1,48 +1,47 @@
 # GymBlock
 
-A simple native SwiftUI workout prototype. Start immediately, log one set at a time, and keep your training on your device. Red and blue UI; optional splits; biggest lifts; exercise progress.
+A native SwiftUI workout prototype built around one action at a time. Red is the only brand accent; native Liquid Glass controls sit above quiet, readable workout content.
 
 ## Try it
 
-Open **GymBlock.xcodeproj**, select the **GymBlock** scheme and an iPhone simulator, and Run. The project and shared scheme are included. Xcode with an iOS 17+ simulator is required; the verified simulator uses Xcode 27 and iOS 27.
+Open **GymBlock.xcodeproj**, select **GymBlock** and an iPhone simulator, then Run. Xcode 26+ with an iOS 17+ simulator is required. Liquid Glass uses the supported native controls on iOS 26+; earlier versions use native bordered controls. The verified environment is Xcode 27 / iPhone 17 / iOS 27.
 
-The Debug scheme passes `--demo` automatically. A fresh install opens directly on Home with **Arms, Push and Legs**, roughly six weeks of sample workouts, records and progress. Home labels the sample history. You can add real test workouts, edit/create splits and reopen the app; everything saves locally. The demo loader never overwrites existing local history, splits or an active session. Remove the `--demo` Run argument to try clean onboarding, or use Settings → Load sample workouts after onboarding while the store is empty.
+The shared Debug scheme passes `--demo`. An empty store opens Home with **Arms, Push and Legs**, six weeks of sample history and lift records. The Home **Demo** label identifies that history. New test workouts and split edits save locally; relaunch keeps them. Demo loading never replaces existing history, splits or an active workout.
 
-Alternatively, run `./run-simulator.sh`. It selects the booted iPhone or an available iPhone, builds, installs, launches with `--demo` and opens Device Hub. It does not publish or charge.
+To try the complete onboarding, remove `--demo` on a fresh install. With existing data, **Settings → Edit routine answers** opens it without deleting workouts. For a clean test, Debug-only `--ui-reset` clears this app's data; use it only when resetting test data intentionally. Alternatively run `./run-simulator.sh` to build and launch the populated simulator.
 
-## Screenshots
+## Workout flow
 
-Captured from the running iPhone simulator. More screens are in [screenshots](screenshots/).
+- Home: choose **Free workout** or an optional split, then **Start workout**.
+- A split opens its first exercise ready to start. Free workout opens recent exercises and native search; type `dum` for dumbbell exercises.
+- Choose a weight on the first use of an exercise; later sets remember it. Tap the weight for manual entry, a native wheel or +/−. Weight is 0–500 in the chosen kg/lb unit; fractions are supported. Zero is labeled **Bodyweight**. Changing units preserves the load and converts its display.
+- **Start set → enter actual completed reps → Finish set.** Previous reps are a draft, not a target. Extra or fewer reps use the same flow. Reps support 1–999.
+- Rest starts automatically. **Start next set** works immediately; the timer never gates training. Tap it to change rest duration. Exercise changes preserve the deadline and each exercise's values.
+- Tap the saved-set row to correct, delete or mark a warm-up. **Workout options** contains uncommon actions, including cancelling an unperformed set, recording a zero-rep unsuccessful attempt, inspecting sets and adding a missed completed set.
+- **End workout** saves completed work and ends the focus representation. An active set offers save/discard/keep-training choices. Unsuccessful attempts stay in history but never become lift records or completed-workout streaks.
 
-<img src="screenshots/10-ready-to-try.png" alt="Red and blue Home with sample streak and biggest lifts" width="240"> <img src="screenshots/04-active-set-reps.png" alt="Active set with editable reps and Finish set" width="240"> <img src="screenshots/09-split-before-after-progress.png" alt="Split progress showing before and after weights" width="240">
+**Settings → Splits** and **Home workout menu → Manage splits** both open the optional editor. Rename/reorder without losing progress identity. Deleting a split retains history. Home shows three heaviest completed working sets with reps. Progress compares either load at identical reps or reps at identical load, within the same exercise and split. The chosen before/after animation respects Reduce Motion; the chart is behind History.
 
-## Main flow
+## Onboarding
 
-1. **Start workout** on Home. Choose a split below the button if you want one; otherwise use **Free workout**.
-2. Focus simulation begins immediately. Search `dum` for dumbbell exercises, or choose from the split.
-3. Type the weight, use +/−, or tap the picker control for a native wheel and editable number. Switch kg/lb before starting. Weight range is 0–500 in the selected unit, fractional values allowed; zero means no added weight.
-4. **Start set**, lift, adjust reps, then **Finish set**. There is no separate logging screen.
-5. A 60-second rest begins automatically. Start next set whenever ready; change exercise between sets.
-6. Finish workout to end the simulation and save the summary. A free workout can optionally be saved as a split.
+Seven short screens: language/name and purpose, distractions, gym time/frequency, usual exercises/sets/reps, self-reported scrolling time, personal summary, optional focus demo. Questions can be skipped. Typical values, ranges, per-exercise differences and per-set rep lists are supported. Unknown stays unknown; values are not silently filled in. Answers save locally and survive reopening.
 
-**Settings → Splits** adds, edits and reorders exercises. Renaming a split keeps its progress links. **Progress** compares each exercise at the same rep count within a split, using before/after bars and a date chart. Home's biggest lifts show heaviest logged sets and reps. Cardio/stretching retain minutes-based logging. Reduce Motion and system appearance are supported.
+Time totals are clearly attributed to the user's estimates. Reduction goals are goals. Necessary rest is never called wasted time, and no muscle-gain/fat-loss prediction is made. These survey answers are separate from completed workout records and demo history. Edit or delete them in Settings.
 
-## Limits
+## Actual simulator screens
 
-Blocking and purchases are simulated. The app cannot restrict other apps or lock the phone. There are no Screen Time entitlements/extensions or StoreKit/RevenueCat integrations. The paywall uses placeholder USD prices and charges nothing. No account, network API, analytics, backend or cloud sync exists; UserDefaults holds local data and iOS may include it in system backups.
+<img src="screenshots/redesign/redesign-01-home.png" alt="Red Home with Start workout and compact lift records" width="240"> <img src="screenshots/redesign/redesign-05-active.png" alt="Active set with actual reps and Finish set" width="240"> <img src="screenshots/redesign/redesign-13-personal-result.png" alt="Personal onboarding result attributed to self-reported feed time" width="240">
 
-This is a simulator prototype, not a physical-device, billing, distribution or App Store release. Code signing is disabled for the simulator. The old repository's Supabase, friends, subscriptions, Screen Time extensions and Live Activity implementation have been replaced by this smaller prototype. Previous code remains available in Git history.
+More captures are in [screenshots/redesign](screenshots/redesign/). The older screenshots in the parent folder document the previous design.
 
-## Development
+## Boundaries
 
-`project.yml` is authoritative. Run `xcodegen generate` after adding/removing source files or changing configuration. There are no package dependencies.
+Focus blocking remains a simulator representation. No Screen Time restriction, installed-app discovery or real permission prompt exists. **Focus demo** explicitly labels the session. Logging works with focus disabled. No purchases, paywall, account, network API, analytics, backend or cloud sync are configured. UserDefaults persists local data; iOS may include it in system backups.
 
-Product → Test runs local logic checks and actual simulator journeys. CLI:
+This is a simulator prototype. Physical-iPhone handling, real system enforcement, billing, signing and App Store delivery are separate work. Previous implementations remain in Git history.
 
-```sh
-xcodebuild -project GymBlock.xcodeproj -scheme GymBlock \
-  -destination 'platform=iOS Simulator,name=iPhone 17' \
-  -parallel-testing-enabled NO test
-```
+## Development and verification
 
-Debug-only `--ui-reset` clears this app's local data for tests; avoid it when keeping workouts. Normal launches never reset data. Validation evidence is described in VALIDATION.md.
+`project.yml` is authoritative; `xcodegen generate` regenerates the included project. No package dependencies are required. Product → Test runs model checks and simulator UI journeys. Use `-parallel-testing-enabled NO` for UI tests against one simulator.
+
+The design and edge-case decisions are in [docs/REDESIGN-PLAN.md](docs/REDESIGN-PLAN.md). Current verification evidence and limits are in [VALIDATION.md](VALIDATION.md).
