@@ -2,7 +2,7 @@
 
 - Native Swift/SwiftUI only. `project.yml` is the XcodeGen source of truth; regenerate when adding files or changing configuration.
 - Keep the app extremely simple and local-only. No accounts, backend, analytics or network SDKs.
-- Follow docs/REDESIGN-PLAN.md: welcome/language/name, distractions, gym time, routine, scrolling estimate, personal summary, optional focus demo. No placeholder paywall or unsupported body-outcome predictions.
+- Follow docs/ONBOARDING-REDESIGN-PROPOSAL.md: centered welcome, workout frequency, visit duration, routine sketch, scrolling question, optional minutes and personal before/after, then Start workout. No placeholder paywall or unsupported body-outcome predictions.
 - Home offers an optional split choice; Start workout activates the simulated block and opens the split’s first exercise or Free workout exercise selection. Finish clears it before summary.
 - Keep splits optional, preserve their IDs on edits and compare progress only within the same split and exercise, with rep count or load held constant.
 - Demo loading must be explicit, idempotent and never overwrite existing local work. Keep the sample-history marker visible on Home.

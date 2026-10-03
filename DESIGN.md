@@ -1,6 +1,6 @@
 # GymBlock design
 
-Follow `docs/PROGRESS-AND-ONBOARDING.md` for visible finishing, training totals and expressive onboarding, `docs/GYM-FLOW-REVIEW.md` for the latest page review and navigation/rest corrections, and `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
+Follow `docs/ONBOARDING-REDESIGN-PROPOSAL.md` for the current onboarding; `docs/PROGRESS-AND-ONBOARDING.md` for visible finishing and training totals, `docs/GYM-FLOW-REVIEW.md` for the latest page review and navigation/rest corrections, and `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
 
 ## Visual system
 
@@ -26,10 +26,12 @@ Progress has a neutral first result and red latest result. Compare weight with r
 
 ## Onboarding and data
 
-Language/optional name → distractions → duration/frequency → exercise/sets/reps → between-set scrolling and minutes per break → attributed summary → optional focus demo. Skip/unknown paths lead to a usable Home. Routine baselines support ranges, per-exercise differences and per-set reps; they never masquerade as workout logs. No placeholder paywall or predicted pounds of muscle/fat change.
+The onboarding follows `docs/ONBOARDING-REDESIGN-PROPOSAL.md`: Welcome → frequency → visit duration → routine sketch → scrolling → optional minutes → personal before/after → ready. Questions use centered DM Sans 28-point medium type; hero values use 64–76 points. Warm white/red warmth replaces the dot-grid on onboarding only. Real regular tinted Liquid Glass belongs on controls, with native material/opaque accessibility fallbacks. One central object, one bottom primary action; details live in sheets.
+
+Name and language are deferred to Settings/options; apps are asked only in the optional Focus demo sheet at the end. Just train opens a free workout with focus disabled. No/unknown scrolling skips minutes and the numeric narrative. Partial routine answers can continue without fabricated totals. The user can edit actual scrolling-break counts for supersets or selected breaks. Before/after keeps the same visit length; phone-free time can include rest. Half/no-scrolling scenarios remain proposals until Use this goal. Survey values and the example set never enter History. Existing per-exercise details remain editable in Settings. No placeholder paywall or predicted muscle/fat outcomes.
 
 Local-only storage and stable split IDs remain required. Demo seeds are explicit, repeat-safe and marked on Home. Existing data must decode without new optional fields. Native large-text layout, increased contrast, light/dark and reduced motion/transparency remain part of review. Capture actual simulator UI for visual changes.
 
 Focus remains simulated: use Focus demo and honest onboarding copy. No real restriction, billing or distribution claim follows from the prototype.
 
-See `docs/PROGRESS-AND-ONBOARDING.md` for the every-break estimate, cue behavior, Reduce Motion and sound/haptic controls.
+See `docs/ONBOARDING-REDESIGN-PROPOSAL.md` for the current flow, break assumption, animation, cue and accessibility contracts. `docs/PROGRESS-AND-ONBOARDING.md` documents the previous revision.

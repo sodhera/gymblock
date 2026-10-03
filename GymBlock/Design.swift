@@ -64,10 +64,73 @@ struct GymButton: View {
 extension GymStore {
   func t(_ key: String) -> String {
     profile.language == "es"
-      ? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[key] ?? key : key
+      ? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
+        key] ?? key : key
   }
 }
 enum Spanish {
+  static let onboarding: [String: String] = [
+    "Replay": "Repetir",
+    "Stay with your workout.": "Quédate con tu entrenamiento.",
+    "How often do you work out?": "¿Cuántas veces entrenas?",
+    "How long is a usual visit?": "¿Cuánto dura una visita habitual?",
+    "What’s a usual workout?": "¿Cómo es tu entrenamiento habitual?",
+    "Do you scroll between sets?": "¿Miras el teléfono entre series?",
+    "How much of each break is scrolling?": "¿Cuánto del descanso pasas mirando contenidos?",
+    "Your time at the gym.": "Tu tiempo en el gimnasio.",
+    "Ready for your next set.": "Listo para tu próxima serie.",
+    "Get started": "Empezar",
+    "Just train": "Entrenar ahora",
+    "workouts / week": "entrenamientos / semana",
+    "Visit minutes": "Minutos por visita",
+    "Sets each": "Series por ejercicio",
+    "Varies": "Varía",
+    "Mostly timed": "Principalmente por tiempo",
+    "Use reps": "Usar repeticiones",
+    "Assuming every break": "Suponiendo cada descanso",
+    "Edit": "Editar",
+    "Show me": "Muéstrame",
+    "scrolling breaks": "descansos con teléfono",
+    "Scrolling breaks": "Descansos con teléfono",
+    "scrolling minutes per workout": "minutos con teléfono por entrenamiento",
+    "more phone-free minutes": "más minutos sin teléfono",
+    "Based on your answers": "Según tus respuestas",
+    "If you halve scrolling between sets.": "Si reduces a la mitad el uso entre series.",
+    "If you skip scrolling between sets.": "Si dejas de mirar contenidos entre series.",
+    "Half as much": "La mitad",
+    "No scrolling": "Sin distracciones",
+    "min across": "min en",
+    "weekly workouts": "entrenamientos semanales",
+    "How this is estimated": "Cómo lo estimamos",
+    "See the difference": "Ver la diferencia",
+    "Use this goal": "Elegir este objetivo",
+    "Continue without a goal": "Continuar sin objetivo",
+    "Go to Home": "Ir a Inicio",
+    "See one set": "Ver una serie",
+    "Check the number of scrolling breaks.": "Revisa el número de descansos con teléfono.",
+    "That exceeds your visit. Check your answers.": "Supera tu visita. Revisa tus respuestas.",
+    "Edit time": "Editar tiempo",
+    "Edit routine": "Editar entrenamiento",
+    "Edit scrolling breaks": "Editar descansos con teléfono",
+    "Phone-free time includes rest. This is an estimate, not measured phone use.":
+      "El tiempo sin teléfono incluye descanso. Es una estimación, no una medición.",
+    "Possible change": "Cambio posible",
+    "minute visit": "minutos por visita",
+    "Phone-free": "Sin teléfono",
+    "Scrolling": "Con teléfono",
+    "Setup progress": "Progreso de configuración",
+    "Options": "Opciones",
+    "Enable haptics": "Activar respuesta háptica",
+    "Mute haptics": "Desactivar respuesta háptica",
+    "Tap to edit": "Toca para editar",
+    "Use every break": "Usar todos los descansos",
+    "Apps you tend to scroll": "Contenidos que sueles mirar",
+    "Social feeds": "Redes sociales",
+    "Start again": "Volver a empezar",
+    "Stop set": "Terminar serie",
+    "Example": "Ejemplo",
+    "Focus demo": "Demo de concentración",
+  ]
   static let additions: [String: String] = [
     "Training totals": "Totales de entrenamiento",
     "All workouts": "Todos los entrenamientos",
@@ -80,8 +143,10 @@ enum Spanish {
     "workouts": "entrenamientos",
     "moved": "movidos",
     "No rep-based workouts yet.": "Aún no hay entrenamientos con repeticiones.",
-    "Work performed, not a strength score. Completed sets include warm-ups; timed activities are separate.": "Trabajo realizado, no una puntuación de fuerza. Incluye series de calentamiento; las actividades por tiempo son independientes.",
-    "Sum of logged load × completed reps. Bodyweight adds no guessed load. Dumbbell load uses your per-dumbbell entry.": "Suma de carga registrada × repeticiones completadas. No se estima carga corporal. La carga de mancuerna usa tu valor por mancuerna.",
+    "Work performed, not a strength score. Completed sets include warm-ups; timed activities are separate.":
+      "Trabajo realizado, no una puntuación de fuerza. Incluye series de calentamiento; las actividades por tiempo son independientes.",
+    "Sum of logged load × completed reps. Bodyweight adds no guessed load. Dumbbell load uses your per-dumbbell entry.":
+      "Suma de carga registrada × repeticiones completadas. No se estima carga corporal. La carga de mancuerna usa tu valor por mancuerna.",
     "Workout values": "Valores por entrenamiento",
     "Sounds": "Sonidos",
     "Haptics": "Respuesta háptica",
@@ -93,13 +158,19 @@ enum Spanish {
     "Minutes per break": "Minutos por descanso",
     "breaks": "descansos",
     "min per break": "min por descanso",
-    "Do you scroll through your phone in between sets?": "¿Miras contenidos en el teléfono entre series?",
+    "Do you scroll through your phone in between sets?":
+      "¿Miras contenidos en el teléfono entre series?",
     "How many minutes between each set?": "¿Cuántos minutos entre cada serie?",
-    "Assumes you scroll during every break, including between exercises.": "Supone que miras contenidos en cada descanso, incluso entre ejercicios.",
-    "Add your usual exercise and set counts to estimate time.": "Añade tus cantidades habituales de ejercicios y series para estimar el tiempo.",
-    "Assumes scrolling in every break. This is your estimate, not measured phone use.": "Supone uso del teléfono en cada descanso. Es tu estimación, no una medición.",
-    "Enter 1–600 minutes per break, or leave it blank.": "Introduce entre 1 y 600 minutos por descanso o déjalo vacío.",
-    "Estimated scrolling exceeds your visit. Check minutes per break or your routine.": "El tiempo estimado supera tu visita. Revisa los minutos por descanso o tu rutina.",
+    "Assumes you scroll during every break, including between exercises.":
+      "Supone que miras contenidos en cada descanso, incluso entre ejercicios.",
+    "Add your usual exercise and set counts to estimate time.":
+      "Añade tus cantidades habituales de ejercicios y series para estimar el tiempo.",
+    "Assumes scrolling in every break. This is your estimate, not measured phone use.":
+      "Supone uso del teléfono en cada descanso. Es tu estimación, no una medición.",
+    "Enter 1–600 minutes per break, or leave it blank.":
+      "Introduce entre 1 y 600 minutos por descanso o déjalo vacío.",
+    "Estimated scrolling exceeds your visit. Check minutes per break or your routine.":
+      "El tiempo estimado supera tu visita. Revisa los minutos por descanso o tu rutina.",
     "Home": "Inicio", "Workouts": "Entrenamientos", "History view": "Vista del historial",
     "workouts saved": "entrenamientos guardados", "Split progress": "Progreso de rutina",
     "Choose exercises as you go": "Elige ejercicios sobre la marcha",

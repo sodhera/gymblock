@@ -48,6 +48,10 @@ struct Profile: Codable {
   var restSeconds: Int?
   var focusEnabled: Bool?
   var onboardingVersion: Int?
+  var onboardingStepID: String?
+  var onboardingScrollAnswered: Bool?
+  var onboardingPreviewTarget: Double?
+  var onboardingRevealSeen: Bool?
   var soundEnabled: Bool?
   var hapticsEnabled: Bool?
 }
@@ -144,6 +148,14 @@ struct LocalData: Codable {
   func updateProfile(_ body: (inout Profile) -> Void) {
     body(&data.profile)
     persist()
+  }
+  func deleteRoutineAnswers() {
+    updateProfile {
+      $0.baseline = nil
+      $0.onboardingPreviewTarget = nil
+      $0.onboardingScrollAnswered = nil
+      $0.onboardingRevealSeen = nil
+    }
   }
   func startSession(workout: Workout? = nil) {
     guard data.session == nil else { return }

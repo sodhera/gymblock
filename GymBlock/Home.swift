@@ -47,7 +47,7 @@ struct HomeView: View {
                     ?? store.t("Choose exercises as you go")
                 )
                 .font(GymType.body(15)).foregroundStyle(GymColor.dim)
-                  .multilineTextAlignment(.leading)
+                .multilineTextAlignment(.leading)
               }
               Spacer(minLength: 8)
               Image(systemName: "chevron.down").font(.system(size: 12, weight: .semibold))
@@ -134,6 +134,7 @@ struct PreferencesView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
   @State private var deleting = false
+  @State private var routineDetails = false
   var body: some View {
     NavigationStack {
       Form {
@@ -147,9 +148,12 @@ struct PreferencesView: View {
             store.updateProfile {
               $0.onboarded = false
               $0.onboardingStep = 0
+              $0.onboardingStepID = OnboardingStep.frequency.rawValue
             }
             dismiss()
           }.accessibilityIdentifier("settings.baseline")
+          Button(store.t("Each exercise")) { routineDetails = true }
+            .accessibilityIdentifier("settings.routineDetails")
         }
         Section {
           TextField(
@@ -177,12 +181,16 @@ struct PreferencesView: View {
           }
         }
         Section {
-          Toggle(store.t("Sounds"), isOn: Binding(
-            get: { store.profile.soundEnabled ?? true },
-            set: { value in store.updateProfile { $0.soundEnabled = value } }))
-          Toggle(store.t("Haptics"), isOn: Binding(
-            get: { store.profile.hapticsEnabled ?? true },
-            set: { value in store.updateProfile { $0.hapticsEnabled = value } }))
+          Toggle(
+            store.t("Sounds"),
+            isOn: Binding(
+              get: { store.profile.soundEnabled ?? true },
+              set: { value in store.updateProfile { $0.soundEnabled = value } }))
+          Toggle(
+            store.t("Haptics"),
+            isOn: Binding(
+              get: { store.profile.hapticsEnabled ?? true },
+              set: { value in store.updateProfile { $0.hapticsEnabled = value } }))
           Toggle(
             store.t("Focus demo"),
             isOn: Binding(
@@ -200,7 +208,9 @@ struct PreferencesView: View {
         } footer: {
           Text(store.t("Saved on this device. No account or analytics."))
         }
-      }.gymPage().navigationTitle(store.t("Settings")).navigationBarTitleDisplayMode(.inline)
+      }.gymPage().navigationTitle(store.t("Settings"))
+        .sheet(isPresented: $routineDetails) { RoutineDetailEditor() }
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .confirmationAction) {
             Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("preferences.done")
@@ -211,7 +221,7 @@ struct PreferencesView: View {
           store.t("Delete routine answers?"), isPresented: $deleting, titleVisibility: .visible
         ) {
           Button(store.t("Delete"), role: .destructive) {
-            store.updateProfile { $0.baseline = nil }
+            store.deleteRoutineAnswers()
           }
         } message: {
           Text(store.t("Your workouts and splits will stay saved."))

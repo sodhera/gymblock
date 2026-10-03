@@ -19,6 +19,13 @@ import SwiftUI
         UserDefaults.standard.removeObject(forKey: GymStore.storageKey)
       }
     #endif
+    #if DEBUG
+      if ProcessInfo.processInfo.arguments.contains("--ui-report-accessibility") {
+        NSLog(
+          "GymBlock accessibility: motion=\(UIAccessibility.isReduceMotionEnabled), transparency=\(UIAccessibility.isReduceTransparencyEnabled)"
+        )
+      }
+    #endif
     let store = GymStore()
     #if DEBUG
       if ProcessInfo.processInfo.arguments.contains("--demo") { store.loadDemoIfEmpty() }

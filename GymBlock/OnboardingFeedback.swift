@@ -4,17 +4,30 @@ import UIKit
 @MainActor final class OnboardingFeedback {
   static let shared = OnboardingFeedback()
   private let audio = OnboardingAudio()
+  private var pendingSound: Task<Void, Never>?
+  func cancel() {
+    pendingSound?.cancel()
+    audio.stop()
+  }
   func play(profile: Profile, completion: Bool = false, selection: Bool = false) {
     if profile.hapticsEnabled ?? true {
-      if completion { UINotificationFeedbackGenerator().notificationOccurred(.success) }
-      else { UISelectionFeedbackGenerator().selectionChanged() }
+      if completion {
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+      } else {
+        UISelectionFeedbackGenerator().selectionChanged()
+      }
     }
     guard !selection else { return }
-    Task { await playSound(profile: profile, completion: completion) }
+    pendingSound?.cancel()
+    pendingSound = Task {
+      guard !Task.isCancelled else { return }
+      await playSound(profile: profile, completion: completion)
+    }
   }
   @discardableResult func playSound(profile: Profile, completion: Bool = false) async -> Bool {
     guard profile.soundEnabled ?? true,
-      let url = Bundle.main.url(forResource: completion ? "complete" : "advance", withExtension: "wav")
+      let url = Bundle.main.url(
+        forResource: completion ? "complete" : "advance", withExtension: "wav")
     else { return false }
     return await audio.play(url)
   }
@@ -24,6 +37,7 @@ import UIKit
 private final class OnboardingAudio: @unchecked Sendable {
   private let queue = DispatchQueue(label: "com.sirish.gymblock.onboarding-audio")
   private var player: AVAudioPlayer?
+  func stop() { queue.async { self.player?.stop() } }
   func play(_ url: URL) async -> Bool {
     await withCheckedContinuation { continuation in
       queue.async {

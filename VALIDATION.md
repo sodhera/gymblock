@@ -2,7 +2,32 @@
 
 Native Swift/SwiftUI simulator prototype, Xcode 27 / iPhone 17 / iOS 27. Signing is disabled. No external services or package dependencies are configured.
 
-## Visible End workout, training totals and onboarding feedback
+## Workout-first Liquid Glass onboarding — current revision
+
+The approved `docs/ONBOARDING-REDESIGN-PROPOSAL.md` is implemented. Welcome → workout frequency → visit duration → routine sketch comes before scrolling questions. Centered DM Sans, one visual focus, real native Liquid Glass controls, a fixed-length before/after timeline and deferred details replace the previous text/card-heavy setup. Just train immediately starts a free session; Go to Home completes setup without starting one. Existing workouts and survey drafts survive migration; sample data remains explicitly loaded.
+
+**All 39 model checks passed, and nine distinct affected UI journeys passed across the targeted runs below.** Repeated journeys and device-size repeats are counted once. The entire historical UI suite was not rerun as one batch.
+
+| Coverage | Evidence in ignored `build/` directory |
+| --- | --- |
+| All 39 model checks: prior workout/progress behavior plus stable onboarding migration, variable routines, actual scrolling breaks, fractional targets, impossible/unknown estimates, proposal persistence and survey deletion preserving training | `WorkoutFirstFinalModels.xcresult` — all 39 passed on final source |
+| Personal setup/resume/goal/example/focus; manual minutes and inconsistent-answer correction/replay; Just train; missing/unknown answers; no scrolling/timed session/discard | `WorkoutFirstJourneys.xcresult` — five relevant journeys passed; its two outdated test expectations were corrected and rerun below |
+| Empty History/Splits after finishing an empty skipped session; Spanish/back preservation; manual-entry comparison and reachable controls at 402 × 874 points | `WorkoutFirstFinalRoutes.xcresult` — all three passed |
+| Small iPhone SE, 375 × 667 points, actual OS Reduce Motion and Reduce Transparency enabled; manual entry, complete comparison and duplicate-tap protection | `WorkoutFirstSmallFinal.xcresult` — compact UI journey and all 38 model checks existing at that stage passed |
+| iPhone 17e, 390 × 844 points, standard effects; manual entry dismisses keyboard, full result and duplicate-tap protection | `WorkoutFirstMediumFinal.xcresult` — passed |
+| iPhone 17, dark appearance, accessibility-large text and increased contrast; workout controls and onboarding duration/scrolling/minutes/before/after remain reachable | `WorkoutFirstAccessibility.xcresult` — passed |
+
+The early preset run exposed native Form buttons triggering multiple preset actions; presets now use a borderless style. The medium-screen run exposed the keyboard surviving the manual-entry sheet; explicit keyboard dismissal fixed it. Visual inspection caught lower result controls overflowing the smallest screen; compact spacing now fits the complete result and actions together. The initial empty-history and Spanish tests expected an already-dismissed summary and an extra language submenu; final routes now follow the actual native navigation and pass. No invalid-frame or AttributeGraph warning appeared in the final normal, medium, small or accessibility UI logs.
+
+The iOS 26.5 small-screen diagnostic confirmed UIKit reads **Reduce Motion = true and Reduce Transparency = true**. Its actual captures show opaque controls and the final comparison without animated interpolation. Main/medium devices use iOS 27. Large-text content scrolls where needed, with the primary action pinned. This verifies the selected simulator configurations, not a manual VoiceOver audit or every supported iOS release.
+
+Actual app captures are in [`screenshots/onboarding-first/`](screenshots/onboarding-first/README.md), including compact, medium and dark/large-text routes. `before-after.mp4` is a short normal-speed simulator excerpt of the result transition; no audio is included. Screenshots and the clip were visually reviewed. The latest app is installed on the primary iPhone 17 simulator and left at the fresh welcome, in light appearance, standard text and normal contrast. Other review devices are shut down and the temporary SE device is removed after evidence export.
+
+The estimate remains explicit: `(total sets − 1) × scrolling minutes`, or an edited actual count of scrolling breaks. Six exercises × three sets × two minutes between 17 gaps gives 34 minutes per visit and 102 across three visits. The timeline keeps visit duration fixed; proposed phone-free time includes necessary rest. Unknown or impossible inputs do not generate a fabricated reveal. Previewing/replaying a scenario creates no workout, achievement or saved goal; Use this goal is explicit.
+
+Audio cues and independent mute/haptic preferences are implemented; prior decoder/playback checks remain in the final model suite. Physical-device sound levels and haptic feel, manual VoiceOver use, one-handed ergonomics and animation preference remain unverified. Focus blocking is still simulated. No body-composition or optimal-rest claim, account, billing, backend, signing or release work is included.
+
+## Previous visible End workout, training totals and onboarding feedback
 
 The workout toolbar has a visible End workout action in every session state. History → Progress → Training totals shows actual reps, recorded weight moved (load × completed reps) and sets, with trend and bar views and optional split scope. Summary includes reps and workload. Onboarding asks about between-set scrolling, reveals 1–5 minutes or manual More, and shows the break-count calculation. Short page/symbol/numeric animations, independent sound/haptic settings and a first-page mute control are implemented.
 
@@ -81,6 +106,6 @@ The simulator is left in light appearance with its original text-size/contrast s
 
 ## Limits
 
-Real Screen Time blocking, billing, accounts, backend, signing and App Store delivery are not configured. Physical-iPhone ergonomics, VoiceOver navigation, OS Reduce Motion/Reduce Transparency behavior and older-iOS runtime appearance were not certified by these runs. The source uses native system materials, scaled DM Sans typography and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
+Real Screen Time blocking, billing, accounts, backend, signing and App Store delivery are not configured. Physical-iPhone ergonomics and manual VoiceOver navigation remain unverified. The current onboarding revision above verifies OS Reduce Motion/Reduce Transparency on an iOS 26.5 simulator; iOS 17–25 runtime appearance remains unverified. The source uses native system materials, scaled DM Sans typography and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
 
 Animation preference and usability claims still require the proposed friend/user study. No muscle-gain, fat-loss or optimal-workout-time prediction is made.
