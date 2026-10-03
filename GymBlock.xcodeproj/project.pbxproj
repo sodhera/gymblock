@@ -15,11 +15,13 @@
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
 		4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F47BAD59FB5F3B4443457 /* Splits.swift */; };
 		540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C32DC47F5228BD30518BAB /* Typography.swift */; };
+		666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D599A2899F5D63D89F8AEF /* Navigation.swift */; };
 		695A8B96F7B37E27F5C1C50D /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 84996EEECD2441DA822FAD7E /* OFL.txt */; };
 		7303B461227959C5F2E3C0E9 /* DMSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4F4A06E7386D08074CB79CA7 /* DMSans.ttf */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
 		885666D10CAAF6A5A4F31485 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F70F4B27F004B995455CBB /* Session.swift */; };
+		903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */; };
 		A9DB2A28B218A27F17AD1504 /* RedesignTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82559945550DCB076E35D35D /* RedesignTests.swift */; };
 		B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */; };
 		BB3D6624D0A7D9FDDB187F22 /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2A5696BA38746AE2AF3 /* DemoData.swift */; };
@@ -63,7 +65,9 @@
 		7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineBaseline.swift; sourceTree = "<group>"; };
 		82559945550DCB076E35D35D /* RedesignTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignTests.swift; sourceTree = "<group>"; };
 		84996EEECD2441DA822FAD7E /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		91D599A2899F5D63D89F8AEF /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		95245B0AE197664243A1DF54 /* GymBlockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockApp.swift; sourceTree = "<group>"; };
+		98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymNavigationTests.swift; sourceTree = "<group>"; };
 		A00423AA0AB15C75A8BDC2E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A84AD10ED062C64A13487708 /* Home.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home.swift; sourceTree = "<group>"; };
 		B5C32DC47F5228BD30518BAB /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
@@ -117,6 +121,7 @@
 				A84AD10ED062C64A13487708 /* Home.swift */,
 				A00423AA0AB15C75A8BDC2E3 /* Info.plist */,
 				FA97052542A6CE2655EB31D4 /* Model.swift */,
+				91D599A2899F5D63D89F8AEF /* Navigation.swift */,
 				4F60F86A83F2D70198BDC549 /* Onboarding.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
 				371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */,
@@ -142,6 +147,7 @@
 		E0B30398622F29EC7006534F /* GymBlockTests */ = {
 			isa = PBXGroup;
 			children = (
+				98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */,
 				18BD74A4F712847C40F46201 /* GymStoreTests.swift */,
 				E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */,
 				82559945550DCB076E35D35D /* RedesignTests.swift */,
@@ -274,6 +280,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */,
 				74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */,
 				B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */,
 				A9DB2A28B218A27F17AD1504 /* RedesignTests.swift in Sources */,
@@ -289,6 +296,7 @@
 				2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */,
 				F8278DB2F4F20B209F198AF3 /* Home.swift in Sources */,
 				26E302FF83882C09A69885AC /* Model.swift in Sources */,
+				666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */,
 				0D899512FC58218E35D95623 /* Onboarding.swift in Sources */,
 				2E74CBB270312313000E124C /* Progress.swift in Sources */,
 				7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */,

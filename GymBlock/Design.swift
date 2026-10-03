@@ -69,6 +69,15 @@ extension GymStore {
 }
 enum Spanish {
   static let additions: [String: String] = [
+    "Home": "Inicio", "Workouts": "Entrenamientos", "History view": "Vista del historial",
+    "workouts saved": "entrenamientos guardados", "Split progress": "Progreso de rutina",
+    "Choose exercises as you go": "Elige ejercicios sobre la marcha",
+    "Resume workout": "Volver al entrenamiento",
+    "Rest elapsed": "Descanso transcurrido", "This workout": "Este entrenamiento",
+    "Switch exercise?": "¿Cambiar de ejercicio?", "Save set and switch": "Guardar serie y cambiar",
+    "Discard current set and switch": "Descartar serie actual y cambiar",
+    "Completed sets stay saved. Choose what to do with this unfinished set.":
+      "Las series completadas siguen guardadas. Elige qué hacer con esta serie sin terminar.",
     "Good morning": "Buenos días", "Good afternoon": "Buenas tardes",
     "Good evening": "Buenas noches",
     "Your workout": "Tu entrenamiento", "Week streak": "Semanas seguidas",

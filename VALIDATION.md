@@ -2,7 +2,26 @@
 
 Native Swift/SwiftUI simulator prototype, Xcode 27 / iPhone 17 / iOS 27. Signing is disabled. No external services or package dependencies are configured.
 
-## Speaking Coach visual revision
+## Gym-floor navigation and flexible exercise revision
+
+The latest user correction is implemented: minimal Home with no lift-stat card, native Home / History / Splits navigation, upward rest counter, unrestricted exercise selection and explicit resolution of an unfinished set. Red and the Speaking Coach DM Sans visual system remain. The complete page review and primary competitor references are in `docs/GYM-FLOW-REVIEW.md`.
+
+**27 model checks and nine distinct simulator journeys passed across the runs below.** Repeated journeys are counted once.
+
+| Coverage | Evidence in ignored `build/` directory |
+| --- | --- |
+| All 27 model checks, including rest persistence/migration, save/discard switching with original exercise attribution, invalid-save rejection, timed switching, independent drafts, unchanged split templates, corrections and delete/undo | `NavigationModels.xcresult` — all 27 passed |
+| Eight simulator journeys: empty History/Progress and split navigation, freestyle logging/correction/relaunch, reachable controls, native split editing and kg/lb, personal onboarding/resume, Spanish onboarding, split start/progress, skipped/zero answers and timed activity | `NavigationUI.xcresult` — eight passed; the ninth exposed the hidden native cancel option |
+| All three unfinished-set choices, navigation/resume with active drafts, counter growth across tabs and reopening, preservation of the original exercise, saved set count, completed History and detail | `NavigationVerified.xcresult` — passed in 96 seconds on the final source |
+| Native navigation, ready/active/rest actions, editable weight and onboarding with actual dark appearance, accessibility-large text and increased contrast | `NavigationAccessibilityFinal.xcresult` — passed in 78 seconds on the final source |
+
+The initial native confirmation popover hid a cancel-role action. Keep training is now an explicit visible action for switching and ending. A screenshot review then caught clipped timer digits at large text size; elapsed timers now fit one line. The final dark/large-text captures show the complete value, and Home supporting text wraps to the left. A targeted test initially read the old exercise label during the dismissal animation; persisted data confirmed the correct saved set and selection. The final journey waits for the visible exercise transition and passes. No invalid-frame or AttributeGraph runtime warning appeared in either final UI run.
+
+Current actual captures are in `screenshots/gym-flow/`, with final dark/large-text/increased-contrast screens in its `dark-large/` folder. Home, History, progress, splits, switch choices, original-set attribution, rest, corrections and onboarding were visually reviewed. The switched rest screen is captured after reopening, with 0:14 elapsed. Final Home is recaptured from the installed build. The simulator is restored to light appearance, standard text and normal contrast, on Home with Arms/Push/Legs and six weeks of sample history; Demo identifies sample data. Test resets affect only this prototype.
+
+The rest source is a persisted start timestamp. Switching exercises, tabs or relaunching never resets it; starting a set clears it. Older countdown data migrate from the source record or legacy deadline/duration. Physical one-handed usability and animation preference remain unverified; this is simulator proof.
+
+## Previous Speaking Coach visual revision
 
 The user's latest correction replaces the earlier SF/flat UI with Speaking Coach's actual bundled DM Sans, warm paper, dot-grid backdrop, soft content surfaces, left-aligned headers and spacing. GymBlock keeps its red theme and existing workout behavior. Speaking Coach's source and reference screenshots were read only.
 

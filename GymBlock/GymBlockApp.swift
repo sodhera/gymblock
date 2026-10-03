@@ -39,12 +39,8 @@ struct RootView: View {
       GymColor.ground.ignoresSafeArea()
       if !store.profile.onboarded {
         OnboardingView()
-      } else if let summary = store.summary {
-        SummaryView(session: summary)
-      } else if store.session != nil {
-        SessionView()
       } else {
-        HomeView()
+        GymNavigationView()
       }
     }
     .alert("Could not save on this device", isPresented: $store.storageError) {

@@ -1,65 +1,62 @@
 import Charts
 import SwiftUI
 
-struct ProgressView: View {
+struct ProgressContent: View {
   @EnvironmentObject private var store: GymStore
-  @Environment(\.dismiss) private var dismiss
   @State private var splitID: UUID?
-  @State private var history = false
   var body: some View {
-    NavigationStack {
-      ScrollView(showsIndicators: false) {
-        VStack(alignment: .leading, spacing: 24) {
-          Text(store.t("Progress")).font(GymType.hero(32)).accessibilityAddTraits(.isHeader)
-          if !store.data.workouts.isEmpty {
-            Picker(store.t("Split"), selection: $splitID) {
-              ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
-            }.pickerStyle(.menu).font(GymType.title(22)).accessibilityIdentifier("progress.split")
-            if let split = store.data.workouts.first(where: { $0.id == splitID }) {
-              VStack(spacing: 0) {
-                ForEach(split.exercises) { exercise in
-                  NavigationLink {
-                    ExerciseProgressView(exercise: exercise, split: split)
-                  } label: {
-                    HStack(spacing: 16) {
-                      VStack(alignment: .leading, spacing: 6) {
-                        Text(store.t(exercise.name)).font(GymType.title(19)).foregroundStyle(
-                          GymColor.ink)
-                        if let set = store.latestSet(for: exercise, split: split) {
-                          Text(setValue(set, store: store)).font(GymType.body(14)).foregroundStyle(
-                            GymColor.dim)
-                        }
-                      }
-                      Spacer(minLength: 0)
-                      Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(GymColor.red)
-                    }.frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
-                  }.accessibilityIdentifier("progress.exercise." + exercise.id)
-                  if exercise.id != split.exercises.last?.id { Divider().opacity(0.45) }
-                }
-              }.padding(.horizontal, 20).gymCard()
+    VStack(alignment: .leading, spacing: 24) {
+      if !store.biggestLifts.isEmpty {
+        VStack(alignment: .leading, spacing: 12) {
+          Text(store.t("Best lifts")).font(GymType.hero(22))
+          ForEach(Array(store.biggestLifts.prefix(3))) { record in
+            VStack(alignment: .leading, spacing: 4) {
+              Text(store.t(record.set.exercise.name)).font(GymType.body(16))
+              Text(setValue(record.set, store: store)).font(GymType.label(17))
+                .foregroundStyle(GymColor.dim).monospacedDigit()
             }
-          } else {
-            Text(store.t("Add a split to compare its exercises.")).foregroundStyle(GymColor.dim)
-          }
-          NavigationLink {
-            HistoryView()
-          } label: {
-            Label(store.t("History"), systemImage: "clock.arrow.circlepath").font(GymType.label(16))
-              .frame(minHeight: 44)
-          }.accessibilityIdentifier("progress.history")
-        }.padding(24)
-      }.gymPage().navigationTitle("").navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("progress.done")
           }
         }
-        .onAppear {
-          if splitID == nil {
-            splitID = store.profile.preferredSplitID ?? store.data.workouts.first?.id
+      }
+      if !store.data.workouts.isEmpty {
+        VStack(alignment: .leading, spacing: 12) {
+          Text(store.t("Split progress")).font(GymType.hero(22))
+          Picker(store.t("Split"), selection: $splitID) {
+            ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
+          }.pickerStyle(.menu).accessibilityIdentifier("progress.split")
+          if let split = store.data.workouts.first(where: { $0.id == splitID }) {
+            VStack(spacing: 0) {
+              ForEach(split.exercises) { exercise in
+                NavigationLink {
+                  ExerciseProgressView(exercise: exercise, split: split)
+                } label: {
+                  HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 6) {
+                      Text(store.t(exercise.name)).font(GymType.title(19)).foregroundStyle(
+                        GymColor.ink)
+                      if let set = store.latestSet(for: exercise, split: split) {
+                        Text(setValue(set, store: store)).font(GymType.body(14)).foregroundStyle(
+                          GymColor.dim)
+                      }
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .medium))
+                      .foregroundStyle(GymColor.dim)
+                  }.frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
+                }.accessibilityIdentifier("progress.exercise." + exercise.id)
+                if exercise.id != split.exercises.last?.id { Divider().opacity(0.45) }
+              }
+            }
           }
         }
+      } else {
+        Text(store.t("Add a split to compare its exercises.")).foregroundStyle(GymColor.dim)
+      }
+    }.onAppear {
+      if !store.data.workouts.contains(where: { $0.id == splitID }) {
+        splitID = store.data.workouts.first { $0.id == store.profile.preferredSplitID }?.id
+          ?? store.data.workouts.first?.id
+      }
     }
   }
 }

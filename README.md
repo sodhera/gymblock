@@ -12,15 +12,16 @@ To try the complete onboarding, remove `--demo` on a fresh install. With existin
 
 ## Workout flow
 
-- Home: choose **Free workout** or an optional split, then **Start workout**.
+- Native navigation: **Home · History · Splits**. Home contains the streak, **Free workout** or optional split choice, and **Start workout**. It contains no lift-stat card.
 - A split opens its first exercise ready to start. Free workout opens recent exercises and native search; type `dum` for dumbbell exercises.
 - Choose a weight on the first use of an exercise; later sets remember it. Tap the weight for manual entry, a native wheel or +/−. Weight is 0–500 in the chosen kg/lb unit; fractions are supported. Zero is labeled **Bodyweight**. Changing units preserves the load and converts its display.
 - **Start set → enter actual completed reps → Finish set.** Previous reps are a draft, not a target. Extra or fewer reps use the same flow. Reps support 1–999.
-- Rest starts automatically. **Start next set** works immediately; the timer never gates training. Tap it to change rest duration. Exercise changes preserve the deadline and each exercise's values.
+- **Rest elapsed** starts at 0:00 and counts up. **Start next set** works whenever you are ready. Changing exercises, switching tabs and relaunching preserve its original start; there is no expiry or configured rest duration.
+- **Change exercise** and the exercise title stay tappable in every set state. After saving, switch immediately. During an unfinished set, choose **Save set and switch**, **Discard current set and switch** or **Keep training**. Earlier sets stay saved under their original movement. The session picker shows this workout, recent exercises and search.
 - Tap the saved-set row to correct, delete or mark a warm-up. **Workout options** contains uncommon actions, including cancelling an unperformed set, recording a zero-rep unsuccessful attempt, inspecting sets and adding a missed completed set.
 - **End workout** saves completed work and ends the focus representation. An active set offers save/discard/keep-training choices. Unsuccessful attempts stay in history but never become lift records or completed-workout streaks.
 
-**Settings → Splits** and **Home workout menu → Manage splits** both open the optional editor. Rename/reorder without losing progress identity. Deleting a split retains history. Home shows three heaviest completed working sets with reps. Progress compares either load at identical reps or reps at identical load, within the same exercise and split. The chosen before/after animation respects Reduce Motion; the chart is behind History.
+The **Splits** tab is the direct route to the optional editor. Home’s **Manage splits** also selects that tab; the existing Settings shortcut remains available. Rename/reorder without losing progress identity. Deleting a split retains history. **History → Workouts** shows older sessions and editable sets. **History → Progress** contains best lifts as plain content and split comparisons. You can browse these during training and use **Resume workout** or Home to return without losing the draft or counter. Progress compares either load at identical reps or reps at identical load, within the same exercise and split. The chosen before/after animation respects Reduce Motion; the chart is behind History.
 
 ## Onboarding
 
@@ -30,9 +31,9 @@ Time totals are clearly attributed to the user's estimates. Reduction goals are 
 
 ## Actual simulator screens
 
-<img src="screenshots/coach-style/redesign-01-home.png" alt="Home with DM Sans, a weekly streak and red Start workout" width="240"> <img src="screenshots/coach-style/redesign-05-active.png" alt="Active set with actual reps and Finish set" width="240"> <img src="screenshots/coach-style/redesign-13-personal-result.png" alt="Personal onboarding result attributed to self-reported feed time" width="240">
+<img src="screenshots/gym-flow/gym-flow-01-home.png" alt="Minimal Home with streak and native navigation" width="240"> <img src="screenshots/gym-flow/gym-flow-02-history.png" alt="History with dated workout records" width="240"> <img src="screenshots/gym-flow/gym-flow-07-switched-with-rest-counter.png" alt="Elapsed rest after switching exercises, with the original saved set labeled" width="240">
 
-Current captures are in [screenshots/coach-style](screenshots/coach-style/). Earlier captures in `screenshots/redesign/` document the previous design.
+Current captures are in [screenshots/gym-flow](screenshots/gym-flow/). Earlier captures in `screenshots/coach-style/` and `screenshots/redesign/` document earlier designs.
 
 ## Boundaries
 
@@ -44,4 +45,4 @@ This is a simulator prototype. Physical-iPhone handling, real system enforcement
 
 `project.yml` is authoritative; `xcodegen generate` regenerates the included project. No package dependencies are required. Product → Test runs model checks and simulator UI journeys. Use `-parallel-testing-enabled NO` for UI tests against one simulator.
 
-The design and edge-case decisions are in [docs/REDESIGN-PLAN.md](docs/REDESIGN-PLAN.md). Current verification evidence and limits are in [VALIDATION.md](VALIDATION.md).
+The latest page-by-page review and competitor references are in [docs/GYM-FLOW-REVIEW.md](docs/GYM-FLOW-REVIEW.md). The design and edge-case decisions are in [docs/REDESIGN-PLAN.md](docs/REDESIGN-PLAN.md). Current verification evidence and limits are in [VALIDATION.md](VALIDATION.md).

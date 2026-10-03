@@ -4,9 +4,11 @@
 
 GymBlock should help someone put their phone down and train. Open it, start the workout, record a set, and return to the exercise. Every screen must make the next action obvious without requiring an explanation.
 
-The redesign uses one red accent, native Apple typography, and Liquid Glass for navigation and important controls. The larger change is removing decisions and information from moments when they are unnecessary.
+The redesign uses one red accent, Speaking Coach’s DM Sans typography, and Liquid Glass for navigation and important controls. The larger change is removing decisions and information from moments when they are unnecessary.
 
 The approved screen structure, onboarding and workout edge cases are implemented in the native prototype. `AGENTS.md` and `DESIGN.md` now reflect this specification. See [VALIDATION.md](../VALIDATION.md) for simulator evidence and remaining limits. Real Screen Time blocking and the proposed user study comparing animation preferences remain future work.
+
+The latest implemented navigation and page review is [GYM-FLOW-REVIEW.md](GYM-FLOW-REVIEW.md). Its Home/History/Splits structure, elapsed-rest counter and unrestricted exercise switching supersede the earlier sequence-based direction.
 
 ## 1. What the previous design got wrong
 
@@ -19,7 +21,7 @@ This reviews the previous SwiftUI screens and captured simulator UI, not an obse
 | Exercise selection | Large title, custom search box, separate rounded cards, category text and instructions | Styling makes a simple list feel like several different components | Native search and plain rows; recent exercises first |
 | Set setup | Unit switch, weight panel, picker, steppers, two help sentences, previous set, full logged history | Too many ways to act are exposed together | One editable weight, one last-set line, one primary action |
 | Active set | Focus header, session timer, exercise title, set status, set timer, weight, reps and history | Logging requires scanning a dashboard during a workout | Exercise, weight, reps and Finish set only; one compact focus status |
-| Rest | Timer, three rest presets, weight controls, previous set, history and two actions | Rest becomes another configuration screen | Countdown, next set, Start next set; edits on demand |
+| Rest | Timer, three rest presets, weight controls, previous set, history and two actions | Rest becomes another configuration screen | Elapsed counter, next load, Start next set and unrestricted Change exercise |
 | Progress | Duplicate split naming, big title, bars, replay control, chart and explanations | Several representations compete to explain one change | Before/after comparison first; detailed history one tap away |
 | Summary | Celebration mark, recap card, set card, split toggle and name field | Finishing becomes another task | Short saved result and Done; optional actions in a menu |
 
@@ -28,7 +30,7 @@ The blue actions and blue numbers also overpower the intended red identity. Chan
 ## 2. Rules for every design decision
 
 1. **One primary action per state.** Its label says exactly what happens: Start workout, Start set, Finish set, Start next set, Done.
-2. **Show information when it changes a decision.** Rest settings belong behind the timer; history belongs outside the active set.
+2. **Show information when it changes a decision.** Historical stats live in History; browsing them never ends the active set.
 3. **Remember routine choices.** Preserve split, units, last weight, reps and rest duration. Never require the same setup every workout.
 4. **Keep orientation stable.** Exercise title stays at the top; the primary action stays near the bottom. State changes update the same screen.
 5. **Make recovery easy.** Correct a saved set, change exercises, and resume after closing the app without reentering everything.
@@ -38,7 +40,7 @@ Visible copy budget at default text size: Home has no paragraphs; active set has
 
 ## 3. Navigation and intent
 
-Use one Home with two clear destinations: **Progress** and **Settings**. An active workout occupies its own full-screen flow. Do not add a tab bar just to showcase glass.
+Use native bottom navigation with **Home, History, Splits**. Home becomes the active workout while a session runs. Each destination has its own navigation stack. History has Workouts/Progress; Settings is a small sheet. Browsing another destination preserves the active session and offers Resume workout.
 
 Settings retains **Splits**, units, language, focus apps and data preferences. The Home workout selector also offers **Manage splits**, so someone choosing a workout does not need to discover Settings first.
 
@@ -51,13 +53,13 @@ Settings retains **Splits**, units, language, focus apps and data preferences. T
 | “Use 22.5 kg” | Weight → type or use wheel → Done | Updates the same value, returns to ready state | No separate setup wizard |
 | “Record the set I just finished” | Adjust reps if needed → Finish set | Saves once and starts rest immediately | No confirmation or log screen |
 | “I'm ready again” | Start next set | Starts immediately with the retained values | No wait-for-timer gate |
-| “Move to another exercise” | Next exercise or Change exercise | Opens the next split exercise or recent/search sheet | No trip through Home |
+| “Move to another exercise” | Change exercise | Opens this workout and recent/search choices; resolve any unfinished set | No trip through Home |
 | “I'm finished” | End workout | Saves and ends focus, then shows a short result | No naming, ratings or required recap review |
-| “Did I improve?” | Progress → exercise | Shows first/latest comparable sets in the selected split | No search through entire workout logs |
+| “Did I improve?” | History → Progress → exercise | Shows first/latest comparable sets in the selected split | No search through entire workout logs |
 
 **Tap targets, excluding typing and optional value edits:** repeat a selected split to first active set: 2 taps; Free workout using a visible recent exercise: 3 taps; log unchanged reps: 1 tap; begin another set: 1 tap. These are design targets, not measured results.
 
-The minimum is not always zero. Keep an explicit Start set so the user controls when lifting begins; never auto-start because they selected an exercise or the rest timer expired.
+The minimum is not always zero. Keep an explicit Start set so the user controls when lifting begins; never auto-start because they selected an exercise or any rest interval has elapsed.
 
 ## 4. Screen specifications
 
@@ -67,9 +69,7 @@ The 3 October user correction adopts Speaking Coach’s typography and placement
 
 The central action area contains **Arms ⌄** or **Free workout ⌄**, followed by the prominent red **Start workout** button. Remember the last selection and keep its name visible before starting. Do not silently choose a split based on the weekday.
 
-Below the action: **Best lifts** with up to three rows grouped on one quiet surface, such as `Bench press · 85 kg × 5`, and **Progress**. Values use normal text color. History lives inside Progress. Empty accounts get one line, “Your best lifts will appear here.”
-
-The latest visual correction restores the personal greeting and truthful week activity marks from the Speaking Coach reference. Keep helper paragraphs, extra last-workout panels and separate cards around every row out of Home. Do not remove the requested lift records or streak to achieve minimalism.
+Home contains no lift records and no separate workout-choice card. Best lifts move to **History → Progress** as plain content. Finished sessions live in **History → Workouts**. Keep Home’s greeting, streak, plain workout choice and one bottom Start action above the native navigation.
 
 If a workout is already running, the primary action becomes **Resume workout** with its exercise name. Never create a second session accidentally. A sample-data build carries a compact **Demo** label; focus simulation has its own truthful status.
 
@@ -97,12 +97,9 @@ Use **End workout** in the top toolbar, never the ambiguous **Finish** beside **
 
 ### Rest: “Recover, then go”
 
-Finish set saves once and immediately changes the same screen to **Rest · 0:59**. Show one compact `Saved: 20 kg × 10` row that opens correction, a next-set weight value and **Start next set**. Tapping the countdown edits rest duration; retain the choice. Remove the permanent 30/60/90 controls.
+Finish set saves once and immediately changes the same screen to **Rest elapsed · 0:00**, counting upward from the original saved-set time. Show one saved-set row opening correction, the next load and **Start next set**. When changing movements, name the original exercise on the saved-set row to avoid confusing it with the new selection.
 
-At zero, give one optional gentle haptic and change the label to **Ready**. Stay on this screen. Do not auto-start or add a dismissal step. For a split, show **Next: Hammer curl** as the secondary action; freestyle uses **Change exercise**. Tapping either prepares that exercise but leaves the current rest deadline intact until Start set.
-
-The set correction sheet supports changing reps/weight or deleting an accidental set. Edits update history once; they do not create another set or restart rest. Deleting the most recent accidental set cancels only its own rest, as specified in section 9. Full session records are available from a compact **Sets** toolbar item outside the active lifting state.
-
+There is no rest duration setting, expiry, alarm or wait gate. **Change exercise** is the secondary action for both split and freestyle sessions. The exercise picker shows this workout plus recent alternatives/search. Selection retains the current counter until Start set. During an unfinished set, selecting another movement prompts Save set and switch / Discard current set and switch / Keep training. The split template and previous sets are retained.
 ### Completion: “Put the phone away”
 
 Show **Workout saved**, duration and set count, then **Done**. No mandatory celebration, full set list, score or rating. **View workout** and **Save as split** are optional menu actions; saving a split requests a name only after selection.
@@ -113,7 +110,7 @@ End focus before showing completion. Reopening after an interruption restores th
 
 Split creation stays one native editor: name, ordered exercises, Add exercises and Save. No required days, schedule, targets or rest configuration. Existing saved splits and stable IDs survive the redesign.
 
-Progress opens with the current split already selected. Show its exercise rows and a History entry. Each exercise opens **15 kg → 20 kg**, labeled with dates and **at 10 reps**. A neutral first bar and red latest bar animate once for about half a second. Put the detailed chart and session list behind **History**; remove the dedicated replay button.
+History → Progress opens with the current split already selected. Show best lifts and its exercise rows. History → Workouts lists finished sessions separately. Each exercise opens **15 kg → 20 kg**, labeled with dates and **at 10 reps**. A neutral first bar and red latest bar animate once for about half a second. Put the detailed chart and session list behind **History**; remove the dedicated replay button.
 
 For load changes, compare only the same exercise, split and rep count. For rep changes, hold exercise, split and weight constant; section 9 specifies how to choose the comparison. Show an honest decrease or unchanged result without a celebration. One matching session says **First recorded set**. Free workouts remain visible in history; do not pretend their records belong to a split. Do not invent an overall strength score. Reduced Motion shows the final comparison immediately.
 
@@ -359,20 +356,20 @@ GymBlock is recording these decisions, not prescribing what weight or rep count 
 | “I couldn't complete even one rep” | Set options → Record unsuccessful attempt | Save a separate attempt with zero completed reps and the attempted weight; begin rest. Display Attempt recorded, not Set completed. Exclude it from lift records, completed-set totals and progress comparisons |
 | “I pressed Start but never lifted” | Set options → Cancel set | Return to Ready with the draft weight retained. Save no set or attempt; do not start a new rest period |
 | “That weight was too heavy; I'll use less next set” | Tap next-set weight during rest | Update only the upcoming set. Keep the completed set's original weight and reps |
-| “I entered the wrong weight or reps” | Tap the saved-set row → edit → Save | Correct the existing record, recompute records/progress, and retain the current rest deadline |
+| “I entered the wrong weight or reps” | Tap the saved-set row → edit → Save | Correct the existing record, recompute records/progress, and retain the current rest start |
 | “I finished by accident” | Saved-set row → Delete set | Remove the erroneous record. If rest belongs to that just-deleted set and no new set has started, return to Ready and cancel that rest. Deleting an older set never changes the current timer |
 | “I did an extra set” | Start next set | Add another set normally. No fixed set count, required template edit or workout restart |
-| “The bench is busy” | Next exercise or exercise selector → another exercise | Keep completed sets and per-exercise drafts. Permit returning later; do not mark the skipped exercise complete or alter the saved split |
-| “I want a longer rest” | Tap the countdown → adjust | Change this rest deadline and remember the preference for later sets; never demand that the person resume at zero |
-| “I don't need the rest” | Start next set | End the countdown and begin the set immediately; one tap |
+| “The bench is busy” | Change exercise → any available exercise | Keep completed sets and per-exercise drafts. Permit returning later; do not mark the skipped exercise complete or alter the saved split |
+| “I want a longer rest” | Keep resting | Counter continues upward; there is no expiry or additional setup |
+| “I don't need the rest” | Start next set | Clear the rest counter and begin the set immediately; one tap |
 | “I forgot to tap Start set” | Sets → Add completed set | Open a small weight/reps editor, prefilled from the selected exercise. Save once and return to the current state. Mark timing unknown; do not invent a start time or restart rest |
 | “I forgot to tap Finish set” | Enter the actual reps → Finish set | Save when explicitly confirmed. Allow correction of completion time from set details; do not present the app's running strength-set time as actual lifting duration |
 | “I want to stop the workout early” | End workout | Keep completed work and end focus. When a set is active, offer the save/discard/keep-training choices already specified. Never require completion of the split or a rep target to exit |
 | “I double-tapped Finish set” | Two rapid taps | Save exactly one record and start one rest timer; disable repeat submission during the transition |
-| “The app closed or my phone locked” | Reopen | Restore the workout and any unconfirmed draft. Rest uses its saved deadline. Never turn elapsed time into completed reps or silently finish a set |
+| “The app closed or my phone locked” | Reopen | Restore the workout and any unconfirmed draft. Rest uses its saved start timestamp. Never turn elapsed time into completed reps or silently finish a set |
 | “I changed kg to lb” | Change unit in the weight editor | Convert the stored load; do not reinterpret the same number as a different weight. Existing history and records remain equivalent |
 
-**Deletion clarification:** ordinary edits never restart rest. Removing the most recent accidental set cancels only the rest created by that record; this is the explicit exception to section 4's general timer-preservation rule. Offer Undo for deletion while preserving the record's identity and original rest deadline, without removing a newer active set.
+**Deletion clarification:** ordinary edits never restart rest. Removing the most recent accidental set cancels only the rest created by that record; this is the explicit exception to section 4's general timer-preservation rule. Offer Undo for deletion while preserving the record's identity and original rest start, without removing a newer active set.
 
 An unsuccessful attempt belongs in workout details as context. A session with only attempts can be retained as an **Attempt-only session**, but does not generate a lift record or the existing completed-workout streak. An empty session has neither attempts nor completed work. These are distinct states, not interchangeable zero-value records.
 
@@ -387,7 +384,7 @@ Show the comparison matching the latest set when there is a valid earlier match.
 
 If both load and reps changed and neither comparison has a matching baseline, show the two actual sets and dates without a strength percentage or claim that one is better. A reduction also displays plainly, without assuming regression or criticizing the person. Extra reps do not justify changing the next weight automatically.
 
-The before/after animation must use the relevant unit: kilograms/pounds for load, reps for repetition count. Do not animate a load bar for a rep-only change. Attempted weights are never personal records. Home's Best lifts remains heaviest completed load **with reps beside it**; it is not an estimated maximum-strength score.
+The before/after animation must use the relevant unit: kilograms/pounds for load, reps for repetition count. Do not animate a load bar for a rep-only change. Attempted weights are never personal records. History → Progress’s Best lifts remains heaviest completed load **with reps beside it**; it is not an estimated maximum-strength score.
 
 ### Other workout types: support only what the record can describe honestly
 
@@ -409,7 +406,7 @@ Do not turn this table into onboarding questions or add every option to the acti
 2. A zero-rep attempt at a heavier weight cannot replace a completed lift record or inflate completed-set totals.
 3. Cancelling before lifting leaves no false work. A double tap cannot create duplicate work.
 4. Editing or deleting a saved set updates all dependent records, history, streaks and progress consistently; the correct timer survives.
-5. Switching exercises during rest preserves both their drafts and the rest deadline. Returning does not reset the session.
+5. Switching exercises during rest preserves both their drafts and the rest start. Returning does not reset the session.
 6. An added historical set does not change an active set or claim precise lifting duration.
 7. More reps at the same weight are visible as a rep change; different weights and reps do not produce an unsupported improvement score.
 8. A person can end a workout at any time, including after fewer reps, an unsuccessful attempt or an unfinished split. Focus release never depends on a performance goal.

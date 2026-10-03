@@ -38,8 +38,10 @@ struct SplitsView: View {
       store.t("Splits")
     )
     .toolbar {
-      ToolbarItem(placement: .confirmationAction) {
-        Button(store.t("Done")) { onDone?() }.accessibilityIdentifier("preferences.done")
+      if let onDone {
+        ToolbarItem(placement: .confirmationAction) {
+          Button(store.t("Done")) { onDone() }.accessibilityIdentifier("preferences.done")
+        }
       }
     }
     .sheet(item: $editing) { SplitEditor(workout: $0) }

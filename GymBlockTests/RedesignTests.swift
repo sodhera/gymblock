@@ -89,15 +89,15 @@ import XCTest
     reloaded.startSession()
     XCTAssertTrue(reloaded.session!.sets.isEmpty)
   }
-  func testChangeExercisePreservesDeadlineAndIndependentValues() {
+  func testChangeExercisePreservesCounterAndIndependentValues() {
     let s = GymStore(defaults: defaults)
     ready(s)
     s.finishSet(reps: 7, minutes: 0)
-    let deadline = s.session?.restEnds
+    let restStart = s.session?.restStarted
     s.chooseExercise(Exercise.catalog[1])
     s.updateWeight(12.5, unit: "kg")
     s.updateDraft(reps: 11)
-    XCTAssertEqual(s.session?.restEnds, deadline)
+    XCTAssertEqual(s.session?.restStarted, restStart)
     XCTAssertEqual(s.session?.stage, .rest)
     s.chooseExercise(Exercise.catalog[0])
     XCTAssertEqual(s.session?.weightKG, 20)
@@ -105,29 +105,29 @@ import XCTest
     s.chooseExercise(Exercise.catalog[1])
     XCTAssertEqual(s.session?.weightKG, 12.5)
     XCTAssertEqual(s.session?.draftReps, 11)
-    XCTAssertEqual(GymStore(defaults: defaults).session?.restEnds, deadline)
+    XCTAssertEqual(GymStore(defaults: defaults).session?.restStarted, restStart)
   }
   func testEditDeleteAndUndoUpdateOnlyCorrectRest() {
     let s = GymStore(defaults: defaults)
     ready(s)
     s.finishSet(reps: 10, minutes: 0)
     let id = s.session!.id
-    let deadline = s.session!.restEnds
+    let restStart = s.session!.restStarted
     var set = s.session!.sets[0]
     set.reps = 8
     XCTAssertTrue(s.editSet(set, sessionID: id))
-    XCTAssertEqual(s.session?.restEnds, deadline)
+    XCTAssertEqual(s.session?.restStarted, restStart)
     s.deleteSet(set, sessionID: id)
     XCTAssertEqual(s.session?.stage, .setup)
-    XCTAssertNil(s.session?.restEnds)
+    XCTAssertNil(s.session?.restStarted)
     s.undoDelete()
-    XCTAssertEqual(s.session?.restEnds, deadline)
+    XCTAssertEqual(s.session?.restStarted, restStart)
     XCTAssertEqual(s.session?.sets.first?.reps, 8)
     s.startSet(weight: 20, unit: "kg")
     s.finishSet(reps: 7, minutes: 0)
-    let newDeadline = s.session?.restEnds
+    let newCounter = s.session?.restStarted
     s.deleteSet(set, sessionID: id)
-    XCTAssertEqual(s.session?.restEnds, newDeadline)
+    XCTAssertEqual(s.session?.restStarted, newCounter)
     s.undoDelete()
     XCTAssertEqual(s.session?.sets.count, 2)
   }

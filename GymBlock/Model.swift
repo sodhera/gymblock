@@ -77,7 +77,8 @@ struct Session: Codable, Identifiable {
   var selected: Exercise?
   var stage: Stage = .workout
   var setStarted: Date?
-  var restEnds: Date?
+  var restEnds: Date?  // Decode-only legacy countdown deadline.
+  var restStarted: Date?
   var weightKG = 0.0
   var splitID: UUID?
   var draftReps: Int?
@@ -119,6 +120,14 @@ struct LocalData: Codable {
       data = decoded
     } else {
       data = LocalData()
+    }
+    if var current = data.session, current.restStarted == nil, current.restEnds != nil {
+      current.restStarted =
+        current.sets.first { $0.id == current.restSourceID }?.date
+        ?? current.restEnds?.addingTimeInterval(-Double(data.profile.restSeconds ?? 60))
+      current.restEnds = nil
+      data.session = current
+      persist()
     }
   }
   var profile: Profile { data.profile }
@@ -171,7 +180,7 @@ struct LocalData: Codable {
     if data.session?.exercises.contains(exercise) == false {
       data.session?.exercises.append(exercise)
     }
-    data.session?.stage = current.restEnds == nil ? .setup : .rest
+    data.session?.stage = current.restStarted == nil ? .setup : .rest
     persist()
   }
   private func saveCurrentDraft() {
@@ -197,6 +206,7 @@ struct LocalData: Codable {
     data.session?.weightKG = Self.kilograms(weight, unit: unit)
     data.session?.weightIsSet = true
     data.session?.restEnds = nil
+    data.session?.restStarted = nil
     data.session?.restSourceID = nil
     deletedSet = nil
     data.session?.stage = .active
@@ -218,7 +228,7 @@ struct LocalData: Codable {
         exercise: exercise, weightKG: exercise.timed ? 0 : s.weightKG,
         reps: exercise.timed ? 0 : reps, minutes: exercise.timed ? minutes : 0))
     data.session?.stage = .rest
-    data.session?.restEnds = Date().addingTimeInterval(Double(profile.restSeconds ?? 60))
+    data.session?.restStarted = Date()
     data.session?.restSourceID = data.session?.sets.last?.id
     data.session?.draftReps = exercise.timed ? s.draftReps : reps
     if !exercise.timed { data.session?.draftRepsText = String(reps) }
@@ -289,6 +299,7 @@ struct LocalData: Codable {
   func anotherSet() {
     data.session?.stage = .setup
     data.session?.restEnds = nil
+    data.session?.restStarted = nil
     persist()
   }
   func changeExercise() {
@@ -297,11 +308,32 @@ struct LocalData: Codable {
     data.session?.stage = .exercise
     persist()
   }
-  func setRest(seconds: Int?) {
-    guard seconds == nil || (0...3600).contains(seconds!) else { return }
-    data.session?.restEnds = seconds.map { Date().addingTimeInterval(Double($0)) }
-    if let seconds { data.profile.restSeconds = seconds }
-    persist()
+  func restElapsed(at date: Date = Date()) -> Int {
+    guard let start = session?.restStarted else { return 0 }
+    return max(0, Int(date.timeIntervalSince(start)))
+  }
+  /// Resolve the current set before switching; completed sets retain their original exercise.
+  @discardableResult func switchExercise(
+    to exercise: Exercise, savingCurrent: Bool, reps: Int = 0, minutes: Double = 0
+  ) -> Bool {
+    guard let current = session, current.selected?.id != exercise.id else { return false }
+    if current.stage == .active || current.stage == .log {
+      if savingCurrent {
+        guard
+          current.selected?.timed == true
+            ? minutes.isFinite && minutes > 0 : (1...999).contains(reps)
+        else { return false }
+        if current.stage == .active {
+          finishSet(reps: reps, minutes: minutes)
+        } else {
+          logSet(reps: reps, minutes: minutes)
+        }
+      } else {
+        cancelSet()
+      }
+    }
+    chooseExercise(exercise)
+    return session?.selected?.id == exercise.id
   }
   func cancelSet() {
     guard session?.stage == .active || session?.stage == .log else { return }
@@ -318,7 +350,7 @@ struct LocalData: Codable {
     data.session?.sets.append(attempt)
     data.session?.stage = .rest
     data.session?.restSourceID = attempt.id
-    data.session?.restEnds = Date().addingTimeInterval(Double(profile.restSeconds ?? 60))
+    data.session?.restStarted = Date()
     persist()
   }
   func editSet(_ set: LoggedSet, sessionID: UUID) -> Bool {
@@ -350,8 +382,9 @@ struct LocalData: Codable {
     if session?.id == sessionID {
       deletionWasRest = session?.stage == .rest && session?.restSourceID == set.id
       if deletionWasRest {
-        deletionRest = session?.restEnds
+        deletionRest = session?.restStarted
         data.session?.restEnds = nil
+        data.session?.restStarted = nil
         data.session?.restSourceID = nil
         data.session?.stage = .setup
       }
@@ -368,7 +401,7 @@ struct LocalData: Codable {
       data.session?.sets.sort { $0.date < $1.date }
       if deletionWasRest && session?.stage == .setup && session?.restSourceID == nil {
         data.session?.stage = .rest
-        data.session?.restEnds = deletionRest
+        data.session?.restStarted = deletionRest
         data.session?.restSourceID = set.id
       }
     } else if let h = data.history.firstIndex(where: { $0.id == id }) {
@@ -398,6 +431,7 @@ struct LocalData: Codable {
     guard var session = data.session else { return }
     session.ended = Date()
     session.restEnds = nil
+    session.restStarted = nil
     if !session.sets.isEmpty { data.history.insert(session, at: 0) }
     summary = session
     data.session = nil  // The simulated block ends before the summary appears.

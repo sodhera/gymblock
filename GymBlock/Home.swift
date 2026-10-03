@@ -2,10 +2,8 @@ import SwiftUI
 
 struct HomeView: View {
   @EnvironmentObject private var store: GymStore
-  @Environment(\.dynamicTypeSize) private var typeSize
   @State private var settings = false
-  @State private var progress = false
-  @State private var splits = false
+  var onSplits: () -> Void = {}
   @State private var consistency = false
   private var split: Workout? {
     store.data.workouts.first { $0.id == store.profile.preferredSplitID }
@@ -32,90 +30,38 @@ struct HomeView: View {
               .accessibilityLabel(store.t("Settings")).accessibilityIdentifier("home.preferences")
           }
           streakCard
-          VStack(alignment: .leading, spacing: 12) {
-            Text(store.t("Your workout")).font(GymType.hero(22)).foregroundStyle(GymColor.ink)
-            VStack(alignment: .leading, spacing: 22) {
-              HStack(spacing: 16) {
-                Image(systemName: "dumbbell.fill").font(.system(size: 26, weight: .medium))
-                  .foregroundStyle(GymColor.red).frame(width: 62, height: 70)
-                  .background(GymColor.red.opacity(0.09), in: RoundedRectangle(cornerRadius: 18))
-                Menu {
-                  Button(store.t("Free workout")) {
-                    store.updateProfile { $0.preferredSplitID = nil }
-                  }
-                  ForEach(store.data.workouts) { split in
-                    Button(split.name) { store.updateProfile { $0.preferredSplitID = split.id } }
-                  }
-                  Divider()
-                  Button(store.t("Manage splits")) { splits = true }
-                } label: {
-                  HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 5) {
-                      Text(split?.name ?? store.t("Free workout")).font(GymType.title(24))
-                        .foregroundStyle(GymColor.ink).multilineTextAlignment(.leading)
-                      Text(
-                        split.map { "\($0.exercises.count) " + store.t("exercises") }
-                          ?? store.t("One move at a time.")
-                      )
-                      .font(GymType.body(14)).foregroundStyle(GymColor.dim)
-                    }
-                    Spacer(minLength: 6)
-                    Image(systemName: "chevron.down").font(.system(size: 12, weight: .semibold))
-                      .foregroundStyle(GymColor.dim)
-                  }.frame(minHeight: 60).contentShape(Rectangle())
-                }.accessibilityIdentifier("home.workout")
-              }
-              GymButton(title: store.t("Start workout"), icon: "arrow.right", id: "home.start") {
-                store.startSession(workout: split)
-              }
-            }.padding(20).gymCard()
-          }
-          VStack(alignment: .leading, spacing: 12) {
-            HStack {
-              Text(store.t("Best lifts")).font(GymType.hero(22)).foregroundStyle(GymColor.ink)
-              Spacer()
-              Button {
-                progress = true
-              } label: {
-                HStack(spacing: 5) {
-                  Text(store.t("Progress")).font(GymType.label(14))
-                  Image(systemName: "arrow.up.right").font(.system(size: 11, weight: .semibold))
-                }.frame(minHeight: 44)
-              }.accessibilityIdentifier("home.progress")
+          Menu {
+            Button(store.t("Free workout")) { store.updateProfile { $0.preferredSplitID = nil } }
+            ForEach(store.data.workouts) { split in
+              Button(split.name) { store.updateProfile { $0.preferredSplitID = split.id } }
             }
-            VStack(alignment: .leading, spacing: 0) {
-              if store.biggestLifts.isEmpty {
-                Text(store.t("Your best lifts will appear here.")).font(GymType.body(15))
-                  .foregroundStyle(GymColor.dim).padding(.vertical, 16)
+            Divider()
+            Button(store.t("Manage splits")) { onSplits() }
+          } label: {
+            HStack {
+              VStack(alignment: .leading, spacing: 6) {
+                Text(split?.name ?? store.t("Free workout")).font(GymType.title(24))
+                  .foregroundStyle(GymColor.ink).multilineTextAlignment(.leading)
+                Text(
+                  split.map { "\($0.exercises.count) " + store.t("exercises") }
+                    ?? store.t("Choose exercises as you go")
+                )
+                .font(GymType.body(15)).foregroundStyle(GymColor.dim)
+                  .multilineTextAlignment(.leading)
               }
-              ForEach(Array(store.biggestLifts.prefix(3)).indices, id: \.self) { index in
-                let record = Array(store.biggestLifts.prefix(3))[index]
-                if typeSize.isAccessibilitySize {
-                  VStack(alignment: .leading, spacing: 8) {
-                    Text(store.t(record.set.exercise.name)).font(GymType.body(16)).foregroundStyle(
-                      GymColor.ink)
-                    Text(setValue(record.set, store: store)).font(GymType.label(15))
-                      .monospacedDigit().foregroundStyle(GymColor.dim)
-                  }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 15)
-                } else {
-                  HStack(alignment: .firstTextBaseline, spacing: 16) {
-                    Text(store.t(record.set.exercise.name)).font(GymType.body(16)).foregroundStyle(
-                      GymColor.ink)
-                    Spacer(minLength: 0)
-                    Text(setValue(record.set, store: store)).font(GymType.label(15))
-                      .monospacedDigit().foregroundStyle(GymColor.dim).fixedSize(
-                        horizontal: true, vertical: false)
-                  }.padding(.vertical, 15)
-                }
-                if index < min(2, store.biggestLifts.count - 1) { Divider().opacity(0.45) }
-              }
-            }.padding(.horizontal, 20).gymCard()
-          }
+              Spacer(minLength: 8)
+              Image(systemName: "chevron.down").font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(GymColor.dim)
+            }.frame(minHeight: 60).contentShape(Rectangle())
+          }.accessibilityIdentifier("home.workout").padding(.top, 8)
         }.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 28)
       }.gymPage().toolbar(.hidden, for: .navigationBar)
+        .safeAreaInset(edge: .bottom) {
+          GymButton(title: store.t("Start workout"), id: "home.start") {
+            store.startSession(workout: split)
+          }.padding(.horizontal, 24).padding(.vertical, 16)
+        }
         .sheet(isPresented: $settings) { PreferencesView() }
-        .sheet(isPresented: $progress) { ProgressView() }
-        .sheet(isPresented: $splits) { NavigationStack { SplitsView(onDone: { splits = false }) } }
         .sheet(isPresented: $consistency) {
           NavigationStack {
             List {
@@ -283,31 +229,6 @@ struct WorkoutRecap: View {
         "\(session.completedSets.count) " + store.t("sets")
           + " · \(max(1, Int(session.duration / 60))) " + store.t("min")
       ).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-    }
-  }
-}
-struct HistoryView: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dismiss) private var dismiss
-  var body: some View {
-    NavigationStack {
-      List {
-        if store.data.history.isEmpty {
-          Text(store.t("No workouts yet.")).foregroundStyle(GymColor.dim)
-        }
-        ForEach(store.data.history) { session in
-          NavigationLink {
-            WorkoutDetailView(sessionID: session.id)
-          } label: {
-            WorkoutRecap(session: session)
-          }.accessibilityIdentifier("history." + session.id.uuidString)
-        }
-      }.gymPage().navigationTitle(store.t("History")).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("history.done")
-          }
-        }
     }
   }
 }

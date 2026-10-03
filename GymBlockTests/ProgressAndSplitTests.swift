@@ -68,10 +68,10 @@ import XCTest
     store.finishSet(reps: 12, minutes: 0)
     XCTAssertEqual(store.session?.sets.count, 1)
     XCTAssertEqual(store.session?.stage, .rest)
-    XCTAssertNotNil(store.session?.restEnds)
+    XCTAssertNotNil(store.session?.restStarted)
     store.startSet(weight: 22.5, unit: "kg")
     XCTAssertEqual(store.session?.stage, .active)
-    XCTAssertNil(store.session?.restEnds)
+    XCTAssertNil(store.session?.restStarted)
     store.updateDraft(reps: 8)
     XCTAssertEqual(GymStore(defaults: defaults).session?.draftReps, 8)
   }

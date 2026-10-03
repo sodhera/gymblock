@@ -1,6 +1,6 @@
 # GymBlock design
 
-Follow `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
+Follow `docs/GYM-FLOW-REVIEW.md` for the latest page review and navigation/rest corrections, and `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
 
 ## Visual system
 
@@ -8,19 +8,19 @@ The 3 October visual revision uses the native Speaking Coach as a read-only refe
 
 Red remains the sole accent: #C92535 in light appearance and #FF626B in dark appearance, with higher-contrast variants. Warm paper #F3EFEB, warm ink #231A1B, and soft #FFFCF9 content surfaces reproduce Speaking Coach's temperature while retaining GymBlock's deeper red. Dark appearance has its own warm near-black ground and lighter ink. A restrained 22-point dot grid appears behind content; it is removed with increased contrast or Reduce Transparency.
 
-Bundle the same unmodified DM Sans variable font and its SIL Open Font License. Use its weight and optical-size axes: hero 600, titles/labels 500, body 400. Use scaled text for accessibility, with 28-point Home greetings, 22-point section headings, 32-point exercise/onboarding titles, 17-point body and 12–15-point supporting copy. Weight/reps/rest use an already-scaled 72-point numeric role; weight units use a smaller baseline-aligned label. Native navigation titles use the same family. Do not substitute another font silently.
+Bundle the same unmodified DM Sans variable font and its SIL Open Font License. Use its weight and optical-size axes: hero 600, titles/labels 500, body 400. Use scaled text for accessibility, with 28-point Home greetings, 22-point section headings, 32-point exercise/onboarding titles, 17-point body and 12–15-point supporting copy. Weight/reps/rest use an already-scaled 72-point numeric role; weight units use a smaller baseline-aligned label. Elapsed timers remain on one line and fit their available width at large text sizes without clipping digits. Native navigation titles use the same family. Do not substitute another font silently.
 
-Use 24-point page margins, 20–24-point card insets and 24–28-point section spacing. Speaking Coach's soft 26-point surfaces group distinct tasks: streak, workout choice/action, grouped lift records, and the current set. Do not put every row in a separate card. The streak has a large value and a truthful seven-day activity row. Home starts with a personal time-of-day greeting and has no duplicate navigation wordmark.
+Use 24-point page margins, 20–24-point card insets and 24–28-point section spacing. Speaking Coach's soft 26-point surfaces group distinct tasks: streak and the current set. Do not put every row in a separate card. The streak has a large value and a truthful seven-day activity row. Home starts with a personal time-of-day greeting and has no duplicate navigation wordmark.
 
 Keep native Liquid Glass on functional controls and navigation, with native bordered fallback below iOS 26. Solid workout content provides clear numbers. Shadows are subtle; the primary red action has a restrained glow. No new routes, setup steps, explanatory paragraphs or extra workout controls are added for decoration.
 
 ## Structure
 
-Home has a compact streak card, an explicit workout choice, Start workout and three compact lift records. Progress and Settings are its secondary destinations. A split starts directly at its first exercise; Free workout starts at native search/recent exercises.
+Native bottom navigation has Home, History and Splits. Home has a compact streak, a plain workout choice and a bottom Start workout action; it has no lift records or separate workout card. History owns finished workouts, older stats, lift records and split progress. Settings remains a small sheet. A split starts directly at its first exercise; Free workout starts at native search/recent exercises.
 
-Ready → Start set → actual Reps completed → Finish set → rest → Start next set. One primary action stays near the bottom. Rest starts after saving and can be interrupted. Exercise changes retain rest and independent values. Uncommon actions belong in Workout options or the saved-set editor, not a grid of controls.
+Ready → Start set → actual Reps completed → Finish set → rest → Start next set. One primary action stays near the bottom. Rest elapsed counts upward from saving and continues across exercise selection, tabs and relaunch. Change exercise is visible before, during and after a set. During an unfinished set it offers save/discard/keep training; completed work retains its original exercise and the split template stays unchanged. Exercise changes retain rest and independent values. Uncommon actions belong in Workout options or the saved-set editor, not a grid of controls.
 
-First-time exercise weight is explicitly chosen; unknown reps stay blank. Record actual completed reps regardless of prior values. Attempts are distinct from completed sets and never count as lift records or training streaks. Corrections update the same record. Deleting the most recent accidental set cancels only its own rest; undo restores its original deadline when no new active set has started. Timed exercise records actual elapsed duration or an explicit correction.
+First-time exercise weight is explicitly chosen; unknown reps stay blank. Record actual completed reps regardless of prior values. Attempts are distinct from completed sets and never count as lift records or training streaks. Corrections update the same record. Deleting the most recent accidental set cancels only its own rest; undo restores its original rest start when no new active set has started. Timed exercise records actual elapsed duration or an explicit correction.
 
 Progress has a neutral first result and red latest result. Compare weight with reps held constant, or reps with weight held constant. Charts live behind History. Reduced Motion shows the final comparison immediately. Never invent a combined strength or body-change score.
 

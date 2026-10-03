@@ -4,7 +4,8 @@ struct SessionView: View {
   @EnvironmentObject private var store: GymStore
   @State private var exercisePicker = false
   @State private var weightEditor = false
-  @State private var restEditor = false
+  @State private var switching = false
+  @State private var pendingExercise: Exercise?
   @State private var records = false
   @State private var ending = false
   @State private var editing: LoggedSet?
@@ -15,13 +16,6 @@ struct SessionView: View {
   private var exercise: Exercise? { session.selected }
   private var active: Bool { session.stage == .active || session.stage == .log }
   private var selecting: Bool { session.stage == .exercise || session.stage == .workout }
-  private var nextExercise: Exercise? {
-    guard session.splitID != nil,
-      let i = session.exercises.firstIndex(where: { $0.id == exercise?.id }),
-      i + 1 < session.exercises.count
-    else { return nil }
-    return session.exercises[i + 1]
-  }
   private var actualMinutes: Double {
     if let entered = parseNumber(minutes) { return entered }
     return max(0, Date().timeIntervalSince(session.setStarted ?? Date()) / 60)
@@ -51,10 +45,10 @@ struct SessionView: View {
                 HStack(alignment: .firstTextBaseline) {
                   Text(store.t(exercise?.name ?? "Exercise")).font(GymType.hero(32))
                     .multilineTextAlignment(.leading)
-                  if !active { Image(systemName: "chevron.down").font(GymType.body(12)) }
+                  Image(systemName: "chevron.down").font(GymType.body(12))
                 }.foregroundStyle(GymColor.ink).frame(
                   maxWidth: .infinity, minHeight: 44, alignment: .leading)
-              }.disabled(active).accessibilityIdentifier("set.exercise")
+              }.accessibilityIdentifier("set.exercise")
               VStack(alignment: .leading, spacing: 24) {
                 if active { activeContent } else { readyContent }
               }.frame(maxWidth: .infinity, alignment: .leading).padding(24).gymCard()
@@ -84,16 +78,11 @@ struct SessionView: View {
                   weight: GymStore.displayedWeight(session.weightKG, unit: store.profile.unit),
                   unit: store.profile.unit)
               }
-              if let nextExercise {
-                Button(store.t("Next:") + " " + store.t(nextExercise.name)) {
-                  store.chooseExercise(nextExercise)
-                }.frame(minHeight: 44).accessibilityIdentifier("set.next")
-              } else {
-                Button(store.t("Change exercise")) { exercisePicker = true }.frame(minHeight: 44)
-                  .accessibilityIdentifier("set.change")
-              }
             }
-          }.padding(.horizontal, 24).padding(.bottom, 12)
+            Button(store.t("Change exercise")) { exercisePicker = true }
+              .font(GymType.label(16)).frame(minHeight: 44).accessibilityIdentifier("set.change")
+          }
+          .padding(.horizontal, 24).padding(.bottom, 12)
         }
       }
       .gymPage().navigationTitle(store.t(session.name)).navigationBarTitleDisplayMode(.inline)
@@ -129,12 +118,19 @@ struct SessionView: View {
           store.cancelSet()
           store.finish()
         }.accessibilityIdentifier("session.discardEnd")
-        Button(store.t("Keep training"), role: .cancel) {}
+        Button(store.t("Keep training")) {}
       }
-      .sheet(isPresented: $exercisePicker) {
+      .sheet(
+        isPresented: $exercisePicker,
+        onDismiss: {
+          if pendingExercise != nil { switching = true }
+        }
+      ) {
         NavigationStack {
           ExercisePickerContent {
-            store.chooseExercise($0)
+            if $0.id != exercise?.id {
+              if active { pendingExercise = $0 } else { store.chooseExercise($0) }
+            }
             exercisePicker = false
           }.gymPage().navigationTitle(store.t("Exercises")).navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -150,7 +146,21 @@ struct SessionView: View {
           store.updateWeight(value, unit: unit)
         }
       }
-      .sheet(isPresented: $restEditor) { RestEditor() }
+      .confirmationDialog(
+        store.t("Switch exercise?"), isPresented: $switching, titleVisibility: .visible
+      ) {
+        Button(store.t("Save set and switch")) { resolveSwitch(saving: true) }
+          .disabled(!valid).accessibilityIdentifier("switch.save")
+        Button(store.t("Discard current set and switch"), role: .destructive) {
+          resolveSwitch(saving: false)
+        }
+        .accessibilityIdentifier("switch.discard")
+        Button(store.t("Keep training")) { pendingExercise = nil }
+          .accessibilityIdentifier("switch.cancel")
+      } message: {
+        Text(store.t("Completed sets stay saved. Choose what to do with this unfinished set."))
+      }
+      .onChange(of: switching) { _, presented in if !presented { pendingExercise = nil } }
       .sheet(isPresented: $records) { SessionRecordsView() }
       .sheet(item: $editing) { SetEditor(set: $0, sessionID: session.id) }
       .onAppear { loadReps() }
@@ -179,7 +189,8 @@ struct SessionView: View {
         Text(
           clockString(
             max(0, Int(context.date.timeIntervalSince(session.setStarted ?? context.date))))
-        ).font(GymType.number(numberSize)).monospacedDigit()
+        ).font(GymType.number(numberSize)).monospacedDigit().lineLimit(1)
+          .minimumScaleFactor(0.5).frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier("set.elapsed")
       }
       TextField(store.t("Minutes completed (optional correction)"), text: $minutes).keyboardType(
@@ -221,26 +232,24 @@ struct SessionView: View {
   @ViewBuilder private var readyContent: some View {
     if session.stage == .rest {
       TimelineView(.periodic(from: .now, by: 1)) { context in
-        let seconds = max(
-          0, Int(ceil((session.restEnds ?? context.date).timeIntervalSince(context.date))))
-        Button {
-          restEditor = true
-        } label: {
-          VStack(alignment: .leading, spacing: 8) {
-            Text(store.t(seconds > 0 ? "Rest" : "Ready")).font(GymType.body(15)).foregroundStyle(
-              GymColor.dim)
-            Text(clockString(seconds)).font(GymType.number(numberSize))
-              .monospacedDigit().foregroundStyle(GymColor.ink).accessibilityIdentifier(
-                "rest.countdown")
-          }
-        }.accessibilityLabel(store.t("Edit rest timer")).accessibilityIdentifier("rest.edit")
+        VStack(alignment: .leading, spacing: 8) {
+          Text(store.t("Rest elapsed")).font(GymType.label(15)).foregroundStyle(GymColor.dim)
+          Text(clockString(store.restElapsed(at: context.date))).font(GymType.number(numberSize))
+            .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
+            .frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(GymColor.ink)
+            .accessibilityIdentifier("rest.elapsed")
+        }.frame(maxWidth: .infinity, alignment: .leading)
       }
       if let last = session.sets.last {
         Button {
           editing = last
         } label: {
           HStack {
-            Text(store.t("Saved:") + " " + setValue(last, store: store)).foregroundStyle(
+            Text(
+              (last.exercise.id == exercise?.id
+                ? store.t("Saved:") : store.t(last.exercise.name) + " ·")
+                + " " + setValue(last, store: store)
+            ).foregroundStyle(
               GymColor.dim
             )
             .font(GymType.body(15))
@@ -299,6 +308,14 @@ struct SessionView: View {
         .accessibilityIdentifier("set.undo")
     }
   }
+  private func resolveSwitch(saving: Bool) {
+    guard let next = pendingExercise else { return }
+    dismissKeyboard()
+    store.switchExercise(
+      to: next, savingCurrent: saving, reps: Int(reps) ?? 0, minutes: actualMinutes)
+    pendingExercise = nil
+    minutes = ""
+  }
   private func loadReps() {
     reps = session.draftRepsText ?? String(session.draftReps ?? 10)
     if active && exercise?.timed == true, let value = session.draftMinutes, value > 0 {
@@ -323,39 +340,23 @@ struct ExercisePickerContent: View {
     if !search.isEmpty {
       return store.allExercises.filter { store.t($0.name).localizedCaseInsensitiveContains(search) }
     }
-    if store.session?.splitID != nil { return store.session?.exercises ?? [] }
     let recent = store.data.history.flatMap(\.sets).map(\.exercise)
     var seen = Set<String>()
-    return Array((recent + store.allExercises).filter { seen.insert($0.id).inserted }.prefix(8))
+    let inWorkout = Set((store.session?.exercises ?? []).map(\.id))
+    return Array(
+      (recent + store.allExercises).filter {
+        !inWorkout.contains($0.id) && seen.insert($0.id).inserted
+      }.prefix(8))
   }
   var body: some View {
     List {
-      Section(
-        store.t(
-          search.isEmpty
-            ? (store.session?.splitID == nil ? "Recent exercises" : "This split") : "Results")
-      ) {
-        ForEach(matches) { exercise in
-          Button {
-            dismissKeyboard()
-            onChoose(exercise)
-          } label: {
-            HStack {
-              Text(store.t(exercise.name)).foregroundStyle(GymColor.ink)
-              Spacer()
-              if store.session?.splitID != nil {
-                let count =
-                  store.session?.sets.filter { $0.exercise.id == exercise.id && $0.completed }.count
-                  ?? 0
-                if count > 0 {
-                  Text("\(count)").foregroundStyle(GymColor.dim).font(GymType.body(12))
-                }
-              }
-              Image(systemName: "chevron.right").font(GymType.body(12)).foregroundStyle(
-                Color(uiColor: .tertiaryLabel))
-            }
-          }.accessibilityIdentifier("exercise." + exercise.id)
+      if search.isEmpty, let exercises = store.session?.exercises, !exercises.isEmpty {
+        Section(store.t("This workout")) {
+          ForEach(exercises) { exercise in exerciseRow(exercise) }
         }
+      }
+      Section(store.t(search.isEmpty ? "Recent exercises" : "Results")) {
+        ForEach(matches) { exercise in exerciseRow(exercise) }
       }
       if matches.isEmpty || !search.isEmpty {
         Button(store.t("Add custom exercise")) { custom = true }.accessibilityIdentifier(
@@ -364,6 +365,27 @@ struct ExercisePickerContent: View {
     }.searchable(text: $search, prompt: store.t("Search exercises"))
       .sheet(isPresented: $custom) { CustomExerciseView { onChoose($0) } }
   }
+  private func exerciseRow(_ exercise: Exercise) -> some View {
+    Button {
+      dismissKeyboard()
+      onChoose(exercise)
+    } label: {
+      HStack {
+        Text(store.t(exercise.name)).foregroundStyle(GymColor.ink)
+        Spacer()
+        let count =
+          store.session?.sets.filter { $0.exercise.id == exercise.id && $0.completed }.count ?? 0
+        if count > 0 { Text("\(count)").font(GymType.body(12)).foregroundStyle(GymColor.dim) }
+        Image(
+          systemName: store.session?.selected?.id == exercise.id
+            ? "checkmark.circle.fill" : "chevron.right"
+        )
+        .font(.system(size: 13)).foregroundStyle(
+          store.session?.selected?.id == exercise.id ? GymColor.red : GymColor.dim)
+      }.frame(minHeight: 44)
+    }.accessibilityIdentifier("exercise." + exercise.id)
+  }
+
 }
 struct WeightEditor: View {
   @EnvironmentObject private var store: GymStore
@@ -453,30 +475,6 @@ struct WeightEditor: View {
         converted = (text, weightKG)
       }
     }.presentationDetents([.medium, .large])
-  }
-}
-struct RestEditor: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dismiss) private var dismiss
-  @State private var seconds = 60
-  var body: some View {
-    NavigationStack {
-      Form {
-        Picker(store.t("Rest duration"), selection: $seconds) {
-          ForEach([0, 30, 60, 90, 120, 180, 240, 300], id: \.self) { Text(clockString($0)).tag($0) }
-        }.pickerStyle(.wheel)
-      }
-      .gymPage().navigationTitle(store.t("Rest")).navigationBarTitleDisplayMode(.inline).toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
-        ToolbarItem(placement: .confirmationAction) {
-          Button(store.t("Done")) {
-            store.setRest(seconds: seconds)
-            dismiss()
-          }
-        }
-      }
-      .onAppear { seconds = store.profile.restSeconds ?? 60 }
-    }.presentationDetents([.medium])
   }
 }
 struct SelectNumberOnFocus: ViewModifier {

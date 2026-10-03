@@ -115,7 +115,7 @@ import XCTest
     XCTAssertEqual(store.data.history.count, 2)
     XCTAssertEqual(store.weekCount, 1)
   }
-  func testRestDeadlineAndLocalPreferencesSurviveRelaunch() {
+  func testRestCounterAndLocalPreferencesSurviveRelaunch() {
     let store = GymStore(defaults: defaults)
     store.updateProfile {
       $0.blockWholePhone = false
@@ -130,12 +130,11 @@ import XCTest
     store.startSet(weight: 10, unit: "kg")
     store.showLog()
     store.logSet(reps: 8, minutes: 0)
-    store.setRest(seconds: 60)
     let loaded = GymStore(defaults: defaults)
     XCTAssertEqual(loaded.profile.blockedApps, ["YouTube"])
     XCTAssertEqual(loaded.session?.stage, .rest)
-    XCTAssertNotNil(loaded.session?.restEnds)
+    XCTAssertNotNil(loaded.session?.restStarted)
     loaded.anotherSet()
-    XCTAssertNil(loaded.session?.restEnds)
+    XCTAssertNil(loaded.session?.restStarted)
   }
 }
