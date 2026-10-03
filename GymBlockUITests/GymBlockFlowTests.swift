@@ -30,10 +30,14 @@ final class GymBlockFlowTests: XCTestCase {
   }
   private func fill(_ id: String, _ value: String) {
     let field = app.textFields[id]
+    for _ in 0..<5 {
+      if field.exists { break }
+      scrollForm()
+    }
     XCTAssertTrue(field.waitForExistence(timeout: 6), id)
-    for _ in 0..<3 {
+    for _ in 0..<5 {
       if field.isHittable { break }
-      app.swipeUp()
+      scrollForm()
     }
     field.tap()
     if let old = field.value as? String, old != field.placeholderValue {
@@ -41,6 +45,17 @@ final class GymBlockFlowTests: XCTestCase {
     }
     field.typeText(value)
 
+  }
+  private func scrollForm() {
+    let scroll = app.scrollViews.firstMatch
+    let collection = app.collectionViews.firstMatch
+    if scroll.exists && scroll.isHittable {
+      scroll.swipeUp()
+    } else if collection.exists && collection.isHittable {
+      collection.swipeUp()
+    } else {
+      app.swipeUp()
+    }
   }
   private func search(_ text: String) {
     let field = app.searchFields.firstMatch
@@ -145,97 +160,7 @@ final class GymBlockFlowTests: XCTestCase {
     tap("progress.chart")
     XCTAssertTrue(app.staticTexts["History"].exists)
   }
-  func testPersonalOnboardingCalculationAndResume() {
-    freshOnboarding()
-    snap("onboarding-01-welcome")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["How often do you work out?"].exists)
-    XCTAssertFalse(app.buttons["baseline.between.yes"].exists)
-    tap("baseline.visits.3")
-    snap("onboarding-02-frequency")
-    tap("onboarding.continue")
-    tap("baseline.duration.60")
-    snap("onboarding-03-duration")
-    tap("onboarding.continue")
-    survey("baseline.exercises", choice: "6")
-    survey("baseline.sets", choice: "3")
-    survey("baseline.reps", choice: "8–12")
-    XCTAssertTrue(app.staticTexts["baseline.routine.total"].label.contains("144–216"))
-    snap("onboarding-04-routine")
-    app.terminate()
-    app.launchArguments = []
-    app.launch()
-    XCTAssertTrue(app.buttons["baseline.reps"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["baseline.reps"].label.contains("8–12"))
-    tap("onboarding.continue")
-    snap("onboarding-05-scroll-question")
-    tap("baseline.between.yes")
-    tap("onboarding.continue")
-    tap("baseline.break.2")
-    snap("onboarding-06-minutes")
-    tap("onboarding.continue")
-    XCTAssertEqual(app.staticTexts["baseline.result"].label, "34")
-    snap("onboarding-07-before")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["baseline.weekly"].label.contains("102"))
-    snap("onboarding-08-after")
-    tap("baseline.scenario.half")
-    XCTAssertEqual(app.staticTexts["baseline.result"].label, "17")
-    XCTAssertTrue(app.staticTexts["baseline.weekly"].label.contains("51"))
-    app.terminate()
-    app.launchArguments = []
-    app.launch()
-    XCTAssertTrue(app.staticTexts["baseline.result"].waitForExistence(timeout: 5))
-    XCTAssertEqual(app.staticTexts["baseline.result"].label, "17")
-    tap("onboarding.continue")
-    snap("onboarding-09-ready")
-    tap("onboarding.example")
-    tap("example.set")
-    tap("example.set")
-    snap("onboarding-10-example-rest")
-    app.buttons["Done"].tap()
-    tap("onboarding.focus")
-    XCTAssertTrue(
-      app.staticTexts["This demo previews focus mode. It doesn't block other apps."].exists)
-    snap("onboarding-11-focus-demo")
-    app.buttons["Done"].tap()
-    tap("onboarding.skip")
-    XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 5))
-    tab("History")
-    XCTAssertTrue(app.staticTexts["No workouts yet."].exists)
-  }
-  func testZeroScrollingSkipDurationAndEarlyEnd() {
-    freshOnboarding()
-    tap("onboarding.continue")
-    tap("onboarding.skip")  // Unknown frequency.
-    tap("onboarding.skip")  // Unknown visit.
-    tap("baseline.timed")
-    tap("onboarding.continue")
-    tap("baseline.between.no")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["Ready for your next set."].exists)
-    XCTAssertFalse(app.staticTexts["baseline.result"].exists)
-    tap("onboarding.continue")
-    search("Running")
-    tap("exercise.run")
-    tap("set.start")
-    fill("set.minutes", "5")
-    tap("set.stop")
-    XCTAssertTrue(app.buttons["set.saved"].label.contains("5 min"))
-    end()
-    tap("summary.done")
-    tap("home.start")
-    tap("exercise.curl")
-    XCTAssertFalse(app.buttons["set.start"].isEnabled)
-    snap("redesign-24-first-weight")
-    editWeight("10")
-    tap("set.start")
-    fill("set.reps", "8")
-    end()
-    tap("session.discardEnd")
-    tap("summary.done")
-    XCTAssertTrue(app.buttons["home.start"].exists)
-  }
+
   func testNativeSplitEditorAndPoundsConversion() {
     tap("home.preferences")
     tap("settings.splits")
@@ -269,25 +194,7 @@ final class GymBlockFlowTests: XCTestCase {
     tap("set.undo")
     XCTAssertTrue(app.staticTexts["rest.elapsed"].exists)
   }
-  func testSpanishOnboardingAndBackPreserveAnswers() {
-    freshOnboarding()
-    tap("onboarding.options")
-    app.buttons["Español"].tap()
-    XCTAssertTrue(app.staticTexts["Quédate con tu entrenamiento."].exists)
-    snap("onboarding-12-spanish")
-    tap("onboarding.continue")
-    tap("baseline.visits.3")
-    tap("onboarding.continue")
-    tap("baseline.duration.60")
-    tap("onboarding.continue")
-    tap("onboarding.back")
-    XCTAssertTrue(app.buttons["baseline.duration"].label.contains("60"))
-    tap("onboarding.back")
-    XCTAssertTrue(app.buttons["baseline.visits"].label.contains("3"))
-    tap("onboarding.options")
-    app.buttons["Entrenar ahora"].tap()
-    XCTAssertTrue(app.buttons["exercise.curl"].waitForExistence(timeout: 5))
-  }
+
   func testLargeTextWorkoutControlsStayReachable() {
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 5))
     snap("redesign-17-accessible-home")
@@ -312,108 +219,7 @@ final class GymBlockFlowTests: XCTestCase {
     XCTAssertTrue(app.buttons["set.start"].isHittable)
     XCTAssertTrue(app.buttons["set.change"].isHittable)
     snap("redesign-20-accessible-rest")
-    freshOnboarding()
-    snap("onboarding-ax-welcome")
-    toScrolling()
-    snap("onboarding-ax-scroll-question")
-    tap("baseline.between.yes")
-    tap("onboarding.continue")
-    tap("baseline.break.2")
-    snap("onboarding-ax-minutes")
-    tap("onboarding.continue")
-    snap("onboarding-ax-before")
-    tap("onboarding.continue")
-    snap("onboarding-ax-after")
-    tap("onboarding.skip")
-    tap("onboarding.skip")
-    XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 5))
-  }
 
-  private func freshOnboarding() {
-    app.terminate()
-    app.launchArguments = ["--ui-reset"]
-    app.launch()
-    XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 5))
-  }
-  private func survey(_ id: String, choice: String) {
-    tap(id)
-    tap(id + "." + choice)
-    tap("survey.done")
-  }
-  private func toScrolling() {
-    tap("onboarding.continue")
-    tap("baseline.visits.3")
-    tap("onboarding.continue")
-    tap("baseline.duration.60")
-    snap("onboarding-duration-check")
-    tap("onboarding.continue")
-    survey("baseline.exercises", choice: "6")
-    survey("baseline.sets", choice: "3")
-    tap("onboarding.continue")
-  }
-  func testJustTrainDoesNotSeedHistoryOrEnableFocus() {
-    freshOnboarding()
-    tap("onboarding.skip")
-    XCTAssertTrue(app.buttons["exercise.curl"].waitForExistence(timeout: 5))
-    snap("onboarding-14-just-train")
-    XCTAssertFalse(app.staticTexts["Focus demo"].exists)
-    tab("History")
-    XCTAssertTrue(app.staticTexts["No workouts yet."].exists)
-  }
-  func testUnknownScrollAndMissingCountsBypassPersonalResult() {
-    freshOnboarding()
-    tap("onboarding.continue")
-    tap("onboarding.skip")
-    tap("onboarding.skip")
-    tap("onboarding.continue")
-    tap("baseline.between.unknown")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["Ready for your next set."].exists)
-    tap("onboarding.back")
-    tap("baseline.between.yes")
-    tap("onboarding.continue")
-    tap("baseline.break.2")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["Ready for your next set."].exists)
-    XCTAssertFalse(app.staticTexts["baseline.result"].exists)
-    tap("onboarding.skip")
-    XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 5))
-  }
-
-  func testCompactOnboardingManualEntryAndComparison() {
-    freshOnboarding()
-    snap("compact-01-welcome")
-    tap("onboarding.continue")
-    tap("baseline.visits")
-    fill("baseline.visits.manual", "3")
-    tap("survey.done")
-    tap("onboarding.continue")
-    tap("baseline.duration")
-    fill("baseline.duration.manual", "75")
-    snap("compact-02-keyboard")
-    tap("survey.done")
-    XCTAssertTrue(app.buttons["baseline.duration"].label.contains("75"))
-    snap("compact-03-duration")
-    tap("onboarding.continue")
-    survey("baseline.exercises", choice: "6")
-    survey("baseline.sets", choice: "3")
-    survey("baseline.reps", choice: "8–12")
-    snap("compact-04-routine")
-    tap("onboarding.continue")
-    tap("baseline.between.yes")
-    tap("onboarding.continue")
-    tap("baseline.break.2")
-    tap("onboarding.continue")
-    snap("compact-05-before")
-    app.buttons["onboarding.continue"].doubleTap()
-    XCTAssertEqual(app.staticTexts["baseline.result"].label, "34")
-    XCTAssertTrue(app.buttons["onboarding.continue"].isHittable)
-    tap("baseline.explanation")
-    app.buttons["Done"].tap()
-    snap("compact-06-after")
-    tap("onboarding.skip")
-    tap("onboarding.continue")
-    XCTAssertTrue(app.buttons["exercise.curl"].waitForExistence(timeout: 5))
   }
 
   private func tab(_ name: String) {
@@ -454,6 +260,7 @@ final class GymBlockFlowTests: XCTestCase {
     tap("history.resume")
     XCTAssertEqual(app.textFields["set.reps"].value as? String, "8")
     tap("set.change")
+    search("hammer")
     tap("exercise.hammer")
     XCTAssertTrue(app.buttons["switch.cancel"].waitForExistence(timeout: 5))
     snap("gym-flow-06-unfinished-set-choice")
@@ -461,6 +268,7 @@ final class GymBlockFlowTests: XCTestCase {
     expectExercise("Dumbbell curl")
     XCTAssertEqual(app.textFields["set.reps"].value as? String, "8")
     tap("set.change")
+    search("hammer")
     tap("exercise.hammer")
     tap("switch.save")
     expectExercise("hammer")
@@ -484,7 +292,7 @@ final class GymBlockFlowTests: XCTestCase {
     tap("exercise.curl")
     tap("switch.discard")
     XCTAssertTrue(app.buttons["set.start"].exists)
-    XCTAssertFalse(app.staticTexts["rest.elapsed"].exists)
+    XCTAssertTrue(app.staticTexts["rest.elapsed"].exists)
     expectExercise("Dumbbell curl")
     tap("session.options")
     tap("session.sets")
@@ -505,7 +313,7 @@ final class GymBlockFlowTests: XCTestCase {
     app.terminate()
     app.launchArguments = ["--ui-reset"]
     app.launch()
-    tap("onboarding.skip")
+    tap("onboarding.secondary")
     XCTAssertTrue(app.buttons["exercise.curl"].waitForExistence(timeout: 5))
     end()
     tap("summary.done")
@@ -562,39 +370,43 @@ final class GymBlockFlowTests: XCTestCase {
     app.segmentedControls["totals.metric"].buttons["Sets"].tap()
     snap("enhanced-06-split-sets")
   }
-  func testBetweenSetOnboardingCalculationMotionAndResume() {
-    freshOnboarding()
-    tap("onboarding.options")
-    tap("onboarding.sound")
-    toScrolling()
-    tap("baseline.between.yes")
-    tap("onboarding.continue")
-    tap("baseline.break.more")
-    fill("baseline.break.minutes.manual", "6")
-    tap("survey.done")
-    XCTAssertTrue(app.staticTexts["onboarding.error"].waitForExistence(timeout: 5))
-    XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)
-    snap("onboarding-13-invalid-estimate")
-    tap("baseline.break.assumption")
-    fill("baseline.break.count.manual", "5")
-    tap("survey.done")
-    XCTAssertFalse(app.staticTexts["onboarding.error"].exists)
-    app.terminate()
-    app.launchArguments = []
-    app.launch()
-    XCTAssertTrue(app.buttons["baseline.break.assumption"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["baseline.break.assumption"].label.contains("5"))
-    tap("onboarding.continue")
-    XCTAssertEqual(app.staticTexts["baseline.result"].label, "30")
-    tap("onboarding.continue")
-    tap("baseline.explanation")
-    XCTAssertTrue(app.staticTexts["5 scrolling breaks × 6 min = 30 min"].exists)
-    app.buttons["Done"].tap()
-    tap("baseline.replay")
-    XCTAssertEqual(app.buttons["onboarding.continue"].label, "See the difference")
-    tap("onboarding.skip")
-    tap("onboarding.skip")
-    XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 5))
+
+  func testSavedTimingAndFourWeekReport() {
+    tap("home.workout")
+    app.buttons["Arms"].tap()
+    tap("home.start")
+    tap("set.start")
+    fill("set.reps", "10")
+    tap("set.stop")
+    tap("set.saved")
+    tap("Recorded timing")
+    fill("edit.elapsed", "35")
+    tap("edit.save")
+    tap("set.start")
+    fill("set.reps", "11")
+    tap("set.stop")
+    tap("set.saved")
+    tap("Recorded timing")
+    fill("edit.elapsed", "40")
+    fill("edit.gap", "90")
+    snap("journey-workout-timing-editor")
+    tap("edit.save")
+    end()
+    tap("summary.done")
+    tab("History")
+    app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "history.")).firstMatch
+      .tap()
+    XCTAssertTrue(app.staticTexts["Set time 0:40"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Gap before 1:30"].exists)
+    snap("journey-workout-saved-timing")
+    app.navigationBars.buttons.firstMatch.tap()
+    app.segmentedControls["history.mode"].buttons["Progress"].tap()
+    tap("progress.totals")
+    let all = app.staticTexts["totals.amount"].label
+    tap("totals.period")
+    app.buttons["Last four weeks"].tap()
+    XCTAssertNotEqual(app.staticTexts["totals.amount"].label, all)
+    snap("journey-workout-four-week-reps")
   }
 
 }

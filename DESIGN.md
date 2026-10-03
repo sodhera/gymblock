@@ -1,6 +1,6 @@
 # GymBlock design
 
-Follow `docs/ONBOARDING-REDESIGN-PROPOSAL.md` for the current onboarding; `docs/PROGRESS-AND-ONBOARDING.md` for visible finishing and training totals, `docs/GYM-FLOW-REVIEW.md` for the latest page review and navigation/rest corrections, and `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
+Follow `docs/ONBOARDING-JOURNEY-V2.md` for the current onboarding; `docs/PROGRESS-AND-ONBOARDING.md` for visible finishing and training totals, `docs/GYM-FLOW-REVIEW.md` for the latest page review and navigation/rest corrections, and `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen budgets and edge-case rules. The approved redesign replaces the earlier blue dashboard and six-step preference/paywall onboarding.
 
 ## Visual system
 
@@ -26,12 +26,16 @@ Progress has a neutral first result and red latest result. Compare weight with r
 
 ## Onboarding and data
 
-The onboarding follows `docs/ONBOARDING-REDESIGN-PROPOSAL.md`: Welcome → frequency → visit duration → routine sketch → scrolling → optional minutes → personal before/after → ready. Questions use centered DM Sans 28-point medium type; hero values use 64–76 points. Warm white/red warmth replaces the dot-grid on onboarding only. Real regular tinted Liquid Glass belongs on controls, with native material/opaque accessibility fallbacks. One central object, one bottom primary action; details live in sheets.
+The onboarding follows `docs/ONBOARDING-JOURNEY-V2.md`: Welcome → days/week → visit length → reps → sets → exercises → scrolling → optional minutes → rest timing → logging/review → set timing → focus → rest → progress → ready. Each number question has one inline wheel; frequency has one seven-value rail, replaced by a wheel at accessibility sizes. No duplicate hero values, preset pills, pencils or routine summary compete with the answer. One pinned Continue confirms the working value. Skipped/unconfirmed values remain unknown.
 
-Name and language are deferred to Settings/options; apps are asked only in the optional Focus demo sheet at the end. Just train opens a free workout with focus disabled. No/unknown scrolling skips minutes and the numeric narrative. Partial routine answers can continue without fabricated totals. The user can edit actual scrolling-break counts for supersets or selected breaks. Before/after keeps the same visit length; phone-free time can include rest. Half/no-scrolling scenarios remain proposals until Use this goal. Survey values and the example set never enter History. Existing per-exercise details remain editable in Settings. No placeholder paywall or predicted muscle/fat outcomes.
+Questions come before explanations. Three chapter indicators remain stationary. The center uses DM Sans medium 28-point questions, red numerical story values, a warm red/paper stage and actual native Liquid Glass for functional controls. Brief numerical traces connect the lifting answers; the same set/gap marks carry into rest and the neutral prospective four-week record. The fixed-length visit does not shrink as scrolling withdraws. The rest example counts upward to a clearly labeled illustrative 2:00. The comparison labels its 20 kg / 10→11 reps / 35 sec values as Example. Future workouts are outlines, not completed achievements.
+
+Name/language remain in Settings/options; apps appear only in the optional Focus demo. Yes/Sometimes scrolling opens the minutes wheel; Sometimes requires an actual scrolling-break count before a personal estimate. The later estimate detail handles supersets and multiple visits. Training days stay distinct from older weekly visits. A one-visit/day assumption is visible; multiple daily visits bypass time projections. Partial/invalid answers get qualitative scenes. Four-week projected sets and reps are routine volume, not predicted improvement or body change. Example records never enter History. Just train opens free training with focus disabled; Ready offers Start workout and Go to Home without another feature detour.
+
+Actual Start-to-Finish duration is stored separately from timed-activity minutes. Each recorded gap keeps its source set ID; changed dates invalidate affected gap meaning and deleted sources hide their gaps until undo. Cancelling an unfinished set restores the prior counter. Missed/manual records have unknown timing. History exposes set time and gaps, and Training totals can filter the last 28 days. Corrections never manufacture progress.
 
 Local-only storage and stable split IDs remain required. Demo seeds are explicit, repeat-safe and marked on Home. Existing data must decode without new optional fields. Native large-text layout, increased contrast, light/dark and reduced motion/transparency remain part of review. Capture actual simulator UI for visual changes.
 
 Focus remains simulated: use Focus demo and honest onboarding copy. No real restriction, billing or distribution claim follows from the prototype.
 
-See `docs/ONBOARDING-REDESIGN-PROPOSAL.md` for the current flow, break assumption, animation, cue and accessibility contracts. `docs/PROGRESS-AND-ONBOARDING.md` documents the previous revision.
+See `docs/ONBOARDING-JOURNEY-V2.md` for the current flow, arithmetic, animation, cue and accessibility contracts. `docs/PROGRESS-AND-ONBOARDING.md` documents the previous revision.

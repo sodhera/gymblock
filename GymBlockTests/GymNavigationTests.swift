@@ -56,9 +56,9 @@ import XCTest
     XCTAssertTrue(store.switchExercise(to: Exercise.catalog[1], savingCurrent: false))
     XCTAssertEqual(store.session?.sets.count, 1)
     XCTAssertEqual(store.session?.sets.first?.reps, 8)
-    XCTAssertEqual(store.session?.stage, .setup)
+    XCTAssertEqual(store.session?.stage, .rest)
     XCTAssertNil(store.session?.setStarted)
-    XCTAssertNil(store.session?.restStarted)
+    XCTAssertNotNil(store.session?.restStarted)
   }
   func testLegacyRestDeadlineMigratesFromLoggedSetDate() throws {
     var data = LocalData()

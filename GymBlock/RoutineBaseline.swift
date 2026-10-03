@@ -48,6 +48,13 @@ struct RoutineBaseline: Codable {
   var minutesPerBreak: Int?
   var scrollingBreaks: Int?
   var goalMinutesPerBreak: Double?
+  var trainingDays: Int?
+  var scrollingMinutes: Double?
+  var scrollFrequency: HabitAnswer?
+  var restTiming: HabitAnswer?
+  var loggingHabit: LoggingHabit?
+  var setTiming: HabitAnswer?
+  var visitsPerTrainingDay: Int?
   var breakCount: Int? { totalSets.map { max(0, $0 - 1) } }
   var effectiveScrollingBreaks: Int? { scrollingBreaks ?? breakCount }
   var breakAssumptionValid: Bool {

@@ -517,6 +517,7 @@ struct SessionRecordsView: View {
 struct SetEditor: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.dynamicTypeSize) private var typeSize
   let set: LoggedSet?
   let sessionID: UUID
   @State private var weight = ""
@@ -525,6 +526,10 @@ struct SetEditor: View {
   @State private var warmup = false
   @State private var date = Date()
   @State private var error = false
+  @State private var elapsedSeconds = ""
+  @State private var gapSeconds = ""
+  @State private var timingExpanded = false
+  @State private var detent = PresentationDetent.medium
   private var exercise: Exercise? { self.set?.exercise ?? store.session?.selected }
   var body: some View {
     NavigationStack {
@@ -547,6 +552,19 @@ struct SetEditor: View {
             Toggle(store.t("Warm-up"), isOn: $warmup)
           }
           if set != nil { DatePicker(store.t("Completed at"), selection: $date, in: ...Date()) }
+        }
+        if let set {
+          DisclosureGroup(store.t("Recorded timing"), isExpanded: $timingExpanded) {
+            timingInput("Set time (seconds)", text: $elapsedSeconds, id: "edit.elapsed")
+            if set.gapSourceID != nil {
+              timingInput("Gap before (seconds)", text: $gapSeconds, id: "edit.gap")
+            }
+            Text(
+              store.t(
+                "Elapsed Start-to-Finish time. Gaps include exercise changes and interruptions.")
+            )
+            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+          }
         }
         if error { Text(store.t("Check the entered values.")).foregroundStyle(GymColor.red) }
         if let set {
@@ -572,8 +590,33 @@ struct SetEditor: View {
           minutes = inputNumber(set?.minutes ?? 5)
           warmup = set?.warmup ?? false
           date = set?.date ?? Date()
+          elapsedSeconds = set?.displayedSetSeconds.map(inputNumber) ?? ""
+          gapSeconds = set?.gapUnknown == true ? "" : set?.gapBeforeSeconds.map(inputNumber) ?? ""
         }
-    }.presentationDetents([.medium, .large])
+    }.presentationDetents([.medium, .large], selection: $detent)
+      .onChange(of: timingExpanded) { _, expanded in
+        if expanded { detent = .large }
+      }
+  }
+  @ViewBuilder private func timingInput(_ title: String, text: Binding<String>, id: String)
+    -> some View
+  {
+    let label = Text(store.t(title)).accessibilityHidden(true)
+    let field = TextField(store.t("Not recorded"), text: text)
+      .keyboardType(.decimalPad).accessibilityLabel(store.t(title))
+      .accessibilityIdentifier(id).frame(minHeight: 44)
+    if typeSize.isAccessibilitySize {
+      VStack(alignment: .leading, spacing: 8) {
+        label.font(GymType.body(14)).foregroundStyle(GymColor.dim)
+        field
+      }.accessibilityElement(children: .contain)
+    } else {
+      HStack {
+        label
+        Spacer()
+        field.multilineTextAlignment(.trailing).frame(width: 100)
+      }.accessibilityElement(children: .contain)
+    }
   }
   private func save() {
     guard let exercise, let value = parseNumber(weight), value.isFinite, (0...500).contains(value)
@@ -586,6 +629,18 @@ struct SetEditor: View {
       set.reps = exercise.timed || set.unsuccessful == true ? 0 : Int(reps) ?? 0
       set.minutes = exercise.timed ? parseNumber(minutes) ?? 0 : 0
       set.warmup = warmup
+      let elapsed = elapsedSeconds.isEmpty ? nil : parseNumber(elapsedSeconds)
+      let gap = gapSeconds.isEmpty ? nil : parseNumber(gapSeconds)
+      guard elapsedSeconds.isEmpty || elapsed != nil, gapSeconds.isEmpty || gap != nil,
+        [elapsed, gap].allSatisfy({ $0 == nil || ($0!.isFinite && $0! >= 0 && $0! <= 604800) })
+      else {
+        error = true
+        return
+      }
+      set.elapsedSetSeconds = elapsed
+      set.timingUnknown = elapsed == nil
+      set.gapBeforeSeconds = gap
+      set.gapUnknown = gap == nil || date != set.date
       set.date = date
       if store.editSet(set, sessionID: sessionID) { dismiss() } else { error = true }
     } else if store.addCompletedSet(
@@ -652,10 +707,12 @@ struct SummaryView: View {
             + " · \(max(1, Int(session.duration / 60))) " + store.t("min")
         ).foregroundStyle(GymColor.dim)
         if !session.repSets.isEmpty {
-          Text("\(session.totalReps) " + store.t("reps") + " · "
-            + formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit))
-            + " " + store.profile.unit + " " + store.t("moved"))
-            .font(GymType.label(17)).accessibilityIdentifier("summary.volume")
+          Text(
+            "\(session.totalReps) " + store.t("reps") + " · "
+              + formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit))
+              + " " + store.profile.unit + " " + store.t("moved")
+          )
+          .font(GymType.label(17)).accessibilityIdentifier("summary.volume")
         }
         Text(store.t("Focus demo ended")).font(GymType.body(13)).foregroundStyle(GymColor.dim)
           .accessibilityIdentifier("summary.unblocked")

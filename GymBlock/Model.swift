@@ -52,6 +52,7 @@ struct Profile: Codable {
   var onboardingScrollAnswered: Bool?
   var onboardingPreviewTarget: Double?
   var onboardingRevealSeen: Bool?
+  var onboardingStoryStage: Int?
   var soundEnabled: Bool?
   var hapticsEnabled: Bool?
 }
@@ -65,6 +66,10 @@ struct LoggedSet: Codable, Identifiable {
   var unsuccessful: Bool?
   var warmup: Bool?
   var timingUnknown: Bool?
+  var elapsedSetSeconds: Double?
+  var gapBeforeSeconds: Double?
+  var gapSourceID: UUID?
+  var gapUnknown: Bool?
   var completed: Bool { unsuccessful != true && (exercise.timed ? minutes > 0 : reps > 0) }
   var comparable: Bool { completed && warmup != true }
 }
@@ -83,6 +88,10 @@ struct Session: Codable, Identifiable {
   var selected: Exercise?
   var stage: Stage = .workout
   var setStarted: Date?
+  var setStopped: Date?
+  var pendingGapStarted: Date?
+  var pendingGapSourceID: UUID?
+  var pendingGapSeconds: Double?
   var restEnds: Date?  // Decode-only legacy countdown deadline.
   var restStarted: Date?
   var weightKG = 0.0
@@ -155,6 +164,7 @@ struct LocalData: Codable {
       $0.onboardingPreviewTarget = nil
       $0.onboardingScrollAnswered = nil
       $0.onboardingRevealSeen = nil
+      $0.onboardingStoryStage = nil
     }
   }
   func startSession(workout: Workout? = nil) {
@@ -220,6 +230,12 @@ struct LocalData: Codable {
     else { return }
     data.session?.weightKG = Self.kilograms(weight, unit: unit)
     data.session?.weightIsSet = true
+    data.session?.pendingGapStarted = session?.restStarted ?? session?.pendingGapStarted
+    data.session?.pendingGapSourceID = session?.restSourceID ?? session?.pendingGapSourceID
+    data.session?.pendingGapSeconds = (session?.restStarted ?? session?.pendingGapStarted).map {
+      max(0, Date().timeIntervalSince($0))
+    }
+    data.session?.setStopped = nil
     data.session?.restEnds = nil
     data.session?.restStarted = nil
     data.session?.restSourceID = nil
@@ -230,6 +246,8 @@ struct LocalData: Codable {
     persist()
   }
   func showLog() {
+    guard session?.stage == .active else { return }
+    data.session?.setStopped = Date()
     data.session?.stage = .log
     persist()
   }
@@ -238,10 +256,14 @@ struct LocalData: Codable {
     guard exercise.timed ? minutes.isFinite && minutes > 0 : (1...999).contains(reps) else {
       return
     }
+    let elapsed = s.setStarted.map { max(0, (s.setStopped ?? Date()).timeIntervalSince($0)) }
     data.session?.sets.append(
       .init(
         exercise: exercise, weightKG: exercise.timed ? 0 : s.weightKG,
-        reps: exercise.timed ? 0 : reps, minutes: exercise.timed ? minutes : 0))
+        reps: exercise.timed ? 0 : reps, minutes: exercise.timed ? minutes : 0,
+        elapsedSetSeconds: elapsed, gapBeforeSeconds: s.pendingGapSeconds,
+        gapSourceID: s.pendingGapSourceID))
+    clearPendingTiming()
     data.session?.stage = .rest
     data.session?.restStarted = Date()
     data.session?.restSourceID = data.session?.sets.last?.id
@@ -256,6 +278,7 @@ struct LocalData: Codable {
     guard exercise.timed ? minutes.isFinite && minutes > 0 : (1...999).contains(reps) else {
       return
     }
+    data.session?.setStopped = Date()
     data.session?.stage = .log
     data.session?.draftReps = reps
     data.session?.draftMinutes = minutes
@@ -312,6 +335,8 @@ struct LocalData: Codable {
     persist()
   }
   func anotherSet() {
+    data.session?.pendingGapStarted = session?.restStarted
+    data.session?.pendingGapSourceID = session?.restSourceID
     data.session?.stage = .setup
     data.session?.restEnds = nil
     data.session?.restStarted = nil
@@ -352,24 +377,38 @@ struct LocalData: Codable {
   }
   func cancelSet() {
     guard session?.stage == .active || session?.stage == .log else { return }
-    data.session?.stage = .setup
-    data.session?.setStarted = nil
+    let source = session?.pendingGapSourceID
+    let exists = source != nil && session?.sets.contains(where: { $0.id == source }) == true
+    data.session?.restStarted = exists ? session?.pendingGapStarted : nil
+    data.session?.restSourceID = exists ? source : nil
+    data.session?.stage = session?.restStarted == nil ? .setup : .rest
+    clearPendingTiming()
     persist()
+  }
+  private func clearPendingTiming() {
+    data.session?.setStarted = nil
+    data.session?.setStopped = nil
+    data.session?.pendingGapStarted = nil
+    data.session?.pendingGapSeconds = nil
+    data.session?.pendingGapSourceID = nil
   }
   func recordAttempt() {
     guard let s = session, let exercise = s.selected, !exercise.timed, s.stage == .active else {
       return
     }
     let attempt = LoggedSet(
-      exercise: exercise, weightKG: s.weightKG, reps: 0, minutes: 0, unsuccessful: true)
+      exercise: exercise, weightKG: s.weightKG, reps: 0, minutes: 0, unsuccessful: true,
+      elapsedSetSeconds: s.setStarted.map { max(0, Date().timeIntervalSince($0)) },
+      gapBeforeSeconds: s.pendingGapSeconds, gapSourceID: s.pendingGapSourceID)
     data.session?.sets.append(attempt)
+    clearPendingTiming()
     data.session?.stage = .rest
     data.session?.restSourceID = attempt.id
     data.session?.restStarted = Date()
     persist()
   }
   func editSet(_ set: LoggedSet, sessionID: UUID) -> Bool {
-    guard set.weightKG.isFinite,
+    guard set.validTiming, set.weightKG.isFinite,
       (0...500).contains(Self.displayedWeight(set.weightKG, unit: profile.unit)),
       set.date <= Date(),
       set.unsuccessful == true
@@ -378,11 +417,30 @@ struct LocalData: Codable {
           ? set.minutes.isFinite && set.minutes > 0 : (1...999).contains(set.reps))
     else { return false }
     if session?.id == sessionID, let i = data.session?.sets.firstIndex(where: { $0.id == set.id }) {
-      data.session?.sets[i] = set
+      let changedDate = data.session?.sets[i].date != set.date
+      var corrected = set
+      if changedDate { corrected.gapUnknown = true }
+      data.session?.sets[i] = corrected
+      if changedDate {
+        for index in data.session!.sets.indices
+        where data.session!.sets[index].gapSourceID == set.id {
+          data.session?.sets[index].gapUnknown = true
+        }
+        if data.session?.pendingGapSourceID == set.id { data.session?.pendingGapSeconds = nil }
+      }
     } else if let h = data.history.firstIndex(where: { $0.id == sessionID }),
       let i = data.history[h].sets.firstIndex(where: { $0.id == set.id })
     {
-      data.history[h].sets[i] = set
+      let changedDate = data.history[h].sets[i].date != set.date
+      var corrected = set
+      if changedDate { corrected.gapUnknown = true }
+      data.history[h].sets[i] = corrected
+      if changedDate {
+        for index in data.history[h].sets.indices
+        where data.history[h].sets[index].gapSourceID == set.id {
+          data.history[h].sets[index].gapUnknown = true
+        }
+      }
     } else {
       return false
     }

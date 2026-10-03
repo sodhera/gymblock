@@ -1,152 +1,188 @@
 import SwiftUI
 
-/// Raw identifiers survive question reordering. Legacy drafts keep their answers and logs.
 enum OnboardingStep: String, CaseIterable {
-  case welcome, frequency, duration, routine, scrolling, minutes, reveal, ready
+  case welcome, frequency, duration, reps, sets, exercises, scrolling, minutes
+  case restHabits, loggingHabits, setTiming, reveal, restStory, progressStory, ready
+  case routine  // Decode-only route from the previous grouped question.
   static func restored(_ profile: Profile) -> Self {
     if let id = profile.onboardingStepID, let step = Self(rawValue: id) {
-      return step == .reveal && profile.baseline?.canReveal != true ? .ready : step
+      return step == .routine ? .reps : step
     }
-    let old: [Self] = [.welcome, .frequency, .duration, .routine, .scrolling, .reveal, .ready]
-    let step = old[min(max(profile.onboardingStep, 0), old.count - 1)]
-    return step == .reveal && profile.baseline?.canReveal != true ? .ready : step
+    let old: [Self] = [.welcome, .frequency, .duration, .reps, .scrolling, .reveal, .ready]
+    let result = old[min(max(profile.onboardingStep, 0), old.count - 1)]
+    return result == .reveal && profile.baseline?.canReveal != true ? .ready : result
   }
-  var progress: Double { Double(Self.allCases.firstIndex(of: self) ?? 0) / 7 }
 }
 
 struct OnboardingView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.scenePhase) private var scenePhase
+  @State private var draft = 3.0
+  @State private var didEdit = false
   @State private var visible = true
   @State private var transitioning = false
   @State private var transitionTask: Task<Void, Never>?
-  @State private var editor: SurveyField?
-  @State private var explanation = false
-  @State private var focus = false
-  @State private var example = false
-  @State private var after = false
-  @State private var half = false
+  @State private var artTask: Task<Void, Never>?
+  @State private var artProgress = 0.0
+  @State private var detail: JourneyDetail?
   @State private var markReady = false
-  @State private var previewTransitioning = false
-  @State private var animateReveal = false
-  @State private var scrollAnswerChosen = false
+  @State private var bridge = 0.0
+  @State private var bridgeValue = ""
+  @State private var showBridge = false
   private var step: OnboardingStep { OnboardingStep.restored(store.profile) }
   private var baseline: RoutineBaseline { store.profile.baseline ?? RoutineBaseline() }
-  private var gain: Double { Double(baseline.feedMinutes ?? 0) * (half ? 0.5 : 1) }
-
+  private var storyStage: Int { store.profile.onboardingStoryStage ?? 0 }
+  private var needsBreaks: Bool {
+    step == .reveal && baseline.scrollFrequency == .sometimes && baseline.scrollingBreaks == nil
+  }
+  private var route: [OnboardingStep] {
+    var result: [OnboardingStep] = [.frequency, .duration]
+    if !baseline.timed { result += [.reps, .sets, .exercises] }
+    result += [.scrolling]
+    if baseline.scrollFrequency == .yes || baseline.scrollFrequency == .sometimes
+      || baseline.scrollsBetweenSets == true
+    {
+      result += [.minutes]
+    }
+    return result + [
+      .restHabits, .loggingHabits, .setTiming, .reveal, .restStory, .progressStory, .ready,
+    ]
+  }
   var body: some View {
     NavigationStack {
       GeometryReader { geometry in
         VStack(spacing: 0) {
           chrome.padding(.horizontal, 24).padding(.top, 8)
           ScrollView(showsIndicators: false) {
-            VStack(spacing: 0) {
-              Spacer(
-                minLength: step == .reveal
-                  ? (geometry.size.height < 700 ? 0 : 16) : (geometry.size.height < 700 ? 16 : 32))
+            VStack(spacing: 28) {
               if step != .welcome && step != .reveal {
                 Text(store.t(question)).font(GymType.title(28)).multilineTextAlignment(.center)
-                  .accessibilityAddTraits(.isHeader).padding(
-                    .bottom, geometry.size.height < 700 ? 24 : 40
-                  )
-                  .accessibilityIdentifier("onboarding.question")
+                  .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
               }
               scene(compact: geometry.size.height < 700)
-              if let error {
-                Text(store.t(error)).font(GymType.body(14)).foregroundStyle(GymColor.red)
-                  .multilineTextAlignment(.center).padding(.top, 20)
-                  .accessibilityIdentifier("onboarding.error")
-                if step == .minutes && !baseline.scrollingValid {
-                  HStack {
-                    Button(store.t("Edit time")) { move(.duration) }
-                    Button(store.t("Edit routine")) { move(.routine) }
-                  }.font(GymType.label(14)).padding(.top, 8)
-                }
-              }
-              Spacer(
-                minLength: step == .reveal
-                  ? (geometry.size.height < 700 ? 0 : 16) : (geometry.size.height < 700 ? 16 : 32))
-            }.frame(maxWidth: .infinity)
-              .frame(minHeight: max(0, geometry.size.height - 192))
-              .padding(.horizontal, 24).opacity(visible ? 1 : 0)
-          }.scrollDismissesKeyboard(.interactively)
+            }.padding(.horizontal, 24).padding(.vertical, 24)
+              .frame(maxWidth: .infinity).frame(minHeight: max(0, geometry.size.height - 152))
+              .opacity(visible ? 1 : 0)
+          }
           actions.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 12)
         }
-      }
-      .background(OnboardingStage(depth: step.progress))
+      }.overlay {
+        if showBridge {
+          JourneyTrace(value: bridgeValue, progress: bridge).allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+      }.background(
+        OnboardingStage(depth: Double(route.firstIndex(of: step) ?? 0) / Double(route.count))
+      )
       .toolbar(.hidden, for: .navigationBar)
-      .sheet(item: $editor) { field in
-        SurveyEditor(field: field, baseline: baseline) { value in
-          update { field.write(value, into: &$0) }
+      .sheet(item: $detail) { item in
+        switch item {
+        case .estimate: JourneyEstimateEditor()
+        case .rest: JourneyResearchSheet()
+        case .focus: FocusPreview()
+        case .record: JourneyRecordSheet()
         }
       }
-      .sheet(isPresented: $explanation) { assumptions }
-      .sheet(isPresented: $focus) { FocusPreview() }
-      .sheet(isPresented: $example) { OneSetPreview() }
       .onAppear {
+        prepare()
         let restored = step
-        scrollAnswerChosen =
-          store.profile.onboardingScrollAnswered == true || baseline.scrollsBetweenSets != nil
-        restorePreview()
-        if step == .reveal { store.updateProfile { $0.onboardingRevealSeen = true } }
         store.updateProfile {
-          $0.onboardingVersion = 3
-          if $0.focusEnabled == nil { $0.focusEnabled = false }
           $0.onboardingStepID = restored.rawValue
+          $0.onboardingVersion = 4
+          if $0.focusEnabled == nil { $0.focusEnabled = false }
           if $0.language.isEmpty {
             $0.language = Locale.current.language.languageCode?.identifier == "es" ? "es" : "en"
           }
         }
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.6)) { markReady = true }
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.65)) { markReady = true }
+        animateArt()
+      }
+      .onChange(of: scenePhase) { _, phase in
+        if phase != .active {
+          transitionTask?.cancel()
+          artTask?.cancel()
+          OnboardingFeedback.shared.cancel()
+          showBridge = false
+          visible = true
+          transitioning = false
+          artProgress = 1
+        }
       }
       .onDisappear {
         transitionTask?.cancel()
+        artTask?.cancel()
         OnboardingFeedback.shared.cancel()
       }
     }
   }
-
   private var chrome: some View {
-    HStack(spacing: 20) {
+    HStack(spacing: 18) {
       Button {
         back()
       } label: {
         Image(systemName: "chevron.left").frame(width: 44, height: 44)
-      }.buttonStyle(OnboardingGlassStyle()).opacity(step == .welcome ? 0 : 1)
-        .disabled(step == .welcome || transitioning)
-        .accessibilityLabel(store.t("Back")).accessibilityIdentifier("onboarding.back")
+      }
+      .buttonStyle(OnboardingGlassStyle()).disabled(step == .welcome || transitioning)
+      .opacity(step == .welcome ? 0 : 1).accessibilityLabel(store.t("Back"))
+      .accessibilityIdentifier("onboarding.back")
       if step == .welcome {
         Spacer()
       } else {
-        GeometryReader { g in
-          ZStack(alignment: .leading) {
-            Capsule().fill(GymColor.ink.opacity(0.08))
-            Capsule().fill(GymColor.red).frame(width: max(3, g.size.width * step.progress))
+        HStack(spacing: 5) {
+          ForEach(0..<3) { chapter in
+            GeometryReader { g in
+              Capsule().fill(GymColor.ink.opacity(0.08))
+              Capsule().fill(GymColor.red).frame(width: g.size.width * chapterProgress(chapter))
+            }.frame(height: 3)
           }
-        }.frame(height: 3).accessibilityLabel(store.t("Setup progress"))
-          .accessibilityValue("\(Int(step.progress * 100))%")
+        }.accessibilityLabel(store.t("Setup progress"))
+          .accessibilityValue(
+            store.t(
+              step == .reveal || step == .restStory || step == .progressStory || step == .ready
+                ? "Your next month"
+                : [.restHabits, .loggingHabits, .setTiming, .scrolling, .minutes].contains(step)
+                  ? "Your habits" : "Your training"))
       }
       Menu {
+        if step != .welcome && step != .ready {
+          Button(store.t("Skip this question")) { skip() }.accessibilityIdentifier(
+            "onboarding.skip")
+        }
+        if [.reps, .sets, .exercises].contains(step) {
+          Button(store.t("Varies")) { skip() }.accessibilityIdentifier("baseline.varies")
+        }
+        if step == .reps {
+          Button(store.t("Mostly timed")) {
+            update { $0.timed = true }
+            move(.scrolling)
+          }.accessibilityIdentifier("baseline.timed")
+        }
+        if [.reveal, .restStory, .progressStory].contains(step) {
+          Button(store.t("Replay")) {
+            setStoryStage(0)
+            animateArt()
+          }
+        }
+        Button(store.t("Just train")) { finish(start: true, skip: true) }
+        if step == .ready { Button(store.t("Focus demo")) { detail = .focus } }
         Picker(
           store.t("Language"),
           selection: Binding(
             get: { store.profile.language },
-            set: { language in
-              store.updateProfile { $0.language = language }
-            })
+            set: { language in store.updateProfile { $0.language = language } })
         ) {
           Text("English").tag("en")
           Text("Español").tag("es")
-        }.accessibilityIdentifier("onboarding.language")
+        }
         Button(store.t(store.profile.soundEnabled == false ? "Enable sounds" : "Mute sounds")) {
           store.updateProfile { $0.soundEnabled = !($0.soundEnabled ?? true) }
           OnboardingFeedback.shared.cancel()
         }.accessibilityIdentifier("onboarding.sound")
         Button(store.t(store.profile.hapticsEnabled == false ? "Enable haptics" : "Mute haptics")) {
           store.updateProfile { $0.hapticsEnabled = !($0.hapticsEnabled ?? true) }
-        }.accessibilityIdentifier("onboarding.haptics")
-        Button(store.t("Just train")) { finish(start: true, skip: true) }
+        }
       } label: {
         Image(systemName: "ellipsis").frame(width: 44, height: 44)
       }
@@ -154,425 +190,473 @@ struct OnboardingView: View {
       .accessibilityIdentifier("onboarding.options")
     }.foregroundStyle(GymColor.ink).frame(height: 44)
   }
-
+  private func chapterProgress(_ chapter: Int) -> Double {
+    let training = route.filter { [.frequency, .duration, .reps, .sets, .exercises].contains($0) }
+    let habits = route.filter {
+      [.scrolling, .minutes, .restHabits, .loggingHabits, .setTiming].contains($0)
+    }
+    if training.contains(step) {
+      return chapter == 0
+        ? Double((training.firstIndex(of: step) ?? 0) + 1) / Double(training.count) : 0
+    }
+    if habits.contains(step) {
+      return chapter == 0
+        ? 1
+        : chapter == 1 ? Double((habits.firstIndex(of: step) ?? 0) + 1) / Double(habits.count) : 0
+    }
+    return chapter < 2
+      ? 1 : step == .ready ? 1 : step == .progressStory ? 0.75 : step == .restStory ? 0.5 : 0.25
+  }
   private var question: String {
     switch step {
-    case .welcome: return ""
-    case .frequency: return "How often do you work out?"
+    case .welcome: return "GymBlock"
+    case .frequency: return "How many days a week do you work out?"
     case .duration: return "How long is a usual visit?"
-    case .routine: return "What’s a usual workout?"
+    case .reps, .routine: return "On average, how many reps per set?"
+    case .sets: return "How many sets per exercise?"
+    case .exercises: return "How many exercises on a usual training day?"
     case .scrolling: return "Do you scroll between sets?"
-    case .minutes: return "How much of each break is scrolling?"
-    case .reveal: return "Your time at the gym."
-    case .ready: return "Ready for your next set."
+    case .minutes: return "How many minutes do you scroll between sets?"
+    case .restHabits: return "Do you time your rests between sets?"
+    case .loggingHabits: return "Do you log your workouts and look back at them?"
+    case .setTiming: return "Do you record how long each set takes?"
+    case .reveal: return "Keep this time for yourself."
+    case .restStory: return "Give your next set a fair chance."
+    case .progressStory: return "Make the next workout less of a guess."
+    case .ready: return "Your next set starts here."
     }
   }
-
   @ViewBuilder private func scene(compact: Bool) -> some View {
     switch step {
     case .welcome:
       VStack(spacing: 26) {
         WorkoutMark(assembled: markReady).frame(width: 116, height: 116)
-        VStack(spacing: 12) {
-          Text("GymBlock").font(GymType.hero(38))
-          Text(store.t("Stay with your workout.")).font(GymType.body(17)).foregroundStyle(
-            GymColor.dim)
-        }
-      }.padding(.bottom, 36)
+        Text("GymBlock").font(GymType.hero(38))
+        Text(store.t("Make your next set count.")).font(GymType.body(17)).foregroundStyle(
+          GymColor.dim)
+      }
     case .frequency:
-      SurveyNumber(value: baseline.visits, unit: store.t("workouts / week"), id: "baseline.visits")
-      { editor = .visits }
-      WorkoutRhythm(count: baseline.visits ?? 0).padding(.top, 32)
-      choices([2, 3, 4, 5], field: .visits).padding(.top, 32)
-    case .duration:
-      SurveyNumber(value: baseline.duration, unit: store.t("minutes"), id: "baseline.duration") {
-        editor = .duration
-      }
-      VisitRuler(value: baseline.duration).padding(.top, 32)
-      choices([30, 45, 60, 90], field: .duration).padding(.top, 24)
-    case .routine:
-      RoutineSketch(baseline: baseline).padding(.bottom, 32)
       if typeSize.isAccessibilitySize {
-        VStack(spacing: 16) { routineValues }
+        wheel(values: (1...7).map(Double.init), unit: "days / week", id: "baseline.days")
       } else {
-        HStack(alignment: .top, spacing: 8) { routineValues }
+        HStack(spacing: 0) {
+          ForEach(1...7, id: \.self) { day in
+            Button {
+              draft = Double(day)
+              didEdit = true
+              OnboardingFeedback.shared.play(profile: store.profile, selection: true)
+            } label: {
+              Text("\(day)").font(GymType.label(22)).frame(maxWidth: .infinity, minHeight: 58)
+                .background {
+                  if draft == Double(day) { Capsule().fill(GymColor.red.opacity(0.12)).padding(4) }
+                }
+                .foregroundStyle(draft == Double(day) ? GymColor.red : GymColor.ink)
+            }.buttonStyle(.plain).accessibilityAddTraits(draft == Double(day) ? .isSelected : [])
+              .accessibilityLabel("\(day) " + store.t("days / week")).accessibilityIdentifier(
+                "baseline.days.\(day)")
+          }
+        }.buttonStyle(OnboardingGlassStyle()).modifier(OnboardingGlass(tint: nil))
       }
-      if let total = baseline.totalSets {
-        Text(routineReadout(total)).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-          .padding(.top, 24).accessibilityIdentifier("baseline.routine.total")
-      }
-      HStack(spacing: 24) {
-        Button(store.t("Varies")) {
-          update {
-            $0.exercises = nil
-            $0.sets = nil
-            $0.reps = ""
-            $0.details = []
+    case .duration:
+      wheel(
+        values: stride(from: 5.0, through: 240.0, by: 5).map { $0 }, unit: "min",
+        id: "baseline.duration")
+    case .reps, .routine:
+      wheel(values: (1...50).map(Double.init), unit: "reps", id: "baseline.reps")
+    case .sets: wheel(values: (1...20).map(Double.init), unit: "sets", id: "baseline.sets")
+    case .exercises:
+      wheel(values: (1...30).map(Double.init), unit: "exercises", id: "baseline.exercises")
+    case .minutes:
+      wheel(
+        values: stride(from: 0.5, through: 15.0, by: 0.5).map { $0 }, unit: "min",
+        id: "baseline.scrollMinutes")
+    case .scrolling, .restHabits, .setTiming:
+      VStack(spacing: 12) {
+        ForEach([HabitAnswer.yes, .sometimes, .no], id: \.self) { answer in
+          answerRow(
+            answer == .yes ? "Yes" : answer == .no ? "No" : "Sometimes", selected: habit == answer,
+            id: "habit.\(step.rawValue).\(answer.rawValue)"
+          ) {
+            update {
+              if step == .scrolling {
+                $0.scrollFrequency = answer
+                $0.scrollsBetweenSets = answer != .no
+                $0.scrollingBreaks = nil
+              } else if step == .restHabits {
+                $0.restTiming = answer
+              } else {
+                $0.setTiming = answer
+              }
+            }
           }
         }
-        .accessibilityIdentifier("baseline.varies")
-        Button(store.t(baseline.timed ? "Use reps" : "Mostly timed")) {
-          update { $0.timed.toggle() }
-        }
-        .accessibilityIdentifier("baseline.timed")
-      }.font(GymType.body(14)).frame(minHeight: 44).padding(.top, 12)
-    case .scrolling:
-      VStack(spacing: 14) {
-        answer("Yes", value: true, id: "yes")
-        answer("No", value: false, id: "no")
-        answer("Not sure", value: nil, id: "unknown")
       }
-    case .minutes:
-      LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
-        ForEach(1...5, id: \.self) { number in
-          choice(
-            "\(number) " + store.t("min"), selected: baseline.minutesPerBreak == number,
-            id: "baseline.break.\(number)"
-          ) { update { $0.minutesPerBreak = number } }
+    case .loggingHabits:
+      VStack(spacing: 12) {
+        ForEach(LoggingHabit.allCases, id: \.self) { answer in
+          answerRow(
+            answer == .review ? "Log and review" : answer == .logOnly ? "Log only" : "Neither",
+            selected: baseline.loggingHabit == answer, id: "habit.loggingHabits.\(answer.rawValue)"
+          ) { update { $0.loggingHabit = answer } }
         }
-        choice(
-          (baseline.minutesPerBreak ?? 0) > 5
-            ? "\(baseline.minutesPerBreak!) " + store.t("min") : store.t("More"),
-          selected: (baseline.minutesPerBreak ?? 0) > 5, id: "baseline.break.more"
-        ) { editor = .minutes }
       }
+    case .reveal:
+      if needsBreaks {
+        Text(store.t("How many breaks do you scroll in?")).font(GymType.title(28))
+          .multilineTextAlignment(.center)
+        wheel(
+          values: (0...(baseline.breakCount ?? 50)).map(Double.init), unit: "scrolling breaks",
+          id: "baseline.actualBreaks")
+      } else {
+        focusScene(compact: compact)
+      }
+    case .restStory:
+      JourneyRest(progress: artProgress).padding(.vertical, 12)
+      Text(
+        store.t(
+          baseline.restTiming == .yes
+            ? "Keep your rest visible with your sets."
+            : "Let the rest counter start when you finish a set.")
+      )
+      .font(GymType.body(17)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+      Text(store.t("See the gap. Start when you’re ready.")).font(GymType.body(14)).foregroundStyle(
+        GymColor.dim
+      )
+      .multilineTextAlignment(.center)
+      Button(store.t("Why rest matters")) { detail = .rest }.font(GymType.body(14)).frame(
+        minHeight: 44
+      )
+      .accessibilityIdentifier("journey.rest.research")
+    case .progressStory:
+      if storyStage == 0 {
+        JourneyComparison(showChange: artProgress >= 1)
+        Text(
+          store.t(
+            baseline.loggingHabit == .neither
+              ? "Remember what you did."
+              : baseline.loggingHabit == .logOnly
+                ? "See what changed." : "Keep the comparison close to your next set.")
+        )
+        .font(GymType.body(17)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+        Text(
+          store.t(
+            baseline.setTiming == .yes
+              ? "Set time stays with reps and weight." : "Start and finish. Set time is recorded.")
+        )
+        .font(GymType.body(14)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+      } else {
+        hero(
+          baseline.fourWeekSets.map(String.init) ?? "4",
+          label: baseline.fourWeekSets == nil ? "weeks to build a record" : "sets you could track",
+          qualifier: baseline.fourWeekSets == nil
+            ? "Example: four weeks" : "Over 4 weeks at your current routine")
+        JourneyMonth(days: baseline.trainingDays)
+        Text(store.t("You could have a record of every one.")).font(GymType.body(17))
+          .foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+        if baseline.fourWeekSets != nil {
+          Button(store.t("Your routine in numbers")) { detail = .record }
+            .font(GymType.body(14)).frame(minHeight: 44).accessibilityIdentifier(
+              "journey.record.detail")
+        }
+      }
+    case .ready:
+      JourneyMarks(count: 1, outlined: true).padding(.vertical, 24)
+      Text(store.t("A clear workout. A record to build on.")).font(GymType.body(17))
+        .foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+    }
+  }
+  private func wheel(values: [Double], unit: String, id: String) -> some View {
+    var preserved = values
+    if !preserved.contains(draft) {
+      preserved.append(draft)
+      preserved.sort()
+    }
+    return JourneyWheel(
+      values: preserved, unit: store.t(unit), id: id,
+      value: Binding(
+        get: { draft },
+        set: {
+          draft = $0
+          didEdit = true
+        })
+    )
+    .frame(height: typeSize.isAccessibilitySize ? 260 : 220).frame(maxWidth: .infinity)
+  }
+  private func hero(_ value: String, label: String, qualifier: String) -> some View {
+    VStack(spacing: 12) {
+      Text(value).font(GymType.hero(typeSize.isAccessibilitySize ? 48 : 60)).monospacedDigit()
+        .foregroundStyle(GymColor.red).multilineTextAlignment(.center).accessibilityIdentifier(
+          "baseline.result")
+      Text(store.t(label)).font(GymType.label(17)).multilineTextAlignment(.center)
+      Text(store.t(qualifier)).font(GymType.body(13)).foregroundStyle(GymColor.dim)
+        .multilineTextAlignment(.center)
+    }
+  }
+  @ViewBuilder private func focusScene(compact: Bool) -> some View {
+    if baseline.canShowAttention, let minutes = baseline.attentionMinutes {
+      hero(
+        storyStage == 2
+          ? JourneyFormat.minutes(baseline.fourWeekAttention ?? minutes)
+          : JourneyFormat.number(minutes) + " min",
+        label: storyStage == 0
+          ? "Estimated scrolling per visit"
+          : storyStage == 1
+            ? "potential phone-free time" : "Potential phone-free time over 4 weeks",
+        qualifier: storyStage == 0 ? "Based on your answers" : "Rest stays. Scrolling goes.")
+      if storyStage == 2 {
+        JourneyMonth(days: baseline.trainingDays)
+      } else {
+        JourneyVisit(
+          duration: baseline.duration ?? 60, scrolling: minutes, phoneFree: storyStage > 0)
+      }
+    } else {
+      Text(
+        store.t(
+          !baseline.attentionValid
+            ? "Let’s check that estimate."
+            : baseline.scrollFrequency == .no || baseline.scrollsBetweenSets == false
+              ? "You’re already keeping the space between sets."
+              : "Start by noticing your next break.")
+      )
+      .font(GymType.title(28)).multilineTextAlignment(.center)
+      JourneyMarks(count: 3, outlined: true).padding(.vertical, 24)
+      if !baseline.attentionValid {
+        Text(store.t("The scrolling estimate leaves no time for your workout.")).font(
+          GymType.body(15)
+        ).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+      }
+    }
+    if baseline.scrollFrequency == .yes || baseline.scrollFrequency == .sometimes
+      || baseline.scrollsBetweenSets == true
+    {
       Button {
-        editor = .breaks
+        detail = .estimate
       } label: {
         Text(
-          baseline.scrollingBreaks.map { "\($0) " + store.t("scrolling breaks") }
-            ?? store.t("Assuming every break"))
-        Text("· " + store.t("Edit"))
-      }.font(GymType.body(14)).foregroundStyle(GymColor.dim).frame(minHeight: 44).padding(.top, 20)
-        .accessibilityIdentifier("baseline.break.assumption")
-    case .reveal:
-      VStack(spacing: compact ? 12 : 20) {
-        VStack(spacing: compact ? 4 : 8) {
-          Text(Self.minutes(after ? gain : Double(baseline.feedMinutes ?? 0)))
-            .font(GymType.hero(typeSize.isAccessibilitySize ? 52 : (compact ? 64 : 76)))
-            .monospacedDigit()
-            .foregroundStyle(after ? GymColor.red : GymColor.ink)
-            .contentTransition(.numericText()).accessibilityIdentifier("baseline.result")
-          Text(store.t(after ? "more phone-free minutes" : "scrolling minutes per workout"))
-            .font(GymType.label(16)).multilineTextAlignment(.center)
-          Text(
-            store.t(
-              after
-                ? (half
-                  ? "If you halve scrolling between sets." : "If you skip scrolling between sets.")
-                : "Based on your answers")
-          )
-          .font(GymType.body(14)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
-        }
-        WorkoutTimeline(
-          duration: baseline.duration ?? 1, scrolling: Double(baseline.feedMinutes ?? 0),
-          gain: after ? gain : 0, animateEntrance: animateReveal, compact: compact)
-        if after {
-          HStack(spacing: 12) {
-            choice(
-              store.t("Half as much"), selected: half, id: "baseline.scenario.half",
-              height: compact ? 44 : 52
-            ) {
-              half = true
-              savePreview()
-            }
-            choice(
-              store.t("No scrolling"), selected: !half, id: "baseline.scenario.none",
-              height: compact ? 44 : 52
-            ) {
-              half = false
-              savePreview()
-            }
-          }
-          if let visits = baseline.visits, (1...21).contains(visits) {
-            Text(
-              Self.minutes(gain * Double(visits)) + " " + store.t("min across") + " \(visits) "
-                + store.t("weekly workouts")
-            )
-            .font(GymType.body(14)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
-            .accessibilityIdentifier("baseline.weekly")
-          }
-        }
-        HStack(spacing: 24) {
-          if after {
-            Button(store.t("Replay")) {
-              withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.7)) { after = false }
-              store.updateProfile { $0.onboardingPreviewTarget = nil }
-            }.accessibilityIdentifier("baseline.replay")
-          }
-          Button(store.t("How this is estimated")) { explanation = true }
-            .accessibilityIdentifier("baseline.explanation")
-        }.font(GymType.body(14)).frame(minHeight: 44)
-
-      }.animation(reduceMotion ? nil : .easeInOut(duration: 0.7), value: after)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: half)
-    case .ready:
-      VStack(spacing: 28) {
-        WorkoutMark(assembled: true).frame(width: 88, height: 88)
-        Button(store.t("See one set")) { example = true }
-          .font(GymType.label(16)).frame(minHeight: 44).accessibilityIdentifier(
-            "onboarding.example")
-        Button {
-          focus = true
-        } label: {
-          Label(store.t("Focus demo"), systemImage: "moon")
-        }.font(GymType.body(14)).frame(minHeight: 44).accessibilityIdentifier("onboarding.focus")
-      }
+          store.t(
+            baseline.scrollingBreaks == nil
+              ? "One visit a day · every break · Adjust" : "Your break estimate · Adjust")
+        )
+        .font(GymType.body(13)).foregroundStyle(GymColor.dim).multilineTextAlignment(.center)
+      }.frame(minHeight: 44).accessibilityIdentifier("baseline.explanation")
     }
   }
-
-  @ViewBuilder private var routineValues: some View {
-    routineValue("Exercises", value: valueFor(.exercises), field: .exercises)
-    routineValue("Sets each", value: valueFor(.sets), field: .sets)
-    if !baseline.timed { routineValue("Reps", value: valueFor(.reps), field: .reps) }
-  }
-  private func valueFor(_ field: SurveyField) -> String? {
-    let value = field.read(baseline)
-    if value.isEmpty && !baseline.details.isEmpty && field != .exercises {
-      return store.t("Varies")
+  private var habit: HabitAnswer? {
+    if step == .scrolling {
+      return baseline.scrollFrequency ?? baseline.scrollsBetweenSets.map { $0 ? .yes : .no }
     }
-    return value.isEmpty ? nil : value
+    return step == .restHabits ? baseline.restTiming : baseline.setTiming
   }
-  private func routineValue(_ title: String, value: String?, field: SurveyField) -> some View {
-    Button {
-      editor = field
-    } label: {
-      VStack(spacing: 6) {
-        HStack(spacing: 4) {
-          Text(value ?? "—").font(GymType.title(30)).foregroundStyle(GymColor.ink)
-          Image(systemName: "pencil").font(.system(size: 10)).foregroundStyle(GymColor.dim)
-        }
-        Text(store.t(title)).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-      }.frame(maxWidth: .infinity, minHeight: 72)
-    }.buttonStyle(.plain).accessibilityLabel(
-      store.t(title) + ", " + (value ?? store.t("Not supplied"))
-    )
-    .accessibilityHint(store.t("Tap to edit"))
-    .accessibilityIdentifier(field.controlID)
-  }
-  private func routineReadout(_ sets: Int) -> String {
-    var text = "\(sets) " + store.t("sets")
-    if let reps = baseline.totalReps {
-      let count =
-        reps.lowerBound == reps.upperBound
-        ? "\(reps.lowerBound)" : "\(reps.lowerBound)–\(reps.upperBound)"
-      text += " · " + count + " " + store.t("reps")
-    }
-    return text
-  }
-  private func answer(_ title: String, value: Bool?, id: String) -> some View {
-    let selected = scrollAnswerChosen && baseline.scrollsBetweenSets == value
-    return Button {
-      scrollAnswerChosen = true
-      store.updateProfile { $0.onboardingScrollAnswered = true }
-      update {
-        $0.scrollsBetweenSets = value
-        $0.scrolling = value == false ? 0 : nil
-      }
-      feedback(selection: true)
-    } label: {
-      HStack {
-        Text(store.t(title)).font(GymType.label(17))
-        Spacer()
-        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-          .foregroundStyle(selected ? GymColor.red : GymColor.dim.opacity(0.5))
-      }.padding(.horizontal, 22).frame(minHeight: 58)
-    }.buttonStyle(OnboardingGlassStyle(selected: selected))
-      .accessibilityAddTraits(selected ? .isSelected : [])
-      .accessibilityIdentifier("baseline.between." + id)
-  }
-  private func choices(_ numbers: [Int], field: SurveyField) -> some View {
-    HStack(spacing: 12) {
-      ForEach(numbers, id: \.self) { n in
-        choice("\(n)", selected: field.read(baseline) == String(n), id: field.controlID + ".\(n)") {
-          update { field.write(String(n), into: &$0) }
-        }
-      }
-    }
-  }
-  private func choice(
-    _ title: String, selected: Bool, id: String, height: CGFloat = 52, action: @escaping () -> Void
-  )
+  private func answerRow(_ title: String, selected: Bool, id: String, action: @escaping () -> Void)
     -> some View
   {
     Button {
-      withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { action() }
-      feedback(selection: true)
+      action()
+      OnboardingFeedback.shared.play(profile: store.profile, selection: true)
     } label: {
-      Text(title).font(GymType.label(16)).multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, minHeight: height).padding(.horizontal, 4)
-    }.buttonStyle(OnboardingGlassStyle(selected: selected))
-      .accessibilityAddTraits(selected ? .isSelected : []).accessibilityIdentifier(id)
+      HStack {
+        Text(store.t(title))
+        Spacer()
+        Image(systemName: selected ? "checkmark.circle.fill" : "circle").foregroundStyle(
+          selected ? GymColor.red : GymColor.dim.opacity(0.4))
+      }
+      .font(GymType.label(17)).padding(.horizontal, 22).frame(minHeight: 58)
+    }.buttonStyle(OnboardingGlassStyle(selected: selected)).accessibilityIdentifier(id)
+      .accessibilityAddTraits(selected ? .isSelected : [])
   }
-
   private var actions: some View {
-    VStack(spacing: 6) {
+    VStack(spacing: 4) {
       Button {
         advance()
       } label: {
         Text(store.t(primaryTitle)).font(GymType.label(17)).frame(
           maxWidth: .infinity, minHeight: 58)
-      }.buttonStyle(OnboardingGlassStyle(primary: true))
-        .disabled(transitioning || error != nil).accessibilityIdentifier("onboarding.continue")
-      Button(store.t(secondaryTitle)) { secondary() }
+      }
+      .buttonStyle(OnboardingGlassStyle(primary: true)).disabled(transitioning || requiresAnswer)
+      .accessibilityIdentifier("onboarding.continue")
+      if step == .welcome || step == .ready {
+        Button(store.t(step == .welcome ? "Just train" : "Go to Home")) {
+          finish(start: step == .welcome, skip: step == .welcome)
+        }
         .font(GymType.body(15)).foregroundStyle(GymColor.dim).frame(minHeight: 44)
-        .disabled(transitioning).accessibilityIdentifier("onboarding.skip")
+        .accessibilityIdentifier("onboarding.secondary")
+      }
     }
   }
   private var primaryTitle: String {
-    switch step {
-    case .welcome: return "Get started"
-    case .minutes: return "Show me"
-    case .reveal: return after ? "Use this goal" : "See the difference"
-    case .ready: return "Start workout"
-    default: return "Continue"
-    }
-  }
-  private var secondaryTitle: String {
-    switch step {
-    case .welcome: return "Just train"
-    case .reveal: return "Continue without a goal"
-    case .ready: return "Go to Home"
-    default: return "Not sure"
-    }
-  }
-  private var error: String? {
-    switch step {
-    case .minutes:
-      if !baseline.breakAssumptionValid { return "Check the number of scrolling breaks." }
-      if !baseline.scrollingValid { return "That exceeds your visit. Check your answers." }
-    case .routine:
-      if let n = baseline.exercises, !(1...50).contains(n) {
-        return "Enter 1–50 exercises, or leave it blank."
-      }
-      if let n = baseline.sets, !(1...50).contains(n) {
-        return "Enter 1–50 sets, or leave it blank."
-      }
-      if !baseline.timed && !baseline.reps.isEmpty && RoutineBaseline.repRange(baseline.reps) == nil
+    if step == .welcome { return "Get started" }
+    if step == .ready { return "Start workout" }
+    if needsBreaks { return "Show me" }
+    if step == .reveal && baseline.canShowAttention {
+      if storyStage == 0 { return "See the difference" }
+      if storyStage == 1 && baseline.fourWeekTrainingDays != nil
+        && baseline.visitsPerTrainingDay != 2
       {
-        return "Use a rep count or range, such as 8–12."
+        return "Over four weeks"
       }
-    case .frequency:
-      if let n = baseline.visits, !(0...21).contains(n) {
-        return "Enter 0–21 visits, or leave it blank."
+    }
+    if step == .progressStory && storyStage == 0 { return "Your four weeks" }
+    return "Continue"
+  }
+  private var requiresAnswer: Bool {
+    [.scrolling, .restHabits, .setTiming].contains(step)
+      ? habit == nil : step == .loggingHabits && baseline.loggingHabit == nil
+  }
+  private func prepare() {
+    switch step {
+    case .frequency: draft = Double(baseline.trainingDays ?? 3)
+    case .duration: draft = Double(baseline.duration ?? 60)
+    case .reps, .routine: draft = Double(baseline.defaultReps ?? 10)
+    case .sets: draft = Double(Int(SurveyField.sets.read(baseline)) ?? 3)
+    case .exercises: draft = Double(Int(SurveyField.exercises.read(baseline)) ?? 6)
+    case .minutes:
+      draft = baseline.scrollingMinutes ?? baseline.minutesPerBreak.map(Double.init) ?? 2
+    case .reveal: draft = Double(min(5, baseline.breakCount ?? 5))
+    default: break
+    }
+    didEdit = false
+  }
+  private func commitPicker() {
+    switch step {
+    case .frequency: update { $0.trainingDays = Int(draft) }
+    case .duration: update { $0.duration = Int(draft) }
+    case .reps, .routine:
+      if didEdit || baseline.reps.isEmpty && baseline.details.isEmpty {
+        update {
+          SurveyField.reps.write(String(Int(draft)), into: &$0)
+          $0.timed = false
+        }
       }
-    case .duration:
-      if let n = baseline.duration, !(1...600).contains(n) {
-        return "Enter 1–600 minutes, or leave it blank."
+    case .sets:
+      if didEdit || baseline.sets == nil && baseline.details.isEmpty {
+        update { SurveyField.sets.write(String(Int(draft)), into: &$0) }
+      }
+    case .exercises:
+      if didEdit || baseline.exercises == nil && baseline.details.isEmpty {
+        update { SurveyField.exercises.write(String(Int(draft)), into: &$0) }
+      }
+    case .minutes:
+      update {
+        $0.scrollingMinutes = draft
+        $0.minutesPerBreak = draft.rounded() == draft ? Int(draft) : nil
       }
     default: break
     }
-    return nil
   }
   private func advance() {
-    guard !transitioning, !previewTransitioning, error == nil else { return }
-    switch step {
-    case .welcome: move(.frequency)
-    case .frequency: move(.duration)
-    case .duration: move(.routine)
-    case .routine: move(.scrolling)
-    case .scrolling: move(baseline.scrollsBetweenSets == true ? .minutes : .ready)
-    case .minutes: move(baseline.canReveal ? .reveal : .ready)
-    case .reveal:
-      if !after {
-        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.7)) { after = true }
-        savePreview()
-        previewTransitioning = true
-        transitionTask = Task { @MainActor in
-          try? await Task.sleep(for: .milliseconds(reduceMotion ? 100 : 350))
-          guard !Task.isCancelled else { return }
-          previewTransitioning = false
-        }
-        feedback(completion: true)
-      } else {
-        let target = half ? Double(baseline.minutesPerBreak ?? 0) / 2 : 0
-        let confirmedGain: Int? = gain.rounded() == gain ? Int(gain) : nil
-        store.updateProfile {
-          $0.baseline?.goalMinutesPerBreak = target
-          $0.baseline?.reductionGoal = confirmedGain
-        }
-        move(.ready)
-      }
-    case .ready: finish(start: true)
+    guard !transitioning, !requiresAnswer else { return }
+    commitPicker()
+    if step == .welcome {
+      move(.frequency)
+      return
     }
+    if step == .ready {
+      finish(start: true)
+      return
+    }
+    if needsBreaks {
+      update { $0.scrollingBreaks = Int(draft) }
+      return
+    }
+    if step == .reveal && baseline.canShowAttention {
+      if storyStage == 0 {
+        update { if $0.visitsPerTrainingDay == nil { $0.visitsPerTrainingDay = 1 } }
+        setStoryStage(1)
+        return
+      }
+      if storyStage == 1 && baseline.fourWeekAttention != nil {
+        setStoryStage(2)
+        return
+      }
+    }
+    if step == .progressStory && storyStage == 0 {
+      setStoryStage(1)
+      return
+    }
+    if let index = route.firstIndex(of: step), index + 1 < route.count { move(route[index + 1]) }
   }
-  private func secondary() {
+  private func skip() {
     switch step {
-    case .welcome: finish(start: true, skip: true)
-    case .frequency:
-      update { $0.visits = nil }
-      move(.duration)
-    case .duration:
-      update { $0.duration = nil }
-      move(.routine)
-    case .routine:
-      update {
-        $0.exercises = nil
-        $0.sets = nil
-        $0.reps = ""
-        $0.details = []
-      }
-      move(.scrolling)
+    case .frequency: update { $0.trainingDays = nil }
+    case .duration: update { $0.duration = nil }
+    case .reps, .routine: update { SurveyField.reps.write("", into: &$0) }
+    case .sets: update { SurveyField.sets.write("", into: &$0) }
+    case .exercises: update { SurveyField.exercises.write("", into: &$0) }
     case .scrolling:
-      store.updateProfile { $0.onboardingScrollAnswered = true }
       update {
+        $0.scrollFrequency = nil
         $0.scrollsBetweenSets = nil
-        $0.scrolling = nil
       }
-      scrollAnswerChosen = true
-      move(.ready)
     case .minutes:
-      update { $0.minutesPerBreak = nil }
-      move(.ready)
-    case .reveal:
-      store.updateProfile {
-        $0.baseline?.reductionGoal = nil
-        $0.baseline?.goalMinutesPerBreak = nil
+      update {
+        $0.scrollingMinutes = nil
+        $0.minutesPerBreak = nil
       }
-      move(.ready)
-    case .ready: finish(start: false)
+    case .restHabits: update { $0.restTiming = nil }
+    case .loggingHabits: update { $0.loggingHabit = nil }
+    case .setTiming: update { $0.setTiming = nil }
+    default: break
     }
+    if let index = route.firstIndex(of: step), index + 1 < route.count { move(route[index + 1]) }
   }
   private func back() {
-    switch step {
-    case .welcome: break
-    case .frequency: move(.welcome)
-    case .duration: move(.frequency)
-    case .routine: move(.duration)
-    case .scrolling: move(.routine)
-    case .minutes: move(.scrolling)
-    case .reveal: move(.minutes)
-    case .ready:
-      move(
-        baseline.canReveal ? .reveal : baseline.scrollsBetweenSets == true ? .minutes : .scrolling)
+    if step == .frequency {
+      move(.welcome)
+      return
     }
+    if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
   private func move(_ next: OnboardingStep) {
     guard !transitioning else { return }
-    transitioning = true
-    previewTransitioning = false
-    dismissKeyboard()
-    feedback()
+    OnboardingFeedback.shared.play(profile: store.profile)
     transitionTask?.cancel()
+    artTask?.cancel()
+    transitioning = true
+    showBridge = !reduceMotion && [.reps, .sets, .exercises, .setTiming].contains(step)
+    bridgeValue = step == .setTiming ? "" : String(Int(draft))
+    bridge = 0
+    withAnimation(.easeInOut(duration: 0.4)) { bridge = 1 }
     transitionTask = Task { @MainActor in
-      withAnimation(.easeOut(duration: reduceMotion ? 0.08 : 0.15)) { visible = false }
-      try? await Task.sleep(for: .milliseconds(reduceMotion ? 80 : 150))
+      withAnimation(reduceMotion ? nil : .easeOut(duration: 0.12)) { visible = false }
+      try? await Task.sleep(for: .milliseconds(reduceMotion ? 40 : 120))
       guard !Task.isCancelled else { return }
-      after = false
-      half = false
       store.updateProfile {
         $0.onboardingStepID = next.rawValue
-        $0.onboardingStep = OnboardingStep.allCases.firstIndex(of: next) ?? 0
+        $0.onboardingStoryStage = 0
       }
-      if next == .reveal {
-        animateReveal = store.profile.onboardingRevealSeen != true
-        restorePreview()
-        store.updateProfile { $0.onboardingRevealSeen = true }
-      }
-      withAnimation(.easeIn(duration: reduceMotion ? 0.1 : 0.28)) { visible = true }
-      try? await Task.sleep(for: .milliseconds(reduceMotion ? 100 : 280))
+      prepare()
+      withAnimation(reduceMotion ? nil : .easeIn(duration: 0.18)) { visible = true }
+      animateArt()
+      try? await Task.sleep(for: .milliseconds(reduceMotion ? 40 : 180))
+      guard !Task.isCancelled else { return }
+      showBridge = false
+      transitioning = false
+    }
+  }
+  private func setStoryStage(_ value: Int) {
+    store.updateProfile { $0.onboardingStoryStage = value }
+    OnboardingFeedback.shared.play(profile: store.profile, completion: true)
+    // Protect the changed action label from a duplicate tap, not the whole animation.
+    transitioning = true
+    transitionTask?.cancel()
+    transitionTask = Task { @MainActor in
+      try? await Task.sleep(for: .milliseconds(350))
       guard !Task.isCancelled else { return }
       transitioning = false
+    }
+  }
+  private func animateArt() {
+    artTask?.cancel()
+    artProgress = reduceMotion ? 1 : 0
+    guard !reduceMotion else { return }
+    if step == .restStory {
+      withAnimation(.easeOut(duration: 1.6)) { artProgress = 1 }
+    } else if step == .progressStory {
+      artTask = Task { @MainActor in
+        try? await Task.sleep(for: .milliseconds(650))
+        guard !Task.isCancelled else { return }
+        withAnimation(.easeInOut(duration: 0.5)) { artProgress = 1 }
+      }
     }
   }
   private func update(_ body: (inout RoutineBaseline) -> Void) {
@@ -585,68 +669,156 @@ struct OnboardingView: View {
       $0.onboardingPreviewTarget = nil
     }
   }
-  private func restorePreview() {
-    after = store.profile.onboardingPreviewTarget != nil
-    half = store.profile.onboardingPreviewTarget.map { $0 > 0 } ?? false
-  }
-  private func savePreview() {
-    let target = half ? Double(baseline.minutesPerBreak ?? 0) / 2 : 0
-    store.updateProfile {
-      $0.onboardingPreviewTarget = target
-      $0.onboardingRevealSeen = true
-    }
-  }
   private func finish(start: Bool, skip: Bool = false) {
     guard !transitioning else { return }
-    dismissKeyboard()
-    feedback(completion: true)
-    if start { store.startSession() }
     store.updateProfile {
       $0.onboarded = true
       $0.onboardingStepID = OnboardingStep.ready.rawValue
       if skip { $0.focusEnabled = false }
     }
+    if start { store.startSession() }
   }
-  private func feedback(completion: Bool = false, selection: Bool = false) {
-    OnboardingFeedback.shared.play(
-      profile: store.profile, completion: completion, selection: selection)
-  }
-  static func minutes(_ value: Double) -> String {
-    value.formatted(.number.precision(.fractionLength(0...1)))
-  }
+  static func minutes(_ value: Double) -> String { JourneyFormat.number(value) }
+}
 
-  private var assumptions: some View {
+enum JourneyDetail: String, Identifiable {
+  case estimate, rest, focus, record
+  var id: String { rawValue }
+}
+
+struct JourneyEstimateEditor: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  @State private var breaks = 5.0
+  @State private var visits = 1
+  @State private var duration = 60.0
+  @State private var scrollMinutes = 2.0
+  private var baseline: RoutineBaseline { store.profile.baseline ?? RoutineBaseline() }
+  var body: some View {
     NavigationStack {
       Form {
         Section(store.t("Based on your answers")) {
-          Text(
-            "\(baseline.effectiveScrollingBreaks ?? 0) " + store.t("scrolling breaks")
-              + " × \(baseline.minutesPerBreak ?? 0) " + store.t("min")
-              + " = \(baseline.feedMinutes ?? 0) " + store.t("min"))
+          if let count = baseline.effectiveScrollingBreaks,
+            let minutes = baseline.scrollingMinutes ?? baseline.minutesPerBreak.map(Double.init)
+          {
+            Text(
+              "\(count) × \(JourneyFormat.number(minutes)) min = \(JourneyFormat.number(Double(count) * minutes)) min"
+            )
+          }
           Text(
             store.t("Phone-free time includes rest. This is an estimate, not measured phone use."))
-          if after {
-            Text(store.t("Possible change") + ": " + Self.minutes(gain) + " " + store.t("min"))
-          }
+          Text(store.t("Gaps include exercise changes. Supersets may need fewer."))
+        }
+        Section(store.t("Scrolling breaks")) {
+          JourneyWheel(
+            values: Array(Set((0...(baseline.breakCount ?? 50)).map(Double.init) + [breaks]))
+              .sorted(), unit: store.t("breaks"),
+            id: "estimate.breaks", value: $breaks
+          ).frame(height: 150)
+        }
+        Section(store.t("Visit minutes")) {
+          JourneyWheel(
+            values: Array(Set(stride(from: 5.0, through: 240.0, by: 5).map { $0 } + [duration]))
+              .sorted(), unit: store.t("min"), id: "estimate.duration", value: $duration
+          ).frame(height: 150)
+        }
+        Section(store.t("Minutes scrolling per break")) {
+          JourneyWheel(
+            values: Array(
+              Set(stride(from: 0.5, through: 15.0, by: 0.5).map { $0 } + [scrollMinutes])
+            ).sorted(), unit: store.t("min"), id: "estimate.minutes", value: $scrollMinutes
+          ).frame(height: 150)
         }
         Section {
-          Button(store.t("Edit scrolling breaks")) {
-            explanation = false
-            move(.minutes)
+          Picker(store.t("Visits on a training day"), selection: $visits) {
+            Text("1").tag(1)
+            Text(store.t("More than one")).tag(2)
           }
-          Button(store.t("Edit time")) {
-            explanation = false
-            move(.duration)
-          }
-          Button(store.t("Edit routine")) {
-            explanation = false
-            move(.routine)
-          }
+          Text(
+            store.t(
+              "Multiple visits need a separate time estimate. Your daily sets can still be projected."
+            ))
         }
-      }.navigationTitle(store.t("How this is estimated")).navigationBarTitleDisplayMode(.inline)
+      }.navigationTitle(store.t("Your estimate")).navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+          ToolbarItem(placement: .confirmationAction) {
+            Button(store.t("Done")) {
+              store.updateProfile {
+                $0.baseline?.scrollingBreaks = Int(breaks)
+                $0.baseline?.duration = Int(duration)
+                $0.baseline?.scrollingMinutes = scrollMinutes
+                $0.baseline?.visitsPerTrainingDay = visits
+                $0.onboardingStoryStage = 0
+              }
+              dismiss()
+            }.accessibilityIdentifier("estimate.done")
+          }
+        }.onAppear {
+          breaks = Double(baseline.effectiveScrollingBreaks ?? 5)
+          duration = Double(baseline.duration ?? 60)
+          scrollMinutes =
+            baseline.scrollingMinutes ?? baseline.minutesPerBreak.map(Double.init) ?? 2
+          visits = baseline.visitsPerTrainingDay ?? 1
+        }
+    }
+  }
+}
+
+struct JourneyResearchSheet: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  var body: some View {
+    NavigationStack {
+      List {
+        Text(store.t("Rest supports your next set.")).font(GymType.title(24))
+        Text(
+          store.t(
+            "Too little recovery can make the next set harder to perform. There isn’t one ideal rest time for everyone."
+          ))
+        Text(
+          store.t(
+            "Timing makes the gap visible. It doesn’t measure recovery or predict muscle gain."))
+        Link(
+          store.t("Rest interval research · 2024"),
+          destination: URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC11349676/")!)
+        Link(
+          store.t("ACSM evidence review · 2026"),
+          destination: URL(string: "https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/")!)
+      }.navigationTitle(store.t("Why rest matters")).navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+          ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() } }
+        }
+    }.presentationDetents([.medium, .large])
+  }
+}
+
+struct JourneyRecordSheet: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  var body: some View {
+    NavigationStack {
+      List {
+        Section(store.t("Over 4 weeks at your current routine")) {
+          if let days = store.profile.baseline?.fourWeekTrainingDays {
+            LabeledContent(store.t("Training days"), value: String(days))
+          }
+          if let sets = store.profile.baseline?.fourWeekSets {
+            LabeledContent(store.t("Sets"), value: String(sets))
+          }
+          if let reps = store.profile.baseline?.fourWeekReps {
+            LabeledContent(
+              store.t("Approximate reps"),
+              value: reps.lowerBound == reps.upperBound
+                ? String(reps.lowerBound) : "\(reps.lowerBound)–\(reps.upperBound)")
+          }
+          Text(store.t("A projection of your routine, not completed workouts or predicted gains."))
+            .font(GymType.body(14)).foregroundStyle(GymColor.dim)
+        }
+      }.navigationTitle(store.t("Your routine in numbers")).navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) { explanation = false }
+            Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("journey.record.done")
           }
         }
     }.presentationDetents([.medium, .large])

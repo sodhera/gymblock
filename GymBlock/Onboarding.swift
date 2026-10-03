@@ -52,7 +52,8 @@ struct BaselineSummary: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       if let duration = baseline.duration { Text("\(duration) " + store.t("min/workout")) }
-      if let total = baseline.weeklyGymMinutes { Text("\(total) " + store.t("gym min/week")) }
+      if let days = baseline.trainingDays { Text("\(days) " + store.t("days / week")) }
+      else if let total = baseline.weeklyGymMinutes { Text("\(total) " + store.t("gym min/week")) }
       if let total = baseline.totalSets {
         Text(store.t("About") + " \(total) " + store.t("sets/workout"))
       }

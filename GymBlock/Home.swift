@@ -149,6 +149,7 @@ struct PreferencesView: View {
               $0.onboarded = false
               $0.onboardingStep = 0
               $0.onboardingStepID = OnboardingStep.frequency.rawValue
+              $0.onboardingStoryStage = 0
             }
             dismiss()
           }.accessibilityIdentifier("settings.baseline")
@@ -263,10 +264,25 @@ struct WorkoutDetailView: View {
           Button {
             editing = set
           } label: {
-            HStack {
-              Text(store.t(set.exercise.name)).foregroundStyle(GymColor.ink)
-              Spacer()
-              Text(setValue(set, store: store)).foregroundStyle(GymColor.dim).font(GymType.body(15))
+            VStack(alignment: .leading, spacing: 8) {
+              HStack {
+                Text(store.t(set.exercise.name)).foregroundStyle(GymColor.ink)
+                Spacer()
+                Text(setValue(set, store: store)).foregroundStyle(GymColor.dim).font(
+                  GymType.body(15))
+              }
+              if let seconds = set.displayedSetSeconds {
+                Text(store.t("Set time") + " " + JourneyFormat.time(seconds))
+                  .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+              }
+              if let gap = session.gapSeconds(before: set) {
+                Text(
+                  store.t(
+                    session.gapCrossesExercises(before: set) ? "Gap across exercises" : "Gap before"
+                  ) + " " + JourneyFormat.time(gap)
+                )
+                .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+              }
             }
           }.accessibilityIdentifier("saved." + set.id.uuidString)
         }

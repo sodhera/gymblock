@@ -46,10 +46,15 @@ extension GymStore {
           let heavy = ["bench", "squat", "deadlift"].contains(exercise.id)
           let weight = (base[exercise.id] ?? 10) + Double(week) * (heavy ? 5 : 1)
           for setIndex in 0..<3 {
+            let elapsed = Double(35 + setIndex * 5)
+            let previous = session.sets.last
             session.sets.append(
               LoggedSet(
                 exercise: exercise, weightKG: weight, reps: heavy ? 5 : 10, minutes: 0,
-                date: date.addingTimeInterval(Double(setIndex + 1) * 180)))
+                date: date.addingTimeInterval(Double(session.sets.count + 1) * 180),
+                elapsedSetSeconds: elapsed,
+                gapBeforeSeconds: previous == nil ? nil : 180 - elapsed,
+                gapSourceID: previous?.id))
           }
         }
         data.history.append(session)

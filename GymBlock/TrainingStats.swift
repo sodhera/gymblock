@@ -10,12 +10,15 @@ struct TrainingPoint: Identifiable {
   let sets: Int
 }
 extension GymStore {
-  func trainingPoints(splitID: UUID? = nil) -> [TrainingPoint] {
-    data.history.filter { splitID == nil || $0.splitID == splitID }
-      .filter { !$0.repSets.isEmpty }.sorted { $0.started < $1.started }.map {
-        TrainingPoint(id: $0.id, date: $0.started, name: $0.name,
-          reps: $0.totalReps, volumeKG: $0.volumeKG, sets: $0.repSets.count)
-      }
+  func trainingPoints(splitID: UUID? = nil, since: Date? = nil) -> [TrainingPoint] {
+    data.history.filter {
+      (splitID == nil || $0.splitID == splitID) && (since == nil || $0.started >= since!)
+    }
+    .filter { !$0.repSets.isEmpty }.sorted { $0.started < $1.started }.map {
+      TrainingPoint(
+        id: $0.id, date: $0.started, name: $0.name,
+        reps: $0.totalReps, volumeKG: $0.volumeKG, sets: $0.repSets.count)
+    }
   }
 }
 struct TrainingStatsView: View {
@@ -25,21 +28,41 @@ struct TrainingStatsView: View {
   @State private var metric = 0
   @State private var bars = false
   @State private var splitID: UUID?
-  private var points: [TrainingPoint] { store.trainingPoints(splitID: splitID) }
-  private var unit: String { metric == 0 ? store.t("reps") : metric == 1 ? store.profile.unit : store.t("sets") }
+  @State private var fourWeeks = false
+  private var points: [TrainingPoint] {
+    store.trainingPoints(
+      splitID: splitID,
+      since: fourWeeks ? Calendar.current.date(byAdding: .day, value: -28, to: Date()) : nil)
+  }
+  private var unit: String {
+    metric == 0 ? store.t("reps") : metric == 1 ? store.profile.unit : store.t("sets")
+  }
   private func value(_ p: TrainingPoint) -> Double {
-    metric == 0 ? Double(p.reps) : metric == 1
-      ? GymStore.displayedWeight(p.volumeKG, unit: store.profile.unit) : Double(p.sets)
+    metric == 0
+      ? Double(p.reps)
+      : metric == 1
+        ? GymStore.displayedWeight(p.volumeKG, unit: store.profile.unit) : Double(p.sets)
   }
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 24) {
         Text(store.t("Training totals")).font(GymType.hero(32))
         if typeSize.isAccessibilitySize {
-          VStack(alignment: .leading, spacing: 12) { scopePicker; stylePicker }
+          VStack(alignment: .leading, spacing: 12) {
+            scopePicker
+            stylePicker
+          }
         } else {
-          HStack { scopePicker; Spacer(); stylePicker }
+          HStack {
+            scopePicker
+            Spacer()
+            stylePicker
+          }
         }
+        Picker(store.t("Period"), selection: $fourWeeks) {
+          Text(store.t("All time")).tag(false)
+          Text(store.t("Last four weeks")).tag(true)
+        }.pickerStyle(.menu).accessibilityIdentifier("totals.period")
         Picker(store.t("Metric"), selection: $metric) {
           Text(store.t("Reps")).tag(0)
           Text(store.t("Weight moved")).tag(1)
@@ -78,11 +101,19 @@ struct TrainingStatsView: View {
             .frame(height: 220).accessibilityIdentifier("totals.chart")
             // Changing units rebuilds the plot without interpolating incompatible axis scales.
             .transaction { $0.animation = nil }
-          Text(store.t("Work performed, not a strength score. Completed sets include warm-ups; timed activities are separate."))
-            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+          Text(
+            store.t(
+              "Work performed, not a strength score. Completed sets include warm-ups; timed activities are separate."
+            )
+          )
+          .font(GymType.body(13)).foregroundStyle(GymColor.dim)
           if metric == 1 {
-            Text(store.t("Sum of logged load × completed reps. Bodyweight adds no guessed load. Dumbbell load uses your per-dumbbell entry."))
-              .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+            Text(
+              store.t(
+                "Sum of logged load × completed reps. Bodyweight adds no guessed load. Dumbbell load uses your per-dumbbell entry."
+              )
+            )
+            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
           }
           DisclosureGroup(store.t("Workout values")) {
             ForEach(points.reversed()) { p in

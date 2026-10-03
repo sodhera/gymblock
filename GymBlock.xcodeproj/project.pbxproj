@@ -10,10 +10,13 @@
 		0D899512FC58218E35D95623 /* Onboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F60F86A83F2D70198BDC549 /* Onboarding.swift */; };
 		0F264D0C88DEC5F7AF54AA6D /* TrainingStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18EBE2B92B055DA4482DD70D /* TrainingStats.swift */; };
 		1462CD13FD969DB524D634D6 /* EnhancementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B599F635CE70DC7530B4388 /* EnhancementTests.swift */; };
+		16CCC16D448DB518587A0EC3 /* JourneyLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2182B63B8ED2F45B3E4DBD12 /* JourneyLanguage.swift */; };
 		24A23E76643CA0A4D5A8DC5E /* GymBlockFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F36AF90BEFC089EC199AD3 /* GymBlockFlowTests.swift */; };
 		26E302FF83882C09A69885AC /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA97052542A6CE2655EB31D4 /* Model.swift */; };
 		2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95245B0AE197664243A1DF54 /* GymBlockApp.swift */; };
+		2DDB2091A254AB357E74F556 /* JourneyV2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456C8F918D647C27F97E22CF /* JourneyV2Tests.swift */; };
 		2E74CBB270312313000E124C /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A16A247D69006A1651F96 /* Progress.swift */; };
+		3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */; };
 		46F7BCEED35CC504B1CC1677 /* OnboardingFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */; };
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
 		4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F47BAD59FB5F3B4443457 /* Splits.swift */; };
@@ -24,6 +27,7 @@
 		695A8B96F7B37E27F5C1C50D /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 84996EEECD2441DA822FAD7E /* OFL.txt */; };
 		7303B461227959C5F2E3C0E9 /* DMSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4F4A06E7386D08074CB79CA7 /* DMSans.ttf */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
+		7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD5009E70EBA3A94854B117 /* JourneyArt.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
 		885666D10CAAF6A5A4F31485 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F70F4B27F004B995455CBB /* Session.swift */; };
 		8B1A2887B864CD5D8FE3AEEF /* complete.wav in Resources */ = {isa = PBXBuildFile; fileRef = D7EFFA2ABC73524792609214 /* complete.wav */; };
@@ -32,6 +36,7 @@
 		A9DB2A28B218A27F17AD1504 /* RedesignTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82559945550DCB076E35D35D /* RedesignTests.swift */; };
 		B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */; };
 		BB3D6624D0A7D9FDDB187F22 /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2A5696BA38746AE2AF3 /* DemoData.swift */; };
+		E8AD2D368E149D3D084E3B1A /* JourneyV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238EA8ACA13F757D4010AA57 /* JourneyV2UITests.swift */; };
 		E917A985EAF4D2A7FFDD60D1 /* RoutineBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */; };
 		EA9C8D16D36FD80170CEBB50 /* OnboardingJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */; };
 		F47983419F84D898BAF0C3DB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 284030AE460C4F499D46BE48 /* Assets.xcassets */; };
@@ -61,13 +66,18 @@
 		18BD74A4F712847C40F46201 /* GymStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymStoreTests.swift; sourceTree = "<group>"; };
 		18EBE2B92B055DA4482DD70D /* TrainingStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStats.swift; sourceTree = "<group>"; };
 		1C7F43B605AA518679094848 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
+		2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyMetrics.swift; sourceTree = "<group>"; };
+		2182B63B8ED2F45B3E4DBD12 /* JourneyLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLanguage.swift; sourceTree = "<group>"; };
+		238EA8ACA13F757D4010AA57 /* JourneyV2UITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyV2UITests.swift; sourceTree = "<group>"; };
 		258A16A247D69006A1651F96 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		284030AE460C4F499D46BE48 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2B1F47BAD59FB5F3B4443457 /* Splits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Splits.swift; sourceTree = "<group>"; };
 		2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourney.swift; sourceTree = "<group>"; };
 		371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressData.swift; sourceTree = "<group>"; };
+		456C8F918D647C27F97E22CF /* JourneyV2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyV2Tests.swift; sourceTree = "<group>"; };
 		4F4A06E7386D08074CB79CA7 /* DMSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DMSans.ttf; sourceTree = "<group>"; };
 		4F60F86A83F2D70198BDC549 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
+		5AD5009E70EBA3A94854B117 /* JourneyArt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyArt.swift; sourceTree = "<group>"; };
 		5DA1D7B99F91FDC5215A97C4 /* GymBlockTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		69016298FD0530DCDF640BEC /* GymBlockUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B599F635CE70DC7530B4388 /* EnhancementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancementTests.swift; sourceTree = "<group>"; };
@@ -105,6 +115,7 @@
 			isa = PBXGroup;
 			children = (
 				01F36AF90BEFC089EC199AD3 /* GymBlockFlowTests.swift */,
+				238EA8ACA13F757D4010AA57 /* JourneyV2UITests.swift */,
 			);
 			path = GymBlockUITests;
 			sourceTree = "<group>";
@@ -137,6 +148,9 @@
 				95245B0AE197664243A1DF54 /* GymBlockApp.swift */,
 				A84AD10ED062C64A13487708 /* Home.swift */,
 				A00423AA0AB15C75A8BDC2E3 /* Info.plist */,
+				5AD5009E70EBA3A94854B117 /* JourneyArt.swift */,
+				2182B63B8ED2F45B3E4DBD12 /* JourneyLanguage.swift */,
+				2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */,
 				FA97052542A6CE2655EB31D4 /* Model.swift */,
 				91D599A2899F5D63D89F8AEF /* Navigation.swift */,
 				4F60F86A83F2D70198BDC549 /* Onboarding.swift */,
@@ -180,6 +194,7 @@
 				6B599F635CE70DC7530B4388 /* EnhancementTests.swift */,
 				98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */,
 				18BD74A4F712847C40F46201 /* GymStoreTests.swift */,
+				456C8F918D647C27F97E22CF /* JourneyV2Tests.swift */,
 				D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */,
 				E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */,
 				82559945550DCB076E35D35D /* RedesignTests.swift */,
@@ -307,6 +322,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				24A23E76643CA0A4D5A8DC5E /* GymBlockFlowTests.swift in Sources */,
+				E8AD2D368E149D3D084E3B1A /* JourneyV2UITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -317,6 +333,7 @@
 				1462CD13FD969DB524D634D6 /* EnhancementTests.swift in Sources */,
 				903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */,
 				74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */,
+				2DDB2091A254AB357E74F556 /* JourneyV2Tests.swift in Sources */,
 				A6457A9FEE6986E494012874 /* OnboardingJourneyTests.swift in Sources */,
 				B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */,
 				A9DB2A28B218A27F17AD1504 /* RedesignTests.swift in Sources */,
@@ -331,6 +348,9 @@
 				473052F91B312391B79100D6 /* Design.swift in Sources */,
 				2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */,
 				F8278DB2F4F20B209F198AF3 /* Home.swift in Sources */,
+				7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */,
+				16CCC16D448DB518587A0EC3 /* JourneyLanguage.swift in Sources */,
+				3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */,
 				26E302FF83882C09A69885AC /* Model.swift in Sources */,
 				666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */,
 				0D899512FC58218E35D95623 /* Onboarding.swift in Sources */,
