@@ -63,13 +63,13 @@ The minimum is not always zero. Keep an explicit Start set so the user controls 
 
 ### Home: “Start my workout”
 
-Top: a small GymBlock title and standard Settings control. Below: **6-week streak** as a quiet single line, with details available on tap. This means consecutive weeks containing a logged workout; rest days do not break it.
+The 3 October user correction adopts Speaking Coach’s typography and placement: a 28-point personal greeting and Settings control, then a compact white streak surface with a large value and seven-day activity marks. **6-week streak** still has details available on tap. This means consecutive weeks containing a logged workout; rest days do not break it.
 
 The central action area contains **Arms ⌄** or **Free workout ⌄**, followed by the prominent red **Start workout** button. Remember the last selection and keep its name visible before starting. Do not silently choose a split based on the weekday.
 
-Below the action: **Best lifts** with up to three plain rows, such as `Bench press · 85 kg × 5`, and **Progress**. Values use normal text color. History lives inside Progress. Empty accounts get one line, “Your best lifts will appear here.”
+Below the action: **Best lifts** with up to three rows grouped on one quiet surface, such as `Bench press · 85 kg × 5`, and **Progress**. Values use normal text color. History lives inside Progress. Empty accounts get one line, “Your best lifts will appear here.”
 
-Remove the large personal greeting, decorative week circles, last-workout card, helper paragraphs and cards around every row. Do not remove the requested lift records or streak to achieve minimalism.
+The latest visual correction restores the personal greeting and truthful week activity marks from the Speaking Coach reference. Keep helper paragraphs, extra last-workout panels and separate cards around every row out of Home. Do not remove the requested lift records or streak to achieve minimalism.
 
 If a workout is already running, the primary action becomes **Resume workout** with its exercise name. Never create a second session accidentally. A sample-data build carries a compact **Demo** label; focus simulation has its own truthful status.
 
@@ -282,8 +282,8 @@ The immediate benefit to demonstrate is fewer chosen distractions and easier wor
 | Primary action | Deep red starting candidate `#C92535`, light label; final contrast verified in rendered controls |
 | Selected controls | Adaptive red tint; selection also has a checkmark or native selected shape |
 | Dark appearance accent | Brighter red starting candidate `#FF626B`; keep filled-button label contrast separate from link tint |
-| Text and numbers | System primary/secondary label colors; remove blue ink and navy headings |
-| Background | System neutral background, white in light appearance and near-black in dark appearance |
+| Text and numbers | Adaptive warm ink and secondary labels; remove blue ink and navy headings |
+| Background | Speaking Coach-inspired warm paper with a restrained dot grid; adaptive warm near-black in dark appearance |
 | Progress | Neutral baseline and red latest value, with dates and explicit numeric change |
 | Destructive action | Native destructive role and explicit “Delete”/“Discard” wording in a separate menu or confirmation |
 
@@ -291,11 +291,11 @@ These hex values are starting design candidates, not certified accessible colors
 
 ### Typography should feel native and calm
 
-Use the system San Francisco family, default design. No rounded display font, condensed gym font, spaced all-caps eyebrow labels or repeated giant headings. Apple identifies SF as its neutral system typeface. [Apple: Fonts](https://developer.apple.com/fonts/)
+The user’s latest correction supersedes the SF-only direction: use the same bundled DM Sans variable font as native Speaking Coach. Match its optical-size and weight axes: hero 600, titles and labels 500, body 400. Preserve the license alongside the font.
 
-Proposed hierarchy: native inline navigation title; exercise title in Title 2 semibold; labels/body in Body; supporting information in Subheadline; weight/reps/rest in a scalable 44–56 pt semibold numeric style with monospaced digits. Only the number currently being acted on gets display-scale emphasis.
+Hierarchy: 28-point Home greeting, 22-point section headings, 32-point exercise and onboarding titles, 17-point body, 12–15-point supporting information, and a scalable 72-point numeric role. Separate a weight’s unit onto a smaller shared baseline. Only the number currently being acted on gets display-scale emphasis. Native navigation chrome uses the same family.
 
-Use semantic text styles and layouts that reflow at accessibility sizes, including vertical stacking and taller rows. Never shrink important text to preserve an attractive screenshot. [Apple: Layout](https://developer.apple.com/design/human-interface-guidelines/layout?changes=lat_3__1_2)
+Scale text and allow scrolling/reflow at accessibility sizes. Never shrink important text to preserve a screenshot. Speaking Coach’s 24-point page margins and 20–24-point content insets make placement consistent across Home, onboarding, training and progress. [Apple: Layout](https://developer.apple.com/design/human-interface-guidelines/layout?changes=lat_3__1_2)
 
 ### Glass has a job
 
@@ -330,7 +330,7 @@ The progress animation is the previously selected before/after concept. Test whe
 
 1. **Approve the structure:** low-detail layouts for Home, Ready, Active set and Rest, plus the revised onboarding sequence in section 5. Verify button destinations before adding materials.
 2. **Build the workout state flow:** preserve existing data, splits and identifiers; implement resume, saved-set correction, rest continuity and safe session ending.
-3. **Apply the visual system:** red tokens, system typography, standard navigation and restrained Liquid Glass. Remove old blue accents and custom card patterns throughout, including onboarding, Settings and progress.
+3. **Apply the visual system:** red tokens, Speaking Coach’s DM Sans typography and placement, standard navigation and restrained Liquid Glass. Remove old blue accents and custom card patterns throughout, including onboarding, Settings and progress.
 4. **Simplify secondary pages:** compact records, optional split editor, comparison-first progress and short completion.
 5. **Verify on device-sized UI:** clean first run and populated demo; light/dark, large text, Reduce Motion, Reduce Transparency and increased contrast. Capture actual simulator screens and the Ready → Active → Rest loop. Follow with physical-iPhone handling tests before calling the workout ergonomics proven.
 6. **Run the intent walkthroughs:** fix hesitation and wrong turns, then review the final screens against this document.

@@ -4,13 +4,19 @@ Follow `docs/REDESIGN-PLAN.md` for the complete intent map, onboarding, screen b
 
 ## Visual system
 
-Red is the sole accent. The adaptive action/link tint uses #C92535 in light appearance and #FF626B in dark appearance, with higher-contrast variants. The filled primary glass button uses deep red with a light label. Use system backgrounds and primary/secondary label colors; no navy headings, blue numbers, decorative textures or repeated cards.
+The 3 October visual revision uses the native Speaking Coach as a read-only reference, following the user's explicit correction to copy its font and placement. Its Home, welcome and live-practice screenshots and `Typography.swift`, `Theme.swift`, `HomeView.swift` and `MorningStage.swift` informed the implementation. This supersedes the earlier SF-only, flat-background and single-line-streak visual direction.
 
-Use the default San Francisco system family with semantic text styles. Exercise titles are Title 2, ordinary rows are Body/Subheadline, and the actionable number uses a scalable semibold numeric style with monospaced digits. Native margins, controls and shapes define the UI. Numbers are content; glass is reserved for functional controls and navigation. Important workout buttons use native glassProminent on iOS 26+ and native bordered controls on earlier supported releases.
+Red remains the sole accent: #C92535 in light appearance and #FF626B in dark appearance, with higher-contrast variants. Warm paper #F3EFEB, warm ink #231A1B, and soft #FFFCF9 content surfaces reproduce Speaking Coach's temperature while retaining GymBlock's deeper red. Dark appearance has its own warm near-black ground and lighter ink. A restrained 22-point dot grid appears behind content; it is removed with increased contrast or Reduce Transparency.
+
+Bundle the same unmodified DM Sans variable font and its SIL Open Font License. Use its weight and optical-size axes: hero 600, titles/labels 500, body 400. Use scaled text for accessibility, with 28-point Home greetings, 22-point section headings, 32-point exercise/onboarding titles, 17-point body and 12–15-point supporting copy. Weight/reps/rest use an already-scaled 72-point numeric role; weight units use a smaller baseline-aligned label. Native navigation titles use the same family. Do not substitute another font silently.
+
+Use 24-point page margins, 20–24-point card insets and 24–28-point section spacing. Speaking Coach's soft 26-point surfaces group distinct tasks: streak, workout choice/action, grouped lift records, and the current set. Do not put every row in a separate card. The streak has a large value and a truthful seven-day activity row. Home starts with a personal time-of-day greeting and has no duplicate navigation wordmark.
+
+Keep native Liquid Glass on functional controls and navigation, with native bordered fallback below iOS 26. Solid workout content provides clear numbers. Shadows are subtle; the primary red action has a restrained glow. No new routes, setup steps, explanatory paragraphs or extra workout controls are added for decoration.
 
 ## Structure
 
-Home has a quiet weekly streak, an explicit workout choice, Start workout and three compact lift records. Progress and Settings are its secondary destinations. A split starts directly at its first exercise; Free workout starts at native search/recent exercises.
+Home has a compact streak card, an explicit workout choice, Start workout and three compact lift records. Progress and Settings are its secondary destinations. A split starts directly at its first exercise; Free workout starts at native search/recent exercises.
 
 Ready → Start set → actual Reps completed → Finish set → rest → Start next set. One primary action stays near the bottom. Rest starts after saving and can be interrupted. Exercise changes retain rest and independent values. Uncommon actions belong in Workout options or the saved-set editor, not a grid of controls.
 

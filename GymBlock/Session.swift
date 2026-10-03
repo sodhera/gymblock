@@ -10,7 +10,7 @@ struct SessionView: View {
   @State private var editing: LoggedSet?
   @State private var reps = "10"
   @State private var minutes = ""
-  @ScaledMetric(relativeTo: .largeTitle) private var numberSize = 52
+  @ScaledMetric(relativeTo: .largeTitle) private var numberSize = 72
   private var session: Session { store.session ?? Session() }
   private var exercise: Exercise? { session.selected }
   private var active: Bool { session.stage == .active || session.stage == .log }
@@ -36,26 +36,31 @@ struct SessionView: View {
       VStack(spacing: 0) {
         HStack {
           Text(store.t((store.profile.focusEnabled ?? true) ? "Focus demo" : "Focus off")).font(
-            .caption
-          ).foregroundStyle(Color.secondary).accessibilityIdentifier("session.blocking")
+            GymType.body(12)
+          ).foregroundStyle(GymColor.dim).accessibilityIdentifier("session.blocking")
           Spacer()
         }.padding(.horizontal, 24).padding(.top, 8)
         if selecting {
           ExercisePickerContent { store.chooseExercise($0) }
         } else {
           ScrollView {
-            VStack(alignment: .leading, spacing: 28) {
+            VStack(alignment: .leading, spacing: 24) {
               Button {
                 exercisePicker = true
               } label: {
                 HStack(alignment: .firstTextBaseline) {
-                  Text(store.t(exercise?.name ?? "Exercise")).font(.title2.weight(.semibold))
+                  Text(store.t(exercise?.name ?? "Exercise")).font(GymType.hero(32))
                     .multilineTextAlignment(.leading)
-                  if !active { Image(systemName: "chevron.down").font(.caption) }
-                }.foregroundStyle(Color.primary).frame(minHeight: 44)
+                  if !active { Image(systemName: "chevron.down").font(GymType.body(12)) }
+                }.foregroundStyle(GymColor.ink).frame(
+                  maxWidth: .infinity, minHeight: 44, alignment: .leading)
               }.disabled(active).accessibilityIdentifier("set.exercise")
-              if active { activeContent } else { readyContent }
-            }.padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 24)
+              VStack(alignment: .leading, spacing: 24) {
+                if active { activeContent } else { readyContent }
+              }.frame(maxWidth: .infinity, alignment: .leading).padding(24).gymCard()
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(
+              .top, 28
+            ).padding(.bottom, 24)
           }.scrollDismissesKeyboard(.interactively)
           VStack(spacing: 8) {
             if active {
@@ -91,7 +96,7 @@ struct SessionView: View {
           }.padding(.horizontal, 24).padding(.bottom, 12)
         }
       }
-      .navigationTitle(store.t(session.name)).navigationBarTitleDisplayMode(.inline)
+      .gymPage().navigationTitle(store.t(session.name)).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
@@ -131,11 +136,12 @@ struct SessionView: View {
           ExercisePickerContent {
             store.chooseExercise($0)
             exercisePicker = false
-          }.navigationTitle(store.t("Exercises")).navigationBarTitleDisplayMode(.inline).toolbar {
-            ToolbarItem(placement: .confirmationAction) {
-              Button(store.t("Done")) { exercisePicker = false }
+          }.gymPage().navigationTitle(store.t("Exercises")).navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+              ToolbarItem(placement: .confirmationAction) {
+                Button(store.t("Done")) { exercisePicker = false }
+              }
             }
-          }
         }
       }
       .sheet(isPresented: $weightEditor) {
@@ -166,14 +172,14 @@ struct SessionView: View {
           ? store.t("Bodyweight")
           : formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit)) + " "
             + store.profile.unit
-      ).font(.body).foregroundStyle(Color.secondary)
+      ).font(GymType.body(17)).foregroundStyle(GymColor.dim)
     }
     if exercise?.timed == true {
       TimelineView(.periodic(from: .now, by: 1)) { context in
         Text(
           clockString(
             max(0, Int(context.date.timeIntervalSince(session.setStarted ?? context.date))))
-        ).font(.system(size: numberSize, weight: .semibold)).monospacedDigit()
+        ).font(GymType.number(numberSize)).monospacedDigit()
           .accessibilityIdentifier("set.elapsed")
       }
       TextField(store.t("Minutes completed (optional correction)"), text: $minutes).keyboardType(
@@ -182,21 +188,23 @@ struct SessionView: View {
         SelectNumberOnFocus())
     } else {
       VStack(alignment: .leading, spacing: 12) {
-        Text(store.t("Reps completed")).font(.subheadline).foregroundStyle(Color.secondary)
+        Text(store.t("Reps completed")).font(GymType.label(15)).foregroundStyle(GymColor.dim)
         HStack {
           Button {
             reps = String(max(1, (Int(reps) ?? 1) - 1))
           } label: {
-            Image(systemName: "minus").frame(width: 48, height: 48)
+            Image(systemName: "minus").frame(width: 44, height: 44).background(
+              GymColor.red.opacity(0.08), in: Circle())
           }.accessibilityLabel(store.t("Decrease reps")).accessibilityIdentifier("set.reps.minus")
-          TextField("—", text: $reps).font(.system(size: numberSize, weight: .semibold))
+          TextField("—", text: $reps).font(GymType.number(numberSize))
             .monospacedDigit().keyboardType(.numberPad).multilineTextAlignment(.center)
             .accessibilityLabel(store.t("Reps completed")).accessibilityIdentifier("set.reps")
             .modifier(SelectNumberOnFocus())
           Button {
             reps = String(min(999, (Int(reps) ?? 0) + 1))
           } label: {
-            Image(systemName: "plus").frame(width: 48, height: 48)
+            Image(systemName: "plus").frame(width: 44, height: 44).background(
+              GymColor.red.opacity(0.08), in: Circle())
           }.accessibilityLabel(store.t("Increase reps")).accessibilityIdentifier("set.reps.plus")
         }
       }
@@ -207,7 +215,7 @@ struct SessionView: View {
           exercise?.timed == true
             ? "Enter completed minutes above zero."
             : "Enter completed reps, or record an attempt from Workout options.")
-      ).font(.footnote).foregroundStyle(GymColor.red)
+      ).font(GymType.body(13)).foregroundStyle(GymColor.red)
     }
   }
   @ViewBuilder private var readyContent: some View {
@@ -219,10 +227,10 @@ struct SessionView: View {
           restEditor = true
         } label: {
           VStack(alignment: .leading, spacing: 8) {
-            Text(store.t(seconds > 0 ? "Rest" : "Ready")).font(.subheadline).foregroundStyle(
-              Color.secondary)
-            Text(clockString(seconds)).font(.system(size: numberSize, weight: .semibold))
-              .monospacedDigit().foregroundStyle(Color.primary).accessibilityIdentifier(
+            Text(store.t(seconds > 0 ? "Rest" : "Ready")).font(GymType.body(15)).foregroundStyle(
+              GymColor.dim)
+            Text(clockString(seconds)).font(GymType.number(numberSize))
+              .monospacedDigit().foregroundStyle(GymColor.ink).accessibilityIdentifier(
                 "rest.countdown")
           }
         }.accessibilityLabel(store.t("Edit rest timer")).accessibilityIdentifier("rest.edit")
@@ -233,10 +241,10 @@ struct SessionView: View {
         } label: {
           HStack {
             Text(store.t("Saved:") + " " + setValue(last, store: store)).foregroundStyle(
-              Color.secondary
+              GymColor.dim
             )
-            .font(.subheadline)
-            Image(systemName: "pencil").font(.caption)
+            .font(GymType.body(15))
+            Image(systemName: "pencil").font(GymType.body(12))
           }.frame(minHeight: 44)
         }.accessibilityIdentifier("set.saved")
       }
@@ -244,45 +252,47 @@ struct SessionView: View {
       Text(
         store.t("Set")
           + " \(session.sets.filter { $0.exercise.id == exercise?.id && $0.completed }.count + 1)"
-      ).font(.subheadline).foregroundStyle(Color.secondary)
+      ).font(GymType.body(15)).foregroundStyle(GymColor.dim)
     }
     if exercise?.timed != true {
       VStack(alignment: .leading, spacing: 8) {
         if session.stage == .rest {
-          Text(store.t("Next set")).font(.subheadline).foregroundStyle(Color.secondary)
+          Text(store.t("Next set")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
         }
         Button {
           weightEditor = true
         } label: {
-          Text(
-            session.weightIsSet == false
-              ? store.t("Choose weight")
-              : session.weightKG == 0
-                ? store.t("Bodyweight")
-                : formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit))
-                  + " " + store.profile.unit
-          ).font(
-            session.weightIsSet == false
-              ? .title2.weight(.semibold)
-              : .system(size: session.stage == .rest ? 28 : numberSize, weight: .semibold)
-          )
-          .monospacedDigit().foregroundStyle(Color.primary).frame(minHeight: 52)
+          HStack(alignment: .firstTextBaseline, spacing: 8) {
+            if session.weightIsSet == false || session.weightKG == 0 {
+              Text(store.t(session.weightIsSet == false ? "Choose weight" : "Bodyweight"))
+                .font(GymType.title(28)).foregroundStyle(GymColor.ink)
+            } else {
+              Text(
+                formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit))
+              )
+              .font(GymType.number(session.stage == .rest ? 32 : numberSize)).monospacedDigit()
+              .foregroundStyle(GymColor.ink)
+              Text(store.profile.unit).font(GymType.title(22)).foregroundStyle(GymColor.dim)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "pencil").font(.system(size: 15)).foregroundStyle(GymColor.red)
+          }.frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
         }.accessibilityLabel(store.t("Edit weight")).accessibilityIdentifier("set.weight")
         if GymStore.displayedWeight(session.weightKG, unit: store.profile.unit) > 500 {
-          Text(store.t("Enter a weight from 0 to 500.")).font(.footnote).foregroundStyle(
+          Text(store.t("Enter a weight from 0 to 500.")).font(GymType.body(13)).foregroundStyle(
             GymColor.red)
         }
         if exercise?.name.localizedCaseInsensitiveContains("dumbbell") == true
           || exercise?.id == "curl"
         {
-          Text(store.t("Per dumbbell · reps per side")).font(.footnote).foregroundStyle(
-            Color.secondary)
+          Text(store.t("Per dumbbell · reps per side")).font(GymType.body(13)).foregroundStyle(
+            GymColor.dim)
         }
       }
     }
     if session.stage != .rest, let exercise, let previous = store.lastSet(for: exercise) {
-      Text(store.t("Last time:") + " " + setValue(previous, store: store)).font(.subheadline)
-        .foregroundStyle(Color.secondary)
+      Text(store.t("Last time:") + " " + setValue(previous, store: store)).font(GymType.body(15))
+        .foregroundStyle(GymColor.dim)
     }
     if store.deletedSet != nil {
       Button(store.t("Undo delete")) { store.undoDelete() }.frame(minHeight: 44)
@@ -331,15 +341,17 @@ struct ExercisePickerContent: View {
             onChoose(exercise)
           } label: {
             HStack {
-              Text(store.t(exercise.name)).foregroundStyle(Color.primary)
+              Text(store.t(exercise.name)).foregroundStyle(GymColor.ink)
               Spacer()
               if store.session?.splitID != nil {
                 let count =
                   store.session?.sets.filter { $0.exercise.id == exercise.id && $0.completed }.count
                   ?? 0
-                if count > 0 { Text("\(count)").foregroundStyle(Color.secondary).font(.caption) }
+                if count > 0 {
+                  Text("\(count)").foregroundStyle(GymColor.dim).font(GymType.body(12))
+                }
               }
-              Image(systemName: "chevron.right").font(.caption).foregroundStyle(
+              Image(systemName: "chevron.right").font(GymType.body(12)).foregroundStyle(
                 Color(uiColor: .tertiaryLabel))
             }
           }.accessibilityIdentifier("exercise." + exercise.id)
@@ -377,9 +389,10 @@ struct WeightEditor: View {
             } label: {
               Image(systemName: "minus").frame(width: 44, height: 44)
             }.accessibilityLabel(store.t("Decrease weight"))
-            TextField("0", text: $text).font(.largeTitle.monospacedDigit()).multilineTextAlignment(
-              .center
-            ).keyboardType(.decimalPad).accessibilityLabel(store.t("Weight"))
+            TextField("0", text: $text).font(GymType.hero(48).monospacedDigit())
+              .multilineTextAlignment(
+                .center
+              ).keyboardType(.decimalPad).accessibilityLabel(store.t("Weight"))
               .accessibilityIdentifier(
                 "set.weight.manual"
               ).modifier(SelectNumberOnFocus())
@@ -412,11 +425,11 @@ struct WeightEditor: View {
             }
           }.pickerStyle(.wheel).accessibilityIdentifier("set.weight.wheel")
           if !valid {
-            Text(store.t("Enter a weight from 0 to 500.")).font(.footnote).foregroundStyle(
+            Text(store.t("Enter a weight from 0 to 500.")).font(GymType.body(13)).foregroundStyle(
               GymColor.red)
           }
         }
-      }.scrollDismissesKeyboard(.interactively).padding(.horizontal, 24).navigationTitle(
+      }.scrollDismissesKeyboard(.interactively).padding(.horizontal, 24).gymPage().navigationTitle(
         store.t("Weight")
       ).navigationBarTitleDisplayMode(
         .inline
@@ -453,7 +466,7 @@ struct RestEditor: View {
           ForEach([0, 30, 60, 90, 120, 180, 240, 300], id: \.self) { Text(clockString($0)).tag($0) }
         }.pickerStyle(.wheel)
       }
-      .navigationTitle(store.t("Rest")).navigationBarTitleDisplayMode(.inline).toolbar {
+      .gymPage().navigationTitle(store.t("Rest")).navigationBarTitleDisplayMode(.inline).toolbar {
         ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
         ToolbarItem(placement: .confirmationAction) {
           Button(store.t("Done")) {
@@ -483,12 +496,16 @@ struct SessionRecordsView: View {
   var body: some View {
     NavigationStack {
       VStack { if let session = store.session { WorkoutDetailView(sessionID: session.id) } }
-        .navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).toolbar {
+        .gymPage().navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).toolbar {
           ToolbarItem(placement: .confirmationAction) {
             Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("records.done")
           }
           ToolbarItem(placement: .topBarLeading) {
-            Button(store.t("Add completed set")) { adding = true }.accessibilityIdentifier(
+            Button {
+              adding = true
+            } label: {
+              Image(systemName: "plus")
+            }.accessibilityLabel(store.t("Add completed set")).accessibilityIdentifier(
               "records.add")
           }
         }.sheet(isPresented: $adding) {
@@ -520,7 +537,7 @@ struct SetEditor: View {
           }
           if set?.unsuccessful == true {
             Text(store.t("Unsuccessful attempt · 0 completed reps")).foregroundStyle(
-              Color.secondary)
+              GymColor.dim)
           } else if exercise.timed {
             TextField(store.t("Minutes completed"), text: $minutes).keyboardType(.decimalPad)
               .accessibilityIdentifier("edit.minutes").modifier(SelectNumberOnFocus())
@@ -538,7 +555,7 @@ struct SetEditor: View {
             dismiss()
           }.accessibilityIdentifier("edit.delete")
         }
-      }.navigationTitle(store.t(set == nil ? "Add completed set" : "Edit set"))
+      }.gymPage().navigationTitle(store.t(set == nil ? "Add completed set" : "Edit set"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
@@ -592,21 +609,23 @@ struct CustomExerciseView: View {
       Form {
         TextField(store.t("Exercise name"), text: $name).accessibilityIdentifier("custom.name")
         Toggle(store.t("Duration-based"), isOn: $timed)
-      }.navigationTitle(store.t("Add custom exercise")).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
-          ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Add exercise")) {
-              onAdd(
-                Exercise(
-                  id: UUID().uuidString,
-                  name: String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)),
-                  area: "Your training", timed: timed))
-              dismiss()
-            }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-              .accessibilityIdentifier("custom.add")
-          }
+      }.gymPage().navigationTitle(store.t("Add custom exercise")).navigationBarTitleDisplayMode(
+        .inline
+      )
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+        ToolbarItem(placement: .confirmationAction) {
+          Button(store.t("Add exercise")) {
+            onAdd(
+              Exercise(
+                id: UUID().uuidString,
+                name: String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)),
+                area: "Your training", timed: timed))
+            dismiss()
+          }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .accessibilityIdentifier("custom.add")
         }
+      }
     }
   }
 }
@@ -619,21 +638,24 @@ struct SummaryView: View {
     NavigationStack {
       VStack(alignment: .leading, spacing: 16) {
         Spacer()
+        Image(systemName: session.completedSets.isEmpty ? "checkmark" : "checkmark.seal.fill")
+          .font(.system(size: 48, weight: .light)).foregroundStyle(GymColor.red)
+          .padding(.bottom, 12).accessibilityHidden(true)
         Text(
           store.t(
             session.sets.isEmpty
               ? "Session ended."
               : session.completedSets.isEmpty ? "Attempt recorded" : "Workout saved")
-        ).font(.title.weight(.semibold)).accessibilityIdentifier("summary.title")
+        ).font(GymType.hero(32)).accessibilityIdentifier("summary.title")
         Text(
           "\(session.completedSets.count) " + store.t("sets")
             + " · \(max(1, Int(session.duration / 60))) " + store.t("min")
-        ).foregroundStyle(Color.secondary)
-        Text(store.t("Focus demo ended")).font(.footnote).foregroundStyle(Color.secondary)
+        ).foregroundStyle(GymColor.dim)
+        Text(store.t("Focus demo ended")).font(GymType.body(13)).foregroundStyle(GymColor.dim)
           .accessibilityIdentifier("summary.unblocked")
         Spacer()
         GymButton(title: store.t("Done"), id: "summary.done") { store.summary = nil }
-      }.padding(24).navigationBarTitleDisplayMode(.inline)
+      }.padding(24).gymPage().navigationBarTitleDisplayMode(.inline)
         .toolbar {
           if !session.sets.isEmpty {
             ToolbarItem(placement: .topBarTrailing) {

@@ -14,11 +14,12 @@ struct SplitsView: View {
             HStack {
               VStack(alignment: .leading, spacing: 4) {
                 Text(split.name).foregroundStyle(GymColor.ink)
-                Text("\(split.exercises.count) " + store.t("exercises")).font(.caption)
+                Text("\(split.exercises.count) " + store.t("exercises")).font(GymType.body(12))
                   .foregroundStyle(GymColor.dim)
               }
               Spacer()
-              Image(systemName: "chevron.right").foregroundStyle(GymColor.dim).font(.caption)
+              Image(systemName: "chevron.right").foregroundStyle(GymColor.dim).font(
+                GymType.body(12))
             }.padding(.vertical, 5)
           }.accessibilityIdentifier("split.edit.\(split.name)")
         }.onDelete { indices in
@@ -33,7 +34,7 @@ struct SplitsView: View {
       } footer: {
         Text(store.t("Splits are optional. You can always start a free workout."))
       }
-    }.scrollContentBackground(.hidden).background(GymColor.ground).navigationTitle(
+    }.scrollContentBackground(.hidden).background(GymColor.ground).gymPage().navigationTitle(
       store.t("Splits")
     )
     .toolbar {
@@ -80,7 +81,7 @@ struct SplitEditor: View {
           }
         }
       }.environment(\.editMode, .constant(.active))
-        .scrollContentBackground(.hidden).background(GymColor.ground).navigationTitle(
+        .scrollContentBackground(.hidden).background(GymColor.ground).gymPage().navigationTitle(
           store.t(workout.name.isEmpty ? "Add split" : "Edit split")
         )
         .navigationBarTitleDisplayMode(.inline)
@@ -133,7 +134,7 @@ struct SplitExercisePicker: View {
         }
         Button(store.t("Add custom exercise")) { custom = true }
       }.searchable(text: $search, prompt: store.t("Search exercises"))
-        .navigationTitle(store.t("Add exercises")).navigationBarTitleDisplayMode(.inline)
+        .gymPage().navigationTitle(store.t("Add exercises")).navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .confirmationAction) {
             Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("split.exercises.done")

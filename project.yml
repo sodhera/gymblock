@@ -13,9 +13,16 @@ targets:
     type: application
     platform: iOS
     sources: [GymBlock]
+    info:
+      path: GymBlock/Info.plist
+      properties:
+        UIAppFonts: [DMSans.ttf]
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sirish.gymblock.prototype
+        TARGETED_DEVICE_FAMILY: '1'
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: GymBlock
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

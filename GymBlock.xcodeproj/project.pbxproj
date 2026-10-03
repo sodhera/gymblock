@@ -14,6 +14,9 @@
 		2E74CBB270312313000E124C /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A16A247D69006A1651F96 /* Progress.swift */; };
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
 		4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F47BAD59FB5F3B4443457 /* Splits.swift */; };
+		540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C32DC47F5228BD30518BAB /* Typography.swift */; };
+		695A8B96F7B37E27F5C1C50D /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 84996EEECD2441DA822FAD7E /* OFL.txt */; };
+		7303B461227959C5F2E3C0E9 /* DMSans.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4F4A06E7386D08074CB79CA7 /* DMSans.ttf */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
 		885666D10CAAF6A5A4F31485 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F70F4B27F004B995455CBB /* Session.swift */; };
@@ -51,6 +54,7 @@
 		284030AE460C4F499D46BE48 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2B1F47BAD59FB5F3B4443457 /* Splits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Splits.swift; sourceTree = "<group>"; };
 		371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressData.swift; sourceTree = "<group>"; };
+		4F4A06E7386D08074CB79CA7 /* DMSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DMSans.ttf; sourceTree = "<group>"; };
 		4F60F86A83F2D70198BDC549 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
 		5DA1D7B99F91FDC5215A97C4 /* GymBlockTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		69016298FD0530DCDF640BEC /* GymBlockUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -58,13 +62,25 @@
 		777BA2A5696BA38746AE2AF3 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
 		7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineBaseline.swift; sourceTree = "<group>"; };
 		82559945550DCB076E35D35D /* RedesignTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignTests.swift; sourceTree = "<group>"; };
+		84996EEECD2441DA822FAD7E /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		95245B0AE197664243A1DF54 /* GymBlockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockApp.swift; sourceTree = "<group>"; };
+		A00423AA0AB15C75A8BDC2E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A84AD10ED062C64A13487708 /* Home.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Home.swift; sourceTree = "<group>"; };
+		B5C32DC47F5228BD30518BAB /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressAndSplitTests.swift; sourceTree = "<group>"; };
 		FA97052542A6CE2655EB31D4 /* Model.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Model.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		07DB053273F6F6950B27B281 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				4F4A06E7386D08074CB79CA7 /* DMSans.ttf */,
+				84996EEECD2441DA822FAD7E /* OFL.txt */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
 		2F123DE00962F9E3BA28CA91 /* GymBlockUITests */ = {
 			isa = PBXGroup;
 			children = (
@@ -83,6 +99,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		58314823545399E5B59404D8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				07DB053273F6F6950B27B281 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		61B3E35BE7BD60F8E6487626 /* GymBlock */ = {
 			isa = PBXGroup;
 			children = (
@@ -91,6 +115,7 @@
 				1C7F43B605AA518679094848 /* Design.swift */,
 				95245B0AE197664243A1DF54 /* GymBlockApp.swift */,
 				A84AD10ED062C64A13487708 /* Home.swift */,
+				A00423AA0AB15C75A8BDC2E3 /* Info.plist */,
 				FA97052542A6CE2655EB31D4 /* Model.swift */,
 				4F60F86A83F2D70198BDC549 /* Onboarding.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
@@ -98,6 +123,8 @@
 				7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */,
 				75F70F4B27F004B995455CBB /* Session.swift */,
 				2B1F47BAD59FB5F3B4443457 /* Splits.swift */,
+				B5C32DC47F5228BD30518BAB /* Typography.swift */,
+				58314823545399E5B59404D8 /* Resources */,
 			);
 			path = GymBlock;
 			sourceTree = "<group>";
@@ -227,6 +254,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F47983419F84D898BAF0C3DB /* Assets.xcassets in Resources */,
+				7303B461227959C5F2E3C0E9 /* DMSans.ttf in Resources */,
+				695A8B96F7B37E27F5C1C50D /* OFL.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +295,7 @@
 				E917A985EAF4D2A7FFDD60D1 /* RoutineBaseline.swift in Sources */,
 				885666D10CAAF6A5A4F31485 /* Session.swift in Sources */,
 				4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */,
+				540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -358,6 +388,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GymBlock/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GymBlock;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -368,7 +399,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sirish.gymblock.prototype;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -379,6 +410,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GymBlock/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GymBlock;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -389,7 +421,7 @@
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sirish.gymblock.prototype;
 				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};

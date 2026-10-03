@@ -1,8 +1,21 @@
-# Validation — 2 October 2026
+# Validation — 3 October 2026
 
 Native Swift/SwiftUI simulator prototype, Xcode 27 / iPhone 17 / iOS 27. Signing is disabled. No external services or package dependencies are configured.
 
-## Checks completed
+## Speaking Coach visual revision
+
+The user's latest correction replaces the earlier SF/flat UI with Speaking Coach's actual bundled DM Sans, warm paper, dot-grid backdrop, soft content surfaces, left-aligned headers and spacing. GymBlock keeps its red theme and existing workout behavior. Speaking Coach's source and reference screenshots were read only.
+
+Four affected simulator journeys passed across two runs:
+
+- `CoachStyleFlows.xcresult`: free workout/search, wheel/manual weight, actual reps, correction, relaunch and missed warm-up; personal onboarding and resumed answers; direct split start and before/after progress. All three passed.
+- `CoachStyleAccessibility.xcresult`: final source build, actual dark appearance, accessibility-large text and increased contrast. Home, ready/active/rest, manual weight entry, welcome and routine setup remained usable. Passed in 67 seconds.
+
+Actual screenshots from these runs are in `screenshots/coach-style/` and `screenshots/coach-style/dark-large/`. Home, workout, rest, onboarding and progress were visually inspected. Final Home was recaptured after installing the final build. The registered `UIAppFonts` entry and bundled unmodified font were verified; final built version remains 0.1.0 (1), iPhone only. No model/data logic changed, so earlier model evidence below is retained rather than reported as a fresh run. No invalid-frame or AttributeGraph runtime warning appeared in either new test run.
+
+The simulator is restored to light appearance, standard text size and normal contrast, with the seeded Arms/Push/Legs and six weeks of sample data, on Home. The Demo marker identifies this data.
+
+## Previous behavior verification
 
 22 model checks and seven distinct simulator journeys have passed across the redesign and targeted verification runs. Repeated runs are not counted as additional checks.
 
@@ -18,7 +31,7 @@ Native Swift/SwiftUI simulator prototype, Xcode 27 / iPhone 17 / iOS 27. Signing
 
 The model and unit-entry results were repeated after the data and keyboard fixes. Unit-only edits preserve the exact canonical mass rather than re-saving the rounded display value; `build/unit-identity-storage-proof.json` records the inspected 10 kg example. The accessibility journey was repeated after the final semantic text-color correction. Keyboard entry uses the same Save/Finish action; redundant keyboard toolbars were removed. A unit conversion check commits the typed load before reopening the editor to avoid stale simulator hit positions during keyboard movement.
 
-## Visual evidence and simulator state
+## Earlier visual evidence and simulator state
 
 Actual captures are in `screenshots/redesign/`, with dark/large-text/increased-contrast captures in `screenshots/redesign/dark-large/`. Home, active set, rest, weight entry, onboarding and progress were inspected. These are rendered app screens with sample data, not design mockups. The parent screenshot folder contains the previous design.
 
@@ -26,6 +39,6 @@ The simulator is left in light appearance with its original text-size/contrast s
 
 ## Limits
 
-Real Screen Time blocking, billing, accounts, backend, signing and App Store delivery are not configured. Physical-iPhone ergonomics, VoiceOver navigation, OS Reduce Motion/Reduce Transparency behavior and older-iOS runtime appearance were not certified by these runs. The source uses native system materials, semantic styles and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
+Real Screen Time blocking, billing, accounts, backend, signing and App Store delivery are not configured. Physical-iPhone ergonomics, VoiceOver navigation, OS Reduce Motion/Reduce Transparency behavior and older-iOS runtime appearance were not certified by these runs. The source uses native system materials, scaled DM Sans typography and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
 
 Animation preference and usability claims still require the proposed friend/user study. No muscle-gain, fat-loss or optimal-workout-time prediction is made.

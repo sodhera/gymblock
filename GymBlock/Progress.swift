@@ -8,38 +8,48 @@ struct ProgressView: View {
   @State private var history = false
   var body: some View {
     NavigationStack {
-      List {
-        Section {
-          NavigationLink(store.t("History")) { HistoryView() }.accessibilityIdentifier(
-            "progress.history")
-        }
-        if !store.data.workouts.isEmpty {
-          Section {
+      ScrollView(showsIndicators: false) {
+        VStack(alignment: .leading, spacing: 24) {
+          Text(store.t("Progress")).font(GymType.hero(32)).accessibilityAddTraits(.isHeader)
+          if !store.data.workouts.isEmpty {
             Picker(store.t("Split"), selection: $splitID) {
               ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
-            }.accessibilityIdentifier("progress.split")
-          }
-          if let split = store.data.workouts.first(where: { $0.id == splitID }) {
-            Section {
-              ForEach(split.exercises) { exercise in
-                NavigationLink {
-                  ExerciseProgressView(exercise: exercise, split: split)
-                } label: {
-                  VStack(alignment: .leading, spacing: 4) {
-                    Text(store.t(exercise.name))
-                    if let set = store.latestSet(for: exercise, split: split) {
-                      Text(setValue(set, store: store)).font(.subheadline).foregroundStyle(
-                        Color.secondary)
-                    }
-                  }
-                }.accessibilityIdentifier("progress.exercise." + exercise.id)
-              }
+            }.pickerStyle(.menu).font(GymType.title(22)).accessibilityIdentifier("progress.split")
+            if let split = store.data.workouts.first(where: { $0.id == splitID }) {
+              VStack(spacing: 0) {
+                ForEach(split.exercises) { exercise in
+                  NavigationLink {
+                    ExerciseProgressView(exercise: exercise, split: split)
+                  } label: {
+                    HStack(spacing: 16) {
+                      VStack(alignment: .leading, spacing: 6) {
+                        Text(store.t(exercise.name)).font(GymType.title(19)).foregroundStyle(
+                          GymColor.ink)
+                        if let set = store.latestSet(for: exercise, split: split) {
+                          Text(setValue(set, store: store)).font(GymType.body(14)).foregroundStyle(
+                            GymColor.dim)
+                        }
+                      }
+                      Spacer(minLength: 0)
+                      Image(systemName: "arrow.up.right").font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(GymColor.red)
+                    }.frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
+                  }.accessibilityIdentifier("progress.exercise." + exercise.id)
+                  if exercise.id != split.exercises.last?.id { Divider().opacity(0.45) }
+                }
+              }.padding(.horizontal, 20).gymCard()
             }
+          } else {
+            Text(store.t("Add a split to compare its exercises.")).foregroundStyle(GymColor.dim)
           }
-        } else {
-          Text(store.t("Add a split to compare its exercises.")).foregroundStyle(Color.secondary)
-        }
-      }.navigationTitle(store.t("Progress")).navigationBarTitleDisplayMode(.inline)
+          NavigationLink {
+            HistoryView()
+          } label: {
+            Label(store.t("History"), systemImage: "clock.arrow.circlepath").font(GymType.label(16))
+              .frame(minHeight: 44)
+          }.accessibilityIdentifier("progress.history")
+        }.padding(24)
+      }.gymPage().navigationTitle("").navigationBarTitleDisplayMode(.inline)
         .toolbar {
           ToolbarItem(placement: .confirmationAction) {
             Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("progress.done")
@@ -86,27 +96,28 @@ struct ExerciseProgressView: View {
   private var unit: String { repMode ? store.t("reps") : store.profile.unit }
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 28) {
+      VStack(alignment: .leading, spacing: 24) {
+        Text(store.t(exercise.name)).font(GymType.hero(32)).accessibilityAddTraits(.isHeader)
         if let latest, exercise.timed {
           Text(formatNumber(latest.minutes) + " " + store.t("min")).font(
-            .largeTitle.monospacedDigit())
-          Text(store.t("Latest activity duration")).foregroundStyle(Color.secondary)
+            GymType.hero(34).monospacedDigit())
+          Text(store.t("Latest activity duration")).foregroundStyle(GymColor.dim)
         } else if let latest, let previous = previousSet, weights.count < 2 && repetitions.count < 2
         {
           VStack(alignment: .leading, spacing: 12) {
-            Text(store.t("Previous workout")).font(.subheadline).foregroundStyle(Color.secondary)
-            Text(setValue(previous, store: store)).font(.title2.weight(.semibold))
-            Text(previous.date, format: .dateTime.month(.abbreviated).day()).font(.caption)
-              .foregroundStyle(Color.secondary)
+            Text(store.t("Previous workout")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
+            Text(setValue(previous, store: store)).font(GymType.hero(24))
+            Text(previous.date, format: .dateTime.month(.abbreviated).day()).font(GymType.body(12))
+              .foregroundStyle(GymColor.dim)
           }
           VStack(alignment: .leading, spacing: 12) {
-            Text(store.t("Latest workout")).font(.subheadline).foregroundStyle(Color.secondary)
-            Text(setValue(latest, store: store)).font(.title2.weight(.semibold))
-            Text(latest.date, format: .dateTime.month(.abbreviated).day()).font(.caption)
-              .foregroundStyle(Color.secondary)
+            Text(store.t("Latest workout")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
+            Text(setValue(latest, store: store)).font(GymType.hero(24))
+            Text(latest.date, format: .dateTime.month(.abbreviated).day()).font(GymType.body(12))
+              .foregroundStyle(GymColor.dim)
           }
-          Text(store.t("Different weight or reps")).font(.subheadline).foregroundStyle(
-            Color.secondary)
+          Text(store.t("Different weight or reps")).font(GymType.body(15)).foregroundStyle(
+            GymColor.dim)
           NavigationLink(store.t("History")) { ExerciseRecords(exercise: exercise, split: split) }
         } else if let latest, !points.isEmpty {
           Text(
@@ -114,7 +125,7 @@ struct ExerciseProgressView: View {
               ? store.t("Same weight:") + " "
                 + formatNumber(GymStore.displayedWeight(latest.weightKG, unit: store.profile.unit))
                 + " " + store.profile.unit : store.t("Same reps:") + " \(latest.reps)"
-          ).font(.subheadline).foregroundStyle(Color.secondary)
+          ).font(GymType.body(15)).foregroundStyle(GymColor.dim)
           if weights.count > 1 && repetitions.count > 1 {
             Picker(store.t("Compare"), selection: $repMode) {
               Text(store.t("Weight")).tag(false)
@@ -123,23 +134,23 @@ struct ExerciseProgressView: View {
           }
           comparison(
             title: "First", amount: first, date: points.first?.date,
-            tint: Color.secondary.opacity(0.5))
+            tint: GymColor.dim.opacity(0.5))
           comparison(title: "Latest", amount: shown, date: points.last?.date, tint: GymColor.red)
           if points.count > 1 {
             Text((last > first ? "+" : "") + formatNumber(last - first) + " " + unit).font(
-              .title2.weight(.semibold)
+              GymType.hero(24)
             ).monospacedDigit().accessibilityIdentifier("progress.change")
           } else {
-            Text(store.t("First recorded set")).font(.subheadline).foregroundStyle(Color.secondary)
+            Text(store.t("First recorded set")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
           }
           NavigationLink(store.t("History")) {
             ComparisonHistory(points: points, repMode: repMode, unit: unit)
           }.frame(minHeight: 44).accessibilityIdentifier("progress.chart")
         } else {
-          Text(store.t("No comparable sets yet.")).foregroundStyle(Color.secondary)
+          Text(store.t("No comparable sets yet.")).foregroundStyle(GymColor.dim)
         }
       }.padding(24)
-    }.navigationTitle(store.t(exercise.name)).navigationBarTitleDisplayMode(.inline)
+    }.gymPage().navigationTitle(split.name).navigationBarTitleDisplayMode(.inline)
       .task {
         repMode = weights.count < 2 && repetitions.count > 1
         animate()
@@ -150,21 +161,22 @@ struct ExerciseProgressView: View {
     VStack(alignment: .leading, spacing: 10) {
       HStack {
         VStack(alignment: .leading, spacing: 4) {
-          Text(store.t(title)).font(.subheadline).foregroundStyle(Color.secondary)
+          Text(store.t(title)).font(GymType.body(15)).foregroundStyle(GymColor.dim)
           if let date {
-            Text(date, format: .dateTime.month(.abbreviated).day()).font(.caption).foregroundStyle(
-              Color.secondary)
+            Text(date, format: .dateTime.month(.abbreviated).day()).font(GymType.body(12))
+              .foregroundStyle(
+                GymColor.dim)
           }
         }
         Spacer()
-        Text(formatNumber(amount) + " " + unit).font(.title2.weight(.semibold)).monospacedDigit()
+        Text(formatNumber(amount) + " " + unit).font(GymType.hero(24)).monospacedDigit()
           .contentTransition(.numericText())
       }
       GeometryReader { proxy in
         Rectangle().fill(tint).frame(width: max(0, proxy.size.width * min(1, amount / ceiling)))
           .clipShape(Capsule())
-      }.frame(height: 8)
-    }
+      }.frame(height: 10)
+    }.padding(20).gymCard()
   }
   private func animate() {
     shown = first
@@ -201,7 +213,7 @@ struct ComparisonHistory: View {
           Text(formatNumber(value(p)) + " " + unit).monospacedDigit()
         }
       }
-    }.navigationTitle(store.t("History")).navigationBarTitleDisplayMode(.inline)
+    }.gymPage().navigationTitle(store.t("History")).navigationBarTitleDisplayMode(.inline)
   }
 }
 
@@ -218,6 +230,6 @@ struct ExerciseRecords: View {
           }
         }
       }
-    }.navigationTitle(store.t("History")).navigationBarTitleDisplayMode(.inline)
+    }.gymPage().navigationTitle(store.t("History")).navigationBarTitleDisplayMode(.inline)
   }
 }

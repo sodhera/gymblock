@@ -2,10 +2,10 @@ import SwiftUI
 import UIKit
 
 enum GymColor {
-  static let ground = Color(uiColor: .systemBackground)
-  static let surface = Color(uiColor: .secondarySystemBackground)
-  static let ink = Color.primary
-  static let dim = Color.secondary
+  static let ground = adaptive(light: 0xF3EFEB, dark: 0x191617)
+  static let surface = adaptive(light: 0xFFFCF9, dark: 0x292526)
+  static let ink = adaptive(light: 0x231A1B, dark: 0xF8F0EB)
+  static let dim = adaptive(light: 0x746668, dark: 0xBCADAF)
   static let red = Color(
     uiColor: UIColor { traits in
       let high = traits.accessibilityContrast == .high
@@ -16,6 +16,15 @@ enum GymColor {
         red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
         blue: CGFloat(hex & 255) / 255, alpha: 1)
     })
+  static func adaptive(light: UInt32, dark: UInt32) -> Color {
+    Color(
+      uiColor: UIColor { traits in
+        let hex = traits.userInterfaceStyle == .dark ? dark : light
+        return UIColor(
+          red: CGFloat((hex >> 16) & 255) / 255,
+          green: CGFloat((hex >> 8) & 255) / 255, blue: CGFloat(hex & 255) / 255, alpha: 1)
+      })
+  }
   static let action = red
   static let wash = Color(uiColor: .tertiarySystemFill)
 }
@@ -29,7 +38,10 @@ struct GymButton: View {
   var action: () -> Void
   private var control: some View {
     Button(action: action) {
-      Text(title).font(.headline).frame(maxWidth: .infinity, minHeight: 52)
+      HStack(spacing: 8) {
+        if let icon { Image(systemName: icon) }
+        Text(title).font(GymType.label(17))
+      }.frame(maxWidth: .infinity, minHeight: 54)
     }.disabled(!enabled).accessibilityIdentifier(id)
   }
   var body: some View {
@@ -39,6 +51,7 @@ struct GymButton: View {
       } else {
         control.buttonStyle(.glassProminent).tint(Color(red: 0.79, green: 0.145, blue: 0.208))
           .foregroundStyle(.white)
+          .shadow(color: GymColor.red.opacity(enabled ? 0.18 : 0), radius: 16, y: 8)
       }
     } else {
       control.buttonStyle(.borderedProminent).tint(
@@ -56,6 +69,10 @@ extension GymStore {
 }
 enum Spanish {
   static let additions: [String: String] = [
+    "Good morning": "Buenos días", "Good afternoon": "Buenas tardes",
+    "Good evening": "Buenas noches",
+    "Your workout": "Tu entrenamiento", "Week streak": "Semanas seguidas",
+    "exercises": "ejercicios",
     "Settings": "Ajustes", "Splits": "Rutinas", "Split": "Rutina",
     "Split name": "Nombre de la rutina", "Add split": "Añadir rutina",
     "Edit split": "Editar rutina", "Save": "Guardar",

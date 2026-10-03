@@ -3,6 +3,17 @@ import SwiftUI
 @main struct GymBlockApp: App {
   @StateObject private var store: GymStore
   init() {
+    let navigation = UINavigationBarAppearance()
+    navigation.configureWithTransparentBackground()
+    navigation.titleTextAttributes = [
+      .font: GymType.uiFont(17, weight: 500), .foregroundColor: UIColor(GymColor.ink),
+    ]
+    navigation.largeTitleTextAttributes = [
+      .font: GymType.uiFont(32, weight: 600), .foregroundColor: UIColor(GymColor.ink),
+    ]
+    UINavigationBar.appearance().standardAppearance = navigation
+    UINavigationBar.appearance().scrollEdgeAppearance = navigation
+
     #if DEBUG
       if ProcessInfo.processInfo.arguments.contains("--ui-reset") {
         UserDefaults.standard.removeObject(forKey: GymStore.storageKey)
@@ -16,7 +27,8 @@ import SwiftUI
   }
   var body: some Scene {
     WindowGroup {
-      RootView().environmentObject(store).tint(GymColor.red)
+      RootView().environmentObject(store).tint(GymColor.red).font(GymType.body(17)).foregroundStyle(
+        GymColor.ink)
     }
   }
 }

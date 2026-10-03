@@ -1,6 +1,6 @@
 # GymBlock
 
-A native SwiftUI workout prototype built around one action at a time. Red is the only brand accent; native Liquid Glass controls sit above quiet, readable workout content.
+A native SwiftUI workout prototype built around one action at a time. The visual design uses Speaking Coach’s DM Sans, warm paper, soft content surfaces and left-aligned hierarchy, with GymBlock’s red as the only brand accent. Native Liquid Glass controls sit above readable workout content.
 
 ## Try it
 
@@ -30,9 +30,9 @@ Time totals are clearly attributed to the user's estimates. Reduction goals are 
 
 ## Actual simulator screens
 
-<img src="screenshots/redesign/redesign-01-home.png" alt="Red Home with Start workout and compact lift records" width="240"> <img src="screenshots/redesign/redesign-05-active.png" alt="Active set with actual reps and Finish set" width="240"> <img src="screenshots/redesign/redesign-13-personal-result.png" alt="Personal onboarding result attributed to self-reported feed time" width="240">
+<img src="screenshots/coach-style/redesign-01-home.png" alt="Home with DM Sans, a weekly streak and red Start workout" width="240"> <img src="screenshots/coach-style/redesign-05-active.png" alt="Active set with actual reps and Finish set" width="240"> <img src="screenshots/coach-style/redesign-13-personal-result.png" alt="Personal onboarding result attributed to self-reported feed time" width="240">
 
-More captures are in [screenshots/redesign](screenshots/redesign/). The older screenshots in the parent folder document the previous design.
+Current captures are in [screenshots/coach-style](screenshots/coach-style/). Earlier captures in `screenshots/redesign/` document the previous design.
 
 ## Boundaries
 
