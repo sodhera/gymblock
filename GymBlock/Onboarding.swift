@@ -2,6 +2,11 @@ import SwiftUI
 
 struct OnboardingView: View {
   @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var forward = true
+  @State private var moreMinutes = false
+  @State private var heroPulse = 0
   @State private var details = false
   @State private var why = false
   @State private var goal = false
@@ -13,7 +18,7 @@ struct OnboardingView: View {
     store.updateProfile { p in
       var b = p.baseline ?? RoutineBaseline()
       body(&b)
-      if let goal = b.reductionGoal, goal > (b.scrolling ?? 0) { b.reductionGoal = nil }
+      if let goal = b.reductionGoal, goal > (b.feedMinutes ?? 0) { b.reductionGoal = nil }
       p.baseline = b
     }
   }
@@ -57,7 +62,10 @@ struct OnboardingView: View {
     if let n = baseline.scrolling, !(0...600).contains(n) {
       return "Enter 0–600 minutes, or leave it blank."
     }
-    if !baseline.scrollingValid { return "Scrolling time exceeds your visit. Edit either answer." }
+    if let n = baseline.minutesPerBreak, !(1...600).contains(n) {
+      return "Enter 1–600 minutes per break, or leave it blank."
+    }
+    if !baseline.scrollingValid { return "Estimated scrolling exceeds your visit. Check minutes per break or your routine." }
     return nil
   }
   var body: some View {
@@ -73,13 +81,23 @@ struct OnboardingView: View {
                 }
               }.accessibilityHidden(true).padding(.bottom, 4)
             }
-            content
+            VStack(alignment: .leading, spacing: 24) {
+              if step > 0 { onboardingSymbol }
+              content
+            }.id(step).transition(reduceMotion ? .opacity : .asymmetric(
+              insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+              removal: .opacity))
             if let problem {
               Text(store.t(problem)).font(GymType.body(13)).foregroundStyle(GymColor.red)
                 .accessibilityIdentifier("onboarding.error")
             }
           }.padding(.horizontal, 24).padding(.top, 32).padding(.bottom, 24)
-        }.scrollDismissesKeyboard(.interactively)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: baseline.minutesPerBreak)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: baseline.scrollsBetweenSets)
+        }.scrollDismissesKeyboard(.interactively).id(step)
+          .transition(reduceMotion ? .opacity : .asymmetric(
+            insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+            removal: .opacity))
         VStack(spacing: 8) {
           GymButton(
             title: store.t(step == 5 ? "Set up focus" : step == 6 ? "Try demo" : "Continue"),
@@ -94,12 +112,18 @@ struct OnboardingView: View {
       .gymPage().navigationTitle(step == 0 ? "GymBlock" : "")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
+        ToolbarItem(placement: .topBarTrailing) {
+          Button {
+            store.updateProfile { $0.soundEnabled = !($0.soundEnabled ?? true) }
+          } label: {
+            Image(systemName: (store.profile.soundEnabled ?? true) ? "speaker.wave.2" : "speaker.slash")
+          }.accessibilityLabel(store.t((store.profile.soundEnabled ?? true) ? "Mute sounds" : "Enable sounds"))
+            .accessibilityIdentifier("onboarding.sound")
+        }
         if step > 0 {
           ToolbarItem(placement: .topBarLeading) {
             Button {
-              let previous =
-                step == 5 && baseline.distractions.contains("None") ? 3 : max(0, step - 1)
-              store.updateProfile { $0.onboardingStep = previous }
+              move(to: max(0, step - 1), ahead: false)
             } label: {
               Image(systemName: "chevron.left")
             }.accessibilityLabel(store.t("Back")).accessibilityIdentifier("onboarding.back")
@@ -149,6 +173,7 @@ struct OnboardingView: View {
           }
           if $0.baseline == nil { $0.baseline = RoutineBaseline() }
         }
+        heroPulse += 1
       }
     }
   }
@@ -170,6 +195,7 @@ struct OnboardingView: View {
         .foregroundStyle(.white).frame(width: 80, height: 80)
         .background(GymColor.red, in: RoundedRectangle(cornerRadius: 24))
         .shadow(color: GymColor.red.opacity(0.18), radius: 20, y: 10)
+        .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? 0 : heroPulse)
         .accessibilityHidden(true).padding(.top, 24).padding(.bottom, 8)
       title(
         "Your workout deserves your attention.",
@@ -205,6 +231,7 @@ struct OnboardingView: View {
           ], id: \.self
         ) { category in
           Button {
+            feedback(selection: true)
             update { b in
               if ["None", "Not sure"].contains(category) {
                 b.distractions = [category]
@@ -265,7 +292,7 @@ struct OnboardingView: View {
           ).textFieldStyle(.roundedBorder).accessibilityIdentifier("baseline.reps")
           HStack {
             ForEach(["5", "8", "10", "12"], id: \.self) { value in
-              Button(value) { update { $0.reps = value } }.buttonStyle(.bordered).tint(
+              Button(value) { update { $0.reps = value }; feedback(selection: true) }.buttonStyle(.bordered).tint(
                 baseline.reps == value ? GymColor.red : .secondary)
             }
             Button(store.t("Varies")) { update { $0.reps = "" } }.font(GymType.body(13))
@@ -279,34 +306,74 @@ struct OnboardingView: View {
           GymColor.dim)
       }
     case 4:
-      title(
-        "How much of that visit goes to scrolling?",
-        subtitle: "Think feeds and videos, not music or logging sets.")
-      BaselineNumber(
-        title: "Minutes on feeds", value: number(\.scrolling), choices: [0, 5, 10, 15],
-        id: "baseline.scrolling")
+      title("Do you scroll through your phone in between sets?")
+      if typeSize.isAccessibilitySize {
+        VStack(alignment: .leading) { scrollChoices }
+      } else {
+        HStack { scrollChoices }
+      }
+      if baseline.scrollsBetweenSets == true {
+        Text(store.t("How many minutes between each set?"))
+          .font(GymType.label(17))
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: typeSize.isAccessibilitySize ? 150 : 80))], spacing: 12) {
+          ForEach(1...5, id: \.self) { value in
+            Button("\(value) " + store.t("min")) {
+              update { $0.minutesPerBreak = value }
+              moreMinutes = false
+              feedback(selection: true)
+            }.buttonStyle(.bordered).frame(maxWidth: .infinity, minHeight: 44)
+              .tint(baseline.minutesPerBreak == value ? GymColor.red : .secondary)
+              .accessibilityIdentifier("baseline.break.\(value)")
+          }
+          Button(store.t("More")) { moreMinutes = true; update { $0.minutesPerBreak = nil }; feedback(selection: true) }
+            .buttonStyle(.bordered).frame(maxWidth: .infinity, minHeight: 44)
+            .tint(moreMinutes || (baseline.minutesPerBreak ?? 0) > 5 ? GymColor.red : .secondary)
+            .accessibilityIdentifier("baseline.break.more")
+        }
+        if moreMinutes || (baseline.minutesPerBreak ?? 0) > 5 {
+          BaselineNumber(title: "Minutes per break", value: number(\.minutesPerBreak), choices: [],
+            id: "baseline.break.minutes")
+        }
+        if let minutes = baseline.feedMinutes, let gaps = baseline.breakCount {
+          Text("\(gaps) " + store.t("breaks") + " × \(baseline.minutesPerBreak ?? 0) "
+            + store.t("min") + " = \(minutes) " + store.t("min/workout"))
+            .font(GymType.hero(22)).contentTransition(.numericText())
+            .accessibilityIdentifier("baseline.break.result")
+          Text(store.t("Assumes you scroll during every break, including between exercises."))
+            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+        } else {
+          Text(store.t("Add your usual exercise and set counts to estimate time."))
+            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+        }
+      }
     case 5:
       title(
-        (baseline.scrolling ?? 0) > 0
+        (baseline.feedMinutes ?? 0) > 0
           ? "Make more room for your workout." : "Keep your workout simple.")
       if let total = baseline.weeklyFeedMinutes {
         Text("\(total) " + store.t("min/week on feeds")).font(GymType.hero(24))
           .accessibilityIdentifier("baseline.result")
         Text(
-          store.t("Based on your estimate:") + " \(baseline.scrolling ?? 0) "
+          store.t("Based on your estimate:") + " \(baseline.feedMinutes ?? 0) "
             + store.t("min/workout")
         ).font(GymType.body(13)).foregroundStyle(GymColor.dim)
-      } else if let minutes = baseline.scrolling {
+      } else if let minutes = baseline.feedMinutes {
         Text("\(minutes) " + store.t("min/workout on feeds")).font(GymType.hero(24))
       } else {
         Text(store.t("Find your rhythm over your next few workouts.")).foregroundStyle(
           GymColor.dim)
       }
+      if baseline.scrollsBetweenSets == true, let gaps = baseline.breakCount, let minutes = baseline.minutesPerBreak {
+        Text("\(gaps) " + store.t("breaks") + " × \(minutes) " + store.t("min per break"))
+          .font(GymType.body(15)).foregroundStyle(GymColor.dim)
+        Text(store.t("Assumes scrolling in every break. This is your estimate, not measured phone use."))
+          .font(GymType.body(13)).foregroundStyle(GymColor.dim)
+      }
       DisclosureGroup(store.t("Your routine")) {
         BaselineSummary(baseline: baseline).padding(.top, 8)
       }
       Text(store.t("Keep the rest you need. Leave the feed for later.")).font(GymType.body(15))
-      if let minutes = baseline.scrolling, minutes > 0 {
+      if let minutes = baseline.feedMinutes, minutes > 0 {
         Menu {
           ForEach([5, 10, 15].filter { $0 <= minutes }, id: \.self) { value in
             Button("\(value) " + store.t("fewer feed minutes per workout")) {
@@ -332,17 +399,54 @@ struct OnboardingView: View {
         GymColor.dim)
     }
   }
+  private var onboardingSymbol: some View {
+    Image(systemName: ["dumbbell.fill", "iphone", "clock", "figure.strengthtraining.traditional",
+      "hand.tap", "chart.bar.fill", "sparkles"][step])
+      .font(.system(size: 28, weight: .medium)).foregroundStyle(GymColor.red)
+      .frame(width: 56, height: 56).background(GymColor.red.opacity(0.08), in: Circle())
+      .symbolEffect(.bounce, options: .nonRepeating, value: reduceMotion ? 0 : heroPulse)
+      .accessibilityHidden(true)
+  }
+  private func feedback(completion: Bool = false, selection: Bool = false) {
+    OnboardingFeedback.shared.play(profile: store.profile, completion: completion, selection: selection)
+  }
+  private func move(to next: Int, ahead: Bool) {
+    dismissKeyboard()
+    forward = ahead
+    feedback()
+    withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .snappy(duration: 0.32)) {
+      store.updateProfile { $0.onboardingStep = next }
+      heroPulse += 1
+    }
+  }
+  @ViewBuilder private var scrollChoices: some View {
+    scrollAnswer("Yes", value: true, id: "yes")
+    scrollAnswer("No", value: false, id: "no")
+    scrollAnswer("Not sure", value: nil, id: "unknown")
+  }
+  private func scrollAnswer(_ title: String, value: Bool?, id: String) -> some View {
+    Button(store.t(title)) {
+      update {
+        $0.scrollsBetweenSets = value
+        if value != true { $0.minutesPerBreak = nil }
+        $0.scrolling = value == false ? 0 : nil
+      }
+      feedback(selection: true)
+    }.buttonStyle(.bordered).frame(minHeight: 44)
+      .tint(baseline.scrollsBetweenSets == value ? GymColor.red : .secondary)
+      .accessibilityIdentifier("baseline.between." + id)
+  }
   private func advance() {
     dismissKeyboard()
     if step == 6 {
       complete(focus: true)
     } else {
-      let next = step == 3 && baseline.distractions.contains("None") ? 5 : step + 1
-      store.updateProfile { $0.onboardingStep = next }
+      move(to: step + 1, ahead: true)
     }
   }
   private func complete(focus: Bool) {
     dismissKeyboard()
+    feedback(completion: true)
     store.updateProfile {
       $0.name = $0.name.trimmingCharacters(in: .whitespacesAndNewlines)
       $0.onboarded = true
@@ -383,7 +487,7 @@ struct BaselineNumber: View {
   }
   private var quickChoices: some View {
     ForEach(choices, id: \.self) { n in
-      Button("\(n)") { value = n }.buttonStyle(.bordered).tint(
+      Button("\(n)") { value = n; OnboardingFeedback.shared.play(profile: store.profile, selection: true) }.buttonStyle(.bordered).tint(
         value == n ? GymColor.red : .secondary
       ).accessibilityIdentifier(id + ".\(n)")
     }
@@ -475,7 +579,7 @@ struct GoalEditor: View {
       Form {
         BaselineNumber(
           title: "Fewer feed minutes per workout", value: $value,
-          choices: [1, 2, 5, 10].filter { $0 <= (store.profile.baseline?.scrolling ?? 0) },
+          choices: [1, 2, 5, 10].filter { $0 <= (store.profile.baseline?.feedMinutes ?? 0) },
           id: "baseline.goal")
       }
       .gymPage().navigationTitle(store.t("Choose a goal")).navigationBarTitleDisplayMode(.inline)
@@ -486,7 +590,7 @@ struct GoalEditor: View {
             store.updateProfile { $0.baseline?.reductionGoal = value }
             dismiss()
           }.disabled(
-            value == nil || value! < 1 || value! > (store.profile.baseline?.scrolling ?? 0)
+            value == nil || value! < 1 || value! > (store.profile.baseline?.feedMinutes ?? 0)
           )
           .accessibilityIdentifier("baseline.goal.save")
         }

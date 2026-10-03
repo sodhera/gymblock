@@ -2,7 +2,30 @@
 
 Native Swift/SwiftUI simulator prototype, Xcode 27 / iPhone 17 / iOS 27. Signing is disabled. No external services or package dependencies are configured.
 
-## Gym-floor navigation and flexible exercise revision
+## Visible End workout, training totals and onboarding feedback
+
+The workout toolbar has a visible End workout action in every session state. History → Progress → Training totals shows actual reps, recorded weight moved (load × completed reps) and sets, with trend and bar views and optional split scope. Summary includes reps and workload. Onboarding asks about between-set scrolling, reveals 1–5 minutes or manual More, and shows the break-count calculation. Short page/symbol/numeric animations, independent sound/haptic settings and a first-page mute control are implemented.
+
+**32 model checks and five distinct affected simulator journeys passed across these runs.** Repeated journeys are counted once; the full older navigation suite was not rerun.
+
+| Coverage | Evidence in ignored `build/` directory |
+| --- | --- |
+| All 32 model checks, including gap arithmetic, unknown and legacy answers, individual sets, inconsistent estimates, actual reps/workload, bodyweight/warm-up/timed/attempt handling, corrected/deleted/undone records, stable split scope, both bundled audio files and successful playback request/mute | `EnhancedJourneys.xcresult` — all 32 passed |
+| Personal onboarding/resume; new scrolling question, mute, manual More, invalid-duration rejection and No correction; visible End/save and rep/workload/set charts; unknown/zero answers, timed activity and discard | `EnhancedJourneys.xcresult` — four journeys passed |
+| Onboarding transitions, saved answers and weekly estimate with the final entrance/numeric motion implementation | `OnboardingMotionFinal.xcresult` — passed; actual simulator recording trimmed into `screenshots/enhanced/onboarding-motion.mp4` |
+| Dark appearance, accessibility-large text and increased contrast: workout controls, routine entry and between-set answers | `EnhancedAccessibilityFinal.xcresult` — passed; the subsequent minute-grid refinement is verified in `OnboardingAccessibilityFinal.xcresult` |
+| Dark/large-text/increased-contrast End/save and totals charts, stacked filters and readable date ticks | `TrainingStatsAccessibilityFinal.xcresult` — passed in 50 seconds |
+| Final audio implementation, all 32 model checks, normal-size onboarding calculation/resume/mute and visible End/training totals | `EnhancementsFinal.xcresult` — all 32 model checks and both journeys passed |
+
+The first totals run exposed an invalid-frame warning during a chart's animated unit change. The chart now rebuilds its scale without interpolating incompatible units; the numeric total still transitions. No invalid-frame or AttributeGraph warning appeared in the final accessibility chart run or the final normal-size run. The final run also has no audio activation warning about blocking the UI thread. Screenshot review caught overlapping large-text filters and narrow minute labels; filters stack vertically and minute choices use wider columns at accessibility sizes. The initial large-text test also searched for a lazily created control before scrolling; the test now scrolls to bring it into view.
+
+The estimate is explicit: six exercises × three sets gives 18 sets and 17 gaps; two minutes of scrolling per gap gives 34 minutes per workout, or 102 minutes over three weekly visits. This is self-reported time, not measured phone use, unnecessary rest, or guaranteed time savings. No muscle-gain/fat-loss prediction is made.
+
+Actual captures are in `screenshots/enhanced/`, including dark/large-text/increased-contrast captures. The short simulator video demonstrates visible page transitions; it does not establish animation preference. The final installed app is restored to light appearance and standard text/contrast on Home with Arms/Push/Legs and six weeks of labeled sample history.
+
+Audio assets decode and the playback request succeeds in tests; mute prevents playback. Audio activation and playback run on a dedicated serial queue to avoid blocking UI transitions; haptic requests stay on the UI thread. Hardware haptic feel and physical-device sound levels remain unverified. OS Reduce Motion/Reduce Transparency runtime behavior and VoiceOver navigation were not certified. The source follows Reduce Motion and uses ambient sound that respects Silent mode and mixes with music. Focus blocking remains simulated.
+
+## Previous gym-floor navigation and flexible exercise revision
 
 The latest user correction is implemented: minimal Home with no lift-stat card, native Home / History / Splits navigation, upward rest counter, unrestricted exercise selection and explicit resolution of an unfinished set. Red and the Speaking Coach DM Sans visual system remain. The complete page review and primary competitor references are in `docs/GYM-FLOW-REVIEW.md`.
 

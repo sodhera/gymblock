@@ -87,6 +87,10 @@ struct SessionView: View {
       }
       .gymPage().navigationTitle(store.t(session.name)).navigationBarTitleDisplayMode(.inline)
       .toolbar {
+        ToolbarItem(placement: .topBarLeading) {
+          Button(store.t("End workout")) { if active { ending = true } else { store.finish() } }
+            .font(GymType.label(14)).accessibilityIdentifier("session.finish")
+        }
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
             if active {
@@ -98,8 +102,6 @@ struct SessionView: View {
               }
             }
             Button(store.t("Sets")) { records = true }.accessibilityIdentifier("session.sets")
-            Button(store.t("End workout")) { if active { ending = true } else { store.finish() } }
-              .accessibilityIdentifier("session.finish")
           } label: {
             Image(systemName: "ellipsis")
           }.accessibilityLabel(store.t("Workout options")).accessibilityIdentifier(
@@ -649,6 +651,12 @@ struct SummaryView: View {
           "\(session.completedSets.count) " + store.t("sets")
             + " · \(max(1, Int(session.duration / 60))) " + store.t("min")
         ).foregroundStyle(GymColor.dim)
+        if !session.repSets.isEmpty {
+          Text("\(session.totalReps) " + store.t("reps") + " · "
+            + formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit))
+            + " " + store.profile.unit + " " + store.t("moved"))
+            .font(GymType.label(17)).accessibilityIdentifier("summary.volume")
+        }
         Text(store.t("Focus demo ended")).font(GymType.body(13)).foregroundStyle(GymColor.dim)
           .accessibilityIdentifier("summary.unblocked")
         Spacer()

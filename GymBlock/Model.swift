@@ -48,6 +48,8 @@ struct Profile: Codable {
   var restSeconds: Int?
   var focusEnabled: Bool?
   var onboardingVersion: Int?
+  var soundEnabled: Bool?
+  var hapticsEnabled: Bool?
 }
 struct LoggedSet: Codable, Identifiable {
   var id = UUID()
@@ -88,8 +90,9 @@ struct Session: Codable, Identifiable {
   var drafts: [String: ExerciseDraft]?
   var restSourceID: UUID?
   var completedSets: [LoggedSet] { sets.filter(\.completed) }
-  var totalReps: Int { completedSets.reduce(0) { $0 + $1.reps } }
-  var volumeKG: Double { completedSets.reduce(0) { $0 + $1.weightKG * Double($1.reps) } }
+  var repSets: [LoggedSet] { completedSets.filter { !$0.exercise.timed } }
+  var totalReps: Int { repSets.reduce(0) { $0 + $1.reps } }
+  var volumeKG: Double { repSets.reduce(0) { $0 + $1.weightKG * Double($1.reps) } }
   var duration: TimeInterval { max(0, (ended ?? Date()).timeIntervalSince(started)) }
   var isBlockingSimulated: Bool { ended == nil }
 }

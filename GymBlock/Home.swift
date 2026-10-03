@@ -177,6 +177,12 @@ struct PreferencesView: View {
           }
         }
         Section {
+          Toggle(store.t("Sounds"), isOn: Binding(
+            get: { store.profile.soundEnabled ?? true },
+            set: { value in store.updateProfile { $0.soundEnabled = value } }))
+          Toggle(store.t("Haptics"), isOn: Binding(
+            get: { store.profile.hapticsEnabled ?? true },
+            set: { value in store.updateProfile { $0.hapticsEnabled = value } }))
           Toggle(
             store.t("Focus demo"),
             isOn: Binding(

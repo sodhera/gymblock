@@ -6,6 +6,20 @@ struct ProgressContent: View {
   @State private var splitID: UUID?
   var body: some View {
     VStack(alignment: .leading, spacing: 24) {
+      NavigationLink { TrainingStatsView() } label: {
+        HStack {
+          VStack(alignment: .leading, spacing: 6) {
+            Text(store.t("Training totals")).font(GymType.hero(22))
+            Text("\(store.data.history.reduce(0) { $0 + $1.totalReps }) " + store.t("reps")
+              + " · " + formatNumber(GymStore.displayedWeight(
+                store.data.history.reduce(0) { $0 + $1.volumeKG }, unit: store.profile.unit))
+              + " " + store.profile.unit + " " + store.t("moved"))
+              .font(GymType.body(15)).foregroundStyle(GymColor.dim)
+          }.multilineTextAlignment(.leading)
+          Spacer()
+          Image(systemName: "chevron.right").font(GymType.body(12))
+        }.foregroundStyle(GymColor.ink).frame(minHeight: 64)
+      }.accessibilityIdentifier("progress.totals")
       if !store.biggestLifts.isEmpty {
         VStack(alignment: .leading, spacing: 12) {
           Text(store.t("Best lifts")).font(GymType.hero(22))

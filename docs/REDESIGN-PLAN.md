@@ -1,3 +1,5 @@
+Latest corrections in [PROGRESS-AND-ONBOARDING.md](PROGRESS-AND-ONBOARDING.md) supersede the original aggregate scrolling question and hidden End workout action. The current flow uses between-set minutes, a visible End button, training-volume charts and optional sound/haptic feedback.
+
 # GymBlock: focus-first redesign
 
 **Approved design specification · Implemented 2 October 2026**

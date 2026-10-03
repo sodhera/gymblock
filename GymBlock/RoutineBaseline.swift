@@ -44,6 +44,15 @@ struct RoutineBaseline: Codable {
   var details: [BaselineExercise] = []
   var scrolling: Int?
   var reductionGoal: Int?
+  var scrollsBetweenSets: Bool?
+  var minutesPerBreak: Int?
+  var breakCount: Int? { totalSets.map { max(0, $0 - 1) } }
+  var feedMinutes: Int? {
+    guard let scrollsBetweenSets else { return scrolling } // Existing attributed survey answers.
+    if !scrollsBetweenSets { return 0 }
+    guard let minutesPerBreak, (1...600).contains(minutesPerBreak), let breakCount else { return nil }
+    return breakCount * minutesPerBreak
+  }
   var defaultReps: Int? {
     Self.repRange(reps).flatMap { $0.lowerBound == $0.upperBound ? $0.lowerBound : nil }
   }
@@ -90,13 +99,13 @@ struct RoutineBaseline: Codable {
     return duration * visits
   }
   var weeklyFeedMinutes: Int? {
-    guard let scrolling, let visits, (0...600).contains(scrolling), (0...21).contains(visits),
+    guard let scrolling = feedMinutes, let visits, (0...600).contains(scrolling), (0...21).contains(visits),
       scrollingValid
     else { return nil }
     return scrolling * visits
   }
   var scrollingValid: Bool {
-    guard let scrolling, let duration else { return true }
+    guard let scrolling = feedMinutes, let duration else { return true }
     return scrolling <= duration
   }
 }

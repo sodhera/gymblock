@@ -61,7 +61,7 @@ Correcting a record does not move the counter. Deleting the most recent set clea
 | Active lifting | Return and log actual reps | Reps/elapsed activity and Finish. Change exercise is also visible and resolves unfinished work explicitly |
 | Rest | Recover, choose what comes next | Upward counter fits all digits at large text sizes, clear saved-set attribution, next load and Start next set. Replace the single suggested-next footer with unrestricted Change exercise |
 | Unfinished-set switch | Keep or discard current effort | Three explicit choices; no silent reassignment or deletion of earlier sets |
-| Workout options | End or handle uncommon actions | End workout, sets, cancellation and unsuccessful attempts remain out of the primary flow |
+| Workout options | End or handle uncommon actions | End workout is now a visible navigation-bar button; sets, cancellation and unsuccessful attempts remain in options |
 | Saved sets | Check/correct a log | List and + for a missed set; completed work stays associated with its original movement |
 | Set correction | Fix a mistake | Weight, actual reps/duration, warm-up, timestamp, save/delete; undo follows existing rest ownership rules |
 | Summary | Know the session saved | Short outcome, set count/duration, Done; save-as-split remains optional |
@@ -80,7 +80,7 @@ Correcting a record does not move the counter. Deleting the most recent set clea
 | Gym time | Describe usual visits | Minutes/frequency with optional quick choices and unknown values |
 | Routine | Describe usual exercise/sets/reps | Timed option, typical values and rep ranges; per-exercise detail remains optional |
 | Routine detail / goal sheets | Describe exceptions precisely | Details and goals remain explicit, local and separate from logged workouts |
-| Scrolling estimate | Attribute time honestly | Self-reported feed/video minutes; no measurement claim |
+| Between-set scrolling | Attribute time honestly | Yes/No/unknown, 1–5 or editable More; (sets − 1) × minutes per break × visits; no measurement claim |
 | Personal result | See a useful calculation | Attributed estimates; no universal optimal duration or predicted muscle/fat loss |
 | Focus setup / why-focus sheet | Understand the prototype | Honest Focus demo language and optional entry; no claim of system enforcement |
 
@@ -99,3 +99,5 @@ GymBlock adopts the flexibility and history separation. The upward rest counter 
 Verify navigation with a running set, return/resume, counter growth across tabs/relaunch, save/discard/cancel switching, old-set attribution, independent values and stable split templates. Inspect standard and dark/large-text screens. Detailed result evidence belongs in VALIDATION.md.
 
 A friend should try the occupied-machine, alternating-exercise and mid-set-change scenarios without instructions. Observe mistaken taps and hesitation. Simulator checks establish behavior and rendered layout; physical one-handed use and user preference still need that session.
+
+The next revision adds visible End workout, reps/load-volume/set charts and expressive onboarding; see `PROGRESS-AND-ONBOARDING.md` for its formulas and feedback behavior.
