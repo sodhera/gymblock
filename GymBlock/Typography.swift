@@ -17,32 +17,16 @@ enum GymType {
     Font(UIFontMetrics(forTextStyle: style).scaledFont(for: uiFont(size, weight: weight)))
   }
   static func hero(_ size: CGFloat) -> Font { scaled(size, weight: 600, style: .largeTitle) }
-  static func title(_ size: CGFloat) -> Font { scaled(size, weight: 500, style: .title2) }
+  static func title(_ size: CGFloat) -> Font { scaled(size, weight: 600, style: .title2) }
   static func body(_ size: CGFloat) -> Font { scaled(size, weight: 400, style: .body) }
   static func label(_ size: CGFloat) -> Font { scaled(size, weight: 500, style: .headline) }
   static func number(_ size: CGFloat) -> Font { Font(uiFont(size, weight: 500)) }
 }
 
-/// The same restrained paper and dot-grid vocabulary as Speaking Coach.
-/// Workout controls sit on solid surfaces so the texture never competes with numbers.
+/// A quiet canvas keeps attention on the control and the next action.
 struct GymBackdrop: View {
-  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-  @Environment(\.colorSchemeContrast) private var contrast
   var body: some View {
-    ZStack {
-      GymColor.ground
-      if !reduceTransparency && contrast != .increased {
-        Canvas { context, size in
-          for x in stride(from: 11.0, to: size.width, by: 22) {
-            for y in stride(from: 11.0, to: size.height, by: 22) {
-              context.fill(
-                Path(ellipseIn: CGRect(x: x, y: y, width: 1.2, height: 1.2)),
-                with: .color(GymColor.ink.opacity(0.11)))
-            }
-          }
-        }
-      }
-    }.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
+    GymColor.ground.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
   }
 }
 struct GymCard: ViewModifier {
@@ -62,4 +46,8 @@ struct GymCard: ViewModifier {
 extension View {
   func gymCard() -> some View { modifier(GymCard()) }
   func gymPage() -> some View { scrollContentBackground(.hidden).background(GymBackdrop()) }
+  @ViewBuilder func gymSearchNavigation() -> some View {
+    if #available(iOS 17.1, *) { searchPresentationToolbarBehavior(.avoidHidingContent) }
+    else { self }
+  }
 }

@@ -1,24 +1,6 @@
 import SwiftUI
 import UIKit
 
-struct JourneyTrace: View, Animatable {
-  let value: String
-  var progress: Double
-  var animatableData: Double {
-    get { progress }
-    set { progress = newValue }
-  }
-  var body: some View {
-    ZStack {
-      Text(value).font(GymType.hero(40)).foregroundStyle(GymColor.red)
-        .opacity(max(0, 1 - progress * 2)).scaleEffect(1 - progress * 0.6)
-      Capsule().fill(GymColor.red).frame(width: 36 + progress * 120, height: 8)
-        .opacity(sin(progress * .pi))
-    }.offset(y: -12)
-  }
-}
-
-/// The picker owns the only visible value; there is no mirrored number or editor sheet.
 struct JourneyWheel: UIViewRepresentable {
   let values: [Double]
   let unit: String
@@ -92,145 +74,109 @@ struct JourneyWheel: UIViewRepresentable {
   }
 }
 
-/// One recurring vocabulary of set marks, never an earned achievement.
-struct JourneyMarks: View {
-  var count = 3
-  var outlined = false
-  var progress = 1.0
-  var width: CGFloat = 36
-  var body: some View {
-    HStack(spacing: 12) {
-      ForEach(0..<min(count, 7), id: \.self) { i in
-        Capsule().fill(outlined ? GymColor.red.opacity(0.06) : GymColor.red)
-          .overlay { Capsule().strokeBorder(GymColor.red.opacity(0.65), lineWidth: 1) }
-          .frame(width: width, height: 12)
-          .opacity(progress > Double(i) / Double(max(count, 1)) ? 1 : 0.1)
+
+/// Native system material and discrete ticks; the binding stores whole training days.
+struct TrainingDaysSlider: UIViewRepresentable {
+  @Binding var value: Double
+  var haptics: Bool
+  var label: String
+  func makeCoordinator() -> Coordinator { Coordinator(self) }
+  func makeUIView(context: Context) -> UISlider {
+    let slider = UISlider()
+    slider.minimumValue = 0
+    slider.maximumValue = 1
+    slider.minimumTrackTintColor = UIColor(GymColor.red)
+    slider.accessibilityIdentifier = "baseline.days"
+    if #available(iOS 26.0, *) {
+      slider.trackConfiguration = .init(numberOfTicks: 7)
+    }
+    slider.addTarget(context.coordinator, action: #selector(Coordinator.changed(_:)), for: .valueChanged)
+    return slider
+  }
+  func updateUIView(_ slider: UISlider, context: Context) {
+    context.coordinator.parent = self
+    let normalized = Float((value - 1) / 6)
+    if abs(slider.value - normalized) > 0.001 { slider.value = normalized }
+    slider.accessibilityLabel = label
+    slider.accessibilityValue = "\(Int(value))"
+  }
+  final class Coordinator: NSObject {
+    var parent: TrainingDaysSlider
+    init(_ parent: TrainingDaysSlider) { self.parent = parent }
+    @objc func changed(_ slider: UISlider) {
+      let next = Double(min(7, max(1, (slider.value * 6).rounded() + 1)))
+      if next != parent.value {
+        parent.value = next
+        if parent.haptics { UISelectionFeedbackGenerator().selectionChanged() }
       }
-    }.accessibilityHidden(true)
+      if #unavailable(iOS 26.0) { slider.value = Float((next - 1) / 6) }
+    }
   }
 }
 
-struct JourneyVisit: View {
-  let duration: Int
-  let scrolling: Double
-  var phoneFree = false
+struct RestCounter: View {
+  let started: Date
+  var example = false
   @EnvironmentObject private var store: GymStore
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var body: some View {
-    VStack(spacing: 16) {
-      Text("\(duration) " + store.t("minute visit")).font(GymType.body(14)).foregroundStyle(
-        GymColor.dim)
-      GeometryReader { g in
-        let fraction = max(0, min(1, scrolling / Double(max(duration, 1))))
-        HStack(spacing: 4) {
-          RoundedRectangle(cornerRadius: 14).fill(GymColor.red.opacity(0.16))
-            .overlay(alignment: .leading) {
-              JourneyMarks(count: 3, outlined: true, width: 24).padding(.leading, 16)
-            }.frame(width: max(0, (g.size.width - 4) * (1 - fraction))).clipped()
-          RoundedRectangle(cornerRadius: 14)
-            .fill(phoneFree ? GymColor.red.opacity(0.16) : GymColor.ink.opacity(0.12))
-            .overlay {
-              HStack(spacing: 7) {
-                ForEach(0..<4, id: \.self) { _ in
-                  Capsule().fill(GymColor.ink.opacity(0.18)).frame(width: 6, height: 24)
-                }
-              }.opacity(phoneFree ? 0 : 1)
-            }.frame(maxWidth: .infinity).clipped()
-        }.animation(reduceMotion ? nil : .easeInOut(duration: 1.8), value: phoneFree)
-      }.frame(height: 72)
-      HStack {
-        Label(store.t("Phone-free"), systemImage: "circle.fill").foregroundStyle(GymColor.red)
-        Spacer()
-        Text(store.t(phoneFree ? "Rest stays" : "Scrolling")).foregroundStyle(GymColor.dim)
-      }.font(GymType.body(13))
-    }.accessibilityElement(children: .ignore)
-      .accessibilityLabel(
-        "\(duration) " + store.t("minute visit") + ". "
-          + store.t(phoneFree ? "Rest stays. Scrolling goes." : "Estimated scrolling per visit")
-          + ": " + JourneyFormat.number(scrolling))
+    TimelineView(.periodic(from: .now, by: 1)) { context in
+      VStack(spacing: 8) {
+        Text(store.t("Rest")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
+        Text(clockString(max(0, Int(context.date.timeIntervalSince(started)))))
+          .font(GymType.hero(64)).monospacedDigit()
+          .accessibilityIdentifier(example ? "journey.rest.counter" : "rest.elapsed")
+      }.frame(maxWidth: .infinity)
+    }
   }
 }
 
-struct JourneyMonth: View {
-  var days: Int?
-  var reveal = true
+/// A recognizable phone, with a finite scrolling-to-phone-down sequence.
+struct JourneyPhone: View {
+  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+  private var reduceMotion: Bool { JourneyMotion.reduced(systemReduceMotion) }
   @EnvironmentObject private var store: GymStore
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var appeared = false
+  @State private var down = false
+  @State private var scroll = false
   var body: some View {
-    HStack(alignment: .top, spacing: 12) {
-      ForEach(0..<4, id: \.self) { week in
-        VStack(spacing: 12) {
-          Text("\(week + 1)").font(GymType.body(13)).foregroundStyle(GymColor.dim)
-          ForEach(0..<min(days ?? 3, 7), id: \.self) { day in
-            RoundedRectangle(cornerRadius: 9).fill(GymColor.red.opacity(0.045))
-              .overlay {
-                RoundedRectangle(cornerRadius: 9).strokeBorder(
-                  GymColor.red.opacity(0.5), lineWidth: 1)
-              }
-              .overlay {
-                Capsule().fill(GymColor.red.opacity(0.28)).frame(width: 24, height: 4)
-              }.frame(height: 27)
-              .opacity(appeared || reduceMotion || !reveal ? 1 : 0)
-              .offset(y: appeared || reduceMotion || !reveal ? 0 : 12)
-              .animation(
-                reduceMotion || !reveal
-                  ? nil : .easeOut(duration: 0.4).delay(Double(week) * 0.2 + Double(day) * 0.06),
-                value: appeared)
+    ZStack {
+      RoundedRectangle(cornerRadius: 32).fill(GymColor.ink)
+      ZStack {
+        RoundedRectangle(cornerRadius: 26).fill(GymColor.surface)
+        VStack(alignment: .leading, spacing: 18) {
+          ForEach(0..<4) { index in
+            VStack(alignment: .leading, spacing: 8) {
+              RoundedRectangle(cornerRadius: 4).fill(GymColor.dim.opacity(0.15))
+                .frame(height: 42)
+              Capsule().fill(GymColor.dim.opacity(0.25)).frame(width: index % 2 == 0 ? 80 : 104, height: 4)
+              Capsule().fill(GymColor.dim.opacity(0.12)).frame(width: 64, height: 4)
+            }
           }
-        }.frame(maxWidth: .infinity)
+        }.padding(18).offset(y: scroll ? -36 : 14)
+          .frame(width: 114, height: 208).clipped()
+        Capsule().fill(GymColor.ink).frame(width: 48, height: 13).frame(maxHeight: .infinity, alignment: .top).padding(.top, 8)
+      }.padding(6).clipShape(RoundedRectangle(cornerRadius: 32)).opacity(down ? 0 : 1)
+      if down {
+        VStack {
+          HStack(spacing: 5) {
+            Circle().fill(GymColor.dim.opacity(0.8)).frame(width: 12, height: 12)
+            Circle().fill(GymColor.dim.opacity(0.8)).frame(width: 12, height: 12)
+            Spacer()
+          }
+          Spacer()
+        }.padding(20).transition(.opacity)
       }
-    }.onAppear { appeared = true }
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel(
-        store.t(days == nil ? "Example: four weeks" : "Four weeks at your current routine"))
-  }
-}
-
-struct JourneyRest: View, Animatable {
-  var progress: Double
-  @EnvironmentObject private var store: GymStore
-  var animatableData: Double {
-    get { progress }
-    set { progress = newValue }
-  }
-  var body: some View {
-    VStack(spacing: 26) {
-      Text(JourneyFormat.time(120 * progress)).font(GymType.hero(64)).monospacedDigit()
-        .foregroundStyle(GymColor.ink).accessibilityHidden(true)
-      HStack(spacing: 16) {
-        Capsule().fill(GymColor.red).frame(width: 38, height: 12)
-        Capsule().fill(GymColor.red.opacity(0.15)).frame(height: 2)
-        Capsule().strokeBorder(GymColor.red, lineWidth: 1.5).frame(width: 38, height: 12)
-      }.padding(.horizontal, 28).accessibilityHidden(true)
-      Text(store.t("Example rest · 2:00")).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-    }.accessibilityElement(children: .ignore).accessibilityLabel(store.t("Example rest · 2:00"))
-  }
-}
-
-struct JourneyComparison: View {
-  var showChange: Bool
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    VStack(spacing: 28) {
-      Text(store.t("Example")).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-      HStack(alignment: .firstTextBaseline, spacing: 20) {
-        VStack(spacing: 12) {
-          Text("10").font(GymType.hero(52)).foregroundStyle(GymColor.dim)
-          Text(store.t("Last time")).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-        }
-        Image(systemName: "arrow.right").font(.system(size: 16)).foregroundStyle(GymColor.dim)
-          .accessibilityHidden(true)
-        VStack(spacing: 12) {
-          Text(showChange ? "11" : "10").font(GymType.hero(52)).foregroundStyle(GymColor.red)
-            .contentTransition(.numericText())
-          Text(store.t("Next time")).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-        }
+    }.frame(width: 126, height: 220)
+      .clipShape(RoundedRectangle(cornerRadius: 28))
+      .rotation3DEffect(.degrees(down ? -10 : 0), axis: (x: 1, y: 0, z: 0))
+      .rotationEffect(.degrees(down ? -12 : 5))
+      .accessibilityElement().accessibilityLabel(store.t(down || reduceMotion ? "Phone down" : "Phone scrolling"))
+      .accessibilityIdentifier("journey.phone")
+      .task {
+        if reduceMotion { down = true; return }
+        withAnimation(.easeInOut(duration: 0.7)) { scroll = true }
+        try? await Task.sleep(for: .milliseconds(850))
+        guard !Task.isCancelled else { return }
+        withAnimation(.easeInOut(duration: 0.5)) { down = true }
       }
-      Text("20 kg · " + store.t("same weight")).font(GymType.body(16))
-      Text(store.t("Example set · 35 sec")).font(GymType.body(14)).foregroundStyle(GymColor.dim)
-      Text(store.t("+1 rep at the same weight")).font(GymType.label(16))
-        .opacity(showChange ? 1 : 0)
-    }.accessibilityElement(children: .combine).accessibilityIdentifier("journey.comparison")
   }
 }

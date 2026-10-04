@@ -2,10 +2,10 @@ import SwiftUI
 import UIKit
 
 enum GymColor {
-  static let ground = adaptive(light: 0xF3EFEB, dark: 0x191617)
+  static let ground = adaptive(light: 0xFBF8F5, dark: 0x191617)
   static let surface = adaptive(light: 0xFFFCF9, dark: 0x292526)
   static let ink = adaptive(light: 0x231A1B, dark: 0xF8F0EB)
-  static let dim = adaptive(light: 0x746668, dark: 0xBCADAF)
+  static let dim = adaptive(light: 0x716769, dark: 0xBCADAF)
   static let red = Color(
     uiColor: UIColor { traits in
       let high = traits.accessibilityContrast == .high
@@ -51,7 +51,7 @@ struct GymButton: View {
       } else {
         control.buttonStyle(.glassProminent).tint(Color(red: 0.79, green: 0.145, blue: 0.208))
           .foregroundStyle(.white)
-          .shadow(color: GymColor.red.opacity(enabled ? 0.18 : 0), radius: 16, y: 8)
+
       }
     } else {
       control.buttonStyle(.borderedProminent).tint(
@@ -64,7 +64,7 @@ struct GymButton: View {
 extension GymStore {
   func t(_ key: String) -> String {
     profile.language == "es"
-      ? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
+      ? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
         key] ?? key : key
   }
 }

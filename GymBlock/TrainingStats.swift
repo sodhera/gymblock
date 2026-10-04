@@ -23,125 +23,70 @@ extension GymStore {
 }
 struct TrainingStatsView: View {
   @EnvironmentObject private var store: GymStore
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.dynamicTypeSize) private var typeSize
-  @State private var metric = 0
-  @State private var bars = false
   @State private var splitID: UUID?
-  @State private var fourWeeks = false
+  @State private var fourWeeks: Bool
+  let initialMetric: Int
+  init(initialMetric: Int = 0, initialFourWeeks: Bool = true) {
+    self.initialMetric = initialMetric; _fourWeeks = State(initialValue: initialFourWeeks)
+  }
   private var points: [TrainingPoint] {
-    store.trainingPoints(
-      splitID: splitID,
-      since: fourWeeks ? Calendar.current.date(byAdding: .day, value: -28, to: Date()) : nil)
+    store.trainingPoints(splitID: splitID, since: fourWeeks ? Calendar.current.date(byAdding: .day, value: -28, to: Date()) : nil)
   }
-  private var unit: String {
-    metric == 0 ? store.t("reps") : metric == 1 ? store.profile.unit : store.t("sets")
+  private var weeks: [TrainingPoint] {
+    let groups = Dictionary(grouping: points) { Calendar.current.dateInterval(of: .weekOfYear, for: $0.date)!.start }
+    return groups.map { date, values in
+      TrainingPoint(id: values[0].id, date: date, name: "", reps: values.reduce(0) { $0 + $1.reps },
+                    volumeKG: values.reduce(0) { $0 + $1.volumeKG }, sets: values.reduce(0) { $0 + $1.sets })
+    }.sorted { $0.date < $1.date }
   }
+  private var title: String { initialMetric == 0 ? "Reps" : initialMetric == 1 ? "Weight moved" : "Sets" }
+  private var unit: String { initialMetric == 0 ? store.t("reps") : initialMetric == 1 ? store.profile.unit : store.t("sets") }
   private func value(_ p: TrainingPoint) -> Double {
-    metric == 0
-      ? Double(p.reps)
-      : metric == 1
-        ? GymStore.displayedWeight(p.volumeKG, unit: store.profile.unit) : Double(p.sets)
+    initialMetric == 0 ? Double(p.reps) : initialMetric == 1 ? GymStore.displayedWeight(p.volumeKG, unit: store.profile.unit) : Double(p.sets)
   }
   var body: some View {
     ScrollView {
-      VStack(alignment: .leading, spacing: 24) {
-        Text(store.t("Training totals")).font(GymType.hero(32))
-        if typeSize.isAccessibilitySize {
-          VStack(alignment: .leading, spacing: 12) {
-            scopePicker
-            stylePicker
-          }
-        } else {
-          HStack {
-            scopePicker
-            Spacer()
-            stylePicker
-          }
-        }
-        Picker(store.t("Period"), selection: $fourWeeks) {
-          Text(store.t("All time")).tag(false)
-          Text(store.t("Last four weeks")).tag(true)
-        }.pickerStyle(.menu).accessibilityIdentifier("totals.period")
-        Picker(store.t("Metric"), selection: $metric) {
-          Text(store.t("Reps")).tag(0)
-          Text(store.t("Weight moved")).tag(1)
-          Text(store.t("Sets")).tag(2)
-        }.pickerStyle(.segmented).accessibilityIdentifier("totals.metric")
-        if points.isEmpty {
-          Text(store.t("No rep-based workouts yet.")).foregroundStyle(GymColor.dim)
-        } else {
-          VStack(alignment: .leading, spacing: 8) {
-            Text(formatNumber(points.reduce(0) { $0 + value($1) }) + " " + unit)
-              .font(GymType.hero(36)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.5)
-              .contentTransition(.numericText())
-              .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: metric)
-              .accessibilityIdentifier("totals.amount")
-            Text(store.t("Across") + " \(points.count) " + store.t("workouts"))
-              .font(GymType.body(14)).foregroundStyle(GymColor.dim)
-          }
-          Chart(points) { p in
-            if bars {
-              BarMark(x: .value("Date", p.date), y: .value(unit, value(p)))
-                .foregroundStyle(GymColor.red).cornerRadius(4)
-            } else {
-              LineMark(x: .value("Date", p.date), y: .value(unit, value(p)))
-                .foregroundStyle(GymColor.red)
-              PointMark(x: .value("Date", p.date), y: .value(unit, value(p)))
-                .foregroundStyle(GymColor.red)
-            }
-          }.chartYScale(domain: .automatic(includesZero: true)).chartYAxisLabel(unit)
-            .chartXAxis {
-              AxisMarks(values: .automatic(desiredCount: typeSize.isAccessibilitySize ? 2 : 5)) {
-                AxisGridLine()
-                AxisTick()
-                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-              }
-            }
-            .frame(height: 220).accessibilityIdentifier("totals.chart")
-            // Changing units rebuilds the plot without interpolating incompatible axis scales.
-            .transaction { $0.animation = nil }
-          Text(
-            store.t(
-              "Work performed, not a strength score. Completed sets include warm-ups; timed activities are separate."
-            )
-          )
-          .font(GymType.body(13)).foregroundStyle(GymColor.dim)
-          if metric == 1 {
-            Text(
-              store.t(
-                "Sum of logged load × completed reps. Bodyweight adds no guessed load. Dumbbell load uses your per-dumbbell entry."
-              )
-            )
-            .font(GymType.body(13)).foregroundStyle(GymColor.dim)
-          }
+      VStack(alignment: .leading, spacing: 28) {
+        Text(store.t(splitID == nil ? "All workouts" : store.data.workouts.first { $0.id == splitID }?.name ?? "Split"))
+          .font(GymType.body(15)).foregroundStyle(GymColor.dim)
+        if points.isEmpty { Text(store.t("No workouts in this period")).foregroundStyle(GymColor.dim) }
+        else {
+          Text(formatNumber(points.reduce(0) { $0 + value($1) }) + " " + unit).font(GymType.title(36)).monospacedDigit()
+            .accessibilityIdentifier("totals.amount")
+          Chart(weeks) { point in
+            BarMark(x: .value("Week", point.date, unit: .weekOfYear), y: .value(unit, value(point))).foregroundStyle(GymColor.red).cornerRadius(3)
+          }.chartYScale(domain: .automatic(includesZero: true)).chartYAxisLabel(unit).frame(height: 220)
+            .accessibilityIdentifier("totals.chart")
           DisclosureGroup(store.t("Workout values")) {
-            ForEach(points.reversed()) { p in
+            ForEach(points.reversed()) { point in
               HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                  Text(store.t(p.name))
-                  Text(p.date, format: .dateTime.month(.abbreviated).day())
-                    .font(GymType.body(12)).foregroundStyle(GymColor.dim)
-                }
-                Spacer()
-                Text(formatNumber(value(p)) + " " + unit).monospacedDigit()
-              }.padding(.vertical, 10)
+                Text(point.date, format: .dateTime.month(.abbreviated).day()); Spacer()
+                Text(formatNumber(value(point)) + " " + unit).monospacedDigit()
+              }.padding(.vertical, 8)
+            }
+          }
+          if initialMetric == 1 {
+            DisclosureGroup(store.t("How it’s counted")) {
+              Text(store.t("Logged weight × completed reps. Bodyweight adds no estimated load; dumbbell weight uses your per-dumbbell entry."))
+                .font(GymType.body(15)).foregroundStyle(GymColor.dim)
             }
           }
         }
-      }.padding(24)
-    }.gymPage().navigationBarTitleDisplayMode(.inline)
-  }
-  private var scopePicker: some View {
-    Picker(store.t("Workouts"), selection: $splitID) {
-      Text(store.t("All workouts")).tag(Optional<UUID>.none)
-      ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
-    }.pickerStyle(.menu).font(GymType.body(16)).accessibilityIdentifier("totals.scope")
-  }
-  private var stylePicker: some View {
-    Picker(store.t("View"), selection: $bars) {
-      Text(store.t("Trend")).tag(false)
-      Text(store.t("Bars")).tag(true)
-    }.pickerStyle(.menu).font(GymType.body(16)).accessibilityIdentifier("totals.style")
+      }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+    }.gymPage().navigationTitle(store.t(title)).navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+        ToolbarItem(placement: .topBarTrailing) {
+          Menu {
+            Picker(store.t("Period"), selection: $fourWeeks) {
+              Text(store.t("Last 4 weeks")).tag(true); Text(store.t("All time")).tag(false)
+            }
+            Picker(store.t("Scope"), selection: $splitID) {
+              Text(store.t("All workouts")).tag(Optional<UUID>.none)
+              ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
+            }
+          } label: { Text(store.t(fourWeeks ? "Last 4 weeks" : "All time")) }
+            .accessibilityLabel(store.t("Filter")).accessibilityIdentifier("totals.filter")
+        }
+      }
   }
 }

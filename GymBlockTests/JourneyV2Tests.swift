@@ -170,4 +170,30 @@ import XCTest
     XCTAssertEqual(store.data.history.map(\.id), ids)
   }
 
+  func testV3RouteCollectsSometimesBreaksBeforeTeachingAndSkipsNoScrollReveal() {
+    var b = baseline()
+    b.scrollFrequency = .sometimes
+    let route = OnboardingRoute.steps(b)
+    XCTAssertLessThan(route.firstIndex(of: .breaks)!, route.firstIndex(of: .restHabits)!)
+    XCTAssertEqual(route.last, .subscription)
+    XCTAssertFalse(route.contains(.ready))
+    b.scrollFrequency = .no
+    b.scrollsBetweenSets = false
+    let noScroll = OnboardingRoute.steps(b)
+    XCTAssertFalse(noScroll.contains(.minutes))
+    XCTAssertFalse(noScroll.contains(.breaks))
+    XCTAssertTrue(noScroll.contains(.reveal))
+  }
+  func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {
+    let domain = "EmptyV3.\(UUID())"
+    let defaults = UserDefaults(suiteName: domain)!
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let store = GymStore(defaults: defaults)
+    store.startSession()
+    store.finish()
+    XCTAssertNil(store.session)
+    XCTAssertNil(store.summary)
+    XCTAssertTrue(store.data.history.isEmpty)
+  }
+
 }

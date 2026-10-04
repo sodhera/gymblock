@@ -25,7 +25,7 @@ import UIKit
     }
   }
   @discardableResult func playSound(profile: Profile, completion: Bool = false) async -> Bool {
-    guard profile.soundEnabled ?? true,
+    guard profile.soundEnabled ?? false,
       let url = Bundle.main.url(
         forResource: completion ? "complete" : "advance", withExtension: "wav")
     else { return false }

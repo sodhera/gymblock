@@ -53,6 +53,7 @@ struct Profile: Codable {
   var onboardingPreviewTarget: Double?
   var onboardingRevealSeen: Bool?
   var onboardingStoryStage: Int?
+  var onboardingSkippedQuestions: Bool?
   var soundEnabled: Bool?
   var hapticsEnabled: Bool?
 }
@@ -307,7 +308,7 @@ struct LocalData: Codable {
   var allExercises: [Exercise] {
     var seen = Set<String>()
     return
-      (Exercise.catalog + data.workouts.flatMap(\.exercises)
+      (Exercise.catalog + (session?.exercises ?? []) + data.workouts.flatMap(\.exercises)
       + data.history.flatMap(\.sets).map(\.exercise))
       .filter { seen.insert($0.id).inserted }
   }
@@ -506,7 +507,7 @@ struct LocalData: Codable {
     session.restEnds = nil
     session.restStarted = nil
     if !session.sets.isEmpty { data.history.insert(session, at: 0) }
-    summary = session
+    summary = session.sets.isEmpty ? nil : session
     data.session = nil  // The simulated block ends before the summary appears.
     persist()
   }

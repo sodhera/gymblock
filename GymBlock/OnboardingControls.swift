@@ -1,87 +1,5 @@
 import SwiftUI
 
-struct OnboardingStage: View {
-  var depth: Double
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  var body: some View {
-    LinearGradient(
-      colors: [
-        GymColor.adaptive(light: 0xFBF8F5, dark: 0x191617),
-        GymColor.adaptive(light: 0xFBF8F5, dark: 0x201819),
-        GymColor.adaptive(light: 0xF5E6E4, dark: 0x321F23).opacity(0.45 + depth * 0.35),
-      ],
-      startPoint: .top, endPoint: .bottom
-    )
-    .background(GymColor.adaptive(light: 0xFBF8F5, dark: 0x191617))
-    .ignoresSafeArea().animation(reduceMotion ? nil : .easeInOut(duration: 0.8), value: depth)
-    .allowsHitTesting(false).accessibilityHidden(true)
-  }
-}
-
-struct OnboardingGlass: ViewModifier {
-  var tint: Color?
-  @Environment(\.accessibilityReduceTransparency) private var opaque
-  @Environment(\.colorSchemeContrast) private var contrast
-  @ViewBuilder func body(content: Content) -> some View {
-    if opaque {
-      content.background(tint ?? GymColor.surface, in: Capsule())
-        .overlay { Capsule().strokeBorder(GymColor.dim.opacity(0.6), lineWidth: 1) }
-    } else if #available(iOS 26.0, *) {
-      content.glassEffect(
-        tint.map { .regular.tint($0).interactive() } ?? .regular.interactive(), in: .capsule)
-    } else {
-      content.background(tint ?? .clear, in: Capsule())
-        .background(.regularMaterial, in: Capsule())
-        .overlay {
-          Capsule().strokeBorder(
-            GymColor.dim.opacity(contrast == .increased ? 0.6 : 0.15), lineWidth: 1)
-        }
-    }
-  }
-}
-
-struct OnboardingGlassStyle: ButtonStyle {
-  var primary = false
-  var selected = false
-  @Environment(\.isEnabled) private var enabled
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  func makeBody(configuration: Configuration) -> some View {
-    configuration.label
-      .foregroundStyle(primary ? Color.white : GymColor.ink)
-      .contentShape(Capsule())
-      .modifier(
-        OnboardingGlass(tint: primary ? GymColor.adaptive(light: 0xC92535, dark: 0xC92535) : nil)
-      )
-      .overlay { if selected { Capsule().strokeBorder(GymColor.red, lineWidth: 1.5) } }
-      .opacity(enabled ? 1 : 0.4)
-      .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
-      .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: configuration.isPressed)
-  }
-}
-
-struct WorkoutMark: View {
-  var assembled: Bool
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  var body: some View {
-    GeometryReader { g in
-      let unit = g.size.width / 116
-      ZStack {
-        RoundedRectangle(cornerRadius: 32 * unit).fill(GymColor.red.gradient)
-          .shadow(color: GymColor.red.opacity(0.15), radius: 24 * unit, y: 12 * unit)
-        HStack(spacing: 4 * unit) {
-          Capsule().frame(width: 7 * unit, height: 27 * unit)
-          Capsule().frame(width: 10 * unit, height: 40 * unit)
-          Capsule().frame(width: 20 * unit, height: 8 * unit)
-          Capsule().frame(width: 10 * unit, height: 40 * unit)
-          Capsule().frame(width: 7 * unit, height: 27 * unit)
-        }.foregroundStyle(.white)
-          .scaleEffect(assembled || reduceMotion ? 1 : 0.65)
-          .opacity(assembled || reduceMotion ? 1 : 0)
-      }
-    }.accessibilityHidden(true)
-  }
-}
-
 enum SurveyField: String, Identifiable {
   case visits, duration, exercises, sets, reps, minutes, breaks
   var id: String { rawValue }
@@ -190,38 +108,9 @@ struct FocusPreview: View {
   @Environment(\.dismiss) private var dismiss
   var body: some View {
     NavigationStack {
-      Form {
-        Section {
-          Text(store.t("This demo previews focus mode. It doesn't block other apps."))
-          Toggle(
-            store.t("Focus demo"),
-            isOn: Binding(
-              get: { store.profile.focusEnabled ?? false },
-              set: { flag in
-                store.updateProfile { $0.focusEnabled = flag }
-              })
-          ).accessibilityIdentifier("focus.enabled")
-        }
-        Section(store.t("Apps you tend to scroll")) {
-          ForEach(["Social feeds", "Videos", "News", "Other"], id: \.self) { category in
-            Toggle(
-              store.t(category),
-              isOn: Binding(
-                get: { store.profile.baseline?.distractions.contains(category) == true },
-                set: { flag in
-                  store.updateProfile {
-                    var b = $0.baseline ?? RoutineBaseline()
-                    b.distractions.removeAll { $0 == category }
-                    if flag { b.distractions.append(category) }
-                    $0.baseline = b
-                  }
-                }))
-          }
-        }
-      }.navigationTitle(store.t("Focus demo")).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() } }
-        }
+      FocusSettingsForm().toolbar {
+        ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() } }
+      }
     }.presentationDetents([.medium, .large])
   }
 }

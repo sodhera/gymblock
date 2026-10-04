@@ -2,7 +2,7 @@
 
 - Native Swift/SwiftUI only. `project.yml` is the XcodeGen source of truth; regenerate when adding files or changing configuration.
 - Keep the app extremely simple and local-only. No accounts, backend, analytics or network SDKs.
-- Follow docs/ONBOARDING-JOURNEY-V2.md: workout questions first, one 1–7 day selector, inline numeric wheels, three lifting questions, scrolling and timing/logging habits, then the focus/rest/four-week story and Start workout. No placeholder paywall or unsupported body-outcome predictions.
+- Follow docs/ONBOARDING-CLEAR-JOURNEY-V4.md for onboarding and docs/UX-RESET-V3.md for training/navigation. Workout questions first, native 1–7 Liquid Glass slider, single numeric wheels, habits, then benefit scenes and the review offer. Use Workout / History / Splits navigation; remove decorative icons and repeated copy. Live billing is deferred; preserve the explicit Debug preview and claim qualifiers. Do not invent body-outcome predictions.
 - Home offers an optional split choice; Start workout activates the simulated block and opens the split’s first exercise or Free workout exercise selection. Finish clears it before summary.
 - Keep splits optional, preserve their IDs on edits and compare progress only within the same split and exercise, with rep count or load held constant.
 - Demo loading must be explicit, idempotent and never overwrite existing local work. Keep the sample-history marker visible on Home.

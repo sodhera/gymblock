@@ -64,7 +64,7 @@ import XCTest
     XCTAssertEqual(OnboardingStep.restored(p), .duration)
     p.onboardingStepID = nil
     p.baseline?.minutesPerBreak = nil
-    XCTAssertEqual(OnboardingStep.restored(p), .ready)
+    XCTAssertEqual(OnboardingStep.restored(p), .reveal)  // Unknown estimates use the qualitative focus scene.
     p.onboardingStep = -10
     XCTAssertEqual(OnboardingStep.restored(p), .welcome)
     var data = LocalData()

@@ -3,233 +3,235 @@ import SwiftUI
 struct HomeView: View {
   @EnvironmentObject private var store: GymStore
   @State private var settings = false
+  @State private var choice = false
   var onSplits: () -> Void = {}
-  @State private var consistency = false
-  private var split: Workout? {
-    store.data.workouts.first { $0.id == store.profile.preferredSplitID }
+  private var split: Workout? { store.data.workouts.first { $0.id == store.profile.preferredSplitID } }
+  private var weeklyWorkouts: Int {
+    let start = Calendar.current.dateInterval(of: .weekOfYear, for: Date())!.start
+    return store.data.history.filter { ($0.ended ?? $0.started) >= start && !$0.completedSets.isEmpty }.count
   }
   var body: some View {
     NavigationStack {
-      ScrollView(showsIndicators: false) {
-        VStack(alignment: .leading, spacing: 28) {
-          HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-              Text(greeting).font(GymType.hero(28)).foregroundStyle(GymColor.ink)
-                .accessibilityAddTraits(.isHeader)
-              if store.data.demoLoaded == true {
-                Text(store.t("Demo")).font(GymType.body(12)).foregroundStyle(GymColor.dim)
-              }
+      ScrollView {
+        VStack(alignment: .leading, spacing: 40) {
+          HStack(spacing: 12) {
+            Text(store.profile.language == "es"
+                 ? "\(weeklyWorkouts) entrenamientos esta semana"
+                 : "\(weeklyWorkouts) \(weeklyWorkouts == 1 ? "workout" : "workouts") this week")
+              .font(GymType.body(15)).foregroundStyle(GymColor.dim).accessibilityIdentifier("home.activity")
+            if store.data.demoLoaded == true {
+              Text(store.t("Demo")).font(GymType.body(13)).foregroundStyle(GymColor.dim)
             }
-            Spacer(minLength: 0)
-            Button {
-              settings = true
-            } label: {
-              Image(systemName: "gearshape").font(.system(size: 18, weight: .medium))
-                .foregroundStyle(GymColor.ink).frame(width: 44, height: 44)
-            }.buttonStyle(.bordered).buttonBorderShape(.circle)
+          }
+          Button { choice = true } label: {
+            HStack {
+              Text(split?.name ?? store.t("Free workout")).font(GymType.title(28))
+              Spacer()
+              Image(systemName: "chevron.down").font(.system(size: 14, weight: .medium)).accessibilityHidden(true)
+            }.foregroundStyle(GymColor.ink).frame(minHeight: 56).contentShape(Rectangle())
+          }.buttonStyle(.plain).accessibilityIdentifier("home.workout")
+        }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
+      }.gymPage().navigationTitle(store.t("Workout"))
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Button { settings = true } label: { Image(systemName: "gearshape") }
               .accessibilityLabel(store.t("Settings")).accessibilityIdentifier("home.preferences")
           }
-          streakCard
-          Menu {
-            Button(store.t("Free workout")) { store.updateProfile { $0.preferredSplitID = nil } }
-            ForEach(store.data.workouts) { split in
-              Button(split.name) { store.updateProfile { $0.preferredSplitID = split.id } }
-            }
-            Divider()
-            Button(store.t("Manage splits")) { onSplits() }
-          } label: {
-            HStack {
-              VStack(alignment: .leading, spacing: 6) {
-                Text(split?.name ?? store.t("Free workout")).font(GymType.title(24))
-                  .foregroundStyle(GymColor.ink).multilineTextAlignment(.leading)
-                Text(
-                  split.map { "\($0.exercises.count) " + store.t("exercises") }
-                    ?? store.t("Choose exercises as you go")
-                )
-                .font(GymType.body(15)).foregroundStyle(GymColor.dim)
-                .multilineTextAlignment(.leading)
-              }
-              Spacer(minLength: 8)
-              Image(systemName: "chevron.down").font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(GymColor.dim)
-            }.frame(minHeight: 60).contentShape(Rectangle())
-          }.accessibilityIdentifier("home.workout").padding(.top, 8)
-        }.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 28)
-      }.gymPage().toolbar(.hidden, for: .navigationBar)
+        }
         .safeAreaInset(edge: .bottom) {
-          GymButton(title: store.t("Start workout"), id: "home.start") {
-            store.startSession(workout: split)
-          }.padding(.horizontal, 24).padding(.vertical, 16)
+          GymButton(title: store.t("Start workout"), id: "home.start") { store.startSession(workout: split) }
+            .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 16)
         }
         .sheet(isPresented: $settings) { PreferencesView() }
-        .sheet(isPresented: $consistency) {
-          NavigationStack {
-            List {
-              Text(
-                store.t(
-                  "A week counts when you finish at least one set. Rest days don't break your streak."
-                ))
-              ForEach(store.weekDays, id: \.self) { day in
-                HStack {
-                  Text(day, format: .dateTime.weekday(.wide))
-                  Spacer()
-                  if store.trained(on: day) {
-                    Image(systemName: "checkmark").foregroundStyle(GymColor.red)
-                  }
-                }
-              }
-            }.gymPage().navigationTitle(store.t("Consistency")).navigationBarTitleDisplayMode(
-              .inline
-            ).toolbar {
-              ToolbarItem(placement: .confirmationAction) {
-                Button(store.t("Done")) { consistency = false }
-              }
-            }
-          }.presentationDetents([.medium, .large])
-        }
+        .sheet(isPresented: $choice) { WorkoutChoiceView() }
     }
   }
-  private var greeting: String {
-    let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-    let hour = Calendar.current.component(.hour, from: .now)
-    let key = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
-    let text = store.t(key)
-    return name.isEmpty ? text : text + ", " + name
-  }
-  private var streakCard: some View {
-    Button {
-      consistency = true
-    } label: {
-      VStack(alignment: .leading, spacing: 18) {
-        HStack(spacing: 12) {
-          Image(systemName: "flame.fill").font(.system(size: 29)).foregroundStyle(GymColor.red)
-          Text("\(store.activeWeekStreak)").font(GymType.hero(38)).foregroundStyle(GymColor.ink)
-          Text(store.t("Week streak")).font(GymType.label(14)).foregroundStyle(GymColor.dim)
-          Spacer(minLength: 0)
-        }
-        HStack(spacing: 0) {
-          ForEach(store.weekDays, id: \.self) { day in
-            VStack(spacing: 8) {
-              Text(day, format: .dateTime.weekday(.narrow)).font(GymType.body(11))
-                .foregroundStyle(GymColor.dim)
-              ZStack {
-                Circle().fill(store.trained(on: day) ? GymColor.red : GymColor.ink.opacity(0.06))
-                if store.trained(on: day) {
-                  Image(systemName: "checkmark").font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.white)
-                }
-              }.frame(width: 26, height: 26)
-            }.frame(maxWidth: .infinity)
-          }
-        }.accessibilityHidden(true)
-      }.padding(20).gymCard()
-    }.buttonStyle(.plain).accessibilityIdentifier("home.streak")
-      .accessibilityLabel(
-        store.profile.language == "es"
-          ? "\(store.activeWeekStreak) semanas seguidas" : "\(store.activeWeekStreak)-week streak")
-  }
-
 }
+
+struct WorkoutChoiceView: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  var body: some View {
+    NavigationStack {
+      List {
+        choice(store.t("Free workout"), id: nil)
+        ForEach(store.data.workouts) { choice($0.name, id: $0.id) }
+        NavigationLink(store.t("Create split")) {
+          SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
+            store.updateProfile { $0.preferredSplitID = split.id }; dismiss()
+          }
+        }
+      }.gymPage().navigationTitle(store.t("Choose workout")).navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } } }
+    }.presentationDetents([.medium, .large])
+  }
+  private func choice(_ name: String, id: UUID?) -> some View {
+    Button {
+      store.updateProfile { $0.preferredSplitID = id }; dismiss()
+    } label: {
+      HStack {
+        Text(name).foregroundStyle(GymColor.ink); Spacer()
+        if store.profile.preferredSplitID == id {
+          Image(systemName: "checkmark").foregroundStyle(GymColor.red).accessibilityHidden(true)
+        }
+      }.frame(minHeight: 44)
+    }.accessibilityAddTraits(store.profile.preferredSplitID == id ? .isSelected : [])
+  }
+}
+
 struct PreferencesView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
-  @State private var deleting = false
-  @State private var routineDetails = false
   var body: some View {
     NavigationStack {
       Form {
         Section {
-          NavigationLink {
-            SplitsView(onDone: { dismiss() })
-          } label: {
-            Text(store.t("Splits"))
-          }.accessibilityIdentifier("settings.splits")
-          Button(store.t("Edit routine answers")) {
-            store.updateProfile {
-              $0.onboarded = false
-              $0.onboardingStep = 0
-              $0.onboardingStepID = OnboardingStep.frequency.rawValue
-              $0.onboardingStoryStage = 0
-            }
-            dismiss()
-          }.accessibilityIdentifier("settings.baseline")
-          Button(store.t("Each exercise")) { routineDetails = true }
-            .accessibilityIdentifier("settings.routineDetails")
+          Picker(store.t("Units"), selection: Binding(get: { store.profile.unit }, set: { v in store.updateProfile { $0.unit = v } })) {
+            Text("kg").tag("kg"); Text("lb").tag("lb")
+          }
+          HStack {
+            Text(store.t("Name"))
+            TextField(store.t("Optional"), text: Binding(get: { store.profile.name }, set: { v in store.updateProfile { $0.name = String(v.prefix(40)) } }))
+              .multilineTextAlignment(.trailing)
+          }
+          Picker(store.t("Language"), selection: Binding(get: { store.profile.language }, set: { v in store.updateProfile { $0.language = v } })) {
+            Text("English").tag("en"); Text("Español").tag("es")
+          }
+          Toggle(store.t("Haptics"), isOn: Binding(get: { store.profile.hapticsEnabled ?? true }, set: { v in store.updateProfile { $0.hapticsEnabled = v } }))
+          Toggle(store.t("Sound"), isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } }))
         }
         Section {
-          TextField(
-            store.t("Name (optional)"),
-            text: Binding(
-              get: { store.profile.name },
-              set: { value in store.updateProfile { $0.name = String(value.prefix(40)) } }))
-          Picker(
-            store.t("Language"),
-            selection: Binding(
-              get: { store.profile.language },
-              set: { value in store.updateProfile { $0.language = value } })
-          ) {
-            Text("English").tag("en")
-            Text("Español").tag("es")
-          }
-          Picker(
-            store.t("Weight unit"),
-            selection: Binding(
-              get: { store.profile.unit }, set: { value in store.updateProfile { $0.unit = value } }
-            )
-          ) {
-            Text("kg").tag("kg")
-            Text("lb").tag("lb")
-          }
+          NavigationLink(store.t("Training answers")) { TrainingAnswersForm() }.accessibilityIdentifier("settings.baseline")
+          NavigationLink(store.t("Focus demo")) { FocusSettingsForm() }
+          NavigationLink(store.t("Data")) { DataSettingsView() }
         }
-        Section {
-          Toggle(
-            store.t("Sounds"),
-            isOn: Binding(
-              get: { store.profile.soundEnabled ?? true },
-              set: { value in store.updateProfile { $0.soundEnabled = value } }))
-          Toggle(
-            store.t("Haptics"),
-            isOn: Binding(
-              get: { store.profile.hapticsEnabled ?? true },
-              set: { value in store.updateProfile { $0.hapticsEnabled = value } }))
-          Toggle(
-            store.t("Focus demo"),
-            isOn: Binding(
-              get: { store.profile.focusEnabled ?? true },
-              set: { value in store.updateProfile { $0.focusEnabled = value } }))
-        } footer: {
-          Text(store.t("This demo doesn't block other apps."))
-        }
-        Section {
-          if store.data.history.isEmpty && store.data.workouts.isEmpty {
-            Button(store.t("Load sample workouts")) { store.loadDemoIfEmpty() }
-              .accessibilityIdentifier("settings.demo")
-          }
-          Button(store.t("Delete routine answers"), role: .destructive) { deleting = true }
-        } footer: {
-          Text(store.t("Saved on this device. No account or analytics."))
-        }
-      }.gymPage().navigationTitle(store.t("Settings"))
-        .sheet(isPresented: $routineDetails) { RoutineDetailEditor() }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("preferences.done")
-          }
-
-        }
-        .confirmationDialog(
-          store.t("Delete routine answers?"), isPresented: $deleting, titleVisibility: .visible
-        ) {
-          Button(store.t("Delete"), role: .destructive) {
-            store.deleteRoutineAnswers()
-          }
-        } message: {
-          Text(store.t("Your workouts and splits will stay saved."))
-        }
+      }.gymPage().navigationTitle(store.t("Settings")).navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("preferences.done") } }
     }
   }
 }
+
+struct FocusSettingsForm: View {
+  @EnvironmentObject private var store: GymStore
+  var body: some View {
+    Form {
+      Toggle(store.t("Focus demo"), isOn: Binding(get: { store.profile.focusEnabled ?? false }, set: { v in store.updateProfile { $0.focusEnabled = v } }))
+        .accessibilityIdentifier("focus.enabled")
+      Text(store.t("This demo doesn’t block other apps.")).foregroundStyle(GymColor.dim)
+    }.gymPage().navigationTitle(store.t("Focus demo")).navigationBarTitleDisplayMode(.inline)
+  }
+}
+struct DataSettingsView: View {
+  @EnvironmentObject private var store: GymStore
+  @State private var deleting = false
+  var body: some View {
+    Form {
+      if store.data.history.isEmpty && store.data.workouts.isEmpty {
+        Button(store.t("Load sample workouts")) { store.loadDemoIfEmpty() }.accessibilityIdentifier("settings.demo")
+      }
+      Button(store.t("Delete training answers"), role: .destructive) { deleting = true }
+    }.gymPage().navigationTitle(store.t("Data")).navigationBarTitleDisplayMode(.inline)
+      .confirmationDialog(store.t("Delete training answers?"), isPresented: $deleting, titleVisibility: .visible) {
+        Button(store.t("Delete answers"), role: .destructive) { store.deleteRoutineAnswers() }
+        Button(store.t("Cancel"), role: .cancel) {}
+      } message: { Text(store.t("Workouts and splits stay saved.")) }
+  }
+}
+
+struct TrainingAnswersForm: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  @State private var draft = RoutineBaseline()
+  @State private var error = false
+  @State private var raw: [String: String] = [:]
+  @State private var invalid = Set<String>()
+  var body: some View {
+    Form {
+      Section {
+        number("Days / week", value: Binding(get: { draft.trainingDays.map(String.init) ?? "" }, set: { draft.trainingDays = Int($0) }))
+        number("Workout length", value: survey(.duration), unit: "min")
+        number("Reps / set", value: survey(.reps))
+        number("Sets / exercise", value: survey(.sets))
+        number("Exercises / workout", value: survey(.exercises))
+      }
+      Section {
+        habit("Scrolling", value: $draft.scrollFrequency)
+        if draft.scrollFrequency != .no {
+          number("Scrolling / break", value: Binding(get: { draft.scrollingMinutes.map(inputNumber) ?? draft.minutesPerBreak.map(String.init) ?? "" }, set: { draft.scrollingMinutes = parseNumber($0); draft.minutesPerBreak = nil }), unit: "min")
+          number("Scrolling breaks", value: survey(.breaks))
+          Picker(store.t("Visits / day"), selection: Binding(get: { draft.visitsPerTrainingDay ?? 1 }, set: { draft.visitsPerTrainingDay = $0 })) {
+            Text("1").tag(1); Text(store.t("More than one")).tag(2)
+          }
+        }
+        habit("Time rests", value: $draft.restTiming)
+        Picker(store.t("Workout logging"), selection: $draft.loggingHabit) {
+          Text(store.t("Not sure")).tag(Optional<LoggingHabit>.none)
+          Text(store.t("Log and review")).tag(Optional(LoggingHabit.review))
+          Text(store.t("Log only")).tag(Optional(LoggingHabit.logOnly))
+          Text(store.t("No")).tag(Optional(LoggingHabit.neither))
+        }
+        habit("Time sets", value: $draft.setTiming)
+      }
+      if error { Text(store.t("Check the entered values.")).foregroundStyle(GymColor.red) }
+    }.gymPage().navigationTitle(store.t("Training answers")).navigationBarTitleDisplayMode(.inline)
+      .navigationBarBackButtonHidden()
+      .toolbar {
+        ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+        ToolbarItem(placement: .confirmationAction) {
+          Button(store.t("Save")) {
+            guard invalid.isEmpty, draft.trainingDays == nil || (1...7).contains(draft.trainingDays!),
+              draft.duration == nil || (1...600).contains(draft.duration!),
+              draft.exercises == nil || (1...50).contains(draft.exercises!),
+              draft.sets == nil || (1...50).contains(draft.sets!),
+              draft.reps.isEmpty || RoutineBaseline.repRange(draft.reps) != nil,
+              draft.scrollingMinutes == nil || (draft.scrollingMinutes!.isFinite && (0.5...600).contains(draft.scrollingMinutes!)),
+              draft.breakAssumptionValid else { error = true; return }
+            draft.scrollsBetweenSets = draft.scrollFrequency.map { $0 != .no }
+            store.updateProfile { $0.baseline = draft }; dismiss()
+          }
+        }
+      }.onAppear { draft = store.profile.baseline ?? RoutineBaseline() }
+  }
+  private func survey(_ field: SurveyField) -> Binding<String> {
+    Binding(get: { field.read(draft) }, set: {
+      field.write($0, into: &draft)
+      if field == .reps && !$0.isEmpty { draft.timed = false }
+    })
+  }
+  private func number(_ label: String, value: Binding<String>, unit: String = "") -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack {
+        Text(store.t(label)); Spacer()
+        TextField("—", text: Binding(get: { raw[label] ?? value.wrappedValue }, set: { text in
+          raw[label] = text
+          let valid: Bool
+          if text.isEmpty { valid = true }
+          else if label == "Reps / set" { valid = RoutineBaseline.repRange(text) != nil }
+          else if label == "Scrolling / break" { valid = parseNumber(text).map { $0.isFinite && (0.5...600).contains($0) } ?? false }
+          else {
+            let range: ClosedRange<Int> = label == "Days / week" ? 1...7 : label == "Workout length" ? 1...600 : label == "Scrolling breaks" ? 0...2500 : 1...50
+            valid = Int(text).map { range.contains($0) } ?? false
+          }
+          if valid { invalid.remove(label); value.wrappedValue = text } else { invalid.insert(label) }
+        })).keyboardType(label == "Reps / set" ? .numbersAndPunctuation : .decimalPad)
+          .multilineTextAlignment(.trailing).frame(minWidth: 60, maxWidth: 100)
+          .accessibilityLabel(store.t(label)).modifier(SelectNumberOnFocus())
+        if !unit.isEmpty { Text(unit).foregroundStyle(GymColor.dim) }
+      }
+      if invalid.contains(label) { Text(store.t("Check this value.")).font(GymType.body(13)).foregroundStyle(GymColor.red) }
+    }
+  }
+  private func habit(_ label: String, value: Binding<HabitAnswer?>) -> some View {
+    Picker(store.t(label), selection: value) {
+      Text(store.t("Not sure")).tag(Optional<HabitAnswer>.none)
+      ForEach(HabitAnswer.allCases, id: \.self) { item in
+        Text(store.t(item == .yes ? "Yes" : item == .sometimes ? "Sometimes" : "No")).tag(Optional(item))
+      }
+    }
+  }
+}
+
 struct WorkoutRecap: View {
   @EnvironmentObject private var store: GymStore
   let session: Session
@@ -251,50 +253,68 @@ struct WorkoutRecap: View {
 }
 struct WorkoutDetailView: View {
   @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
   let sessionID: UUID
+  var embedded = false
   @State private var editing: LoggedSet?
   private var session: Session? {
-    store.data.history.first { $0.id == sessionID }
-      ?? store.session.flatMap { $0.id == sessionID ? $0 : nil }
+    store.data.history.first { $0.id == sessionID } ?? store.session.flatMap { $0.id == sessionID ? $0 : nil }
+  }
+  private var exercises: [Exercise] {
+    var seen = Set<String>()
+    return (session?.sets ?? []).map(\.exercise).filter { seen.insert($0.id).inserted }
   }
   var body: some View {
     List {
       if let session {
-        ForEach(session.sets) { set in
-          Button {
-            editing = set
-          } label: {
-            VStack(alignment: .leading, spacing: 8) {
-              HStack {
-                Text(store.t(set.exercise.name)).foregroundStyle(GymColor.ink)
-                Spacer()
-                Text(setValue(set, store: store)).foregroundStyle(GymColor.dim).font(
-                  GymType.body(15))
-              }
-              if let seconds = set.displayedSetSeconds {
-                Text(store.t("Set time") + " " + JourneyFormat.time(seconds))
-                  .font(GymType.body(13)).foregroundStyle(GymColor.dim)
-              }
-              if let gap = session.gapSeconds(before: set) {
-                Text(
-                  store.t(
-                    session.gapCrossesExercises(before: set) ? "Gap across exercises" : "Gap before"
-                  ) + " " + JourneyFormat.time(gap)
-                )
-                .font(GymType.body(13)).foregroundStyle(GymColor.dim)
-              }
+        if !embedded {
+          Section {
+            Text(session.ended ?? session.started, format: .dateTime.month(.wide).day().year())
+              .foregroundStyle(GymColor.dim)
+            Text("\(max(1, Int(session.duration / 60))) " + store.t("min") + " · \(session.totalReps) " + store.t("reps"))
+          }.listRowBackground(Color.clear)
+        }
+        ForEach(exercises) { exercise in
+          Section {
+            let sets = session.sets.filter { $0.exercise.id == exercise.id }
+            HStack {
+              Text(store.t("Set")).frame(width: 40, alignment: .leading)
+              if !exercise.timed { Spacer(); Text(store.t("Weight") + " (" + store.profile.unit + ")") }
+              Spacer()
+              Text(store.t(exercise.timed ? "Time" : "Reps")).frame(width: 60, alignment: .trailing)
+            }.font(GymType.body(13)).foregroundStyle(GymColor.dim).accessibilityHidden(true)
+            ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
+              Button { editing = set } label: {
+                if typeSize.isAccessibilitySize {
+                  VStack(alignment: .leading, spacing: 6) {
+                    Text(store.t("Set") + " \(index + 1)")
+                    Text(setValue(set, store: store))
+                  }.foregroundStyle(GymColor.ink)
+                } else {
+                  HStack {
+                    Text("\(index + 1)").frame(width: 40, alignment: .leading)
+                    if !exercise.timed {
+                      Spacer()
+                      Text(set.weightKG == 0 ? store.t("Bodyweight") : formatNumber(GymStore.displayedWeight(set.weightKG, unit: store.profile.unit)))
+                    }
+                    Spacer()
+                    Text(set.unsuccessful == true ? store.t("Attempt") : exercise.timed ? formatNumber(set.minutes) + " " + store.t("min") : String(set.reps))
+                      .frame(minWidth: 60, alignment: .trailing)
+                  }.monospacedDigit().foregroundStyle(GymColor.ink).frame(minHeight: 44)
+                }
+              }.accessibilityLabel(store.t("Set") + " \(index + 1), " + setValue(set, store: store))
+                .accessibilityIdentifier("saved." + set.id.uuidString)
             }
-          }.accessibilityIdentifier("saved." + set.id.uuidString)
+          } header: { Text(store.t(exercise.name)).font(GymType.label(17)).textCase(nil) }
         }
-        if session.sets.isEmpty {
-          Text(store.t("No sets logged yet.")).foregroundStyle(GymColor.dim)
-        }
+        if session.sets.isEmpty { Text(store.t("No sets yet")).foregroundStyle(GymColor.dim) }
       }
-      if store.deletedSet != nil { Button(store.t("Undo delete")) { store.undoDelete() } }
-    }.gymPage().navigationTitle(store.t(session?.name ?? "Workout")).navigationBarTitleDisplayMode(
-      .inline
-    )
-    .sheet(item: $editing) { SetEditor(set: $0, sessionID: sessionID) }
+      if store.deletedSet != nil { Button(store.t("Undo")) { store.undoDelete() } }
+    }.gymPage().navigationTitle(embedded ? store.t("Sets") : store.t(session?.name ?? "Workout"))
+      .navigationBarTitleDisplayMode(.inline)
+      .navigationDestination(isPresented: Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })) {
+        if let editing { SetEditor(set: editing, sessionID: sessionID, embedded: true) }
+      }
   }
 }
 struct SetList: View {

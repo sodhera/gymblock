@@ -87,4 +87,12 @@ import XCTest
     XCTAssertEqual(store.session?.sets.first?.minutes, 3.5)
     XCTAssertEqual(store.session?.sets.first?.reps, 0)
   }
+  func testNewExerciseRemainsSearchableBeforeWorkoutIsFinished() {
+    let store = GymStore(defaults: defaults)
+    let exercise = Exercise(id: "custom-cable", name: "Cable curl", area: "Your training")
+    store.startSession(); store.chooseExercise(exercise)
+    XCTAssertTrue(store.allExercises.contains { $0.id == exercise.id })
+    XCTAssertTrue(store.data.history.isEmpty)
+  }
+
 }
