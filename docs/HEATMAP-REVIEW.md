@@ -1,6 +1,6 @@
 # Onboarding attention heatmap review
 
-7 Oct 2026 · iPhone 18 Pro / iOS 27 simulator captures of all 18 onboarding states.
+7 Oct 2026 (re-run after fixes) · iPhone 18 Pro / iOS 27 simulator captures of all 18 onboarding states.
 
 **Method.** Each final-frame screenshot was run through Apple's on-device attention-based saliency model (Vision `VNGenerateAttentionBasedSaliencyImageRequest`), via [`scripts/attention-heatmap.swift`](../scripts/attention-heatmap.swift). The model predicts where people look in the first moments of seeing an image. It is a proxy, not an eye-tracking study: it is centre-biased and favours faces, objects and high contrast. It cannot see motion, so animated beats aren't captured. Treat it as a fast sanity check, then confirm with five real users.
 
@@ -13,8 +13,7 @@ Images: [`screenshots/onboarding-v5/heatmaps/`](../screenshots/onboarding-v5/hea
 | Welcome (notifications) | 25 | 73 | 24 | 2 | Headline first, then the notification stack ✅ |
 | Welcome (locked) | 45 | 52 | 43 | 3 | Peak sits exactly on the red lock ✅ |
 | Name | 27 | 52 | 36 | 10 | Headline → field ✅ |
-| Gender | 16 | 61 | 21 | 17 | Headline, then an empty stage ⚠️ |
-| Height & weight | 48 | 33 | 59 | 7 | The weight wheel is the hot spot; height is weaker ⚠️ |
+| About you (gender + height + weight) | 45 | 38 | 51 | 9 | Fixed: replaces the empty gender page (middle 21% → 51%); attention lands on the chosen gender and the wheels ✅ |
 | Phone between sets | 41 | 50 | 43 | 5 | Headline → notifications (the subject of the question) ✅ |
 | Minutes per rest | 50 | 59 | 35 | 4 | Headline → selected value ✅ |
 | Phone time (ring) | 22 | 51 | 38 | 10 | Headline → "34" ✅; adjust rows are secondary, by design |
@@ -26,6 +25,7 @@ Images: [`screenshots/onboarding-v5/heatmaps/`](../screenshots/onboarding-v5/hea
 | Memory | 19 | 53 | 40 | 5 | Fixed: the "?" row now gets attention (middle 31% → 40%) ✅ |
 | Log | 45 | 35 | 58 | 6 | Peak on the rising line ✅; the red "+5 kg" draws secondary attention |
 | Blocking | 14 | 62 | 22 | 14 | Headline; tiles get moderate attention |
+| Rest alerts (new) | 58 | 26 | 61 | 11 | Ring → notification, the thing being asked for ✅ |
 | Commit | 42 | 37 | 56 | 6 | The first pledge ✅ |
 | Offer | 44 | 34 | 54 | 11 | The first benefit row ✅ |
 
@@ -42,9 +42,13 @@ Images: [`screenshots/onboarding-v5/heatmaps/`](../screenshots/onboarding-v5/hea
 - **Memory page.** The forgotten values were too small and dim to register. They're now larger and brighter, and the "?" row draws attention.
 - **Mind-muscle A.** The notification cards are brighter and larger. The model still favours the brain because of its centre bias; that's acceptable since the cards are a side cue to the brain.
 
-## Recommended (not changed)
+## Fixed in the second pass
 
-- **Gender:** the stage is empty, so the second fixation lands on nothing. Either drop the page (the principles review already flags that gender is unused) or give it a small visual.
-- **Height & weight:** height reads weaker than weight. Making the two wheel columns identical in weight, or putting height first in a stacked layout, would balance them.
-- **Blocking:** consider real app icons once FamilyControls is wired. Generic glyphs carry less meaning than recognisable logos.
+- **Gender** is now part of one "Tell us about you." page with height and weight, so no page has an empty stage.
+- **Rest alerts** has its own priming page (a ring that runs to 1:30, then a notification lands), followed by the real iOS prompt.
+
+## Still open
+
+- **Height vs weight:** the model still favours the weight wheel slightly. The two columns are identical, so this is model asymmetry, not design. No change.
+- **Blocking:** use real app icons once FamilyControls is wired. That needs Apple's Family Controls entitlement and a signed build.
 - **Validate with people:** five gym-goers, a think-aloud and one question per page: "What is this page telling you?"

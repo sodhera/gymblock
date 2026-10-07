@@ -29,22 +29,28 @@ final class JourneyV5UITests: XCTestCase {
     wait(for: [delay], timeout: seconds + 2)
   }
 
-  /// Name → gender → height & weight.
+  /// Name → gender, height and weight on one page.
   private func profile(_ name: String = "Sam", gender: String = "male") {
     page("What should we call you?")
     let field = app.textFields["profile.name"]
     XCTAssertTrue(field.waitForExistence(timeout: 6))
     XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)  // A name is required.
     field.typeText(name + "\n")
-    page("What’s your gender?"); tap("profile.gender." + gender)
-    page("Your height and weight.")
+    page("Tell us about you."); tap("profile.gender." + gender)
+    XCTAssertTrue(app.buttons["profile.gender." + gender].isSelected)
+  }
+  /// Rest alerts: the system prompt appears once per simulator; allow it if it does.
+  private func allowAlerts() {
+    page("Get a buzz when rest is up."); tap("alerts.on")
+    let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"]
+    if allow.waitForExistence(timeout: 4) { allow.tap() }
   }
 
   func testFullJourneyEstimatesFromMinutesSetsUpBlockingAndEndsOnOffer() {
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8)); snap("01-welcome"); next()
     profile("Sirish")
     XCTAssertTrue(app.pickerWheels["178 cm"].waitForExistence(timeout: 4))  // Male default.
-    app.segmentedControls.buttons["Imperial"].tap()
+    app.segmentedControls.buttons["ft · lb"].tap()
     XCTAssertTrue(app.pickerWheels["5′ 10″"].waitForExistence(timeout: 4)); snap("04-body"); next()
     page("Do you use your phone between sets?"); snap("02-scrolling"); tap("habit.scrolling.yes")
     page("Between sets, how long are you on your phone?")
@@ -71,7 +77,8 @@ final class JourneyV5UITests: XCTestCase {
     next(); page("Block what distracts you.")
     XCTAssertTrue(app.buttons["block.Instagram"].isSelected); XCTAssertFalse(app.buttons["block.X"].isSelected)
     tap("block.X"); XCTAssertTrue(app.buttons["block.X"].isSelected); snap("11-blocking")
-    tap("blocking.on"); page("Sirish, commit to focus."); snap("13-commit")
+    tap("blocking.on"); allowAlerts(); snap("13-alerts")
+    page("Sirish, commit to focus."); snap("14-commit")
     app.buttons["commit.hold"].press(forDuration: 0.4)  // Releasing early does not commit.
     XCTAssertTrue(app.buttons["commit.hold"].exists); page("Sirish, commit to focus.")
     app.buttons["commit.hold"].press(forDuration: 2.2)
@@ -100,12 +107,14 @@ final class JourneyV5UITests: XCTestCase {
     XCTAssertTrue(any("reveal.phone").label.contains("17"))  // Sometimes defaults to 1 min per rest.
     for _ in 0..<8 { next() }
     page("Block what distracts you."); tap("blocking.later")
+    page("Get a buzz when rest is up."); tap("alerts.later")
     page("Ana, commit to focus."); app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Stay focused, Ana.")
     XCTAssertTrue(app.staticTexts["Blocks the apps you choose"].waitForExistence(timeout: 5))
     app.terminate(); app.launchArguments = []; app.launch()
     page("Stay focused, Ana.")
     tap("onboarding.back"); page("Ana, commit to focus.")
+    tap("onboarding.back"); page("Get a buzz when rest is up.")
     tap("onboarding.back"); page("Block what distracts you.")
     XCTAssertFalse(app.buttons["home.start"].exists)
   }
@@ -118,7 +127,8 @@ final class JourneyV5UITests: XCTestCase {
     page("Sam, here’s your phone time."); snap("large-reveal")
     for name in ["days", "mind-a", "mind-b", "rest-a", "rest-b", "log-a", "log-b"] { next(); snap("large-" + name) }
     next(); page("Block what distracts you."); snap("large-blocking")
-    tap("blocking.on"); page("Sam, commit to focus."); snap("large-commit")
+    tap("blocking.on"); page("Get a buzz when rest is up."); snap("large-alerts"); tap("alerts.later")
+    page("Sam, commit to focus."); snap("large-commit")
     app.buttons["commit.hold"].press(forDuration: 2.2); page("Stay focused, Sam."); snap("large-offer")
   }
 }

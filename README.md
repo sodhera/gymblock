@@ -21,11 +21,15 @@ The Debug scheme opens onboarding for a new store. Add `--demo` when needed: an 
 
 ## Onboarding
 
-Seventeen short pages: name, gender, height and weight; one tap for how often you use your phone between sets and one wheel for how long; then one plain fact (“Sirish, here’s your phone time — 34 min every workout, ≈ 147 hours a year, or 196 workouts of 45 min”) with − / + rows for exercises, sets, minutes per rest and workouts per week. Three paired animated stages follow — mind-muscle connection, timed rests, memory vs log — then choosing apps to block, a hold-to-commit pledge and the offer. Minimal dark stage, SF Pro Dynamic Type, one red accent; see [DESIGN.md](DESIGN.md) and [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md).
+Seventeen short pages: name; gender, height and weight on one page; one tap for how often you use your phone between sets and one wheel for how long; then one plain fact (“Sirish, here’s your phone time — 34 min every workout, ≈ 147 hours a year, or 196 workouts of 45 min”) with − / + rows for exercises, sets, minutes per rest and workouts per week. Three paired animated stages follow — mind-muscle connection, timed rests, memory vs log — then choosing apps to block, rest alerts, a hold-to-commit pledge and the offer. Minimal dark stage, SF Pro Dynamic Type, one red accent; see [DESIGN.md](DESIGN.md) and [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md).
 
 The estimate is the person's own minutes multiplied out — not measured phone use or a body-outcome prediction. Height, weight and gender stay on the device and are not used yet; the weight unit sets kg/lb for logging. The mind-muscle headline is the user-approved “Scrolling weakens your mind-muscle connection.”; scenes are labelled illustrations, examples never create workout history, and blocking remains simulated and labelled.
 
 The offer ends onboarding; there is no preview bypass. StoreKit handling exists behind explicit configuration, but no live subscription, product price, legal URL or shielding service is configured, so Subscribe stays disabled with an honest caption. In Debug, launch with `--demo` to enter the app. Real purchasing requires `GymBlockPurchasesEnabled`, `GymBlockMonthlyProductID`, `GymBlockTermsURL` and `GymBlockPrivacyURL`, plus verified blocking and release validation; do not enable billing to sell simulated blocking.
+
+## Account and alerts
+
+Settings → **Log out** returns to onboarding and keeps workouts, splits and history on the iPhone. **Delete account** permanently erases everything GymBlock stores, after a confirmation. There is no server account yet; both act on this device only and are ready for the planned login. **Rest alert** sends one local notification when a rest reaches the chosen length (default 1:30). **Body** edits gender, height and weight. In Debug, `--skip-onboarding` re-enters the app after logging out (not present in Release).
 
 ## Current design and proof
 

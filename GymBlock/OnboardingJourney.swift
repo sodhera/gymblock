@@ -3,9 +3,9 @@ import SwiftUI
 /// Onboarding: one question or one idea per page, on a fixed grid —
 /// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V5-PLAN.md.
 enum OnboardingStep: String, CaseIterable {
-  case welcome, name, gender, body, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, blocking, commit, subscription
+  case welcome, name, body, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, blocking, alerts, commit, subscription
   // Decode-only steps saved by earlier journeys.
-  case frequency, restHabits, loggingHabits, mindMuscle, restStory, progressStory
+  case gender, frequency, restHabits, loggingHabits, mindMuscle, restStory, progressStory
   case duration, reps, sets, exercises, minutes, breaks, setTiming, routine, ready
   static func restored(_ profile: Profile) -> Self {
     if let id = profile.onboardingStepID, let step = Self(rawValue: id) { return step.current }
@@ -15,6 +15,7 @@ enum OnboardingStep: String, CaseIterable {
   /// Maps removed pages onto the nearest current page; stored answers are never discarded.
   var current: Self {
     switch self {
+    case .gender: return .body
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
     case .minutes, .breaks: return .phoneMinutes
     case .frequency, .restHabits, .loggingHabits, .setTiming: return .reveal
@@ -25,7 +26,7 @@ enum OnboardingStep: String, CaseIterable {
     }
   }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB].contains(self) }
+  var animated: Bool { [.welcome, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .alerts].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
   var stage: String {
     switch self {
@@ -40,12 +41,12 @@ enum OnboardingStep: String, CaseIterable {
 
 enum OnboardingRoute {
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.name, .gender, .body, .scrolling]
+    var steps: [OnboardingStep] = [.name, .body, .scrolling]
     let scrolls = baseline.scrollFrequency != .no
     if scrolls { steps.append(.phoneMinutes) }
     steps.append(.reveal)
     if scrolls { steps.append(.days) }
-    return steps + [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .commit, .subscription]
+    return steps + [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription]
   }
 }
 
@@ -62,6 +63,8 @@ struct OnboardingView: View {
   @State private var nameDraft = ""
   @State private var metric = BodyUnits.defaultMetric
   @State private var heightCM = 175.0
+  @State private var gender: String?
+  @State private var bodyTouched = false
   @State private var weightKG = 75.0
   @State private var covered = true
   @State private var ready = true
@@ -160,8 +163,8 @@ struct OnboardingView: View {
   private var headlineCopy: String {
     switch step {
     case .name: return "What should we call you?"
-    case .gender: return "What’s your gender?"
-    case .body: return "Your height and weight."
+    case .body: return "Tell us about you."
+    case .alerts: return "Get a buzz when rest is up."
     case .scrolling: return "Do you use your phone between sets?"
     case .phoneMinutes: return "Between sets, how long are you on your phone?"
     case .reveal: return "Here’s your phone time."
@@ -194,6 +197,7 @@ struct OnboardingView: View {
   private var caption: String? {
     switch step {
     case .body: return "Stays on this phone."
+    case .alerts: return "Change it anytime in Settings."
     case .reveal, .days: return "Based on your answers."
     case .commit: return "Press and hold."
     case .mindA, .mindB, .restA, .restB: return "Illustration"
@@ -208,8 +212,9 @@ struct OnboardingView: View {
     switch step {
     case .welcome, .scrolling: NotificationStage(awake: step == .scrolling, done: markReady)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
-    case .gender: Color.clear
-    case .body: BodyStage(metric: $metric, heightCM: $heightCM, weightKG: $weightKG)
+    case .body: BodyStage(gender: Binding(get: { gender }, set: { setGender($0) }), metric: $metric,
+                          heightCM: $heightCM, weightKG: $weightKG) { bodyTouched = true }
+    case .alerts: AlertStage(done: markReady)
     case .phoneMinutes:
       JourneyWheel(values: stride(from: 0.5, through: 10, by: 0.5).map { $0 }, unit: store.t("min"), id: "baseline.scrollMinutes",
                    value: $draft).frame(height: 216).frame(maxHeight: .infinity)
@@ -239,13 +244,18 @@ struct OnboardingView: View {
           option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
         }
         Color.clear.frame(height: 44)
-      case .gender:
-        VStack(spacing: 10) {
-          choice("Male", id: "profile.gender.male", selected: store.profile.gender == "male") { store.updateProfile { $0.gender = "male" } }
-          choice("Female", id: "profile.gender.female", selected: store.profile.gender == "female") { store.updateProfile { $0.gender = "female" } }
-          choice("Other", id: "profile.gender.other", selected: store.profile.gender == "other") { store.updateProfile { $0.gender = "other" } }
+      case .alerts:
+        gated(JourneyButton(title: store.t("Turn on rest alerts"), id: "alerts.on", enabled: ready) {
+          Task { @MainActor in
+            let granted = await RestAlert.requestPermission()
+            store.updateProfile { $0.restAlerts = granted }
+            if step == .alerts { next() }
+          }
+        })
+        JourneyTextButton(title: store.t("Not now"), id: "alerts.later") {
+          store.updateProfile { $0.restAlerts = false }
+          next()
         }
-        Color.clear.frame(height: 44)
       case .name:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
@@ -265,7 +275,7 @@ struct OnboardingView: View {
         JourneyTextButton(title: store.t("Not now"), id: "blocking.later") {
           guard !locking else { return }
           store.updateProfile { $0.focusEnabled = false }
-          move(.commit)
+          next()
         }
       case .subscription:
         JourneyButton(title: subscription.product.map { store.t("Subscribe") + " · " + $0.displayPrice } ?? store.t("Subscribe"),
@@ -321,6 +331,17 @@ struct OnboardingView: View {
       }
     }
   }
+  /// Typical starting values, only until the person turns a wheel.
+  private func bodyDefaults(_ gender: String?) -> (height: Double, weight: Double) {
+    gender == "male" ? (178, 80) : gender == "female" ? (165, 65) : (170, 72)
+  }
+  private func setGender(_ value: String?) {
+    gender = value
+    guard !bodyTouched else { return }
+    withAnimation(.snappy(duration: 0.3)) {
+      heightCM = bodyDefaults(value).height; weightKG = bodyDefaults(value).weight
+    }
+  }
   private var canSaveName: Bool { !nameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
   private func prepare() {
@@ -329,9 +350,10 @@ struct OnboardingView: View {
     case .body:
       let p = store.profile
       metric = p.bodyWeightKG != nil ? p.unit == "kg" : BodyUnits.defaultMetric
-      let male = p.gender == "male", female = p.gender == "female"
-      heightCM = p.heightCM ?? (male ? 178 : female ? 165 : 170)
-      weightKG = p.bodyWeightKG ?? (male ? 80 : female ? 65 : 72)
+      gender = p.gender
+      bodyTouched = p.heightCM != nil
+      heightCM = p.heightCM ?? bodyDefaults(p.gender).height
+      weightKG = p.bodyWeightKG ?? bodyDefaults(p.gender).weight
     case .phoneMinutes:
       let saved = baseline.scrollingMinutes ?? 0
       draft = saved > 0 ? min(10, (saved * 2).rounded() / 2) : (baseline.scrollFrequency == .sometimes ? 1 : 2)
@@ -352,7 +374,10 @@ struct OnboardingView: View {
       dismissKeyboard()
     }
     if step == .body {
-      store.updateProfile { $0.heightCM = heightCM.rounded(); $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = metric ? "kg" : "lb" }
+      store.updateProfile {
+        $0.gender = gender
+        $0.heightCM = heightCM.rounded(); $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = metric ? "kg" : "lb"
+      }
     }
     if step == .phoneMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
     if step == .reveal { update { estimate.write(into: &$0) } }
@@ -379,7 +404,7 @@ struct OnboardingView: View {
     Task { @MainActor in
       try? await Task.sleep(for: .seconds(wait))
       JourneyHaptic.play(.success, store.profile)
-      if step == .blocking { move(.commit) }
+      if step == .blocking { next() }
       locking = false
     }
   }

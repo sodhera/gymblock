@@ -66,17 +66,27 @@ final class GymBlockFlowTests: XCTestCase {
     tap("set.change"); search("curl"); tap("exercise.curl"); tap("switch.save")
     XCTAssertTrue(app.staticTexts["rest.elapsed"].exists)
     tap("session.sets"); snap("v3-app-11-grouped-sets"); tap("records.done")
-    tap("session.finish"); XCTAssertTrue(app.staticTexts["2 sets · 15 reps"].waitForExistence(timeout: 5))
+    tap("session.finish"); tap("session.endConfirm"); XCTAssertTrue(app.staticTexts["2 sets · 15 reps"].waitForExistence(timeout: 5))
     XCTAssertEqual(app.staticTexts["summary.volume"].label, "295 kg")
     snap("v3-app-12-summary"); tap("summary.done")
     tab("History"); tap("history.reps"); XCTAssertTrue(app.staticTexts["totals.amount"].waitForExistence(timeout: 5)); snap("v3-app-13-reps-chart")
+  }
+  func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
+    tap("home.preferences"); tap("settings.logout"); tap("settings.logout.confirm")
+    XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))  // Back to onboarding.
+    app.terminate(); app.launchArguments = ["--skip-onboarding"]; app.launch()  // Workouts survived the log-out.
+    tab("History"); XCTAssertFalse(app.staticTexts["No workouts yet"].exists)
+    tab("Workout"); tap("home.preferences"); tap("settings.delete"); tap("settings.delete.confirm")
+    XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))
+    app.terminate(); app.launchArguments = []; app.launch()
+    XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))  // Nothing left to resume.
   }
   func testSplitNavigationEditorAndProgress() {
     tab("Splits"); snap("v3-app-14-splits"); tap("split.add"); fill("split.name", "Monday")
     tap("split.exercises"); tap("split.exercise.curl"); tap("split.exercise.hammer"); tap("split.exercises.done"); tap("split.save")
     tap("split.edit.Monday"); snap("v3-app-15-split-detail"); tap("split.start")
     XCTAssertTrue(app.buttons["set.start"].waitForExistence(timeout: 6)); tap("set.start"); fill("set.reps", "11"); tap("set.stop")
-    tap("session.finish"); tap("summary.done"); tab("History"); tap("history.progress")
+    tap("session.finish"); tap("session.endConfirm"); tap("summary.done"); tab("History"); tap("history.progress")
     tap("progress.scope"); app.buttons["Arms"].tap(); tap("progress.exercise.curl")
     XCTAssertTrue(app.staticTexts["progress.change"].waitForExistence(timeout: 6)); snap("v3-app-16-before-after")
   }
@@ -94,7 +104,7 @@ final class GymBlockFlowTests: XCTestCase {
     snap("v3-attempt-next-set"); tap("set.change"); tap("exercise.hammer"); snap("v3-attempt-change")
     tap("switch.discard")
     tap("session.sets"); XCTAssertEqual(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "saved.")).count, 2)
-    tap("records.done"); tap("session.finish"); tap("summary.done")
+    tap("records.done"); tap("session.finish"); tap("session.endConfirm"); tap("summary.done")
     tap("home.start"); tap("session.finish")
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 6)); XCTAssertFalse(app.buttons["summary.done"].exists)
   }
@@ -118,11 +128,13 @@ final class GymBlockFlowTests: XCTestCase {
     tap("custom.add")
     XCTAssertTrue(app.staticTexts["set.exercise"].waitForExistence(timeout: 6))
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Cable curl")
-    weight("12.5"); tap("set.start"); fill("set.reps", "9"); tap("set.stop")
+    weight("60")  // Typed digits are never dropped.
+    XCTAssertTrue(app.buttons["set.weight"].label.contains("60 kg"), app.buttons["set.weight"].label)
+    tap("set.start"); fill("set.reps", "9"); tap("set.stop")
     tap("set.change"); search("Cable curl")
     XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Cable curl")).firstMatch.waitForExistence(timeout: 6))
     tap("exercise.cancel")
-    tap("session.finish"); tap("summary.done")
+    tap("session.finish"); tap("session.endConfirm"); tap("summary.done")
   }
 
 }

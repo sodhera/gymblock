@@ -175,14 +175,14 @@ import XCTest
   func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
     var b = baseline()
     b.scrollFrequency = .sometimes
-    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .gender, .body, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
-                                              .restA, .restB, .logA, .logB, .blocking, .commit, .subscription])
+    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .body, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
+                                              .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription])
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false
     let noScroll = OnboardingRoute.steps(b)
     XCTAssertFalse(noScroll.contains(.phoneMinutes))
     XCTAssertTrue(noScroll.contains(.reveal))
-    XCTAssertEqual(Array(noScroll.suffix(3)), [.blocking, .commit, .subscription])
+    XCTAssertEqual(Array(noScroll.suffix(4)), [.blocking, .alerts, .commit, .subscription])
   }
   func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {
     let domain = "EmptyV3.\(UUID())"

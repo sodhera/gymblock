@@ -898,38 +898,114 @@ struct NameStage: View {
 }
 
 struct BodyStage: View {
+  @Binding var gender: String?
   @Binding var metric: Bool
   @Binding var heightCM: Double
   @Binding var weightKG: Double
+  let touched: () -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    VStack(spacing: 22) {
+    VStack(spacing: 20) {
       Spacer(minLength: 0)
-      Picker(store.t("Units"), selection: $metric) {
-        Text(store.t("Metric")).tag(true); Text(store.t("Imperial")).tag(false)
-      }.pickerStyle(.segmented).frame(maxWidth: 240).accessibilityIdentifier("profile.units")
+      HStack(spacing: 8) {
+        chip("Male", "male"); chip("Female", "female"); chip("Other", "other")
+      }
       HStack(spacing: 0) {
         column(store.t("Height")) {
           JourneyWheel(values: metric ? (120...220).map(Double.init) : (48...90).map(Double.init),
                        unit: metric ? "cm" : "", id: "profile.height",
                        value: Binding(get: { metric ? heightCM.rounded() : min(90, max(48, (heightCM / 2.54).rounded())) },
-                                      set: { heightCM = metric ? $0 : $0 * 2.54 }),
+                                      set: { heightCM = metric ? $0 : $0 * 2.54; touched() }),
                        format: metric ? nil : BodyUnits.feet)
         }
         column(store.t("Weight")) {
           JourneyWheel(values: metric ? (30...200).map(Double.init) : (66...440).map(Double.init),
                        unit: metric ? "kg" : "lb", id: "profile.weight",
                        value: Binding(get: { metric ? weightKG.rounded() : min(440, max(66, (weightKG * 2.20462).rounded())) },
-                                      set: { weightKG = metric ? $0 : $0 / 2.20462 }))
+                                      set: { weightKG = metric ? $0 : $0 / 2.20462; touched() }))
         }
       }
+      Picker(store.t("Units"), selection: $metric) {
+        Text("cm · kg").tag(true); Text("ft · lb").tag(false)
+      }.pickerStyle(.segmented).frame(maxWidth: 200).accessibilityIdentifier("profile.units")
       Spacer(minLength: 0)
     }
   }
+  private func chip(_ title: String, _ value: String) -> some View {
+    let on = gender == value
+    return Button {
+      withAnimation(.snappy(duration: 0.25)) { gender = value }
+      JourneyHaptic.play(.selection, store.profile)
+    } label: {
+      Text(store.t(title)).font(.body.weight(.medium)).foregroundStyle(on ? Color.black : JourneyColor.text)
+        .frame(maxWidth: .infinity, minHeight: 46)
+        .background(Capsule().fill(on ? Color.white : JourneyColor.fill))
+        .overlay(Capsule().strokeBorder(on ? Color.clear : JourneyColor.hairline))
+    }.buttonStyle(JourneyPressStyle())
+      .accessibilityIdentifier("profile.gender." + value).accessibilityAddTraits(on ? .isSelected : [])
+  }
   private func column<Content: View>(_ title: String, @ViewBuilder _ wheel: () -> Content) -> some View {
     VStack(spacing: 4) {
-      Text(title).font(.footnote).foregroundStyle(JourneyColor.secondary)
-      wheel().frame(height: 200).clipped()
+      Text(title).font(.subheadline.weight(.medium)).foregroundStyle(JourneyColor.secondary)
+      wheel().frame(height: 190).clipped()
     }.frame(maxWidth: .infinity)
+  }
+}
+
+// MARK: - Rest alerts
+
+/// A rest ring runs to 1:30 and a lock-screen notification lands.
+struct AlertStage: View {
+  let done: () -> Void
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+  @State private var ring = 0.0
+  @State private var seconds = 0.0
+  @State private var arrived = false
+  var body: some View {
+    VStack(spacing: 28) {
+      Spacer(minLength: 0)
+      ZStack {
+        Circle().stroke(Color.white.opacity(0.08), lineWidth: 8)
+        Circle().trim(from: 0, to: ring).stroke(Color.white.opacity(0.9), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+          .rotationEffect(.degrees(-90))
+        VStack(spacing: 2) {
+          Text(store.t("Rest")).font(.footnote).foregroundStyle(JourneyColor.secondary)
+          CountingText(value: seconds) { clockString(Int($0)) }
+            .font(.system(.largeTitle, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+        }
+      }.frame(width: 170, height: 170)
+      HStack(spacing: 12) {
+        Image(systemName: "bell.fill").font(.system(size: 16, weight: .semibold)).foregroundStyle(.white)
+          .frame(width: 38, height: 38).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.accent))
+        VStack(alignment: .leading, spacing: 2) {
+          HStack {
+            Text("GymBlock").font(.subheadline.weight(.semibold)).foregroundStyle(JourneyColor.text)
+            Spacer(minLength: 4)
+            Text(store.t("now")).font(.caption).foregroundStyle(JourneyColor.secondary)
+          }
+          Text(store.t("Rest’s up. Time for your next set.")).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+        }
+      }.padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: 360)
+        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white.opacity(0.1)))
+        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.1)))
+        .offset(y: arrived ? 0 : -24).opacity(arrived ? 1 : 0)
+        .accessibilityElement(children: .combine).accessibilityIdentifier("alerts.preview")
+      Spacer(minLength: 0)
+    }
+    .task { await play() }
+  }
+  private func play() async {
+    if JourneyMotion.reduced(systemReduceMotion) { ring = 1; seconds = 90; arrived = true; done(); return }
+    try? await Task.sleep(for: .seconds(0.2))
+    guard !Task.isCancelled else { return }
+    withAnimation(.easeInOut(duration: 1.2)) { ring = 1; seconds = 90 }
+    try? await Task.sleep(for: .seconds(1.2))
+    guard !Task.isCancelled else { return }
+    withAnimation(.spring(duration: 0.45, bounce: 0.3)) { arrived = true }
+    JourneyHaptic.play(.success, store.profile)
+    try? await Task.sleep(for: .seconds(0.3))
+    guard !Task.isCancelled else { return }
+    done()
   }
 }

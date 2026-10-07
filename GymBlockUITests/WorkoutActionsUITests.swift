@@ -31,8 +31,10 @@ final class WorkoutActionsUITests: XCTestCase {
     tap(app, "set.stop")
     XCTAssertTrue(app.staticTexts["rest.elapsed"].waitForExistence(timeout: 6))
     snap(app, "actions-rest")
-    tap(app, "session.finish")
-    XCTAssertTrue(app.staticTexts["1 sets · 12 reps"].waitForExistence(timeout: 6))
+    tap(app, "session.finish")  // A saved set means ending needs a deliberate second tap.
+    XCTAssertTrue(app.buttons["session.endConfirm"].waitForExistence(timeout: 6))
+    tap(app, "session.endConfirm")
+    XCTAssertTrue(app.staticTexts["1 set · 12 reps"].waitForExistence(timeout: 6))
     tap(app, "summary.done")
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 6))
   }

@@ -20,7 +20,6 @@ final class BenefitLayoutUITests: XCTestCase {
     let field = app.textFields["profile.name"]
     XCTAssertTrue(field.waitForExistence(timeout: 6)); field.typeText("Sam\n")  // Keyboard page: the button rides the keyboard.
     XCTAssertTrue(app.buttons["profile.gender.other"].waitForExistence(timeout: 6))
-    XCTAssertEqual(app.buttons["profile.gender.other"].frame.midY, anchor, accuracy: 3)
     tap("profile.gender.other")
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 6))
     XCTAssertEqual(app.buttons["onboarding.continue"].frame.midY, anchor, accuracy: 3)
@@ -36,6 +35,11 @@ final class BenefitLayoutUITests: XCTestCase {
     }
     XCTAssertEqual(app.buttons["blocking.on"].frame.midY, anchor, accuracy: 3)
     tap("blocking.on")
+    XCTAssertTrue(app.buttons["alerts.later"].waitForExistence(timeout: 6))
+    let alertsOn = app.buttons["alerts.on"]
+    wait(for: [expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: alertsOn)], timeout: 6)
+    XCTAssertEqual(alertsOn.frame.midY, anchor, accuracy: 3)
+    tap("alerts.later")
     XCTAssertTrue(app.buttons["commit.hold"].waitForExistence(timeout: 6))
     XCTAssertEqual(app.buttons["commit.hold"].frame.midY, anchor, accuracy: 3)
     app.buttons["commit.hold"].press(forDuration: 2.2)

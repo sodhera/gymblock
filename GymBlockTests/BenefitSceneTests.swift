@@ -6,16 +6,43 @@ import XCTest
     for answer in HabitAnswer.allCases {
       var b = RoutineBaseline(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(9)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .commit, .subscription])
+      XCTAssertEqual(Array(route.suffix(10)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription])
       XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
       XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
-      XCTAssertEqual(Array(route.prefix(4)), [.name, .gender, .body, .scrolling])  // Profile first, then habits.
+      XCTAssertEqual(Array(route.prefix(3)), [.name, .body, .scrolling])  // Profile first, then habits.
     }
     XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .subscription)
+  }
+  func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
+    let domain = "Account.\(UUID())"
+    let defaults = UserDefaults(suiteName: domain)!
+    defer { defaults.removePersistentDomain(forName: domain) }
+    let store = GymStore(defaults: defaults)
+    store.loadDemoIfEmpty()
+    store.updateProfile { $0.name = "Sam"; $0.onboarded = true; $0.heightCM = 180 }
+    let history = store.data.history.map(\.id)
+    store.logOut()
+    var restored = GymStore(defaults: defaults)
+    XCTAssertFalse(restored.profile.onboarded)
+    XCTAssertEqual(restored.data.history.map(\.id), history)  // Log out keeps local work.
+    XCTAssertEqual(restored.profile.name, "Sam")
+    restored.deleteAccount()
+    restored = GymStore(defaults: defaults)
+    XCTAssertTrue(restored.data.history.isEmpty); XCTAssertTrue(restored.data.workouts.isEmpty)
+    XCTAssertFalse(restored.profile.onboarded); XCTAssertEqual(restored.profile.name, ""); XCTAssertNil(restored.profile.heightCM)
+  }
+  func testSetCountIsSingularForOne() {
+    let store = GymStore(defaults: UserDefaults(suiteName: "Plural.\(UUID())")!)
+    XCTAssertEqual(setCount(1, store: store), "1 set"); XCTAssertEqual(setCount(2, store: store), "2 sets")
+  }
+  func testLegacyGenderPageResumesOnTheMergedPage() {
+    var p = Profile(); p.onboardingStepID = "gender"
+    XCTAssertEqual(OnboardingStep.restored(p), .body)
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
     XCTAssertTrue(OnboardingStep.restA.animated); XCTAssertTrue(OnboardingStep.days.animated)
     XCTAssertFalse(OnboardingStep.scrolling.animated); XCTAssertFalse(OnboardingStep.commit.animated)
+    XCTAssertTrue(OnboardingStep.alerts.animated)
     XCTAssertEqual(PumpPlot.scrolling.map(\.y).max()!, 0.34, accuracy: 0.001)  // Scrolling never reaches the pump line.
     XCTAssertEqual(PumpPlot.timed.map(\.y).max(), 1)
     XCTAssertEqual(PumpPlot.restEnds(PumpPlot.scrolling).count, 3)

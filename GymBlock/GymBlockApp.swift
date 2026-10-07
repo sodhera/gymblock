@@ -29,6 +29,8 @@ import SwiftUI
     let store = GymStore()
     #if DEBUG
       if ProcessInfo.processInfo.arguments.contains("--demo") { store.loadDemoIfEmpty() }
+      // Development only: re-enter the app without the paywall (absent from Release builds).
+      if ProcessInfo.processInfo.arguments.contains("--skip-onboarding") { store.updateProfile { $0.onboarded = true } }
     #endif
     _store = StateObject(wrappedValue: store)
   }

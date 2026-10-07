@@ -59,6 +59,7 @@ struct Profile: Codable {
   var gender: String?
   var heightCM: Double?
   var bodyWeightKG: Double?
+  var restAlerts: Bool?
 }
 struct LoggedSet: Codable, Identifiable {
   var id = UUID()
@@ -157,6 +158,37 @@ struct LocalData: Codable {
       defaults.set(try JSONEncoder().encode(data), forKey: Self.storageKey)
       storageError = false
     } catch { storageError = true }
+    syncRestAlert()
+  }
+  private var scheduledRest: Date?
+  /// One pending "rest's up" notification, rescheduled whenever a rest starts and removed when it ends.
+  private func syncRestAlert() {
+    let rest = profile.restAlerts == true && data.session?.stage == .rest ? data.session?.restStarted : nil
+    guard rest != scheduledRest else { return }
+    scheduledRest = rest
+    if let rest {
+      RestAlert.schedule(at: rest.addingTimeInterval(Double(profile.restSeconds ?? 90)), seconds: profile.restSeconds ?? 90, spanish: profile.language == "es")
+    } else {
+      RestAlert.cancel()
+    }
+  }
+  /// Signs out of this device: onboarding starts again; workouts, splits and history stay on this iPhone.
+  func logOut() {
+    summary = nil
+    updateProfile {
+      $0.onboarded = false
+      $0.onboardingStepID = "welcome"
+      $0.onboardingStoryStage = nil
+    }
+  }
+  /// Permanently erases everything GymBlock stores on this iPhone.
+  func deleteAccount() {
+    RestAlert.cancel()
+    summary = nil
+    deletedSet = nil
+    data = LocalData()
+    defaults.removeObject(forKey: Self.storageKey)
+    persist()
   }
   func updateProfile(_ body: (inout Profile) -> Void) {
     body(&data.profile)

@@ -102,10 +102,13 @@ struct PreferencesView: View {
           Toggle(store.t("Sound"), isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } }))
         }
         Section {
+          NavigationLink(store.t("Body")) { BodySettingsView() }.accessibilityIdentifier("settings.body")
+          NavigationLink(store.t("Rest alert")) { RestAlertSettingsView() }.accessibilityIdentifier("settings.restAlerts")
           NavigationLink(store.t("Training answers")) { TrainingAnswersForm() }.accessibilityIdentifier("settings.baseline")
           NavigationLink(store.t("Focus demo")) { FocusSettingsForm() }
           NavigationLink(store.t("Data")) { DataSettingsView() }
         }
+        AccountSection { dismiss() }
       }.gymPage().navigationTitle(store.t("Settings")).navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("preferences.done") } }
     }
@@ -230,7 +233,7 @@ struct WorkoutRecap: View {
         ).foregroundStyle(GymColor.dim)
       }
       Text(
-        "\(session.completedSets.count) " + store.t("sets")
+        setCount(session.completedSets.count, store: store)
           + " · \(max(1, Int(session.duration / 60))) " + store.t("min")
       ).font(GymType.body(15)).foregroundStyle(GymColor.dim)
     }

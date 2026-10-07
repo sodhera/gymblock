@@ -8,6 +8,7 @@ struct SessionView: View {
   @State private var pendingExercise: Exercise?
   @State private var records = false
   @State private var ending = false
+  @State private var endingIdle = false
   @State private var zeroReps = false
   @State private var editing: LoggedSet?
   @State private var reps = ""
@@ -68,7 +69,9 @@ struct SessionView: View {
           }.padding(.horizontal, 24).padding(.top, 8)
         }
         Button {
-          dismissKeyboard(); if active { ending = true } else { store.finish() }
+          dismissKeyboard()
+          // Never end a workout with saved sets on a single, possibly accidental, tap.
+          if active { ending = true } else if !session.sets.isEmpty { endingIdle = true } else { store.finish() }
         } label: {
           Text(store.t("End workout")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
             .frame(maxWidth: .infinity, minHeight: 48).contentShape(Rectangle())
@@ -92,6 +95,10 @@ struct SessionView: View {
           Button(store.t("Discard set and end"), role: .destructive) { store.cancelSet(); store.finish() }.accessibilityIdentifier("session.discardEnd")
           Button(store.t("Keep going")) {}
         } message: { Text(store.t("Saved sets stay.")) }
+        .confirmationDialog(store.t("End workout?"), isPresented: $endingIdle, titleVisibility: .visible) {
+          Button(store.t("End workout")) { store.finish() }.accessibilityIdentifier("session.endConfirm")
+          Button(store.t("Keep going"), role: .cancel) {}
+        } message: { Text(setCount(session.completedSets.count, store: store) + " " + store.t("will be saved.")) }
         .alert(store.t("No reps recorded"), isPresented: $zeroReps) {
           Button(store.t("Edit reps"), role: .cancel) {}.accessibilityIdentifier("attempt.edit")
           Button(store.t("Record attempt")) { store.recordAttempt() }.accessibilityIdentifier("attempt.save")
@@ -327,7 +334,10 @@ struct SelectNumberOnFocus: ViewModifier {
       NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)
     ) { notification in
       guard let field = notification.object as? UITextField, field.isFirstResponder else { return }
-      DispatchQueue.main.async { field.selectAll(nil) }
+      // Select the old value so typing replaces it — but never after typing has started,
+      // or the next keystroke would overwrite what was just typed.
+      let original = field.text
+      DispatchQueue.main.async { if field.isFirstResponder && field.text == original { field.selectAll(nil) } }
     }
   }
 }
@@ -555,7 +565,7 @@ struct SummaryView: View {
         VStack(alignment: .leading, spacing: 24) {
           Text(store.t("Workout saved")).font(GymType.title(32)).accessibilityIdentifier("summary.title")
           Text("\(max(1, Int(session.duration / 60))) " + store.t("min")).font(GymType.title(28)).monospacedDigit()
-          Text("\(session.completedSets.count) " + store.t("sets") + " · \(session.totalReps) " + store.t("reps"))
+          Text(setCount(session.completedSets.count, store: store) + " · \(session.totalReps) " + store.t("reps"))
             .font(GymType.body(17)).foregroundStyle(GymColor.dim)
           if !session.repSets.isEmpty {
             VStack(alignment: .leading, spacing: 6) {
@@ -585,3 +595,8 @@ func inputNumber(_ value: Double) -> String {
       .never))
 }
 func clockString(_ seconds: Int) -> String { String(format: "%d:%02d", seconds / 60, seconds % 60) }
+
+/// "1 set", "2 sets".
+@MainActor func setCount(_ n: Int, store: GymStore) -> String {
+  "\(n) " + store.t(n == 1 ? "set" : "sets")
+}
