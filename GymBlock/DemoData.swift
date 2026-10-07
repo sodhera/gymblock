@@ -61,8 +61,53 @@ extension GymStore {
       }
     }
     data.history.sort { $0.started > $1.started }
+    // Splits rotate: the one after the most recent sample workout is up next.
+    if let last = data.history.first?.splitID, let i = data.workouts.firstIndex(where: { $0.id == last }) {
+      data.profile.preferredSplitID = data.workouts[(i + 1) % data.workouts.count].id
+    }
     data.demoLoaded = true
     persist()
     return true
   }
 }
+
+#if DEBUG
+extension GymStore {
+  /// Puts a sample split workout into one state for screenshots: ready, active, rest, restUp,
+  /// next (target reached), stale or summary. Debug builds only.
+  func debugWorkout(_ stage: String) {
+    loadDemoIfEmpty()
+    updateProfile { $0.onboarded = true; $0.name = $0.name.isEmpty ? "Sirish" : $0.name; $0.focusEnabled = true }
+    guard session == nil, let split = data.workouts.first(where: { $0.id == profile.preferredSplitID }) ?? data.workouts.first else { return }
+    startSession(workout: split)
+    data.session?.started = Date().addingTimeInterval(-14 * 60)
+    func logOne(ago: TimeInterval) {
+      let unit = profile.unit
+      startSet(weight: Self.displayedWeight(session?.weightKG ?? 0, unit: unit), unit: unit)
+      data.session?.setStarted = Date().addingTimeInterval(-ago - 38)
+      finishSet(reps: draftRepCount ?? 8, minutes: 0)
+      data.session?.restStarted = Date().addingTimeInterval(-ago)
+      if let i = data.session?.sets.indices.last { data.session?.sets[i].date = Date().addingTimeInterval(-ago) }
+    }
+    switch stage {
+    case "active":
+      logOne(ago: 150)
+      startSet(weight: Self.displayedWeight(session?.weightKG ?? 0, unit: profile.unit), unit: profile.unit)
+      data.session?.setStarted = Date().addingTimeInterval(-24)
+    case "rest": logOne(ago: 41)
+    case "restUp": logOne(ago: 104)
+    case "next": logOne(ago: 400); logOne(ago: 250); logOne(ago: 70)
+    case "stale":
+      data.session?.started = Date().addingTimeInterval(-2.5 * 3600)
+      logOne(ago: 2 * 3600)
+    case "summary":
+      logOne(ago: 400); logOne(ago: 250); logOne(ago: 70)
+      // Realistic measured rests between the sample sets.
+      for (i, gap) in [(1, 96.0), (2, 108.0)] { data.session?.sets[i].gapBeforeSeconds = gap }
+      finish()
+    default: break
+    }
+    persist()
+  }
+}
+#endif

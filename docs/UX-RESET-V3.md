@@ -2,6 +2,8 @@
 
 **3 October 2026 · Implemented locally, reviewed 4 October 2026**
 
+> **Superseded for training and navigation by [WORKOUT-V6-PLAN.md](WORKOUT-V6-PLAN.md) (7 October 2026):** no tabs, the onboarding's ember stage and Liquid Glass inside the app, and a single fixed-place primary action. Kept for history.
+
 The approved reset below is implemented. The opening critique describes the previous interface. See [current verification](../VALIDATION.md) and [actual app captures](../screenshots/ux-v3/README.md) for results and remaining limits.
 
 **Next onboarding proposal:** [Clear journey V4](ONBOARDING-CLEAR-JOURNEY-V4.md) documents the user's latest wording corrections and confirmed paywall placement. It is not implemented; V3's onboarding ending remains a description of the current prototype, not the next proposed route.

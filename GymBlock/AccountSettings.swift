@@ -27,30 +27,6 @@ struct BodySettingsView: View {
   }
 }
 
-/// A local notification when a rest reaches the chosen length.
-struct RestAlertSettingsView: View {
-  @EnvironmentObject private var store: GymStore
-  @State private var denied = false
-  var body: some View {
-    Form {
-      Toggle(store.t("Rest alert"), isOn: Binding(get: { store.profile.restAlerts == true }, set: { on in
-        guard on else { store.updateProfile { $0.restAlerts = false }; return }
-        Task { @MainActor in
-          let granted = await RestAlert.requestPermission()
-          denied = !granted
-          store.updateProfile { $0.restAlerts = granted }
-        }
-      })).accessibilityIdentifier("settings.restAlert")
-      Picker(store.t("Alert after"), selection: Binding(get: { store.profile.restSeconds ?? 90 }, set: { v in store.updateProfile { $0.restSeconds = v } })) {
-        ForEach([60, 90, 120, 180, 240], id: \.self) { Text(clockString($0)).tag($0) }
-      }.disabled(store.profile.restAlerts != true)
-      if denied {
-        Text(store.t("Notifications are off for GymBlock. Turn them on in iOS Settings.")).font(.footnote).foregroundStyle(GymColor.dim)
-      }
-    }.gymPage().navigationTitle(store.t("Rest alert")).navigationBarTitleDisplayMode(.inline)
-  }
-}
-
 /// Account actions. GymBlock has no server account: both act on this iPhone only.
 struct AccountSection: View {
   @EnvironmentObject private var store: GymStore

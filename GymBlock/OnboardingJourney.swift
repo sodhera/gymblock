@@ -302,7 +302,16 @@ struct OnboardingView: View {
                       id: "subscription.buy", enabled: subscription.product != nil && !subscription.busy) {
           Task { await subscription.buy() }
         }
-        JourneyTextButton(title: store.t("Restore purchases"), id: "subscription.restore") { Task { await subscription.restore() } }
+        #if DEBUG
+          // Simulator use only: with no product configured, step into the app. Never in Release.
+          if subscription.product == nil {
+            JourneyTextButton(title: "Skip paywall (Debug build)", id: "subscription.debugSkip") { finish() }
+          } else {
+            JourneyTextButton(title: store.t("Restore purchases"), id: "subscription.restore") { Task { await subscription.restore() } }
+          }
+        #else
+          JourneyTextButton(title: store.t("Restore purchases"), id: "subscription.restore") { Task { await subscription.restore() } }
+        #endif
       default:
         gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: ready, action: advance))
         Color.clear.frame(height: 44)

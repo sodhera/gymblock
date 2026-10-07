@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct Exercise: Codable, Identifiable, Equatable {
+struct Exercise: Codable, Identifiable, Hashable {
   var id: String
   var name: String
   var area: String
@@ -26,7 +26,30 @@ struct Exercise: Codable, Identifiable, Equatable {
     .init(id: "cycle", name: "Cycling", area: "Cardio", timed: true),
     .init(id: "stretch", name: "Full-body stretch", area: "Stretching", timed: true),
     .init(id: "boxing", name: "Boxing", area: "Martial arts", timed: true),
+    .init(id: "barbell-curl", name: "Barbell curl", area: "Arms"),
+    .init(id: "pushdown", name: "Cable triceps pushdown", area: "Arms"),
+    .init(id: "incline-bench", name: "Incline bench press", area: "Chest & shoulders"),
+    .init(id: "fly", name: "Chest fly", area: "Chest & shoulders"),
+    .init(id: "push-up", name: "Push-up", area: "Chest & shoulders"),
+    .init(id: "dip", name: "Dip", area: "Chest & shoulders"),
+    .init(id: "pull-up", name: "Pull-up", area: "Back"),
+    .init(id: "barbell-row", name: "Barbell row", area: "Back"),
+    .init(id: "cable-row", name: "Seated cable row", area: "Back"),
+    .init(id: "leg-press", name: "Leg press", area: "Legs & compound"),
+    .init(id: "rdl", name: "Romanian deadlift", area: "Legs & compound"),
+    .init(id: "leg-curl", name: "Leg curl", area: "Legs & compound"),
+    .init(id: "leg-extension", name: "Leg extension", area: "Legs & compound"),
+    .init(id: "calf-raise", name: "Calf raise", area: "Legs & compound"),
+    .init(id: "hip-thrust", name: "Hip thrust", area: "Legs & compound"),
+    .init(id: "leg-raise", name: "Hanging leg raise", area: "Core"),
+    .init(id: "plank", name: "Plank", area: "Core", timed: true),
+    .init(id: "rowing", name: "Rowing machine", area: "Cardio", timed: true),
   ]
+  /// Lifted with no added load unless you add some.
+  static let bodyweightIDs: Set<String> = ["crunch", "push-up", "pull-up", "dip", "leg-raise"]
+  var bodyweight: Bool { Self.bodyweightIDs.contains(id) }
+  /// Load is entered per dumbbell.
+  var perDumbbell: Bool { name.localizedCaseInsensitiveContains("dumbbell") }
   static let areas = [
     "Arms", "Chest & shoulders", "Back", "Legs & compound", "Core", "Cardio", "Stretching",
     "Martial arts",
@@ -60,6 +83,8 @@ struct Profile: Codable {
   var heightCM: Double?
   var bodyWeightKG: Double?
   var restAlerts: Bool?
+  /// Off: one tap logs a set and starts the rest (no set clock). Timed exercises always use the clock.
+  var timeSets: Bool?
 }
 struct LoggedSet: Codable, Identifiable {
   var id = UUID()
@@ -78,7 +103,7 @@ struct LoggedSet: Codable, Identifiable {
   var completed: Bool { unsuccessful != true && (exercise.timed ? minutes > 0 : reps > 0) }
   var comparable: Bool { completed && warmup != true }
 }
-struct Workout: Codable, Identifiable {
+struct Workout: Codable, Identifiable, Hashable {
   var id = UUID()
   var name: String
   var exercises: [Exercise]
@@ -159,17 +184,28 @@ struct LocalData: Codable {
       storageError = false
     } catch { storageError = true }
     syncRestAlert()
+    LiveWorkout.sync(self)
   }
   private var scheduledRest: Date?
-  /// One pending "rest's up" notification, rescheduled whenever a rest starts and removed when it ends.
+  private var scheduledIdle: Date?
+  /// One pending "rest's up" notification, rescheduled whenever a rest starts or its length changes,
+  /// and removed when it ends. A second one reminds you if a workout is left running.
   private func syncRestAlert() {
-    let rest = profile.restAlerts == true && data.session?.stage == .rest ? data.session?.restStarted : nil
-    guard rest != scheduledRest else { return }
-    scheduledRest = rest
-    if let rest {
-      RestAlert.schedule(at: rest.addingTimeInterval(Double(profile.restSeconds ?? 90)), seconds: profile.restSeconds ?? 90, spanish: profile.language == "es")
-    } else {
-      RestAlert.cancel()
+    let target = Double(profile.restSeconds ?? 90)
+    let rest = profile.restAlerts == true && data.session?.stage == .rest
+      ? data.session?.restStarted?.addingTimeInterval(target) : nil
+    if rest != scheduledRest {
+      scheduledRest = rest
+      if let rest {
+        RestAlert.schedule(at: rest, seconds: Int(target), spanish: profile.language == "es")
+      } else {
+        RestAlert.cancel()
+      }
+    }
+    let idle = lastActivity.map { $0.addingTimeInterval(GymStore.staleAfter) }
+    if idle != scheduledIdle {
+      scheduledIdle = idle
+      if let idle { RestAlert.scheduleIdle(at: idle, spanish: profile.language == "es") } else { RestAlert.cancelIdle() }
     }
   }
   /// Signs out of this device: onboarding starts again; workouts, splits and history stay on this iPhone.
@@ -184,6 +220,7 @@ struct LocalData: Codable {
   /// Permanently erases everything GymBlock stores on this iPhone.
   func deleteAccount() {
     RestAlert.cancel()
+    RestAlert.cancelIdle()
     summary = nil
     deletedSet = nil
     data = LocalData()
@@ -231,7 +268,7 @@ struct LocalData: Codable {
     data.session?.selected = exercise
     data.session?.weightKG = saved?.weightKG ?? previous?.weightKG ?? 0
     data.session?.weightIsSet =
-      saved?.weightIsSet ?? (previous != nil || exercise.timed || exercise.id == "crunch")
+      saved?.weightIsSet ?? (previous != nil || exercise.timed || exercise.bodyweight)
     data.session?.draftRepsText =
       saved?.repsText ?? previous.map { String($0.reps) } ?? profile.baseline?.defaultReps.map(
         String.init) ?? ""
@@ -244,7 +281,7 @@ struct LocalData: Codable {
     data.session?.stage = current.restStarted == nil ? .setup : .rest
     persist()
   }
-  private func saveCurrentDraft() {
+  func saveCurrentDraft() {
     guard let s = session, let exercise = s.selected else { return }
     if data.session?.drafts == nil { data.session?.drafts = [:] }
     data.session?.drafts?[exercise.id] = ExerciseDraft(
@@ -252,9 +289,7 @@ struct LocalData: Codable {
       repsText: s.draftRepsText, weightIsSet: s.weightIsSet)
   }
   func updateWeight(_ displayed: Double, unit: String) {
-    guard displayed.isFinite, (0...500).contains(displayed), session?.stage != .active else {
-      return
-    }
+    guard displayed.isFinite, (0...500).contains(displayed), session?.selected != nil else { return }
     data.session?.weightKG = Self.kilograms(displayed, unit: unit)
     data.session?.weightIsSet = true
     saveCurrentDraft()
@@ -297,6 +332,7 @@ struct LocalData: Codable {
       .init(
         exercise: exercise, weightKG: exercise.timed ? 0 : s.weightKG,
         reps: exercise.timed ? 0 : reps, minutes: exercise.timed ? minutes : 0,
+        timingUnknown: Self.implausible(elapsed, timed: exercise.timed) ? true : nil,
         elapsedSetSeconds: elapsed, gapBeforeSeconds: s.pendingGapSeconds,
         gapSourceID: s.pendingGapSourceID))
     clearPendingTiming()
@@ -536,12 +572,19 @@ struct LocalData: Codable {
     persist()
     return true
   }
-  func finish() {
+  /// `endedAt` lets a workout that was left running end at its last activity, not hours later.
+  func finish(endedAt: Date? = nil) {
     guard var session = data.session else { return }
-    session.ended = Date()
+    session.ended = max(session.started, endedAt ?? Date())
     session.restEnds = nil
     session.restStarted = nil
-    if !session.sets.isEmpty { data.history.insert(session, at: 0) }
+    if !session.sets.isEmpty {
+      data.history.insert(session, at: 0)
+      // Splits rotate: the next one in the list is up next.
+      if let id = session.splitID, let i = data.workouts.firstIndex(where: { $0.id == id }) {
+        data.profile.preferredSplitID = data.workouts[(i + 1) % data.workouts.count].id
+      }
+    }
     summary = session.sets.isEmpty ? nil : session
     data.session = nil  // The simulated block ends before the summary appears.
     persist()

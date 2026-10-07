@@ -1,6 +1,6 @@
 # GymBlock
 
-A local SwiftUI workout prototype with a red theme, DM Sans typography and native Liquid Glass controls. Open the app, pick an exercise, start a set, record actual reps and get back to training.
+A local SwiftUI workout prototype: a dark ember stage, SF Pro Dynamic Type and native Liquid Glass. Open the app, tap Start, lift, tap Finish, and put the phone away — the rest counts on the Lock Screen.
 
 ## Run
 
@@ -10,14 +10,13 @@ The Debug scheme opens onboarding for a new store. Add `--demo` when needed: an 
 
 ## Experience
 
-- **Workout / History / Splits** are stable native tabs. Tab changes preserve the active set and rest counter.
-- Workout opens with weekly activity, Free workout or a remembered split, and Start workout. Splits start at their first exercise; freestyle opens exercise search.
-- Weight uses either a native wheel or direct typing. Fractions and loads up to 500 in the selected unit are supported; zero is Bodyweight. Change units in Settings.
-- **Start set → actual reps → Finish set → Rest → Start set.** Rest counts up and survives exercise changes and relaunch. Timed exercises record actual elapsed duration.
-- Tap the **exercise name and chevron** to change exercises; an active set offers finish/discard/keep. **End workout** sits below Start/Finish set, above the tabs. Empty sessions create no saved workout or summary.
-- **Sets** in the top bar opens grouped records and uncommon actions; tap a saved row to correct it. Timing/date/warmup live in Details. Missing timing is not invented.
-- History shows reps, logged weight moved and workout records immediately. Exercise progress shows dated Before/After comparisons, holding weight or reps constant within the same exercise/split or free-workout scope. Metric details show weekly bars; weight moved is logged load × completed reps, with no guessed bodyweight load.
-- Splits have a useful detail page with Start, Edit and Progress. Editing retains identity; deleting a split retains history.
+Full design, tap budget and edge cases: [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md). Screens: [screenshots/app-v6](screenshots/app-v6/).
+
+- **Home** is one decision: the workout that's up next (splits rotate after each workout) and **Start workout**. A glass week card shows this week's days and the last workout and opens History; Settings and History are glass buttons. No tab bar.
+- **Workout** is one screen with one button in a fixed place: **Start set → Finish set → rest → Start set**. Last time's weight and reps are pre-filled; `−`/`+` step one plate (2.5 kg / 5 lb), or tap a value to type it. The ring times the set, then fills toward the rest length and turns red when rest's up. After last time's number of sets the button offers **Next: <exercise>**. Tap the exercise name to switch; the rest keeps counting.
+- **Interrupted?** Everything is saved as it happens: locking, calls and relaunches lose nothing. The **Live Activity** shows the rest on the Lock Screen and in the Dynamic Island with a Start/Finish set button, so sets can be logged without unlocking. A workout left running for an hour asks to finish at its last set. Double taps, Start/Finish back to back, forgotten Finishes, zero-rep misses and first-time loads are all handled (see the plan).
+- **Summary** counts up time, sets, weight moved and average rest, lists like-for-like gains over the last same-split workout, and offers Save as split for free workouts.
+- **History** shows reps and weight-moved totals, exercise progress (Before/After within one split or free scope) and every workout, which can be corrected or deleted. Settings → **Time each set** off makes logging one tap per set.
 
 ## Onboarding
 
@@ -25,18 +24,18 @@ Nineteen short pages, one question each: name, gender, height, weight; how often
 
 The estimate is the person's own minutes multiplied out — not measured phone use or a body-outcome prediction. Height, weight and gender stay on the device and are not used yet; the weight unit sets kg/lb for logging. The mind-muscle headline is the user-approved “Scrolling weakens your mind-muscle connection.”; scenes are labelled illustrations, examples never create workout history, and blocking remains simulated and labelled.
 
-The offer ends onboarding; there is no preview bypass. StoreKit handling exists behind explicit configuration, but no live subscription, product price, legal URL or shielding service is configured, so Subscribe stays disabled with an honest caption. In Debug, launch with `--demo` to enter the app. Real purchasing requires `GymBlockPurchasesEnabled`, `GymBlockMonthlyProductID`, `GymBlockTermsURL` and `GymBlockPrivacyURL`, plus verified blocking and release validation; do not enable billing to sell simulated blocking.
+The offer ends onboarding; there is no preview bypass (Debug builds with no product configured show a labelled **Skip paywall (Debug build)** for simulator use). StoreKit handling exists behind explicit configuration, but no live subscription, product price, legal URL or shielding service is configured, so Subscribe stays disabled with an honest caption. In Debug, launch with `--demo` to enter the app. Real purchasing requires `GymBlockPurchasesEnabled`, `GymBlockMonthlyProductID`, `GymBlockTermsURL` and `GymBlockPrivacyURL`, plus verified blocking and release validation; do not enable billing to sell simulated blocking.
 
 ## Account and alerts
 
-Settings → **Log out** returns to onboarding and keeps workouts, splits and history on the iPhone. **Delete account** permanently erases everything GymBlock stores, after a confirmation. There is no server account yet; both act on this device only and are ready for the planned login. **Rest alert** sends one local notification when a rest reaches the chosen length (default 1:30). **Body** edits gender, height and weight. In Debug, `--skip-onboarding` re-enters the app after logging out and `-journeyStep <page>` opens onboarding on one page with sample answers (neither is in Release).
+Settings → **Log out** returns to onboarding and keeps workouts, splits and history on the iPhone. **Delete account** permanently erases everything GymBlock stores, after a confirmation. There is no server account yet; both act on this device only and are ready for the planned login. **Rest alert** sends one local notification when a rest reaches the chosen length (default 1:30; changed in Settings or right on the rest ring). **Body** edits gender, height and weight. In Debug, `--skip-onboarding` re-enters the app after logging out, `-journeyStep <page>` opens onboarding on one page with sample answers, and `-workoutStage ready|active|rest|restUp|next|stale|summary` opens a sample Push workout in that state (none are in Release).
 
 ## Current design and proof
 
-The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); training/navigation retain [docs/UX-RESET-V3.md](docs/UX-RESET-V3.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
+The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); the app after it follows [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
 
-`project.yml` is the XcodeGen source of truth. Product → Test runs model checks and simulator journeys; use `-parallel-testing-enabled NO` for UI testing on one simulator.
+`project.yml` is the XcodeGen source of truth. It builds the app and **GymBlockLive**, the Live Activity extension. Product → Test runs model checks and simulator journeys; use `-parallel-testing-enabled NO` for UI testing on one simulator.
 
 ## Prototype boundaries
 
-Focus blocking remains simulated and labeled where active. Actual prices, payments, Screen Time enforcement, accounts, backend, analytics and cloud sync are not configured. Records persist locally. Physical-device usability, haptic feel, audible sound levels and release delivery need separate verification.
+Blocking remains simulated and labelled wherever it appears. The Live Activity is updated locally, with no push. Actual prices, payments, Screen Time enforcement, accounts, backend, analytics and cloud sync are not configured. Records persist locally. Physical-device usability, haptic feel, audible sound levels and release delivery need separate verification.

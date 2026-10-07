@@ -102,15 +102,3 @@ enum SurveyField: String, Identifiable {
     }
   }
 }
-
-struct FocusPreview: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dismiss) private var dismiss
-  var body: some View {
-    NavigationStack {
-      FocusSettingsForm().toolbar {
-        ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() } }
-      }
-    }.presentationDetents([.medium, .large])
-  }
-}

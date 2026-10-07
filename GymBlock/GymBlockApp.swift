@@ -6,10 +6,10 @@ import SwiftUI
     let navigation = UINavigationBarAppearance()
     navigation.configureWithTransparentBackground()
     navigation.titleTextAttributes = [
-      .font: GymType.uiFont(17, weight: 500), .foregroundColor: UIColor(GymColor.ink),
+      .font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor(GymColor.ink),
     ]
     navigation.largeTitleTextAttributes = [
-      .font: GymType.uiFont(32, weight: 600), .foregroundColor: UIColor(GymColor.ink),
+      .font: UIFont.systemFont(ofSize: 34, weight: .bold), .foregroundColor: UIColor(GymColor.ink),
     ]
     UINavigationBar.appearance().standardAppearance = navigation
     UINavigationBar.appearance().scrollEdgeAppearance = navigation
@@ -40,15 +40,19 @@ import SwiftUI
           $0.baseline = b
         }
       }
+      // Development only: open a sample Push workout in one state (`-workoutStage rest`).
+      if let stage = UserDefaults.standard.string(forKey: "workoutStage") { store.debugWorkout(stage) }
     #endif
+    GymStore.live = store
     _store = StateObject(wrappedValue: store)
     // Onboarding's arm illustration is pre-rendered in the background from launch.
     if !store.profile.onboarded { ArmFrames.shared.prepare() }
   }
   var body: some Scene {
     WindowGroup {
-      RootView().environmentObject(store).tint(GymColor.red).font(GymType.body(17)).foregroundStyle(
-        GymColor.ink)
+      // One dark ember look everywhere, as in onboarding.
+      RootView().environmentObject(store).tint(GymColor.ink).foregroundStyle(GymColor.ink)
+        .preferredColorScheme(.dark)
     }
   }
 }

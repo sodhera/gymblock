@@ -1,12 +1,14 @@
 # GymBlock design
 
-Onboarding follows **docs/ONBOARDING-V5-PLAN.md** (V5 replaces V4). Training and navigation retain **docs/UX-RESET-V3.md**, especially section 13 for text, icons and placement.
+Onboarding follows **docs/ONBOARDING-V5-PLAN.md**. The app after onboarding follows **docs/WORKOUT-V6-PLAN.md** (V6 replaces the training and navigation parts of docs/UX-RESET-V3.md).
 
 ## Visual system
 
-DM Sans remains bundled with its license. Use a flat warm canvas (#FBF8F5), warm ink, quiet secondary text and GymBlock red. Dark appearance has semantic warm near-black surfaces. No dot grid or CTA glow. Titles use semibold, controls medium, body regular; text scales with Dynamic Type. Native navigation, glass actions and the discrete slider are the functional material layer. Content records and numbers stay plain and readable. Earlier OS versions use native bordered controls.
+One look everywhere, set by onboarding: the dark ember stage (near-black, red-tinted dots, a low glow) behind every page, in dark appearance only. SF Pro with Dynamic Type; titles bold, labels medium, numbers monospaced. Liquid Glass on iOS 26 for every control: prominent white glass for the one primary action, glass steppers, rings, tiles, chooser rows and round icon buttons, with translucent fallbacks before iOS 26. Native Lists and Forms (settings, editors, history details) sit on the same stage.
 
-Keep 24-point page margins, related elements together and a stable bottom action. One question/control/primary action on numeric onboarding pages. Choice rows have a selected checkmark only; no empty rings, decorative question icons or paragraph beneath every heading. Icons remain for native Back, tabs, Settings, search, disclosure, selection and reps +/−. No pencils, flames, trophies, success seals or button arrows.
+White is the action; red (#FF626B) is the signal and nothing else — the live set, a finished rest, today in the week, a like-for-like gain, the "on" state of a toggle. Picker values are grey. Never a red background.
+
+Keep 24-point margins and a fixed grid. The primary action sits in exactly the same place on Home, the workout and the summary (as on every onboarding page); a 20-point caption slot above it and a 44-point secondary slot below it are always reserved, so it never moves.
 
 ## Onboarding
 
@@ -20,16 +22,20 @@ Full spec: docs/ONBOARDING-V5-PLAN.md. Nineteen pages (seventeen for Rarely), on
 
 ## Training and navigation
 
-Native tabs: **Workout / History / Splits**. Workout has a weekly activity line, optional selected split and Start workout. The exercise name and downward chevron form one full-width selector with a 56-point minimum target; its accessibility label says Change exercise. End workout is a quiet, 48-point bottom action beneath Start/Finish set, above the native tabs, including during initial exercise selection. Sets lives in the top bar when records or a draft exist. Ending during a set still resolves save/discard/keep, and switching exercises preserves the existing rest counter and records. Weight editing uses a wheel or typing, one at a time; units live in Settings. Zero is the supported Bodyweight value. First-use loads require an explicit choice.
+No tabs. Home, the workout or its summary fills the screen; a running workout always comes back first.
 
-Ready → Start set → actual reps/duration → Finish set → upward Rest → Start set. Record actual performance without enforcing onboarding averages. Rest uses persisted timestamps and survives exercise/tab changes and relaunch. An unfinished exercise change resolves finish/discard/keep; prior records retain their original exercise. Zero reps can record an attempt or be corrected/discarded. An empty ended session creates neither History nor summary. Sets is available when a draft or record exists; rare actions and detailed timing live there/in the editor.
+**Home** — the workout as the headline (`Up next · Push` with its exercises; splits rotate after each workout), one glass week card (seven day dots, today red, "2 of 5" against the goal, last workout; opens History), glass History and Settings buttons, and Start workout. "Sample data" stays visible when demo history is loaded. Tapping the workout name opens the chooser (Free workout, splits with an `…` edit/delete menu, New split).
 
-History opens with reps and logged weight moved, exercise progress and chronological records. Totals open a metric detail with weekly bars and one filter menu. Before/After exercise progress uses dated like-for-like records within the same split identity, or free-workout scope. No Best lifts card, nested Workouts/Progress root or chart-style selector. Workout details group sets by exercise. Editing exposes weight/reps first and timing/date/warmup under Details; unknown timing stays unknown.
+**Workout** — top bar (clock with red live dot, Sets, End); exercise name + chevron (opens the picker) with set dots ("Set 2 of 3", target = last time's set count, else 3); the ring (ready: last time's best; set: the set clock; rest: fills to the rest length, then red with "Rest's up" and a double haptic; the length is changed in place); weight and reps glass steppers (plate-grid steps, hold to repeat, tap to type; typing hides the ring so the button stays above the keyboard); "Last set ›" for one-tap correction; one honest caption; the primary button. Start set → Finish set → rest → Start set; after last time's number of sets it becomes `Next: <exercise>` with `Another set` beneath (free workout: Next exercise; split done: Finish workout). A 0.6 s guard stops double taps. Zero reps finishes as a missed attempt. Settings → Time each set off makes it one tap per set (timing marked unknown, never guessed).
 
-Splits are optional. A split detail shows its exercises, Start workout, Edit and Progress. Editors preserve IDs; adding exercises pushes within the editor rather than stacking sheets. Settings exposes compact preferences, training answers, honest Focus demo information and a separate Data page. Editing answers never restarts onboarding.
+**Interruptions** — everything is a saved timestamp, so locking, calls and relaunches lose nothing. Rest's up is a local notification when locked; the Live Activity (Lock Screen and Dynamic Island) shows the set or rest clock, the next set and a Start/Finish button that carries its intent so a lagging display can't double-log. A workout idle for an hour gets a "Still training?" reminder and, on return, an offer to finish it at its last set. Implausible set clocks (< 3 s, or > 15 min for a rep set) are kept but marked unknown.
+
+**Summary** — the headline, four counting glass tiles (time, sets, weight moved, average rest), "Better than last time" (same split, reps or load held constant), a per-exercise recap, Done; Save as split for free workouts.
+
+History keeps reps and weight-moved totals (glass tiles → weekly bars), exercise progress (dated Before/After within one split or free scope) and the workout list with exercise names; a workout can be deleted from its detail page. Editing exposes weight/reps first and timing/date/warm-up under Details; unknown timing stays unknown. Settings order: workout (rest length, rest alert, time each set), blocking (simulated, labelled), you (name, body, units, language, haptics, sound), answers and data, account.
 
 ## Data and boundaries
 
-Preserve local history, exercise/split IDs, actual reps, load conventions, timing provenance and sample markers. Demo loading is explicit/idempotent and never replaces existing work. Focus remains simulated and is labeled where active; no live billing/account/backend service is configured.
+Preserve local history, exercise/split IDs, actual reps, load conventions, timing provenance and sample markers. Demo loading is explicit/idempotent and never replaces existing work. Blocking remains simulated and is labelled wherever it appears; no live billing/account/backend service is configured. The Live Activity is local (no push).
 
 Build success does not prove visual quality. Verify actual simulator layouts, full routes, keyboard and larger text, appearance, corrections, counter continuity and before/after records. Hardware haptic feel, physical-device handling and user comprehension need separate evidence.

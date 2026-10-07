@@ -1,3 +1,3 @@
 # Credits
 
-DM Sans by Colophon Foundry and Jonny Pinhorn, bundled unmodified under the SIL Open Font License 1.1. The font and license are in `GymBlock/Resources/Fonts/`. Typography roles and visual placement are adapted from the local native Speaking Coach reference at the user's request; Speaking Coach source and assets remain unchanged.
+GymBlock uses Apple's SF Pro system font with Dynamic Type. DM Sans, bundled in earlier prototypes under the SIL Open Font License 1.1, was removed when the app adopted the onboarding's SF Pro type. The onboarding arm artwork is the user-supplied asset in `GymBlock/Assets.xcassets/OnboardingArm.imageset`.

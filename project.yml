@@ -16,7 +16,9 @@ targets:
     info:
       path: GymBlock/Info.plist
       properties:
-        UIAppFonts: [DMSans.ttf]
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        NSSupportsLiveActivities: true
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
     settings:
@@ -25,11 +27,35 @@ targets:
         TARGETED_DEVICE_FAMILY: '1'
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: GymBlock
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         MARKETING_VERSION: '0.1.0'
         CURRENT_PROJECT_VERSION: '1'
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - target: GymBlockLive
+  GymBlockLive:
+    type: app-extension
+    platform: iOS
+    sources:
+      - GymBlockLive
+      - GymBlock/WorkoutActivity.swift
+      - GymBlock/WorkoutStepIntent.swift
+    info:
+      path: GymBlockLive/Info.plist
+      properties:
+        CFBundleDisplayName: GymBlock
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sirish.gymblock.prototype.live
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) LIVE_EXTENSION
+        TARGETED_DEVICE_FAMILY: '1'
+        MARKETING_VERSION: '0.1.0'
+        CURRENT_PROJECT_VERSION: '1'
+        SKIP_INSTALL: YES
   GymBlockTests:
     type: bundle.unit-test
     platform: iOS

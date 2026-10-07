@@ -1,6 +1,58 @@
 # Validation — 7 October 2026
 
-Native Swift/SwiftUI simulator prototype. Latest checks use Xcode 27 / iPhone 17 Pro / iOS 26.5. Signing is disabled. No external services or package dependencies are configured.
+Native Swift/SwiftUI simulator prototype with one app extension (GymBlockLive, the Live Activity). Latest checks use Xcode 27 / iPhone 18 Pro / iOS 27.0. Signing is disabled. No external services or package dependencies are configured.
+
+## V6 — the app after onboarding (7 October 2026)
+
+[docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md) is implemented. The app now matches onboarding (ember stage, SF Pro, Liquid Glass, white action and red signal only; DM Sans removed) and has no tab bar.
+- **Home** is one decision: the split that's up next (splits rotate) and Start workout, plus a glass week card.
+- **The workout** is one screen whose primary button sits in exactly the same frame as Home's Start and the summary's Done:
+  - a ring for the set clock and the rest (red with a double haptic when rest's up, length changed in place)
+  - weight and reps glass steppers on the plate grid, with typing and Start set above the keyboard
+  - "Next: <exercise>" after last time's number of sets
+- **Interruptions:** everything is a saved timestamp. A workout idle for an hour offers to finish at its last set. Implausible set clocks are marked unknown, a 0.6 s guard stops double taps, and zero reps is a missed attempt.
+- **Live Activity:** a new **GymBlockLive** extension shows the set or rest clock, the next set and a Start/Finish set button on the Lock Screen and in the Dynamic Island. The button carries its intent so a lagging display can't double-log.
+- **Summary:** counting glass tiles, like-for-like "Better than last time" (same split, reps or load held constant), a recap and Save as split.
+- **History and Settings:** History gains exercise names and Delete workout. Settings is reordered and adds Time each set (one-tap logging) and the rest length.
+- **Debug:** `-workoutStage <state>` opens a sample workout in any state, and a Debug-only "Skip paywall (Debug build)" enters the app when no product is configured.
+
+**All 70 model checks pass**, including 12 new ones:
+- plate-grid stepping, first-use loads, bodyweight lifts, zero reps as a miss
+- targets from last time, and Next wrapping to skipped exercises
+- one-tap logging without invented timing, and implausible set clocks marked unknown
+- a forgotten workout ending at its last set, split rotation and like-for-like gains
+- Lock Screen steps ignoring stale taps, rest length bounds, average rest, deleting a workout
+
+**All 11 workout UI tests pass** on the final build (iPhone 18 Pro / iOS 27.0), each a whole gym flow:
+- a free workout with typing, a correction, a mid-rest exercise switch and a mid-set app kill and relaunch
+- log out and delete account
+- creating a split, then rotation to the next one, then Before/After progress
+- a missed attempt, one-tap logging and an empty workout
+- larger text across History, Settings and the workout
+- a custom exercise with no invented load and typed "60" saved exactly
+- the primary button in the same frame on Home, ready, set, rest and summary
+- a double tap neither finishing nor restarting a set
+- Next after the last set, with the rest still counting
+- a workout left running finishing at its last set (30 min, not 2.5 h)
+
+**The 5 onboarding UI tests passed on the preceding build**; later changes touched only the workout screen, its tests and Debug sample data.
+
+What earlier runs caught, all fixed and rerun:
+- The ring animated continuously, so the app was never idle and UI tests crawled. It now eases each second, then rests.
+- Removing and re-inserting the ring while typing left its container with infinite accessibility frames. It now folds in place, and the column scrolls only at accessibility sizes.
+- iOS hid a cancel-role "Keep going" button.
+- Settings rows below the fold load lazily, and the tests now scroll to them.
+- A long weight like 102.5 made the steppers stack; long values now scale down instead.
+- The stepper label wasn't a tap target for typing; now it is.
+
+Verified by hand in the simulator:
+- The Lock Screen and Dynamic Island activity, plus Start set and Finish set from the Lock Screen with the app in the background.
+- The rest turning red when stale.
+- Typing a weight, which updates the Lock Screen.
+
+Screenshots of every state are in [screenshots/app-v6](screenshots/app-v6/) (overview.jpg). The attention heatmaps (heatmaps/) put the predicted peak on the ring's clock during sets and rests, and on the workout or exercise name on Home and ready.
+
+Not verified: haptic feel on hardware, Live Activity behaviour on a physical device and with Live Activities declined (iOS's "Allow Live Activities" prompt was left unanswered in the simulator), and real gym use.
 
 ## V5 rev. 7 — ember stage, Liquid Glass, one question per page (7 October 2026)
 

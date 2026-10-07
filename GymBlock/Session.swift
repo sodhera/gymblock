@@ -1,331 +1,67 @@
 import SwiftUI
 
-struct SessionView: View {
-  @EnvironmentObject private var store: GymStore
-  @State private var exercisePicker = false
-  @State private var weightEditor = false
-  @State private var switching = false
-  @State private var pendingExercise: Exercise?
-  @State private var records = false
-  @State private var ending = false
-  @State private var endingIdle = false
-  @State private var zeroReps = false
-  @State private var editing: LoggedSet?
-  @State private var reps = ""
-  @State private var minutes = ""
-  private var session: Session { store.session ?? Session() }
-  private var exercise: Exercise? { session.selected }
-  private var active: Bool { session.stage == .active || session.stage == .log }
-  private var selecting: Bool { session.stage == .exercise || session.stage == .workout }
-  private var actualMinutes: Double {
-    if let entered = parseNumber(minutes) { return entered }
-    return max(0, Date().timeIntervalSince(session.setStarted ?? Date()) / 60)
-  }
-  private var valid: Bool {
-    exercise?.timed == true ? actualMinutes.isFinite && actualMinutes > 0
-      : Int(reps).map { (1...999).contains($0) } ?? false
-  }
-  private var weightLabel: String {
-    let perDumbbell = exercise?.name.localizedCaseInsensitiveContains("dumbbell") == true || exercise?.id == "curl"
-    return store.profile.unit + (perDumbbell ? " / " + store.t("dumbbell") : "")
-  }
-  var body: some View {
-    NavigationStack {
-      VStack(spacing: 0) {
-        if selecting {
-          ExercisePickerContent { store.chooseExercise($0) }
-        } else {
-          ScrollView {
-            VStack(alignment: .leading, spacing: 32) {
-              Button { dismissKeyboard(); exercisePicker = true } label: {
-                HStack(spacing: 16) {
-                  Text(store.t(exercise?.name ?? "Exercise")).font(GymType.title(28))
-                    .accessibilityAddTraits(.isHeader).accessibilityIdentifier("set.exercise")
-                  Spacer(minLength: 8)
-                  Image(systemName: "chevron.down").font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(GymColor.dim).accessibilityHidden(true)
-                }.foregroundStyle(GymColor.ink).frame(minHeight: 56).contentShape(Rectangle())
-              }.buttonStyle(.plain).accessibilityIdentifier("set.change")
-                .accessibilityLabel(store.t("Change exercise") + ", " + store.t(exercise?.name ?? "Exercise"))
-              if active { activeContent } else { readyContent }
-              if store.profile.focusEnabled == true {
-                Text(store.t("Focus demo")).font(GymType.body(13)).foregroundStyle(GymColor.dim)
-                  .accessibilityIdentifier("session.blocking")
-              }
-            }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
-          }.scrollDismissesKeyboard(.interactively)
-          VStack(spacing: 8) {
-            if active {
-              GymButton(title: store.t("Finish set"), enabled: valid || reps == "0", id: "set.stop") {
-                if exercise?.timed != true && Int(reps) == 0 { dismissKeyboard(); zeroReps = true } else { finishSet() }
-              }
-            } else {
-              GymButton(title: store.t("Start set"), enabled: exercise?.timed == true ||
-                (session.weightIsSet != false && GymStore.displayedWeight(session.weightKG, unit: store.profile.unit) <= 500), id: "set.start") {
-                dismissKeyboard(); minutes = ""; store.updateDraft(minutes: 0)
-                store.startSet(weight: GymStore.displayedWeight(session.weightKG, unit: store.profile.unit), unit: store.profile.unit)
-              }
-            }
-          }.padding(.horizontal, 24).padding(.top, 8)
-        }
-        Button {
-          dismissKeyboard()
-          // Never end a workout with saved sets on a single, possibly accidental, tap.
-          if active { ending = true } else if !session.sets.isEmpty { endingIdle = true } else { store.finish() }
-        } label: {
-          Text(store.t("End workout")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-            .frame(maxWidth: .infinity, minHeight: 48).contentShape(Rectangle())
-        }.buttonStyle(.plain)
-          .accessibilityIdentifier("session.finish").padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 8)
-      }.gymPage().navigationTitle(store.t(selecting ? "Choose exercise" : session.name)).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItemGroup(placement: .keyboard) {
-            Spacer()
-            Button(store.t("Done")) { dismissKeyboard() }.accessibilityIdentifier("set.keyboard.done")
-          }
-          if active || !session.sets.isEmpty {
-            ToolbarItem(placement: .topBarTrailing) {
-              Button(store.t("Sets")) { dismissKeyboard(); records = true }
-                .font(GymType.label(14)).accessibilityIdentifier("session.sets")
-            }
-          }
-        }
-        .confirmationDialog(store.t("Finish this set?"), isPresented: $ending, titleVisibility: .visible) {
-          Button(store.t("Finish and end")) { finishSet(); store.finish() }.disabled(!valid).accessibilityIdentifier("session.saveEnd")
-          Button(store.t("Discard set and end"), role: .destructive) { store.cancelSet(); store.finish() }.accessibilityIdentifier("session.discardEnd")
-          Button(store.t("Keep going")) {}
-        } message: { Text(store.t("Saved sets stay.")) }
-        .confirmationDialog(store.t("End workout?"), isPresented: $endingIdle, titleVisibility: .visible) {
-          Button(store.t("End workout")) { store.finish() }.accessibilityIdentifier("session.endConfirm")
-          Button(store.t("Keep going"), role: .cancel) {}
-        } message: { Text(setCount(session.completedSets.count, store: store) + " " + store.t("will be saved.")) }
-        .alert(store.t("No reps recorded"), isPresented: $zeroReps) {
-          Button(store.t("Edit reps"), role: .cancel) {}.accessibilityIdentifier("attempt.edit")
-          Button(store.t("Record attempt")) { store.recordAttempt() }.accessibilityIdentifier("attempt.save")
-          Button(store.t("Discard set"), role: .destructive) { store.cancelSet() }.accessibilityIdentifier("attempt.discard")
-        }
-        .sheet(isPresented: $exercisePicker, onDismiss: { if pendingExercise != nil { switching = true } }) {
-          NavigationStack {
-            ExercisePickerContent {
-              if $0.id != exercise?.id {
-                if active { pendingExercise = $0 } else { store.chooseExercise($0) }
-              }
-              exercisePicker = false
-            }.gymPage().navigationTitle(store.t("Choose exercise")).navigationBarTitleDisplayMode(.inline)
-              .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismissKeyboard(); exercisePicker = false }.accessibilityIdentifier("exercise.cancel") } }
-          }
-        }
-        .sheet(isPresented: $weightEditor) {
-          WeightEditor(weightKG: session.weightKG) { value, unit in store.updateWeight(value, unit: unit) }
-        }
-        .confirmationDialog(store.t("Finish this set?"), isPresented: $switching, titleVisibility: .visible) {
-          Button(store.t("Finish and change")) { resolveSwitch(saving: true) }.disabled(!valid).accessibilityIdentifier("switch.save")
-          Button(store.t("Discard set and change"), role: .destructive) { resolveSwitch(saving: false) }.accessibilityIdentifier("switch.discard")
-          Button(store.t("Keep going")) { pendingExercise = nil }.accessibilityIdentifier("switch.cancel")
-        } message: { Text(store.t("Saved sets stay.")) }
-        .onChange(of: switching) { _, presented in if !presented { pendingExercise = nil } }
-        .sheet(isPresented: $records) { SessionRecordsView() }
-        .sheet(item: $editing) { SetEditor(set: $0, sessionID: session.id) }
-        .onAppear { loadReps() }
-        .onChange(of: session.selected?.id) { _, _ in loadReps(); minutes = "" }
-        .onChange(of: reps) { _, value in store.updateRepText(value) }
-    }
-  }
-  @ViewBuilder private var activeContent: some View {
-    if exercise?.timed != true {
-      Text(weightText).font(GymType.body(17)).foregroundStyle(GymColor.dim)
-      VStack(spacing: 16) {
-        Text(store.t("Reps")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-        HStack(spacing: 16) {
-          Button { reps = String(max(0, (Int(reps) ?? 1) - 1)) } label: { Image(systemName: "minus").frame(width: 44, height: 44) }
-            .buttonStyle(.bordered).buttonBorderShape(.circle).accessibilityLabel(store.t("Decrease reps")).accessibilityIdentifier("set.reps.minus")
-          TextField("—", text: $reps).font(GymType.hero(64)).monospacedDigit().keyboardType(.numberPad)
-            .multilineTextAlignment(.center).accessibilityLabel(store.t("Reps")).accessibilityIdentifier("set.reps")
-            .modifier(SelectNumberOnFocus())
-          Button { reps = String(min(999, (Int(reps) ?? 0) + 1)) } label: { Image(systemName: "plus").frame(width: 44, height: 44) }
-            .buttonStyle(.bordered).buttonBorderShape(.circle).accessibilityLabel(store.t("Increase reps")).accessibilityIdentifier("set.reps.plus")
-        }
-      }.padding(.vertical, 20)
-    }
-    TimelineView(.periodic(from: .now, by: 1)) { context in
-      VStack(spacing: 8) {
-        Text(store.t("Set time")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-        Text(clockString(max(0, Int(context.date.timeIntervalSince(session.setStarted ?? context.date)))))
-          .font(exercise?.timed == true ? GymType.hero(64) : GymType.body(20)).monospacedDigit()
-          .accessibilityIdentifier("set.elapsed")
-      }.frame(maxWidth: .infinity)
-    }
-  }
-  @ViewBuilder private var readyContent: some View {
-    if session.stage == .rest {
-      if let last = session.sets.last {
-        Button { editing = last } label: {
-          VStack(alignment: .leading, spacing: 6) {
-            HStack {
-              Text(store.t("Last set")).foregroundStyle(GymColor.dim)
-              Spacer()
-              Text(setValue(last, store: store)).foregroundStyle(GymColor.ink)
-            }
-            if last.exercise.id != exercise?.id { Text(store.t(last.exercise.name)).font(GymType.body(13)).foregroundStyle(GymColor.dim) }
-          }.font(GymType.body(17)).frame(minHeight: 44).contentShape(Rectangle())
-        }.buttonStyle(.plain).accessibilityIdentifier("set.saved")
-      }
-      if let start = session.restStarted { RestCounter(started: start).padding(.vertical, 12) }
-      if exercise?.timed != true {
-        HStack {
-          Text(store.t("Next weight")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-          Spacer()
-          weightButton(compact: true)
-        }
-      }
-    } else {
-      Text(store.t("Set") + " \(session.sets.filter { $0.exercise.id == exercise?.id && $0.completed }.count + 1)")
-        .font(GymType.body(15)).foregroundStyle(GymColor.dim)
-      if exercise?.timed != true { weightButton(compact: false).padding(.vertical, 20) }
-      if let exercise, let previous = store.lastSet(for: exercise) {
-        HStack {
-          Text(store.t("Last time")).foregroundStyle(GymColor.dim)
-          Spacer()
-          Text(setValue(previous, store: store))
-        }.font(GymType.body(17)).frame(minHeight: 44)
-      }
-    }
-    if store.deletedSet != nil {
-      Button(store.t("Undo")) { store.undoDelete() }.frame(minHeight: 44).accessibilityIdentifier("set.undo")
-    }
-  }
-  private var weightText: String {
-    session.weightKG == 0 ? store.t("Bodyweight") : formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit)) + " " + weightLabel
-  }
-  private func weightButton(compact: Bool) -> some View {
-    Button { weightEditor = true } label: {
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        if session.weightIsSet == false {
-          Text(store.t("Choose weight")).font(GymType.title(compact ? 20 : 30))
-        } else if session.weightKG == 0 {
-          Text(store.t("Bodyweight")).font(GymType.title(compact ? 20 : 30))
-        } else {
-          Text(formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit)))
-            .font(GymType.title(compact ? 24 : 56)).monospacedDigit()
-          Text(weightLabel).font(GymType.body(compact ? 15 : 17)).foregroundStyle(GymColor.dim)
-        }
-      }.padding(.horizontal, compact ? 12 : 22).padding(.vertical, 10)
-        .frame(maxWidth: compact ? nil : .infinity, minHeight: 52)
-    }.buttonStyle(.bordered).buttonBorderShape(.capsule).tint(GymColor.ink)
-      .accessibilityLabel(session.weightIsSet == false ? store.t("Choose weight") : store.t("Edit weight") + ", " + weightText)
-      .accessibilityIdentifier("set.weight")
-  }
-  private func resolveSwitch(saving: Bool) {
-    guard let next = pendingExercise else { return }
-    dismissKeyboard()
-    store.switchExercise(to: next, savingCurrent: saving, reps: Int(reps) ?? 0, minutes: actualMinutes)
-    pendingExercise = nil; minutes = ""
-  }
-  private func loadReps() { reps = session.draftRepsText ?? String(session.draftReps ?? 10) }
-  private func finishSet() {
-    dismissKeyboard()
-    if session.stage == .log { store.logSet(reps: Int(reps) ?? 0, minutes: actualMinutes) }
-    else { store.finishSet(reps: Int(reps) ?? 0, minutes: actualMinutes) }
-    OnboardingFeedback.shared.play(profile: store.profile, completion: true)
-  }
-}
+/// One tap chooses. This workout's exercises come first (with sets done), then recent ones,
+/// then everything by body area.
 struct ExercisePickerContent: View {
   @EnvironmentObject private var store: GymStore
   @State private var search = ""
   @State private var custom = false
   let onChoose: (Exercise) -> Void
+  private var current: [Exercise] { store.session?.exercises ?? [] }
   private var recent: [Exercise] {
-    var seen = Set<String>()
-    let current = Set((store.session?.exercises ?? []).map(\.id))
+    var seen = Set(current.map(\.id))
     return Array(store.data.history.sorted { $0.started > $1.started }.flatMap(\.sets).map(\.exercise)
-      .filter { !current.contains($0.id) && seen.insert($0.id).inserted }.prefix(5))
+      .filter { seen.insert($0.id).inserted }.prefix(5))
   }
-  private var catalog: [Exercise] {
-    let grouped = Set(recent.map(\.id) + (store.session?.exercises ?? []).map(\.id))
-    return store.allExercises.filter {
-      search.isEmpty ? !grouped.contains($0.id) : store.t($0.name).localizedCaseInsensitiveContains(search)
+  private var areas: [(String, [Exercise])] {
+    let shown = Set((current + recent).map(\.id))
+    let all = store.allExercises.filter { !shown.contains($0.id) }
+    let known = Exercise.areas.compactMap { area in
+      let items = all.filter { $0.area == area }
+      return items.isEmpty ? nil : (area, items)
     }
+    let other = all.filter { !Exercise.areas.contains($0.area) }
+    return known + (other.isEmpty ? [] : [("Your exercises", other)])
+  }
+  private var matches: [Exercise] {
+    store.allExercises.filter { store.t($0.name).localizedCaseInsensitiveContains(search) || $0.name.localizedCaseInsensitiveContains(search) }
   }
   var body: some View {
     List {
       if search.isEmpty {
-        if let current = store.session?.exercises, !current.isEmpty {
-          Section(store.t("This workout")) { ForEach(current) { exerciseRow($0) } }
-        }
+        if !current.isEmpty { Section(store.t("This workout")) { ForEach(current) { exerciseRow($0) } } }
         if !recent.isEmpty { Section(store.t("Recent")) { ForEach(recent) { exerciseRow($0) } } }
+        ForEach(areas, id: \.0) { area, items in
+          Section(store.t(area)) { ForEach(items) { exerciseRow($0) } }
+        }
+      } else {
+        Section { ForEach(matches) { exerciseRow($0) } }
+        if matches.isEmpty { Text(store.t("No matches")).foregroundStyle(GymColor.dim) }
       }
-      Section(search.isEmpty ? store.t("Exercises") : "") { ForEach(catalog) { exerciseRow($0) } }
-      if !search.isEmpty && catalog.isEmpty { Text(store.t("No matches")).foregroundStyle(GymColor.dim) }
-      Button(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’") { custom = true }
-        .accessibilityIdentifier("exercise.custom")
+      Button {
+        custom = true
+      } label: {
+        Label(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’", systemImage: "plus")
+          .foregroundStyle(GymColor.ink)
+      }.accessibilityIdentifier("exercise.custom")
     }.gymPage().searchable(text: $search, prompt: store.t("Search exercises")).gymSearchNavigation()
       .navigationDestination(isPresented: $custom) {
         CustomExerciseView(embedded: true, initialName: search) { onChoose($0) }
       }
   }
   private func exerciseRow(_ exercise: Exercise) -> some View {
-    Button { dismissKeyboard(); onChoose(exercise) } label: {
+    let done = store.doneSets(exercise)
+    return Button { dismissKeyboard(); onChoose(exercise) } label: {
       HStack {
-        Text(store.t(exercise.name)).foregroundStyle(GymColor.ink); Spacer()
+        Text(store.t(exercise.name)).foregroundStyle(GymColor.ink)
+        Spacer()
         if store.session?.selected?.id == exercise.id {
           Image(systemName: "checkmark").foregroundStyle(GymColor.red).accessibilityHidden(true)
+        } else if done > 0 {
+          Text(setCount(done, store: store)).font(.subheadline).foregroundStyle(GymColor.dim).monospacedDigit()
         }
       }.frame(minHeight: 44)
     }.accessibilityIdentifier("exercise." + exercise.id)
-  }
-}
-struct WeightEditor: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dismiss) private var dismiss
-  let weightKG: Double
-  let onSave: (Double, String) -> Void
-  @State private var text = ""
-  @State private var typing = false
-  @FocusState private var focused: Bool
-  private var value: Double? { parseNumber(text) }
-  private var valid: Bool { value.map { $0.isFinite && (0...500).contains($0) } ?? false }
-  private var values: [Double] {
-    Array(Set((0...1000).map { Double($0) / 2 } + (valid ? [value!] : []))).sorted()
-  }
-  var body: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(spacing: 24) {
-          if typing {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-              TextField("0", text: $text).font(GymType.title(48)).monospacedDigit()
-                .keyboardType(.decimalPad).multilineTextAlignment(.center).focused($focused)
-                .modifier(SelectNumberOnFocus()).accessibilityLabel(store.t("Weight"))
-                .accessibilityIdentifier("set.weight.manual")
-              Text(store.profile.unit).font(GymType.body(17)).foregroundStyle(GymColor.dim)
-            }.padding(.vertical, 24)
-          } else {
-            Picker(store.t("Weight"), selection: Binding(get: { value ?? 0 }, set: { text = inputNumber($0) })) {
-              ForEach(values, id: \.self) { v in
-                Text(v == 0 ? store.t("Bodyweight") : formatNumber(v) + " " + store.profile.unit).tag(v)
-              }
-            }.pickerStyle(.wheel).frame(height: 216).accessibilityIdentifier("set.weight.wheel")
-          }
-          Button(store.t(typing ? "Use picker" : "Type weight")) {
-            if typing && !valid { text = "0" }
-            typing.toggle(); focused = typing
-          }.font(GymType.body(15)).frame(minHeight: 44).accessibilityIdentifier("weight.mode")
-          if !valid { Text(store.t("Use a weight from 0 to 500.")).font(GymType.body(15)).foregroundStyle(GymColor.red) }
-        }.padding(24)
-      }.gymPage().navigationTitle(store.t("Weight")).navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-          ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
-          ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) {
-              guard let value, valid else { return }
-              // Preserve the original stored load if no actual edit took place.
-              let original = inputNumber(GymStore.displayedWeight(weightKG, unit: store.profile.unit))
-              let saved = text == original ? GymStore.displayedWeight(weightKG, unit: store.profile.unit) : value
-              onSave(saved, store.profile.unit); dismiss()
-            }.disabled(!valid).accessibilityIdentifier("set.weight.picker.done")
-          }
-        }.onAppear { text = inputNumber(GymStore.displayedWeight(weightKG, unit: store.profile.unit)) }
-    }.presentationDetents([.medium, .large])
   }
 }
 struct SelectNumberOnFocus: ViewModifier {
@@ -347,16 +83,11 @@ struct SessionRecordsView: View {
   @State private var adding = false
   var body: some View {
     NavigationStack {
-      VStack {
-        if store.session?.stage == .active || store.session?.stage == .log {
-          Button(store.t("Cancel set")) { store.cancelSet(); dismiss() }
-            .frame(minHeight: 44).accessibilityIdentifier("set.cancel")
-          if store.session?.selected?.timed != true {
-            Button(store.t("Record attempt")) { store.recordAttempt(); dismiss() }
-              .frame(minHeight: 44).accessibilityIdentifier("set.attempt")
-          }
+      Group {
+        if let session = store.session {
+          WorkoutDetailView(sessionID: session.id, embedded: true,
+                            cancelSet: session.stage == .active || session.stage == .log ? { store.cancelSet(); dismiss() } : nil)
         }
-        if let session = store.session { WorkoutDetailView(sessionID: session.id, embedded: true) }
       }
         .gymPage().navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).toolbar {
           ToolbarItem(placement: .confirmationAction) {
@@ -554,34 +285,6 @@ struct CustomExerciseView: View {
           }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityIdentifier("custom.add")
         }
       }
-  }
-}
-struct SummaryView: View {
-  @EnvironmentObject private var store: GymStore
-  var session: Session
-  var body: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading, spacing: 24) {
-          Text(store.t("Workout saved")).font(GymType.title(32)).accessibilityIdentifier("summary.title")
-          Text("\(max(1, Int(session.duration / 60))) " + store.t("min")).font(GymType.title(28)).monospacedDigit()
-          Text(setCount(session.completedSets.count, store: store) + " · \(session.totalReps) " + store.t("reps"))
-            .font(GymType.body(17)).foregroundStyle(GymColor.dim)
-          if !session.repSets.isEmpty {
-            VStack(alignment: .leading, spacing: 6) {
-              Text(store.t("Weight moved")).font(GymType.body(15)).foregroundStyle(GymColor.dim)
-              Text(formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit)) + " " + store.profile.unit)
-                .font(GymType.title(24)).accessibilityIdentifier("summary.volume")
-            }
-          }
-          NavigationLink(store.t("View workout")) { WorkoutDetailView(sessionID: session.id) }.frame(minHeight: 44)
-        }.frame(maxWidth: .infinity, alignment: .leading).padding(24).padding(.top, 32)
-      }.gymPage().navigationBarTitleDisplayMode(.inline)
-        .safeAreaInset(edge: .bottom) {
-          GymButton(title: store.t("Done"), id: "summary.done") { store.summary = nil }
-            .padding(.horizontal, 24).padding(.vertical, 16)
-        }
-    }
   }
 }
 func parseNumber(_ text: String) -> Double? {

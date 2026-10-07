@@ -1,70 +1,29 @@
 import SwiftUI
 import UIKit
 
+/// The app shares the onboarding's dark ember stage: near-black, warm white text,
+/// and red only as the signal (the live set, a finished rest, a record).
 enum GymColor {
-  static let ground = adaptive(light: 0xFBF8F5, dark: 0x191617)
-  static let surface = adaptive(light: 0xFFFCF9, dark: 0x292526)
-  static let ink = adaptive(light: 0x231A1B, dark: 0xF8F0EB)
-  static let dim = adaptive(light: 0x716769, dark: 0xBCADAF)
-  static let red = Color(
-    uiColor: UIColor { traits in
-      let high = traits.accessibilityContrast == .high
-      let hex: UInt32 =
-        traits.userInterfaceStyle == .dark
-        ? (high ? 0xFF8490 : 0xFF626B) : (high ? 0xAE1525 : 0xC92535)
-      return UIColor(
-        red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
-        blue: CGFloat(hex & 255) / 255, alpha: 1)
-    })
-  static func adaptive(light: UInt32, dark: UInt32) -> Color {
-    Color(
-      uiColor: UIColor { traits in
-        let hex = traits.userInterfaceStyle == .dark ? dark : light
-        return UIColor(
-          red: CGFloat((hex >> 16) & 255) / 255,
-          green: CGFloat((hex >> 8) & 255) / 255, blue: CGFloat(hex & 255) / 255, alpha: 1)
-      })
-  }
+  static let ground = JourneyColor.stage
+  static let surface = Color(white: 0.11)
+  static let ink = JourneyColor.text
+  static let dim = JourneyColor.secondary
+  static let red = JourneyColor.signalRed
   static let action = red
-  static let wash = Color(uiColor: .tertiarySystemFill)
+  static let wash = JourneyColor.fill
 }
+/// The primary action, in the onboarding's white Liquid Glass.
 struct GymButton: View {
   var title: String
-  var icon: String? = nil
-  var secondary = false
   var enabled = true
   var id: String = ""
-  var finishSet = false
   var action: () -> Void
-  private var control: some View {
-    Button(action: action) {
-      HStack(spacing: 8) {
-        if let icon { Image(systemName: icon) }
-        Text(title).font(GymType.label(17))
-      }.frame(maxWidth: .infinity, minHeight: 54)
-    }.disabled(!enabled).accessibilityIdentifier(id)
-  }
-  var body: some View {
-    if #available(iOS 26.0, *) {
-      if secondary {
-        control.buttonStyle(.glass).tint(GymColor.red)
-      } else {
-        control.buttonStyle(.glassProminent).tint(Color(red: 0.79, green: 0.145, blue: 0.208))
-          .foregroundStyle(.white)
-
-      }
-    } else {
-      control.buttonStyle(.borderedProminent).tint(
-        secondary
-          ? Color(uiColor: .secondarySystemBackground) : Color(red: 0.79, green: 0.145, blue: 0.208)
-      )
-    }
-  }
+  var body: some View { JourneyButton(title: title, id: id, enabled: enabled, action: action) }
 }
 extension GymStore {
   func t(_ key: String) -> String {
     profile.language == "es"
-      ? Spanish.v5[key] ?? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
+      ? Spanish.v6[key] ?? Spanish.v5[key] ?? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
         key] ?? key : key
   }
 }

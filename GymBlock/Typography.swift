@@ -1,33 +1,26 @@
 import SwiftUI
 import UIKit
 
-/// Speaking Coach's bundled DM Sans, including its weight and optical-size axes.
-/// Text follows the user's preferred size; already-scaled workout numbers do not scale twice.
+/// SF Pro, scaled with Dynamic Type, matching the onboarding.
+/// Already-scaled workout numbers do not scale twice.
 enum GymType {
   static func uiFont(_ size: CGFloat, weight: CGFloat = 400) -> UIFont {
-    let descriptor = UIFontDescriptor(fontAttributes: [
-      .name: "DMSans-9ptRegular",
-      UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [
-        0x6F70_737A: min(max(size, 9), 40), 0x7767_6874: weight,
-      ],
-    ])
-    return UIFont(descriptor: descriptor, size: size)
+    let w: UIFont.Weight = weight >= 650 ? .bold : weight >= 550 ? .semibold : weight >= 450 ? .medium : .regular
+    return UIFont.systemFont(ofSize: size, weight: w)
   }
   private static func scaled(_ size: CGFloat, weight: CGFloat, style: UIFont.TextStyle) -> Font {
     Font(UIFontMetrics(forTextStyle: style).scaledFont(for: uiFont(size, weight: weight)))
   }
   static func hero(_ size: CGFloat) -> Font { scaled(size, weight: 600, style: .largeTitle) }
-  static func title(_ size: CGFloat) -> Font { scaled(size, weight: 600, style: .title2) }
+  static func title(_ size: CGFloat) -> Font { scaled(size, weight: 700, style: .title2) }
   static func body(_ size: CGFloat) -> Font { scaled(size, weight: 400, style: .body) }
   static func label(_ size: CGFloat) -> Font { scaled(size, weight: 500, style: .headline) }
   static func number(_ size: CGFloat) -> Font { Font(uiFont(size, weight: 500)) }
 }
 
-/// A quiet canvas keeps attention on the control and the next action.
+/// The ember stage behind every page, as in onboarding.
 struct GymBackdrop: View {
-  var body: some View {
-    GymColor.ground.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
-  }
+  var body: some View { DotGrid() }
 }
 struct GymCard: ViewModifier {
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
