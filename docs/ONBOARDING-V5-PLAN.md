@@ -1,43 +1,43 @@
 # GymBlock onboarding V5 — design spec
 
-**7 Oct 2026 · Implemented (rev. 3: profile questions, plain-language estimate, faster motion).** Supersedes V4 and the first V5 draft (which was too red, too wordy and too busy).
+**7 Oct 2026 · Implemented (rev. 7: ember stage, Liquid Glass, one question per page, calmer motion).** Supersedes V4 and the first V5 draft (which was too red, too wordy and too busy).
 
 The person should leave thinking: *“I lose a lot of my gym time to my phone. GymBlock blocks it, times my rests, and shows me I'm improving.”*
 
 ## Principles
 
-1. **One idea per page.** One headline, no subtitles. If an idea needs more, it gets a second page that shares the same visual.
-2. **Same place, every page.** Thin progress line → headline box (always two lines tall, centred) → stage → one-line caption → actions. The primary action sits at exactly the same height on every page; answer options stack upward from it. The eye goes top → centre → bottom and never hunts.
-3. **Colour has a job.** ~90% near-black stage with a faint dotted grid, ~8% neutrals (white, two greys), ≤2% red. Red marks the one thing to look at on a screen — the lock, the phone-time bar, the pumped arm, the new best. The primary button is white with black text.
-4. **Apple type.** SF Pro text styles throughout (`.title` bold headlines, `.title3` options, `.headline` buttons, `.footnote`/`.caption` captions) so everything follows Dynamic Type; headlines scale down slightly before wrapping to a third line.
-5. **Motion is calm and cheap.** Native SwiftUI animations (`.smooth`, gentle springs) on opacity, transforms, shape trims and an animatable arm flipbook. Nothing is redrawn per frame by the app; the background is drawn once; scenes run once and stop. Text transitions fade and drift a few points — no blur. Reduce Motion shows final states.
-6. **Honest qualifiers, one word long.** “Illustration”, “Example”, “Lifting time assumes 3 s per rep.”, “Blocking is simulated in this build.”
+1. **One idea per page.** One headline, no subtitles. Hard ideas take two pages that share a stage.
+2. **Same place, every page.** Progress line → two-line headline → stage → one-line caption → actions. The primary action never moves.
+3. **Colour has a job.** One ember stage (near-black, red-tinted dots) on every page; never a red background. Red is the signal only.
+4. **Liquid Glass** for every control and card (iOS 26+), with translucent fallbacks.
+5. **Apple type**, Dynamic Type everywhere.
+6. **Calm motion, designed haptics.** Scenes start after the page settles; Continue waits for them; nothing advances on its own.
+7. **Honest qualifiers**, one line long.
 
-## Pages (17; 15 for Rarely, which skips minutes and hours)
+## Pages (19; 17 for Rarely, which skips minutes and hours)
 
 | # | Headline | Stage | Action |
 |---|---|---|---|
-| 1 | Stay focused. / Stay intentional. | Four real-looking notifications drop in (haptic each), sweep away in a cascade, one red lock lands: "Apps locked while you train" | Get started (appears after the scene) |
-| 2 | What should we call you? | Large centred field, keyboard up | Continue / Return |
-| 3 | Tell us about you. | Male · Female · Other chips, height and weight wheels (defaults follow gender until a wheel is turned), cm·kg / ft·lb switch | Continue |
-| 5 | Do you use your phone between sets? | The notifications creep back in | Every rest · Sometimes · Rarely |
-| 6 | Between sets, how long are you on your phone? | One wheel, default 2 min | Continue |
-| 7 | {Name}, here’s your phone time. | A ring with one segment per rest fills (tick per segment) as the count climbs to 34; "17 rests × 2 min"; four − / + rows adjust it live | Continue |
-| 8 | That’s 147 hours a year. | A grid of dots fills red, one per 45-minute workout; "= 196 workouts", "Each dot is one 45-min workout." | Continue |
-| 9–10 | Scrolling weakens your mind-muscle connection. / Put it away. Feel every rep. | Brain, nerve, arm; notifications pull attention, then signals reach the arm | Continue |
-| 11 | Scroll between sets. / Never hit the pump. | A pump chart (y: Pump, x: Time →, "Rest 3:40" under each rest) draws; every phone rest drains it to zero; dashed FULL PUMP line "Never reached". A small arm below flexes each set | Continue |
-| 12 | Time your rests. / Hit the pump. | Same chart with "Rest 1:30": the line stair-steps up to FULL PUMP, "Reached", and the arm turns red | Continue |
-| 13–14 | Memory forgets your progress. / Your log doesn’t. | Values dissolve into "?", then rebuild as a chart (y: Weight × reps, x: Week →), "+5 kg" | Continue |
-| 15 | Block what distracts you. | App tiles; Turn on stamps locks | Turn on blocking · Not now |
-| 15b | Get a buzz when rest is up. | A rest ring runs to 1:30, then a GymBlock notification lands | Turn on rest alerts (→ iOS prompt) · Not now |
-| 16 | {Name}, commit to focus. | Three pledges | **Hold to commit**: 1.6 s fill, ramping haptics, pledges check off; releasing early drains it |
-| 17 | Stay focused, {Name}. | Benefit rows | Subscribe · Restore purchases |
-
-Continue on animated pages appears only when the scene finishes (all ≤ 3 s; 6 s safety net). Defaults: 6 exercises × 3 sets, 2 min per rest, 5 workouts a week. Principles review: [ONBOARDING-PRINCIPLES-REVIEW.md](ONBOARDING-PRINCIPLES-REVIEW.md). Attention heatmaps: [HEATMAP-REVIEW.md](HEATMAP-REVIEW.md). Every chart labels both axes.
+| 1 | Stay focused. / Stay intentional. | Glass notifications stack, sweep away, a lock lands | Get started |
+| 2 | What should we call you? | Glass name field, keyboard up | Continue |
+| 3 | What’s your gender? | Male · Female · Other glass cards | Continue (after choosing) |
+| 4 | How tall are you? | One wheel, cm / ft · in | Continue |
+| 5 | How much do you weigh? | One wheel, kg / lb (sets the logging unit) | Continue |
+| 6 | Do you use your phone between sets? | Notifications creep in; Every rest · Sometimes · Rarely | Continue (after choosing) |
+| 7 | Between sets, how long are you on your phone? | One wheel, default 2 min | Continue |
+| 8 | {Name}, here’s your phone time. | One ring for a typical workout: red arc = phone (34 min), white arc = training (12 min); glass legend | Continue |
+| 9 | That’s 147 hours a year. | A dot per 45-minute workout fills; "= 196 workouts" | Continue |
+| 10–11 | Scrolling weakens your mind-muscle connection. / Put it away. Feel every rep. | Brain, nerve, arm | Continue |
+| 12–13 | Scroll between sets. Never hit the pump. / Time your rests. Hit the pump. | Pump chart (labelled axes) and arm | Continue |
+| 14–15 | Memory forgets your progress. / Your log doesn’t. | Values fade to "?", then chart (labelled axes) | Continue |
+| 16 | Block what distracts you. | Glass app tiles | Turn on blocking · Not now |
+| 17 | Get a buzz when rest is up. | Rest ring to 1:30, glass notification | Turn on rest alerts → iOS prompt · Not now |
+| 18 | {Name}, commit to focus. | Three pledges | Hold to commit |
+| 19 | Stay focused, {Name}. | Benefits on a glass card | Subscribe · Restore purchases |
 
 ## Estimate
 
-`rests = exercises × sets − 1` · `phone per workout = rests × minutes per rest` · `per year = phone × workouts per week × 52 ÷ 60`. Defaults 6 exercises × 3 sets, 5 workouts a week. With 2 min/rest: 34 min per workout, ≈ 147 h a year = 196 workouts of 45 min. These are the person's own answers multiplied out — never measured phone use or a body-outcome prediction. Adjustments persist to Settings → Training answers. Height, weight and gender are stored locally only; nothing uses them yet.
+A typical workout is assumed: 6 exercises × 3 sets (40 s each), 2-minute rests, 5 workouts a week. Their answer is phone minutes per rest. `rests = 17` · `phone = 17 × minutes` · `training = workout − phone`, where `workout = 12 min lifting + 17 × max(2, minutes)` · `per year = phone × 5 × 52 ÷ 60` · `as workouts = per year ÷ 45 min`. With 2 min: 34 of 46 minutes on the phone, 12 training; 147 h a year = 196 workouts. Self-reported arithmetic — never measured phone use or a body-outcome prediction.
 
 ## Paywall
 
@@ -49,4 +49,5 @@ No preview bypass. With no product configured, Subscribe is disabled and the cap
 - The arm is pre-rendered into 24 poses off the main thread (`ArmFrames`) and played back by index; warmth is a GPU `colorMultiply`.
 - Brain, nerve, pulses, rings and chart are `Shape`s animated through `animatableData`/`trim`.
 - No full-screen masks, blurs or per-frame drawing. A 10 s recording across the story stages on a memory-starved Mac: 447 of 450 frame gaps at 60 or 30 fps.
-- The first-launch fade from the white launch screen is an overlay that removes itself after 0.35 s.
+- The first-launch fade from the white launch screen is an overlay that removes itself after 0.5 s.
+- The arm poses render in parallel from app launch (~1.3 s in the simulator).

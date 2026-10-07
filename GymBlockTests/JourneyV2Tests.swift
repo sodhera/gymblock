@@ -175,7 +175,7 @@ import XCTest
   func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
     var b = baseline()
     b.scrollFrequency = .sometimes
-    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .body, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
+    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .gender, .height, .weight, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
                                               .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription])
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false

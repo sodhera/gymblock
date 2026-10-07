@@ -9,7 +9,7 @@ import XCTest
       XCTAssertEqual(Array(route.suffix(10)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription])
       XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
       XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
-      XCTAssertEqual(Array(route.prefix(3)), [.name, .body, .scrolling])  // Profile first, then habits.
+      XCTAssertEqual(Array(route.prefix(5)), [.name, .gender, .height, .weight, .scrolling])  // Profile first, one question a page.
     }
     XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .subscription)
   }
@@ -35,9 +35,9 @@ import XCTest
     let store = GymStore(defaults: UserDefaults(suiteName: "Plural.\(UUID())")!)
     XCTAssertEqual(setCount(1, store: store), "1 set"); XCTAssertEqual(setCount(2, store: store), "2 sets")
   }
-  func testLegacyGenderPageResumesOnTheMergedPage() {
-    var p = Profile(); p.onboardingStepID = "gender"
-    XCTAssertEqual(OnboardingStep.restored(p), .body)
+  func testLegacyCombinedProfilePageResumesOnGender() {
+    var p = Profile(); p.onboardingStepID = "body"
+    XCTAssertEqual(OnboardingStep.restored(p), .gender)
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
     XCTAssertTrue(OnboardingStep.restA.animated); XCTAssertTrue(OnboardingStep.days.animated)
@@ -54,23 +54,24 @@ import XCTest
     XCTAssertEqual(OnboardingStep.welcome.stage, OnboardingStep.scrolling.stage)
     XCTAssertNotEqual(OnboardingStep.reveal.stage, OnboardingStep.mindA.stage)
   }
-  func testGymTimeEstimateUsesTheirMinutesAndAdjustableDefaults() {
+  func testPhoneTimeIsMeasuredAgainstAnAssumedTypicalWorkout() {
     var b = RoutineBaseline(); b.scrollFrequency = .yes; b.scrollingMinutes = 2
-    var e = GymTimeEstimate(b)
+    let e = GymTimeEstimate(b)
     XCTAssertEqual(e.rests, 17)
     XCTAssertEqual(e.phoneMinutes, 34)
-    XCTAssertEqual(e.days, 5)
+    XCTAssertEqual(e.liftingMinutes, 12)  // 18 sets × 40 s.
+    XCTAssertEqual(e.workoutMinutes, 46)
+    XCTAssertEqual(e.trainingMinutes, 12)
+    XCTAssertEqual(e.phoneShare, 34.0 / 46, accuracy: 0.0001)
     XCTAssertEqual(e.yearlyPhoneHours, 34 * 5 * 52 / 60, accuracy: 0.001)
-    XCTAssertEqual(e.yearlyWorkouts, 196)  // 147.3 h as 45-minute workouts.
-    e.sets = 4
-    XCTAssertEqual(e.phoneMinutes, 46)
-    e.write(into: &b)
-    XCTAssertEqual(GymTimeEstimate(b), e)  // Adjustments persist and restore exactly.
+    XCTAssertEqual(e.yearlyWorkouts, 196)
+    // Longer phone breaks stretch the rest; shorter ones leave rest time that counts as training.
+    XCTAssertEqual(GymTimeEstimate(minutesPerRest: 3).workoutMinutes, 12 + 51)
+    XCTAssertEqual(GymTimeEstimate(minutesPerRest: 1).trainingMinutes, 46 - 17)
     var none = RoutineBaseline(); none.scrollFrequency = .no
-    XCTAssertEqual(GymTimeEstimate(none).phoneMinutes, 0)
+    XCTAssertEqual(GymTimeEstimate(none).phoneMinutes, 0); XCTAssertEqual(GymTimeEstimate(none).phoneShare, 0)
     var sometimes = RoutineBaseline(); sometimes.scrollFrequency = .sometimes
     XCTAssertEqual(GymTimeEstimate(sometimes).minutesPerRest, 1)
-    XCTAssertEqual(GymTimeEstimate(RoutineBaseline(exercises: 1, sets: 1)).rests, 0)
   }
   func testBodyAnswersDecodeOptionallyForExistingProfiles() throws {
     var p = Profile(); p.gender = "female"; p.heightCM = 165; p.bodyWeightKG = 61.5

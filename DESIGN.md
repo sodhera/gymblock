@@ -10,9 +10,13 @@ Keep 24-point page margins, related elements together and a stable bottom action
 
 ## Onboarding
 
-Full spec: docs/ONBOARDING-V5-PLAN.md. Seventeen pages (fifteen for Rarely): welcome; name; gender, height and weight on one page; phone between sets and minutes per rest; one plain estimate (“34 min on your phone, every workout”) with four live − / + rows; an hours-a-year page shown as 45-minute workouts; three paired story stages (mind-muscle, pump, progress); app blocking; rest alerts; hold to commit; offer. Continue appears only after each scene finishes. Every page must be understood at a glance — no charts that need decoding, no jargon.
+Full spec: docs/ONBOARDING-V5-PLAN.md. Nineteen pages (seventeen for Rarely), one question or idea each: welcome; name; gender; height; weight; phone between sets; minutes per rest; phone time against training time; hours a year as 45-minute workouts; paired story stages (mind-muscle, pump, progress); app blocking; rest alerts; hold to commit; offer.
 
-Onboarding has its own system, separate from the warm light app: near-black stage with a faint static dotted grid; white and two greys; one red accent reserved for the single thing to notice on a page; white primary button. SF Pro Dynamic Type text styles. A fixed grid — progress line (no text), two-line headline box, stage, one-line caption, bottom actions — keeps every element in the same place; the primary action never moves. One headline per page, no subtitles. Paired pages share a stage that morphs in place while only the words change. Motion uses native SwiftUI animations on shapes, trims, opacity and a pre-rendered arm flipbook; nothing is redrawn per frame by the app. No preview bypass: the offer is the end of onboarding.
+**Colour.** One dark *ember* stage on every page: near-black with warm red-tinted dots and a low glow. No page uses a red background. Red (#FF626B, the app's dark-mode red) is the signal — ≤2% of a screen, always the one thing to look at. Captions meet WCAG AA (≥ 4.5:1).
+
+**Material.** Liquid Glass (iOS 26) for every control: prominent white glass for the primary action, glass answer cards, back button, notification cards, tiles and info cards; translucent fallbacks before iOS 26.
+
+**Motion and touch.** Calm, one clock per page change: everything that changes fades out (0.18 s), the page swaps unseen, everything fades in (0.35 s); a stage shared by two pages stays put. Low-bounce springs; scenes start after the page settles; Continue fades in when a scene ends. Selecting an answer only selects; Continue moves on. Haptics are designed per moment: iOS-style double taps for notifications, crescendos for counting, a landing thud for reveals, rising impacts for each set, a ramp for the hold.
 
 ## Training and navigation
 

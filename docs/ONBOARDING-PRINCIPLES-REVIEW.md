@@ -1,8 +1,8 @@
 # Onboarding review against onboarding principles
 
-7 Oct 2026 · Re-reviewed after fixes: the 17-page flow (15 for "Rarely") as built on iPhone 18 Pro / iOS 27.
+7 Oct 2026 · Re-reviewed: the 19-page flow (17 for "Rarely") as built on iPhone 18 Pro / iOS 27.
 
-Flow: Welcome → Name → About you (gender, height, weight) → Phone between sets → Minutes per rest → **Your phone time** → **Hours a year** → Mind-muscle ×2 → Pump ×2 → Memory vs log ×2 → Block apps → **Rest alerts** → **Hold to commit** → Paywall.
+Flow: Welcome → Name → Gender → Height → Weight → Phone between sets → Minutes per rest → **Your phone time** → **Hours a year** → Mind-muscle ×2 → Pump ×2 → Memory vs log ×2 → Block apps → **Rest alerts** → **Hold to commit** → Paywall.
 
 | Principle | Status | Notes |
 |---|---|---|
@@ -12,7 +12,7 @@ Flow: Welcome → Name → About you (gender, height, weight) → Phone between 
 | **One idea per screen** | ✅ | One headline, one control, no subtitles. Paired pages split hard ideas in two. |
 | **Personalised "aha" moment** | ✅ | "Sirish, here's your phone time: 34 min every workout", then "That’s 147 hours a year = 196 workouts of 45 min". It's built entirely from their own answers, it can be adjusted live, and it isn't an invented statistic. |
 | **Make the abstract concrete** | ✅ | Minutes become a ring of rests, hours become a grid of 45-minute workouts, pump becomes a chart that never reaches the line. |
-| **Momentum and progress** | ✅ / ⚠️ | A thin progress line and one-tap answers that auto-advance. The flow is long, though (about 60–75 s): every added page has to earn its place. |
+| **Momentum and progress** | ✅ / ⚠️ | A thin progress line; one question per page. Answers no longer auto-advance (Continue confirms), which is calmer but adds taps; at 19 pages (~90 s) every page has to earn its place. |
 | **Pacing / don't let people skip the point** | ✅ | Continue appears only after each scene finishes (all ≤ 3 s), with a 6 s safety net. |
 | **Feedback** | ✅ | Haptics on every page change, answer, notification, ring segment, workout dot, set and pledge, plus a ramp during the hold. |
 | **Commitment & consistency** | ✅ | Three pledges and a 1.6 s hold, placed right before the paywall so the purchase follows a public-to-self commitment. Releasing early drains it. |

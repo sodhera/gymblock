@@ -3,9 +3,9 @@ import SwiftUI
 /// Onboarding: one question or one idea per page, on a fixed grid —
 /// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V5-PLAN.md.
 enum OnboardingStep: String, CaseIterable {
-  case welcome, name, body, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, blocking, alerts, commit, subscription
+  case welcome, name, gender, height, weight, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, blocking, alerts, commit, subscription
   // Decode-only steps saved by earlier journeys.
-  case gender, frequency, restHabits, loggingHabits, mindMuscle, restStory, progressStory
+  case body, frequency, restHabits, loggingHabits, mindMuscle, restStory, progressStory
   case duration, reps, sets, exercises, minutes, breaks, setTiming, routine, ready
   static func restored(_ profile: Profile) -> Self {
     if let id = profile.onboardingStepID, let step = Self(rawValue: id) { return step.current }
@@ -15,7 +15,7 @@ enum OnboardingStep: String, CaseIterable {
   /// Maps removed pages onto the nearest current page; stored answers are never discarded.
   var current: Self {
     switch self {
-    case .gender: return .body
+    case .body: return .gender
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
     case .minutes, .breaks: return .phoneMinutes
     case .frequency, .restHabits, .loggingHabits, .setTiming: return .reveal
@@ -41,7 +41,7 @@ enum OnboardingStep: String, CaseIterable {
 
 enum OnboardingRoute {
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.name, .body, .scrolling]
+    var steps: [OnboardingStep] = [.name, .gender, .height, .weight, .scrolling]
     let scrolls = baseline.scrollFrequency != .no
     if scrolls { steps.append(.phoneMinutes) }
     steps.append(.reveal)
@@ -59,15 +59,18 @@ struct OnboardingView: View {
   @State private var estimate = GymTimeEstimate()
   @State private var apps: Set<String> = []
   @State private var locking = false
-  @State private var answering = false
   @State private var nameDraft = ""
-  @State private var metric = BodyUnits.defaultMetric
-  @State private var heightCM = 175.0
   @State private var gender: String?
-  @State private var bodyTouched = false
+  @State private var heightUnit = BodyUnits.defaultMetric ? 0 : 1
+  @State private var weightUnit = BodyUnits.defaultMetric ? 0 : 1
+  @State private var heightCM = 175.0
   @State private var weightKG = 75.0
   @State private var covered = true
   @State private var ready = true
+  /// Page changes run on one clock: everything changing fades out, the page swaps unseen, everything fades in.
+  @State private var shown = true
+  @State private var stageLeaving = false
+  @State private var moving = false
   @State private var pledged = 0
   @State private var committed = false
   @MainActor private static var coverShown = false
@@ -81,12 +84,15 @@ struct OnboardingView: View {
       VStack(spacing: 0) {
         topBar.frame(height: 44).padding(.horizontal, 12)
         headline.padding(.horizontal, 28).padding(.top, 18)
+          .opacity(shown ? 1 : 0).offset(y: shown || reduceMotion ? 0 : 6)
         ZStack {
-          stage.id(step.stage).transition(.opacity.combined(with: .scale(scale: reduceMotion ? 1 : 0.97)))
+          stage.id(step.stage).transition(.identity)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.horizontal, 24).padding(.vertical, 16)
+          // A stage shared by two pages stays put; only a new stage fades.
+          .opacity(shown || !stageLeaving ? 1 : 0)
         Text(caption.map(store.t) ?? " ").font(.caption2).foregroundStyle(JourneyColor.tertiary)
           .multilineTextAlignment(.center).lineLimit(2).frame(minHeight: 16).padding(.horizontal, 32)
-          .id("caption." + step.stage).transition(.opacity)
+          .opacity(shown ? 1 : 0)
         actions.padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 6)
       }
     }
@@ -98,11 +104,10 @@ struct OnboardingView: View {
     .task(id: step) { if !ready { try? await Task.sleep(for: .seconds(6)); markReady() } }
     .task(id: step == .subscription) { if step == .subscription { await subscription.load() } }
     .onChange(of: subscription.hasAccess) { _, access in if access { finish() } }
-    .onChange(of: estimate) { _, value in update { value.write(into: &$0) } }
     .onAppear {
       if reduceMotion || Self.coverShown { covered = false } else {
         Self.coverShown = true
-        withAnimation(.easeOut(duration: 0.35)) { covered = false }
+        withAnimation(.easeOut(duration: 0.5)) { covered = false }
       }
       ArmFrames.shared.prepare()
       ready = reduceMotion || !step.animated
@@ -122,11 +127,7 @@ struct OnboardingView: View {
 
   private var topBar: some View {
     HStack(spacing: 8) {
-      Button(action: back) {
-        Image(systemName: "chevron.left").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
-          .frame(width: 44, height: 44).contentShape(Rectangle())
-      }.buttonStyle(.plain).accessibilityLabel(store.t("Back")).accessibilityIdentifier("onboarding.back")
-        .disabled(locking)
+      JourneyBackButton(label: store.t("Back"), action: back).disabled(locking)
       JourneyProgress(value: progress).padding(.horizontal, 6)
       Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
     }.opacity(step == .welcome ? 0 : 1).allowsHitTesting(step != .welcome)
@@ -140,11 +141,7 @@ struct OnboardingView: View {
   private var headline: some View {
     ZStack(alignment: .top) {
       Text("A\nB").font(JourneyType.headline).hidden().accessibilityHidden(true)
-      headlineText.id(step)
-        // The old line leaves quickly; the new one arrives just after, so the two never overlap.
-        .transition(.asymmetric(
-          insertion: AnyTransition.opacity.combined(with: .offset(y: reduceMotion ? 0 : 8)).animation(.smooth(duration: 0.28).delay(0.1)),
-          removal: AnyTransition.opacity.animation(.easeOut(duration: 0.1))))
+      headlineText.id(step).transition(.identity)
     }.frame(maxWidth: .infinity)
   }
   private var headlineText: some View {
@@ -163,7 +160,9 @@ struct OnboardingView: View {
   private var headlineCopy: String {
     switch step {
     case .name: return "What should we call you?"
-    case .body: return "Tell us about you."
+    case .gender: return "What’s your gender?"
+    case .height: return "How tall are you?"
+    case .weight: return "How much do you weigh?"
     case .alerts: return "Get a buzz when rest is up."
     case .scrolling: return "Do you use your phone between sets?"
     case .phoneMinutes: return "Between sets, how long are you on your phone?"
@@ -196,9 +195,10 @@ struct OnboardingView: View {
   }
   private var caption: String? {
     switch step {
-    case .body: return "Stays on this phone."
+    case .height, .weight: return "Stays on this phone."
     case .alerts: return "Change it anytime in Settings."
-    case .reveal, .days: return "Based on your answers."
+    case .reveal: return "A typical workout: 6 exercises × 3 sets, 2-min rests."
+    case .days: return "Based on 5 workouts a week."
     case .commit: return "Press and hold."
     case .mindA, .mindB, .restA, .restB: return "Illustration"
     case .logA, .logB: return "Example"
@@ -212,13 +212,27 @@ struct OnboardingView: View {
     switch step {
     case .welcome, .scrolling: NotificationStage(awake: step == .scrolling, done: markReady)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
-    case .body: BodyStage(gender: Binding(get: { gender }, set: { setGender($0) }), metric: $metric,
-                          heightCM: $heightCM, weightKG: $weightKG) { bodyTouched = true }
+    case .gender: GenderStage(gender: gender) { value in
+      withAnimation(JourneyMotion.gentle) { gender = value }
+      JourneyHaptic.play(.selection, store.profile)
+    }
+    case .height:
+      MeasureStage(values: heightUnit == 0 ? (120...220).map(Double.init) : (48...90).map(Double.init),
+                   unit: heightUnit == 0 ? "cm" : "", id: "profile.height",
+                   value: Binding(get: { heightUnit == 0 ? heightCM.rounded() : min(90, max(48, (heightCM / 2.54).rounded())) },
+                                  set: { heightCM = heightUnit == 0 ? $0 : $0 * 2.54 }),
+                   format: heightUnit == 0 ? nil : BodyUnits.feet, units: ["cm", "ft · in"], unitIndex: $heightUnit)
+    case .weight:
+      MeasureStage(values: weightUnit == 0 ? (30...200).map(Double.init) : (66...440).map(Double.init),
+                   unit: weightUnit == 0 ? "kg" : "lb", id: "profile.weight",
+                   value: Binding(get: { weightUnit == 0 ? weightKG.rounded() : min(440, max(66, (weightKG * 2.20462).rounded())) },
+                                  set: { weightKG = weightUnit == 0 ? $0 : $0 / 2.20462 }),
+                   units: ["kg", "lb"], unitIndex: $weightUnit)
     case .alerts: AlertStage(done: markReady)
     case .phoneMinutes:
       JourneyWheel(values: stride(from: 0.5, through: 10, by: 0.5).map { $0 }, unit: store.t("min"), id: "baseline.scrollMinutes",
                    value: $draft).frame(height: 216).frame(maxHeight: .infinity)
-    case .reveal: RevealStage(estimate: $estimate, done: markReady)
+    case .reveal: RevealStage(estimate: estimate, done: markReady)
     case .days: DaysStage(estimate: estimate, done: markReady)
     case .mindA, .mindB: MindStage(focused: step == .mindB, done: markReady)
     case .restA, .restB: RestStage(timed: step == .restB, done: markReady)
@@ -240,9 +254,15 @@ struct OnboardingView: View {
     VStack(spacing: 4) {
       switch step {
       case .scrolling:
-        VStack(spacing: 10) {
-          option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
-        }
+        JourneyGlassGroup(spacing: 10) {
+          VStack(spacing: 10) {
+            option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
+          }
+        }.padding(.bottom, 14)
+        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance)
+        Color.clear.frame(height: 44)
+      case .gender:
+        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: gender != nil, action: advance)
         Color.clear.frame(height: 44)
       case .alerts:
         gated(JourneyButton(title: store.t("Turn on rest alerts"), id: "alerts.on", enabled: ready) {
@@ -291,19 +311,21 @@ struct OnboardingView: View {
   }
   /// Continue holds its place but stays hidden until the page's animation has played.
   private func gated(_ button: JourneyButton) -> some View {
-    button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 6).allowsHitTesting(ready)
-      .animation(.smooth(duration: 0.3), value: ready)
+    // Hidden means hidden for VoiceOver too, so nothing can be activated before the scene ends.
+    button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 8).allowsHitTesting(ready).accessibilityHidden(!ready)
+      .animation(.smooth(duration: 0.5), value: ready)
   }
   private func markReady() {
     guard !ready else { return }
-    withAnimation(.smooth(duration: 0.3)) { ready = true }
+    withAnimation(.smooth(duration: 0.5)) { ready = true }
   }
+
   private func commit() {
     guard !committed else { return }
-    withAnimation(.spring(duration: 0.35)) { committed = true; pledged = 3 }
+    withAnimation(JourneyMotion.gentle) { committed = true; pledged = 3 }
     store.updateProfile { $0.onboardingStoryStage = 1 }
     Task { @MainActor in
-      try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 650))
+      try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 900))
       if step == .commit { move(.subscription) }
     }
   }
@@ -316,44 +338,28 @@ struct OnboardingView: View {
       }
     }
   }
-  /// Saves, shows the check for a beat, then advances.
+  /// Selecting only selects. Continue moves on — nothing jumps away mid-thought.
   private func choice(_ title: String, id: String, selected: Bool, apply: @escaping () -> Void) -> some View {
     JourneyOption(title: store.t(title), selected: selected, id: id) {
-      guard !answering else { return }
-      answering = true
-      apply()
+      withAnimation(JourneyMotion.gentle) { apply() }
       JourneyHaptic.play(.selection, store.profile)
-      let from = step
-      Task { @MainActor in
-        try? await Task.sleep(for: .milliseconds(reduceMotion ? 60 : 180))
-        answering = false
-        if step == from { next() }
-      }
     }
   }
-  /// Typical starting values, only until the person turns a wheel.
+  /// Typical starting values for the wheels.
   private func bodyDefaults(_ gender: String?) -> (height: Double, weight: Double) {
     gender == "male" ? (178, 80) : gender == "female" ? (165, 65) : (170, 72)
-  }
-  private func setGender(_ value: String?) {
-    gender = value
-    guard !bodyTouched else { return }
-    withAnimation(.snappy(duration: 0.3)) {
-      heightCM = bodyDefaults(value).height; weightKG = bodyDefaults(value).weight
-    }
   }
   private var canSaveName: Bool { !nameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
   private func prepare() {
     switch step {
     case .name: nameDraft = store.profile.name
-    case .body:
+    case .gender: gender = store.profile.gender
+    case .height: heightCM = store.profile.heightCM ?? bodyDefaults(store.profile.gender).height
+    case .weight:
       let p = store.profile
-      metric = p.bodyWeightKG != nil ? p.unit == "kg" : BodyUnits.defaultMetric
-      gender = p.gender
-      bodyTouched = p.heightCM != nil
-      heightCM = p.heightCM ?? bodyDefaults(p.gender).height
       weightKG = p.bodyWeightKG ?? bodyDefaults(p.gender).weight
+      weightUnit = p.bodyWeightKG != nil ? (p.unit == "kg" ? 0 : 1) : heightUnit
     case .phoneMinutes:
       let saved = baseline.scrollingMinutes ?? 0
       draft = saved > 0 ? min(10, (saved * 2).rounded() / 2) : (baseline.scrollFrequency == .sometimes ? 1 : 2)
@@ -373,14 +379,12 @@ struct OnboardingView: View {
       store.updateProfile { $0.name = name }
       dismissKeyboard()
     }
-    if step == .body {
-      store.updateProfile {
-        $0.gender = gender
-        $0.heightCM = heightCM.rounded(); $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = metric ? "kg" : "lb"
-      }
+    if step == .gender { guard gender != nil else { return }; store.updateProfile { $0.gender = gender } }
+    if step == .height { store.updateProfile { $0.heightCM = heightCM.rounded() } }
+    if step == .weight {
+      store.updateProfile { $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = weightUnit == 0 ? "kg" : "lb" }
     }
     if step == .phoneMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
-    if step == .reveal { update { estimate.write(into: &$0) } }
     next()
   }
   private func next() {
@@ -400,7 +404,7 @@ struct OnboardingView: View {
     saveApps()
     store.updateProfile { $0.focusEnabled = true }
     locking = true
-    let wait = reduceMotion ? 0.25 : 0.08 * Double(apps.count) + 0.45
+    let wait = reduceMotion ? 0.25 : 0.14 * Double(apps.count) + 0.7
     Task { @MainActor in
       try? await Task.sleep(for: .seconds(wait))
       JourneyHaptic.play(.success, store.profile)
@@ -409,11 +413,22 @@ struct OnboardingView: View {
     }
   }
   private func move(_ next: OnboardingStep) {
-    ready = reduceMotion || !next.animated
-    JourneyHaptic.play(.light, store.profile)
-    withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .smooth(duration: 0.32)) {
-      store.updateProfile { $0.onboardingStepID = next.rawValue; $0.onboardingStoryStage = 0 }
-      prepare()
+    guard !moving else { return }
+    moving = true
+    JourneyHaptic.play(.soft, store.profile, intensity: 0.55)
+    let out = reduceMotion ? 0.1 : 0.18
+    stageLeaving = next.stage != step.stage
+    withAnimation(.easeIn(duration: out)) { shown = false }
+    Task { @MainActor in
+      try? await Task.sleep(for: .seconds(out))
+      // Swap while nothing changing is visible. Views keep their own `.animation(value:)` morphs.
+      withTransaction(Transaction(animation: nil)) {
+        ready = reduceMotion || !next.animated
+        store.updateProfile { $0.onboardingStepID = next.rawValue; $0.onboardingStoryStage = 0 }
+        prepare()
+      }
+      withAnimation(.easeOut(duration: reduceMotion ? 0.15 : 0.35)) { shown = true }
+      moving = false
     }
   }
   private func update(_ body: (inout RoutineBaseline) -> Void) {

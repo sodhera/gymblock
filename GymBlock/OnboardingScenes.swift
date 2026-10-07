@@ -49,8 +49,7 @@ struct PingCard: View {
         Text(store.t(ping.text)).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
       }
     }.padding(.horizontal, 14).padding(.vertical, 12)
-      .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white.opacity(0.08)))
-      .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.08)))
+      .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
   }
 }
 
@@ -69,12 +68,12 @@ struct NotificationStage: View {
         ForEach(Array(Ping.all.prefix(shown).reversed())) { ping in
           PingCard(ping: ping)
             .offset(x: cleared ? 420 : 0).opacity(cleared ? 0 : 1)
-            .animation(.smooth(duration: 0.4).delay(cleared ? Double(ping.id) * 0.05 : 0), value: cleared)
+            .animation(.smooth(duration: 0.6).delay(cleared ? Double(ping.id) * 0.08 : 0), value: cleared)
             .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
         }
       }.frame(maxWidth: 360).frame(maxHeight: .infinity)
       VStack(spacing: 14) {
-        Image(systemName: "lock.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(.white)
+        Image(systemName: "lock.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(JourneyColor.onAccent)
           .frame(width: 72, height: 72).background(Circle().fill(JourneyColor.accent))
           .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.28), .clear], center: .center, startRadius: 0, endRadius: 110)).frame(width: 220, height: 220))
         Text(store.t("Apps locked while you train")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
@@ -87,12 +86,12 @@ struct NotificationStage: View {
   private func play() async {
     let reduced = JourneyMotion.reduced(systemReduceMotion)
     if awake {
-      withAnimation(.smooth(duration: 0.3)) { locked = false; cleared = false; shown = 0 }
+      withAnimation(.smooth(duration: 0.4)) { locked = false; cleared = false; shown = 0 }
       if reduced { shown = 3; return }
       for i in 0..<3 {
-        guard await pause(i == 0 ? 0.35 : 0.8) else { return }
-        withAnimation(.spring(duration: 0.45, bounce: 0.22)) { shown = i + 1 }
-        JourneyHaptic.play(.light, store.profile)
+        guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
+        withAnimation(JourneyMotion.gentle) { shown = i + 1 }
+        JourneyHaptic.notification(store.profile)
       }
       return
     }
@@ -100,106 +99,108 @@ struct NotificationStage: View {
     withTransaction(t) { shown = 0; cleared = false; locked = false }
     if reduced { locked = true; done(); return }
     for i in 0..<Ping.all.count {
-      guard await pause(i == 0 ? 0.3 : 0.32) else { return }
-      withAnimation(.spring(duration: 0.45, bounce: 0.22)) { shown = i + 1 }
-      JourneyHaptic.play(.light, store.profile)
+      guard await pause(i == 0 ? JourneyMotion.settle + 0.15 : 0.5) else { return }
+      withAnimation(JourneyMotion.gentle) { shown = i + 1 }
+      JourneyHaptic.notification(store.profile)
     }
-    guard await pause(0.6) else { return }
+    guard await pause(0.9) else { return }
     cleared = true
+    JourneyHaptic.play(.soft, store.profile, intensity: 0.7)
+    guard await pause(0.6) else { return }
+    withAnimation(.spring(duration: 0.7, bounce: 0.18)) { locked = true }
     JourneyHaptic.play(.rigid, store.profile)
-    guard await pause(0.45) else { return }
-    withAnimation(.spring(duration: 0.45, bounce: 0.3)) { locked = true }
+    guard await pause(0.12) else { return }
     JourneyHaptic.play(.success, store.profile)
-    guard await pause(0.25) else { return }
+    guard await pause(0.35) else { return }
     done()
   }
 }
 
 // MARK: - Your phone time
 
-/// One segment per rest; the filled ring is the phone time.
-struct RestRing: View, Animatable {
-  var rests: Int
-  var fill: Double
-  var animatableData: Double { get { fill } set { fill = newValue } }
+/// A whole workout as one ring: the red arc is time on the phone, the white arc is training.
+struct SplitRing: View, Animatable {
+  var phone: Double
+  var training: Double
+  var animatableData: AnimatablePair<Double, Double> {
+    get { AnimatablePair(phone, training) }
+    set { phone = newValue.first; training = newValue.second }
+  }
   var body: some View {
-    Canvas { c, size in
-      let n = max(1, rests)
-      let r = min(size.width, size.height) / 2 - 7
-      let center = CGPoint(x: size.width / 2, y: size.height / 2)
-      let gap = n > 60 ? 0 : min(6.0, 140.0 / Double(n))
-      let span = 360.0 / Double(n)
-      let lit = Int((fill * Double(n)).rounded(.down))
-      for i in 0..<n {
-        let start = -90 + Double(i) * span + gap / 2
-        var arc = Path()
-        arc.addArc(center: center, radius: r, startAngle: .degrees(start), endAngle: .degrees(start + span - gap), clockwise: false)
-        c.stroke(arc, with: .color(i < lit ? JourneyColor.accent : Color.white.opacity(0.09)),
-                 style: StrokeStyle(lineWidth: 12, lineCap: n > 60 ? .butt : .round))
-      }
+    ZStack {
+      Circle().stroke(Color.white.opacity(0.08), lineWidth: 16)
+      Circle().trim(from: 0, to: max(0, phone - 0.004))
+        .stroke(JourneyColor.signalRed, style: StrokeStyle(lineWidth: 16, lineCap: .butt))
+        .rotationEffect(.degrees(-90))
+      Circle().trim(from: min(1, phone + 0.004), to: min(1, phone + training))
+        .stroke(Color.white.opacity(0.9), style: StrokeStyle(lineWidth: 16, lineCap: .butt))
+        .rotationEffect(.degrees(-90))
     }
   }
 }
 
+/// Phone time against training time, for an assumed typical workout.
 struct RevealStage: View {
-  @Binding var estimate: GymTimeEstimate
+  let estimate: GymTimeEstimate
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-  @State private var fill = 0.0
+  @State private var phone = 0.0
+  @State private var training = 0.0
   @State private var counted = 0.0
+  @State private var legend = false
   var body: some View {
-    VStack(spacing: 0) {
+    VStack(spacing: 24) {
+      Spacer(minLength: 0)
       ZStack {
-        RestRing(rests: estimate.rests, fill: estimate.minutesPerRest > 0 ? fill : 0)
-          .animation(.snappy(duration: 0.3), value: estimate.minutesPerRest > 0)
-        VStack(spacing: 0) {
+        SplitRing(phone: phone, training: training)
+        VStack(spacing: 2) {
           CountingText(value: counted) { "\(Int($0.rounded()))" }
-            .font(.system(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
-            .scaleEffect(1.5).padding(.vertical, 8)
-          Text(store.t("min on your phone")).font(.footnote).foregroundStyle(JourneyColor.secondary)
-          Text(store.t("every workout")).font(.footnote).foregroundStyle(JourneyColor.secondary)
+            .font(.system(size: 64, weight: .bold, design: .default)).monospacedDigit()
+            .foregroundStyle(JourneyColor.text).frame(minWidth: 120)
+          Text(store.t("min on your phone")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
         }
-      }.frame(maxWidth: 210, maxHeight: 210).aspectRatio(1, contentMode: .fit)
+      }.frame(width: 236, height: 236)
         .accessibilityElement(children: .ignore).accessibilityIdentifier("reveal.phone")
-        .accessibilityLabel("\(Int(estimate.phoneMinutes.rounded())) " + store.t("min on your phone") + ", " + store.t("every workout"))
-      Text("\(estimate.rests) " + store.t("rests") + " × " + JourneyFormat.number(estimate.minutesPerRest) + " " + store.t("min"))
-        .font(.subheadline.weight(.medium)).foregroundStyle(JourneyColor.secondary).monospacedDigit()
-        .contentTransition(.numericText()).padding(.top, 10).accessibilityIdentifier("reveal.math")
-      Spacer(minLength: 14)
-      VStack(spacing: 0) {
-        row(store.t("Exercises per workout"), "\(estimate.exercises)", id: "reveal.exercises",
-            down: estimate.exercises > 1, up: estimate.exercises < 15) { estimate.exercises += $0 }
-        Divider().overlay(JourneyColor.hairline)
-        row(store.t("Sets per exercise"), "\(estimate.sets)", id: "reveal.sets",
-            down: estimate.sets > 1, up: estimate.sets < 10) { estimate.sets += $0 }
-        Divider().overlay(JourneyColor.hairline)
-        row(store.t("Phone time per rest"), JourneyFormat.number(estimate.minutesPerRest) + " " + store.t("min"), id: "reveal.minutes",
-            down: estimate.minutesPerRest > 0, up: estimate.minutesPerRest < 10) { estimate.minutesPerRest += 0.5 * Double($0) }
-        Divider().overlay(JourneyColor.hairline)
-        row(store.t("Workouts per week"), "\(estimate.days)", id: "reveal.days",
-            down: estimate.days > 1, up: estimate.days < 7) { estimate.days += $0 }
-      }
+        .accessibilityLabel("\(Int(estimate.phoneMinutes.rounded())) " + store.t("min on your phone") + ", "
+          + "\(Int(estimate.trainingMinutes.rounded())) " + store.t("min training"))
+      HStack(spacing: 0) {
+        legendItem(JourneyColor.signalRed, store.t("On your phone"), estimate.phoneMinutes, id: "reveal.legend.phone")
+        Rectangle().fill(JourneyColor.hairline).frame(width: 1, height: 40)
+        legendItem(.white, store.t("Training"), estimate.trainingMinutes, id: "reveal.legend.training")
+      }.padding(.vertical, 14).frame(maxWidth: 340)
+        .journeyGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .opacity(legend ? 1 : 0).offset(y: legend ? 0 : 10)
+      Spacer(minLength: 0)
     }
-    .onChange(of: estimate.phoneMinutes) { _, value in withAnimation(.snappy(duration: 0.3)) { counted = value } }
     .task { await play() }
   }
-  private func row(_ label: String, _ value: String, id: String, down: Bool, up: Bool, _ apply: @escaping (Int) -> Void) -> some View {
-    JourneyStepper(label: label, value: value, id: id, canDecrease: down, canIncrease: up) { delta in
-      withAnimation(.snappy(duration: 0.25)) { apply(delta) }
-      JourneyHaptic.play(.selection, store.profile)
-    }
+  private func legendItem(_ color: Color, _ label: String, _ minutes: Double, id: String) -> some View {
+    VStack(spacing: 4) {
+      HStack(spacing: 6) {
+        Circle().fill(color).frame(width: 8, height: 8)
+        Text(label).font(.footnote).foregroundStyle(JourneyColor.secondary)
+      }
+      Text("\(Int(minutes.rounded())) " + store.t("min")).font(.system(.title3, weight: .semibold)).monospacedDigit()
+        .foregroundStyle(JourneyColor.text)
+    }.frame(maxWidth: .infinity).accessibilityElement(children: .combine).accessibilityIdentifier(id)
   }
   private func play() async {
-    if JourneyMotion.reduced(systemReduceMotion) { fill = 1; counted = estimate.phoneMinutes; done(); return }
-    guard await pause(0.2) else { return }
-    let duration = 1.0
-    withAnimation(.easeOut(duration: duration)) { fill = 1; counted = estimate.phoneMinutes }
-    let ticks = min(estimate.rests, 18)
-    for _ in 0..<ticks {
-      guard await pause(duration / Double(max(1, ticks))) else { return }
-      JourneyHaptic.play(.selection, store.profile)
+    let p = estimate.phoneShare, t = 1 - estimate.phoneShare
+    if JourneyMotion.reduced(systemReduceMotion) {
+      phone = p; training = t; counted = estimate.phoneMinutes; legend = true; done(); return
     }
+    guard await pause(JourneyMotion.settle + 0.1) else { return }
+    let fill = 1.6 * max(0.3, p)
+    withAnimation(.easeInOut(duration: fill)) { phone = p; counted = estimate.phoneMinutes }
+    await JourneyHaptic.crescendo(store.profile, count: 14, duration: fill)
+    JourneyHaptic.land(store.profile)
+    guard await pause(0.25) else { return }
+    withAnimation(.easeOut(duration: 0.7)) { training = t }
+    JourneyHaptic.play(.soft, store.profile, intensity: 0.6)
+    guard await pause(0.5) else { return }
+    withAnimation(JourneyMotion.gentle) { legend = true }
+    guard await pause(0.4) else { return }
     done()
   }
 }
@@ -256,16 +257,14 @@ struct DaysStage: View {
   }
   private func play() async {
     if JourneyMotion.reduced(systemReduceMotion) { lit = Double(dots); meaning = true; done(); return }
-    guard await pause(0.2) else { return }
-    let duration = 1.3
-    withAnimation(.easeIn(duration: duration)) { lit = Double(dots) }
-    for _ in 0..<12 {
-      guard await pause(duration / 12) else { return }
-      JourneyHaptic.play(.selection, store.profile)
-    }
-    withAnimation(.smooth(duration: 0.35)) { meaning = true }
-    JourneyHaptic.play(.soft, store.profile)
-    guard await pause(0.3) else { return }
+    guard await pause(JourneyMotion.settle + 0.1) else { return }
+    let duration = 1.8
+    withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
+    await JourneyHaptic.crescendo(store.profile, count: 16, duration: duration)
+    if Task.isCancelled { return }
+    JourneyHaptic.land(store.profile)
+    withAnimation(JourneyMotion.gentle) { meaning = true }
+    guard await pause(0.5) else { return }
     done()
   }
 }
@@ -334,7 +333,7 @@ struct MindStage: View {
         ArmView(curl: curl, warmth: warmth).frame(width: b.len(168), height: b.len(168)).position(b.p(150, 276))
       }
     }
-    .animation(.smooth(duration: 0.45), value: focused)
+    .animation(.smooth(duration: 0.8), value: focused)
     .accessibilityElement().accessibilityIdentifier("journey.mindMuscle")
     .accessibilityLabel(store.t(focused
       ? "With the phone away, each signal reaches the arm and it flexes."
@@ -379,16 +378,16 @@ struct MindStage: View {
       if reduced { done(); return }
       withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) { flow = -9 }
       for k in 0..<2 {
-        guard await pause(k == 0 ? 0.3 : 0.55) else { return }
+        guard await pause(k == 0 ? JourneyMotion.settle + 0.2 : 0.8) else { return }
         pulse = 0; pulseAlpha = 1
-        withAnimation(.easeOut(duration: 0.55)) { pulse = 0.42 }
-        withAnimation(.easeIn(duration: 0.25).delay(0.35)) { pulseAlpha = 0 }
-        guard await pause(0.5) else { return }
-        JourneyHaptic.play(.light, store.profile)
-        withAnimation(.easeInOut(duration: 0.18)) { curl = 0.28 }
-        withAnimation(.easeInOut(duration: 0.3).delay(0.18)) { curl = 0.15 }
+        withAnimation(.easeOut(duration: 0.8)) { pulse = 0.42 }
+        withAnimation(.easeIn(duration: 0.35).delay(0.5)) { pulseAlpha = 0 }
+        guard await pause(0.75) else { return }
+        JourneyHaptic.play(.soft, store.profile, intensity: 0.35)
+        withAnimation(.easeInOut(duration: 0.3)) { curl = 0.26 }
+        withAnimation(.easeInOut(duration: 0.45).delay(0.3)) { curl = 0.15 }
       }
-      guard await pause(0.3) else { return }
+      guard await pause(0.5) else { return }
       done()
     } else {
       var t = Transaction(); t.disablesAnimations = true
@@ -396,19 +395,19 @@ struct MindStage: View {
       if reduced { curl = 1; warmth = 1; lit = true; done(); return }
       lit = false
       for k in 0..<3 {
-        guard await pause(k == 0 ? 0.35 : 0.3) else { return }
+        guard await pause(k == 0 ? JourneyMotion.settle + 0.25 : 0.45) else { return }
         withTransaction(t) { pulse = 0 }
         pulseAlpha = 1
-        withAnimation(.easeIn(duration: 0.34)) { pulse = 1.22 }
-        guard await pause(0.28) else { return }
-        JourneyHaptic.play(.soft, store.profile)
-        withAnimation(.spring(duration: 0.26, bounce: 0.25)) { curl = 1; warmth = min(1, 0.4 + 0.3 * Double(k)) }
-        if k < 2 { withAnimation(.easeInOut(duration: 0.3).delay(0.2)) { curl = 0.35 } }
+        withAnimation(.easeIn(duration: 0.5)) { pulse = 1.22 }
+        guard await pause(0.42) else { return }
+        JourneyHaptic.play(.medium, store.profile, intensity: 0.5 + 0.2 * CGFloat(k))
+        withAnimation(.spring(duration: 0.45, bounce: 0.1)) { curl = 1; warmth = min(1, 0.4 + 0.3 * Double(k)) }
+        if k < 2 { withAnimation(.easeInOut(duration: 0.45).delay(0.3)) { curl = 0.35 } }
       }
-      guard await pause(0.15) else { return }
-      withAnimation(.smooth(duration: 0.5)) { lit = true; warmth = 1 }
-      JourneyHaptic.play(.success, store.profile)
       guard await pause(0.3) else { return }
+      withAnimation(.smooth(duration: 0.9)) { lit = true; warmth = 1 }
+      JourneyHaptic.play(.success, store.profile)
+      guard await pause(0.5) else { return }
       done()
     }
   }
@@ -540,27 +539,27 @@ struct RestStage: View {
       progress = Double(pts.count - 1); reached = timed; finished = true
       curl = timed ? 1 : 0.2; warmth = timed ? 1 : 0.02; done(); return
     }
-    guard await pause(0.25) else { return }
+    guard await pause(JourneyMotion.settle + 0.15) else { return }
     for i in 1..<pts.count {
       let rising = pts[i].y > pts[i - 1].y + 0.001
       let holding = pts[i].y >= 0.999 && pts[i - 1].y >= 0.999
-      let duration = rising ? 0.22 : holding ? 0.35 : (timed ? 0.3 : 0.6)
+      let duration = rising ? 0.34 : holding ? 0.5 : (timed ? 0.45 : 0.85)
       withAnimation(.easeInOut(duration: duration)) { progress = Double(i) }
       if rising {
-        withAnimation(.spring(duration: 0.25, bounce: 0.2)) { curl = 1; warmth = pts[i].y }
-        JourneyHaptic.play(.soft, store.profile)
+        withAnimation(.spring(duration: 0.4, bounce: 0.1)) { curl = 1; warmth = pts[i].y }
+        JourneyHaptic.play(.medium, store.profile, intensity: 0.35 + 0.6 * pts[i].y)
       } else if !holding {
         withAnimation(.easeInOut(duration: duration)) { curl = 0.3; warmth = pts[i].y }
       }
       guard await pause(duration) else { return }
       if pts[i].y >= 0.999 && !reached {
-        withAnimation(.spring(duration: 0.4, bounce: 0.3)) { reached = true }
-        JourneyHaptic.play(.success, store.profile)
+        withAnimation(.spring(duration: 0.6, bounce: 0.15)) { reached = true }
+        JourneyHaptic.land(store.profile)
       }
     }
-    withAnimation(.smooth(duration: 0.3)) { finished = true }
-    if !timed { JourneyHaptic.play(.rigid, store.profile) }
-    guard await pause(0.2) else { return }
+    withAnimation(.smooth(duration: 0.5)) { finished = true }
+    JourneyHaptic.play(timed ? .success : .soft, store.profile, intensity: 0.5)
+    guard await pause(0.4) else { return }
     done()
   }
 }
@@ -617,7 +616,7 @@ struct LogStage: View {
             .frame(width: b.len(last ? 12 : 9), height: b.len(last ? 12 : 9))
             .scaleEffect(remembered && line >= Double(i) / 4 - 0.01 ? 1 : 0.01)
             .position(p)
-            .animation(.spring(duration: 0.3, bounce: 0.35), value: line)
+            .animation(.spring(duration: 0.45, bounce: 0.15), value: line)
           value(i, b)
           Text(store.t(["W1", "W2", "W3", "W4", "Today"][i])).font(.caption2).foregroundStyle(JourneyColor.secondary)
             .position(b.p(34 + CGFloat(i) * 63, 240))
@@ -642,7 +641,7 @@ struct LogStage: View {
     }.font(.system(remembered ? .subheadline : .title, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
       .opacity(remembered || i < revealed ? 1 : 0)
       .position(x: logPoint(i, b).x, y: y)
-      .animation(.spring(duration: 0.4, bounce: 0.18).delay(remembered ? Double(i) * 0.04 : 0), value: remembered)
+      .animation(.spring(duration: 0.6, bounce: 0.1).delay(remembered ? Double(i) * 0.06 : 0), value: remembered)
   }
   private func play() async {
     let reduced = JourneyMotion.reduced(systemReduceMotion)
@@ -651,28 +650,29 @@ struct LogStage: View {
       if reduced { revealed = 5; forgotten = 4; done(); return }
       revealed = 0; forgotten = 0
       for i in 0..<5 {
-        guard await pause(i == 0 ? 0.2 : 0.4) else { return }
-        withAnimation(.smooth(duration: 0.3)) { revealed = i + 1 }
-        JourneyHaptic.play(.selection, store.profile)
+        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.55) else { return }
+        withAnimation(.smooth(duration: 0.45)) { revealed = i + 1 }
+        JourneyHaptic.play(.light, store.profile, intensity: 0.5)
         if i > 0 {
-          guard await pause(0.18) else { return }
-          withAnimation(.smooth(duration: 0.4)) { forgotten = i }
+          guard await pause(0.25) else { return }
+          withAnimation(.smooth(duration: 0.6)) { forgotten = i }
+          JourneyHaptic.play(.soft, store.profile, intensity: 0.25)
         }
       }
-      guard await pause(0.3) else { return }
+      guard await pause(0.5) else { return }
       done()
     } else {
       if reduced { line = 1; best = true; done(); return }
-      guard await pause(0.35) else { return }
-      withAnimation(.easeInOut(duration: 0.8)) { line = 1 }
-      for _ in 0..<4 {
-        guard await pause(0.2) else { return }
-        JourneyHaptic.play(.selection, store.profile)
+      guard await pause(JourneyMotion.settle + 0.15) else { return }
+      withAnimation(.easeInOut(duration: 1.2)) { line = 1 }
+      for k in 0..<4 {
+        guard await pause(0.3) else { return }
+        JourneyHaptic.play(.light, store.profile, intensity: 0.4 + 0.15 * CGFloat(k))
       }
       guard await pause(0.05) else { return }
-      withAnimation(.spring(duration: 0.4, bounce: 0.3)) { best = true }
-      JourneyHaptic.play(.success, store.profile)
-      guard await pause(0.25) else { return }
+      withAnimation(.spring(duration: 0.6, bounce: 0.15)) { best = true }
+      JourneyHaptic.land(store.profile)
+      guard await pause(0.45) else { return }
       done()
     }
   }
@@ -708,8 +708,8 @@ struct BlockStage: View {
     .task(id: locking) {
       guard locking else { stamped = 0; return }
       for i in 0..<order.count {
-        guard await pause(i == 0 ? 0.03 : 0.08) else { return }
-        withAnimation(.spring(duration: 0.4, bounce: 0.4)) { stamped = i + 1 }
+        guard await pause(i == 0 ? 0.05 : 0.14) else { return }
+        withAnimation(.spring(duration: 0.5, bounce: 0.25)) { stamped = i + 1 }
         JourneyHaptic.play(.rigid, store.profile)
       }
     }
@@ -719,17 +719,17 @@ struct BlockStage: View {
     let locked = (order.firstIndex(of: app.name).map { $0 < stamped }) ?? false
     return Button {
       guard !locking else { return }
-      withAnimation(.smooth(duration: 0.25)) { if on { selected.remove(app.name) } else { selected.insert(app.name) } }
+      withAnimation(JourneyMotion.gentle) { if on { selected.remove(app.name) } else { selected.insert(app.name) } }
       JourneyHaptic.play(.selection, store.profile)
     } label: {
       VStack(spacing: 10) {
         Image(systemName: app.symbol).font(.system(.title2, weight: .medium))
           .foregroundStyle(on ? JourneyColor.text : JourneyColor.tertiary)
           .frame(width: 68, height: 68)
-          .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(on ? Color.white.opacity(0.1) : JourneyColor.fill))
-          .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(on ? Color.white.opacity(0.6) : JourneyColor.hairline, lineWidth: on ? 1.5 : 1))
+          .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous), tint: on ? Color.white.opacity(0.16) : nil, interactive: true)
+          .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color.white.opacity(on ? 0.55 : 0), lineWidth: 1.5))
           .overlay(alignment: .topTrailing) {
-            Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+            Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(JourneyColor.onAccent)
               .frame(width: 24, height: 24).background(Circle().fill(JourneyColor.accent))
               .offset(x: 8, y: -8).scaleEffect(locked ? 1 : 0.3).opacity(locked ? 1 : 0)
           }
@@ -782,8 +782,8 @@ struct HoldButton: View {
     GeometryReader { g in
       ZStack(alignment: .leading) {
         Capsule().fill(Color.white)
-        label(.black)
-        Capsule().fill(JourneyColor.accent).frame(width: g.size.width * (committed ? 1 : fill))
+        label(JourneyColor.onButton)
+        Capsule().fill(JourneyColor.commitFill).frame(width: g.size.width * (committed ? 1 : fill))
         label(.white).mask(alignment: .leading) { Rectangle().frame(width: g.size.width * (committed ? 1 : fill)) }
       }
     }.frame(height: 56).clipShape(Capsule())
@@ -846,7 +846,8 @@ struct OfferStage: View {
         row("lock", blocking ? store.t("Blocks") + " " + list : store.t("Blocks the apps you choose"))
         row("timer", store.t("Times every rest"))
         row("chart.line.uptrend.xyaxis", store.t("Shows your progress"))
-      }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: 300, alignment: .leading)
+      }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+        .padding(22).journeyGlass(RoundedRectangle(cornerRadius: 26, style: .continuous))
         .accessibilityIdentifier("journey.recap")
       if let product = subscription.product {
         VStack(spacing: 4) {
@@ -864,7 +865,7 @@ struct OfferStage: View {
   }
   private func row(_ symbol: String, _ text: String) -> some View {
     HStack(spacing: 16) {
-      Image(systemName: symbol).font(.system(.title3, weight: .regular)).foregroundStyle(JourneyColor.secondary)
+      Image(systemName: symbol).font(.system(.title3, weight: .regular)).foregroundStyle(JourneyColor.text)
         .frame(width: 30).accessibilityHidden(true)
       Text(text).font(.body).foregroundStyle(JourneyColor.text).fixedSize(horizontal: false, vertical: true)
     }
@@ -889,66 +890,51 @@ struct NameStage: View {
         .font(.system(.largeTitle, weight: .semibold)).multilineTextAlignment(.center).foregroundStyle(JourneyColor.text)
         .textContentType(.givenName).textInputAutocapitalization(.words).autocorrectionDisabled()
         .submitLabel(.continue).focused($focused).onSubmit(submit).tint(JourneyColor.accent)
+        .padding(.vertical, 18).padding(.horizontal, 20)
+        .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityIdentifier("profile.name")
-      Rectangle().fill(JourneyColor.hairline).frame(height: 1).padding(.horizontal, 48)
       Spacer(minLength: 0)
     }
-    .task { try? await Task.sleep(for: .milliseconds(250)); focused = true }
+    .task { try? await Task.sleep(for: .seconds(JourneyMotion.settle)); focused = true }
   }
 }
 
-struct BodyStage: View {
-  @Binding var gender: String?
-  @Binding var metric: Bool
-  @Binding var heightCM: Double
-  @Binding var weightKG: Double
-  let touched: () -> Void
+/// Gender: the options are the content, so they sit in the middle of the page.
+struct GenderStage: View {
+  let gender: String?
+  let choose: (String) -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    VStack(spacing: 20) {
+    JourneyGlassGroup(spacing: 12) {
+      VStack(spacing: 12) {
+        ForEach([("Male", "male"), ("Female", "female"), ("Other", "other")], id: \.1) { title, value in
+          JourneyOption(title: store.t(title), selected: gender == value, id: "profile.gender." + value) { choose(value) }
+        }
+      }
+    }.frame(maxHeight: .infinity)
+  }
+}
+
+/// One big wheel and a unit switch.
+struct MeasureStage: View {
+  let values: [Double]
+  let unit: String
+  let id: String
+  @Binding var value: Double
+  var format: ((Double) -> String)? = nil
+  let units: [String]
+  @Binding var unitIndex: Int
+  @EnvironmentObject private var store: GymStore
+  var body: some View {
+    VStack(spacing: 26) {
       Spacer(minLength: 0)
-      HStack(spacing: 8) {
-        chip("Male", "male"); chip("Female", "female"); chip("Other", "other")
-      }
-      HStack(spacing: 0) {
-        column(store.t("Height")) {
-          JourneyWheel(values: metric ? (120...220).map(Double.init) : (48...90).map(Double.init),
-                       unit: metric ? "cm" : "", id: "profile.height",
-                       value: Binding(get: { metric ? heightCM.rounded() : min(90, max(48, (heightCM / 2.54).rounded())) },
-                                      set: { heightCM = metric ? $0 : $0 * 2.54; touched() }),
-                       format: metric ? nil : BodyUnits.feet)
-        }
-        column(store.t("Weight")) {
-          JourneyWheel(values: metric ? (30...200).map(Double.init) : (66...440).map(Double.init),
-                       unit: metric ? "kg" : "lb", id: "profile.weight",
-                       value: Binding(get: { metric ? weightKG.rounded() : min(440, max(66, (weightKG * 2.20462).rounded())) },
-                                      set: { weightKG = metric ? $0 : $0 / 2.20462; touched() }))
-        }
-      }
-      Picker(store.t("Units"), selection: $metric) {
-        Text("cm · kg").tag(true); Text("ft · lb").tag(false)
-      }.pickerStyle(.segmented).frame(maxWidth: 200).accessibilityIdentifier("profile.units")
+      JourneyWheel(values: values, unit: unit, id: id, value: $value, format: format)
+        .frame(height: 230).clipped()
+      Picker(store.t("Units"), selection: $unitIndex) {
+        ForEach(units.indices, id: \.self) { Text(units[$0]).tag($0) }
+      }.pickerStyle(.segmented).frame(maxWidth: 220).accessibilityIdentifier(id + ".units")
       Spacer(minLength: 0)
     }
-  }
-  private func chip(_ title: String, _ value: String) -> some View {
-    let on = gender == value
-    return Button {
-      withAnimation(.snappy(duration: 0.25)) { gender = value }
-      JourneyHaptic.play(.selection, store.profile)
-    } label: {
-      Text(store.t(title)).font(.body.weight(.medium)).foregroundStyle(on ? Color.black : JourneyColor.text)
-        .frame(maxWidth: .infinity, minHeight: 46)
-        .background(Capsule().fill(on ? Color.white : JourneyColor.fill))
-        .overlay(Capsule().strokeBorder(on ? Color.clear : JourneyColor.hairline))
-    }.buttonStyle(JourneyPressStyle())
-      .accessibilityIdentifier("profile.gender." + value).accessibilityAddTraits(on ? .isSelected : [])
-  }
-  private func column<Content: View>(_ title: String, @ViewBuilder _ wheel: () -> Content) -> some View {
-    VStack(spacing: 4) {
-      Text(title).font(.subheadline.weight(.medium)).foregroundStyle(JourneyColor.secondary)
-      wheel().frame(height: 190).clipped()
-    }.frame(maxWidth: .infinity)
   }
 }
 
@@ -976,7 +962,7 @@ struct AlertStage: View {
         }
       }.frame(width: 170, height: 170)
       HStack(spacing: 12) {
-        Image(systemName: "bell.fill").font(.system(size: 16, weight: .semibold)).foregroundStyle(.white)
+        Image(systemName: "bell.fill").font(.system(size: 16, weight: .semibold)).foregroundStyle(JourneyColor.onAccent)
           .frame(width: 38, height: 38).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.accent))
         VStack(alignment: .leading, spacing: 2) {
           HStack {
@@ -987,8 +973,7 @@ struct AlertStage: View {
           Text(store.t("Rest’s up. Time for your next set.")).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
         }
       }.padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: 360)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Color.white.opacity(0.1)))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color.white.opacity(0.1)))
+        .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .offset(y: arrived ? 0 : -24).opacity(arrived ? 1 : 0)
         .accessibilityElement(children: .combine).accessibilityIdentifier("alerts.preview")
       Spacer(minLength: 0)
@@ -997,14 +982,14 @@ struct AlertStage: View {
   }
   private func play() async {
     if JourneyMotion.reduced(systemReduceMotion) { ring = 1; seconds = 90; arrived = true; done(); return }
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(for: .seconds(JourneyMotion.settle + 0.1))
     guard !Task.isCancelled else { return }
-    withAnimation(.easeInOut(duration: 1.2)) { ring = 1; seconds = 90 }
-    try? await Task.sleep(for: .seconds(1.2))
+    withAnimation(.easeInOut(duration: 1.7)) { ring = 1; seconds = 90 }
+    await JourneyHaptic.crescendo(store.profile, count: 8, duration: 1.7)
     guard !Task.isCancelled else { return }
-    withAnimation(.spring(duration: 0.45, bounce: 0.3)) { arrived = true }
-    JourneyHaptic.play(.success, store.profile)
-    try? await Task.sleep(for: .seconds(0.3))
+    withAnimation(JourneyMotion.gentle) { arrived = true }
+    JourneyHaptic.notification(store.profile)
+    try? await Task.sleep(for: .seconds(0.5))
     guard !Task.isCancelled else { return }
     done()
   }

@@ -29,15 +29,25 @@ final class JourneyV5UITests: XCTestCase {
     wait(for: [delay], timeout: seconds + 2)
   }
 
-  /// Name → gender, height and weight on one page.
+  /// Name → gender → (lands on) height. Choosing never advances on its own.
   private func profile(_ name: String = "Sam", gender: String = "male") {
     page("What should we call you?")
     let field = app.textFields["profile.name"]
     XCTAssertTrue(field.waitForExistence(timeout: 6))
     XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)  // A name is required.
     field.typeText(name + "\n")
-    page("Tell us about you."); tap("profile.gender." + gender)
+    page("What’s your gender?")
+    XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)
+    tap("profile.gender." + gender)
     XCTAssertTrue(app.buttons["profile.gender." + gender].isSelected)
+    page("What’s your gender?")  // Still here: selecting only selects.
+    next(); page("How tall are you?")
+  }
+  /// Height → weight → the phone question, accepting the defaults.
+  private func body() { next(); page("How much do you weigh?"); next(); page("Do you use your phone between sets?") }
+  private func answer(_ id: String) {
+    tap(id); XCTAssertTrue(app.buttons[id].isSelected)
+    page("Do you use your phone between sets?"); next()
   }
   /// Rest alerts: the system prompt appears once per simulator; allow it if it does.
   private func allowAlerts() {
@@ -49,22 +59,25 @@ final class JourneyV5UITests: XCTestCase {
   func testFullJourneyEstimatesFromMinutesSetsUpBlockingAndEndsOnOffer() {
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8)); snap("01-welcome"); next()
     profile("Sirish")
-    XCTAssertTrue(app.pickerWheels["178 cm"].waitForExistence(timeout: 4))  // Male default.
-    app.segmentedControls.buttons["ft · lb"].tap()
-    XCTAssertTrue(app.pickerWheels["5′ 10″"].waitForExistence(timeout: 4)); snap("04-body"); next()
-    page("Do you use your phone between sets?"); snap("02-scrolling"); tap("habit.scrolling.yes")
+    if app.pickerWheels["178 cm"].waitForExistence(timeout: 4) {  // Male default.
+      app.segmentedControls.buttons["ft · in"].tap()
+    }
+    XCTAssertTrue(app.pickerWheels["5′ 10″"].waitForExistence(timeout: 4)); snap("04-height"); next()
+    page("How much do you weigh?")
+    XCTAssertTrue(app.pickerWheels["80 kg"].exists || app.pickerWheels["176 lb"].exists); snap("05-weight"); next()
+    page("Do you use your phone between sets?"); snap("06-scrolling"); answer("habit.scrolling.yes")
     page("Between sets, how long are you on your phone?")
     XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 6))
     app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "2 min"); snap("03-minutes"); next()
     page("Sirish, here’s your phone time.")
-    XCTAssertTrue(any("reveal.phone").label.contains("34"))
-    // A plus tap updates the estimate in place.
-    tap("reveal.sets.plus")
-    let updated = expectation(for: NSPredicate(format: "label CONTAINS %@", "46"), evaluatedWith: any("reveal.phone"))
-    wait(for: [updated], timeout: 5); snap("05-reveal")
-    next(); page("That’s 199 hours a year.")  // 46 min × 5 a week × 52.
+    // 17 rests × 2 min on the phone, against 18 sets × 40 s of training.
+    XCTAssertTrue(any("reveal.phone").label.contains("34 min on your phone"), any("reveal.phone").label)
+    XCTAssertTrue(any("reveal.phone").label.contains("12 min training"))
+    XCTAssertFalse(app.buttons["reveal.sets.plus"].exists)  // No adjusters: one plain fact.
+    snap("07-reveal")
+    next(); page("That’s 147 hours a year.")  // 34 min × 5 a week × 52.
     XCTAssertTrue(app.staticTexts["days.workouts"].waitForExistence(timeout: 4))
-    XCTAssertEqual(app.staticTexts["days.workouts"].label, "= 266 workouts"); snap("06-hours")  // 45 min each.
+    XCTAssertEqual(app.staticTexts["days.workouts"].label, "= 196 workouts"); snap("08-hours")  // 45 min each.
     next(); page("Scrolling weakens your mind-muscle connection."); snap("07-mind-a")
     next(); page("Put it away. Feel every rep."); snap("08-mind-b")
     next(); page("Scroll between sets.\nNever hit the pump.")
@@ -90,7 +103,7 @@ final class JourneyV5UITests: XCTestCase {
   }
 
   func testRarelySkipsMinutesShowsNoPhoneTimeAndBackFollowsRoute() {
-    next(); profile(); next(); tap("habit.scrolling.no")
+    next(); profile(); body(); answer("habit.scrolling.no")
     page("Sam, here’s your phone time.")
     XCTAssertTrue(any("reveal.phone").label.hasPrefix("0 min"))  // Rarely: no phone time assumed.
     XCTAssertFalse(app.staticTexts["days.workouts"].exists)  // Nothing to add up, so no days page.
@@ -101,10 +114,10 @@ final class JourneyV5UITests: XCTestCase {
   func testRelaunchResumesWithoutBypassingOffer() {
     next(); profile("Ana", gender: "female")
     XCTAssertTrue(app.pickerWheels["165 cm"].waitForExistence(timeout: 4) || app.pickerWheels["5′ 5″"].exists)
-    next(); tap("habit.scrolling.sometimes")
+    body(); answer("habit.scrolling.sometimes")
     page("Between sets, how long are you on your phone?"); next()
     page("Ana, here’s your phone time.")
-    XCTAssertTrue(any("reveal.phone").label.contains("17"))  // Sometimes defaults to 1 min per rest.
+    XCTAssertTrue(any("reveal.phone").label.contains("17 min on your phone"))  // Sometimes defaults to 1 min per rest.
     for _ in 0..<8 { next() }
     page("Block what distracts you."); tap("blocking.later")
     page("Get a buzz when rest is up."); tap("alerts.later")
@@ -123,7 +136,7 @@ final class JourneyV5UITests: XCTestCase {
     app.terminate()
     app.launchArguments = ["--ui-reset", "--ui-reduced-motion", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityM"]
     app.launch()
-    next(); profile(); snap("large-body"); next(); tap("habit.scrolling.yes"); next()
+    next(); profile(); snap("large-height"); body(); answer("habit.scrolling.yes"); next()
     page("Sam, here’s your phone time."); snap("large-reveal")
     for name in ["days", "mind-a", "mind-b", "rest-a", "rest-b", "log-a", "log-b"] { next(); snap("large-" + name) }
     next(); page("Block what distracts you."); snap("large-blocking")

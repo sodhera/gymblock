@@ -1,15 +1,5 @@
 import SwiftUI
 
-enum JourneyMotion {
-  static func reduced(_ system: Bool) -> Bool {
-    #if DEBUG
-    return system || ProcessInfo.processInfo.arguments.contains("--ui-reduced-motion")
-    #else
-    return system
-    #endif
-  }
-}
-
 /// Brain outline and folds in a 240 × 220 design space.
 enum BrainShape {
   static let size = CGSize(width: 240, height: 220)

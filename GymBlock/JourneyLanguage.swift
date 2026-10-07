@@ -222,7 +222,14 @@ extension Spanish {
   /// Onboarding V5 copy.
   static let v5: [String: String] = [
     "Stay focused.": "Mantente enfocado.",
-    "Tell us about you.": "Cuéntanos sobre ti.",
+    "min training": "min entrenando",
+    "Training": "Entrenando",
+    "On your phone": "Con el teléfono",
+    "Based on 5 workouts a week.": "Con 5 entrenamientos por semana.",
+    "A typical workout: 6 exercises × 3 sets, 2-min rests.": "Un entrenamiento típico: 6 ejercicios × 3 series, descansos de 2 min.",
+    "How much do you weigh?": "¿Cuánto pesas?",
+    "How tall are you?": "¿Cuánto mides?",
+    "What’s your gender?": "¿Cuál es tu género?",
     "Get a buzz when rest is up.": "Recibe un aviso al terminar el descanso.",
     "Change it anytime in Settings.": "Cámbialo cuando quieras en Ajustes.",
     "Rest’s up. Time for your next set.": "Descanso terminado. Siguiente serie.",

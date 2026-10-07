@@ -6,6 +6,7 @@ import UIKit
 /// animation costs one image swap plus a GPU colour multiply per frame.
 enum ArmRenderer {
   static let artwork = UIImage(named: "OnboardingArm")!
+  private static let artworkImage = UIImage(cgImage: artwork.cgImage!)
   private static let mesh = makeMesh()
 
   private static func makeMesh() -> (cells: [[CGPoint]], samples: [CGPoint]) {
@@ -92,7 +93,7 @@ enum ArmRenderer {
     }
     clip.closeSubpath(); c.addPath(clip); c.clip()
     c.concatenate(CGAffineTransform(a: A, b: B, c: C, d: D, tx: p.x - A * a.x - C * a.y, ty: p.y - B * a.x - D * a.y))
-    UIImage(cgImage: image).draw(in: CGRect(x: 0, y: 0, width: 512, height: 512))
+    artworkImage.draw(in: CGRect(x: 0, y: 0, width: 512, height: 512))
     c.restoreGState()
   }
 }
@@ -107,9 +108,21 @@ enum ArmRenderer {
   func prepare() {
     guard frames.isEmpty, !loading else { return }
     loading = true
+    let count = Self.count, side = Self.side
     Task.detached(priority: .userInitiated) {
-      let rendered = (0..<Self.count).map { ArmRenderer.render(curl: Double($0) / Double(Self.count - 1), side: Self.side) }
-      await MainActor.run { self.frames = rendered; self.loading = false }
+      let start = Date()
+      // Poses are independent: render them across all cores.
+      let lock = NSLock()
+      var rendered = [UIImage?](repeating: nil, count: count)
+      DispatchQueue.concurrentPerform(iterations: count) { i in
+        let image = ArmRenderer.render(curl: Double(i) / Double(count - 1), side: side)
+        lock.lock(); rendered[i] = image; lock.unlock()
+      }
+      let frames = rendered.compactMap { $0 }
+      #if DEBUG
+      NSLog("GymBlock arm frames: %d in %.2f s", frames.count, Date().timeIntervalSince(start))
+      #endif
+      await MainActor.run { self.frames = frames; self.loading = false }
     }
   }
 }

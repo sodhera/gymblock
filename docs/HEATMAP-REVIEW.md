@@ -1,6 +1,6 @@
 # Onboarding attention heatmap review
 
-7 Oct 2026 (re-run after fixes) · iPhone 18 Pro / iOS 27 simulator captures of all 18 onboarding states.
+7 Oct 2026 (re-run for the ember, Liquid Glass revision; brand pages were captured during a since-rejected red-background trial and are now dark) · iPhone 18 Pro / iOS 27 simulator captures of all 19 pages.
 
 **Method.** Each final-frame screenshot was run through Apple's on-device attention-based saliency model (Vision `VNGenerateAttentionBasedSaliencyImageRequest`), via [`scripts/attention-heatmap.swift`](../scripts/attention-heatmap.swift). The model predicts where people look in the first moments of seeing an image. It is a proxy, not an eye-tracking study: it is centre-biased and favours faces, objects and high contrast. It cannot see motion, so animated beats aren't captured. Treat it as a fast sanity check, then confirm with five real users.
 
@@ -8,26 +8,24 @@ Images: [`screenshots/onboarding-v5/heatmaps/`](../screenshots/onboarding-v5/hea
 
 ## Results (share of predicted attention by screen third)
 
-| Page | Peak (% down the screen) | Top | Middle | Bottom | Read |
+| Page | Peak (% down) | Top | Middle | Bottom | Read |
 |---|---|---|---|---|---|
-| Welcome (notifications) | 25 | 73 | 24 | 2 | Headline first, then the notification stack ✅ |
-| Welcome (locked) | 45 | 52 | 43 | 3 | Peak sits exactly on the red lock ✅ |
-| Name | 27 | 52 | 36 | 10 | Headline → field ✅ |
-| About you (gender + height + weight) | 45 | 38 | 51 | 9 | Fixed: replaces the empty gender page (middle 21% → 51%); attention lands on the chosen gender and the wheels ✅ |
-| Phone between sets | 41 | 50 | 43 | 5 | Headline → notifications (the subject of the question) ✅ |
-| Minutes per rest | 50 | 59 | 35 | 4 | Headline → selected value ✅ |
-| Phone time (ring) | 22 | 51 | 38 | 10 | Headline → "34" ✅; adjust rows are secondary, by design |
-| Hours a year | 70 | 36 | 42 | 21 | Peak on "= 196 workouts", the payoff ✅ |
-| Mind-muscle A | 27 | 54 | 34 | 10 | Brain dominates; the notifications (the cause) are peripheral ⚠️ |
-| Mind-muscle B | 39 | 47 | 41 | 10 | Brain → red arm ✅ |
-| Pump: never reached | 58 | 45 | 44 | 9 | Fixed: was 32 (arm); now on the chart ✅ |
-| Pump: reached | 57 | 45 | 45 | 8 | Same ✅ |
-| Memory | 19 | 53 | 40 | 5 | Fixed: the "?" row now gets attention (middle 31% → 40%) ✅ |
-| Log | 45 | 35 | 58 | 6 | Peak on the rising line ✅; the red "+5 kg" draws secondary attention |
-| Blocking | 14 | 62 | 22 | 14 | Headline; tiles get moderate attention |
-| Rest alerts (new) | 58 | 26 | 61 | 11 | Ring → notification, the thing being asked for ✅ |
-| Commit | 42 | 37 | 56 | 6 | The first pledge ✅ |
-| Offer | 44 | 34 | 54 | 11 | The first benefit row ✅ |
+| Welcome | 44 | 55 | 40 | 3 | Peak on the lock ✅ |
+| Name | 47 | 48 | 45 | 6 | On the field ✅ |
+| Gender | 14 | 64 | 31 | 4 | Headline, then the options ✅ |
+| Height | 42 | 47 | 38 | 13 | On the selected value ✅ |
+| Weight | 45 | 40 | 46 | 13 | On the selected value ✅ |
+| Phone between sets | 33 | 54 | 40 | 5 | Headline → notifications → chosen answer ✅ |
+| Minutes per rest | 44 | 60 | 34 | 4 | On the selected value ✅ |
+| Phone time vs training | 17 | 45 | 44 | 10 | Headline → "34" in the ring ✅ |
+| Hours a year | 70 | 45 | 36 | 18 | Peak on "= 196 workouts" ✅ |
+| Mind-muscle A / B | 26 / 39 | 61 / 51 | 34 / 39 | 4 / 9 | Brain, then the arm ✅ |
+| Pump A / B | 57 / 55 | 48 / 47 | 43 / 45 | 7 / 7 | On the chart ✅ |
+| Memory / Log | 19 / 44 | 50 / 36 | 43 / 58 | 6 / 5 | The "?" row / the rising line ✅ |
+| Blocking | 14 | 62 | 24 | 13 | Headline, then tiles |
+| Rest alerts | 41 | 31 | 57 | 10 | Ring → notification ✅ |
+| Commit | 42 | 39 | 55 | 5 | The first pledge ✅ |
+| Offer | 42 | 36 | 53 | 10 | The benefit card ✅ |
 
 ## What the heatmaps show
 
