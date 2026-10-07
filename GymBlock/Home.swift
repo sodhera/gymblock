@@ -149,29 +149,14 @@ struct TrainingAnswersForm: View {
   var body: some View {
     Form {
       Section {
-        number("Days / week", value: Binding(get: { draft.trainingDays.map(String.init) ?? "" }, set: { draft.trainingDays = Int($0) }))
-        number("Workout length", value: survey(.duration), unit: "min")
-        number("Reps / set", value: survey(.reps))
-        number("Sets / exercise", value: survey(.sets))
-        number("Exercises / workout", value: survey(.exercises))
+        habit("Phone between sets", value: $draft.scrollFrequency)
+        number("Minutes / rest", value: Binding(get: { draft.scrollingMinutes.map(inputNumber) ?? "" }, set: { draft.scrollingMinutes = parseNumber($0); draft.minutesPerBreak = nil }), unit: "min")
       }
       Section {
-        habit("Scrolling", value: $draft.scrollFrequency)
-        if draft.scrollFrequency != .no {
-          number("Scrolling / break", value: Binding(get: { draft.scrollingMinutes.map(inputNumber) ?? draft.minutesPerBreak.map(String.init) ?? "" }, set: { draft.scrollingMinutes = parseNumber($0); draft.minutesPerBreak = nil }), unit: "min")
-          number("Scrolling breaks", value: survey(.breaks))
-          Picker(store.t("Visits / day"), selection: Binding(get: { draft.visitsPerTrainingDay ?? 1 }, set: { draft.visitsPerTrainingDay = $0 })) {
-            Text("1").tag(1); Text(store.t("More than one")).tag(2)
-          }
-        }
-        habit("Time rests", value: $draft.restTiming)
-        Picker(store.t("Workout logging"), selection: $draft.loggingHabit) {
-          Text(store.t("Not sure")).tag(Optional<LoggingHabit>.none)
-          Text(store.t("Log and review")).tag(Optional(LoggingHabit.review))
-          Text(store.t("Log only")).tag(Optional(LoggingHabit.logOnly))
-          Text(store.t("No")).tag(Optional(LoggingHabit.neither))
-        }
-        habit("Time sets", value: $draft.setTiming)
+        number("Exercises / workout", value: survey(.exercises))
+        number("Sets / exercise", value: survey(.sets))
+        number("Reps / set", value: survey(.reps))
+        number("Days / week", value: Binding(get: { draft.trainingDays.map(String.init) ?? "" }, set: { draft.trainingDays = Int($0) }))
       }
       if error { Text(store.t("Check the entered values.")).foregroundStyle(GymColor.red) }
     }.gymPage().navigationTitle(store.t("Training answers")).navigationBarTitleDisplayMode(.inline)
@@ -185,8 +170,8 @@ struct TrainingAnswersForm: View {
               draft.exercises == nil || (1...50).contains(draft.exercises!),
               draft.sets == nil || (1...50).contains(draft.sets!),
               draft.reps.isEmpty || RoutineBaseline.repRange(draft.reps) != nil,
-              draft.scrollingMinutes == nil || (draft.scrollingMinutes!.isFinite && (0.5...600).contains(draft.scrollingMinutes!)),
-              draft.breakAssumptionValid else { error = true; return }
+              draft.scrollingMinutes == nil || (draft.scrollingMinutes!.isFinite && (0...600).contains(draft.scrollingMinutes!))
+            else { error = true; return }
             draft.scrollsBetweenSets = draft.scrollFrequency.map { $0 != .no }
             store.updateProfile { $0.baseline = draft }; dismiss()
           }
@@ -208,7 +193,7 @@ struct TrainingAnswersForm: View {
           let valid: Bool
           if text.isEmpty { valid = true }
           else if label == "Reps / set" { valid = RoutineBaseline.repRange(text) != nil }
-          else if label == "Scrolling / break" { valid = parseNumber(text).map { $0.isFinite && (0.5...600).contains($0) } ?? false }
+          else if label == "Minutes / rest" { valid = parseNumber(text).map { $0.isFinite && (0...600).contains($0) } ?? false }
           else {
             let range: ClosedRange<Int> = label == "Days / week" ? 1...7 : label == "Workout length" ? 1...600 : label == "Scrolling breaks" ? 0...2500 : 1...50
             valid = Int(text).map { range.contains($0) } ?? false

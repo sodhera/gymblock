@@ -52,9 +52,11 @@ import XCTest
   func testLegacyGroupedPageMigratesAndNewFieldsDecodeOptionally() throws {
     var profile = Profile()
     profile.onboardingStepID = "routine"
-    XCTAssertEqual(OnboardingStep.restored(profile), .reps)
+    XCTAssertEqual(OnboardingStep.restored(profile), .scrolling)
     profile.onboardingStepID = "loggingHabits"
-    XCTAssertEqual(OnboardingStep.restored(profile), .loggingHabits)
+    XCTAssertEqual(OnboardingStep.restored(profile), .reveal)
+    profile.onboardingStepID = "mindMuscle"
+    XCTAssertEqual(OnboardingStep.restored(profile), .mindA)
     let encoded = try JSONEncoder().encode(baseline())
     var object = try JSONSerialization.jsonObject(with: encoded) as! [String: Any]
     for key in ["trainingDays", "scrollingMinutes", "scrollFrequency", "visitsPerTrainingDay"] {
@@ -170,19 +172,17 @@ import XCTest
     XCTAssertEqual(store.data.history.map(\.id), ids)
   }
 
-  func testV3RouteCollectsSometimesBreaksBeforeTeachingAndSkipsNoScrollReveal() {
+  func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
     var b = baseline()
     b.scrollFrequency = .sometimes
-    let route = OnboardingRoute.steps(b)
-    XCTAssertLessThan(route.firstIndex(of: .breaks)!, route.firstIndex(of: .restHabits)!)
-    XCTAssertEqual(route.last, .subscription)
-    XCTAssertFalse(route.contains(.ready))
+    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .gender, .body, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
+                                              .restA, .restB, .logA, .logB, .blocking, .commit, .subscription])
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false
     let noScroll = OnboardingRoute.steps(b)
-    XCTAssertFalse(noScroll.contains(.minutes))
-    XCTAssertFalse(noScroll.contains(.breaks))
+    XCTAssertFalse(noScroll.contains(.phoneMinutes))
     XCTAssertTrue(noScroll.contains(.reveal))
+    XCTAssertEqual(Array(noScroll.suffix(3)), [.blocking, .commit, .subscription])
   }
   func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {
     let domain = "EmptyV3.\(UUID())"

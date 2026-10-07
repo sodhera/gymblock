@@ -64,7 +64,7 @@ struct GymButton: View {
 extension GymStore {
   func t(_ key: String) -> String {
     profile.language == "es"
-      ? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
+      ? Spanish.v5[key] ?? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
         key] ?? key : key
   }
 }

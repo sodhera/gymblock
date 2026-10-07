@@ -1,6 +1,34 @@
-# Validation — 4 October 2026
+# Validation — 7 October 2026
 
 Native Swift/SwiftUI simulator prototype. Latest checks use Xcode 27 / iPhone 17 Pro / iOS 26.5. Signing is disabled. No external services or package dependencies are configured.
+
+## V5 rev. 5 — hours as workouts, labelled axes, heatmap review (7 October 2026)
+
+The yearly page now reads "That’s 147 hours a year." with a dot per 45-minute workout (= 196 workouts at defaults); no name or "days". Both pump charts label the y-axis (Pump), x-axis (Time →), each rest ("Rest 3:40" / "Rest 1:30") and the target (FULL PUMP); the progress chart labels Weight × reps and Week →. An attention-heatmap review using Apple's on-device saliency model ([docs/HEATMAP-REVIEW.md](docs/HEATMAP-REVIEW.md)) led to three changes, each re-measured: the pump chart now precedes a smaller arm (peak moved from the arm to the chart), the memory values are larger (middle-third attention 31% → 40%), and the mind-muscle notifications are brighter. **Full suite on the final build: all 55 model checks and all 12 UI tests pass** (5 onboarding journeys, 5 workout/history/splits flows, 2 workout-action placement checks), iPhone 18 Pro / iOS 27.0.
+
+## V5 rev. 4 — notifications, minutes made concrete, pump, hold to commit (7 October 2026)
+
+Welcome and first question replace the outline phone with real-looking notification cards (stack, cascade away, lock). The phone-time page fills a ring with one segment per rest while the count climbs; a new page turns the yearly total into calendar days and one-hour workouts. The rest pair is rebuilt around a pump-over-time chart: 3:40 phone rests drain every set to zero and never reach PUMP; 1:30 rests stair-step up to it. Continue appears only after each scene finishes (≤ 3 s; 6 s safety net). A hold-to-commit page with three pledges precedes the paywall. Default workouts per week is 5. Haptics fire on every page change and animation beat. A principles review is in docs/ONBOARDING-PRINCIPLES-REVIEW.md.
+
+**55 model checks and five onboarding UI journeys pass** (iPhone 18 Pro / iOS 27.0), including 46 min → "8 days a year" / "199 one-hour workouts", an early release that does not commit, a full hold that does, blocking and Not now both routing to commit, and the primary action (including the hold button) staying at one height. Walkthrough review caught and fixed: Turn on blocking skipping the commit page, the ring lighting at 0 min, a stray partial calendar tile, overlapping headlines during transitions, and awkward headline line breaks. Two test assertions were corrected (XCUITest waits for animations, so the hidden-Continue state is verified visually instead).
+
+## V5 rev. 3 — profile questions, plain estimate, faster motion (7 October 2026)
+
+After review: the estimate page was hard to read and the motion felt slow. The estimate now states one fact (“34 min on your phone, every workout”, ≈ 118 h a year) with four labelled − / + rows; the lifting comparison and its 3 s/rep assumption were removed. Name, gender and height/weight (Metric/Imperial, defaults from gender, weight unit sets kg/lb) follow the welcome; the name personalises the estimate and offer headlines. The persistent full-screen iris mask, which forced every animation through an offscreen pass, was replaced by a 0.35 s white cover that removes itself; the dotted background is a cached bitmap. Transitions are 0.32 s, one-tap answers advance after 0.18 s and story sequences finish in 1.5–2.5 s. A 10 s recording across the story stages on a heavily swapping 16 GB Mac had 447 of 450 frame gaps at 60 or 30 fps.
+
+**All 54 model checks and five onboarding UI journeys pass** (iPhone 18 Pro / iOS 27.0), including the required name, gender-based height defaults, imperial conversion (178 cm → 5′ 10″), a + tap updating 34 → 46 min, personalised headlines, the Rarely route and relaunch on the offer. One journey initially failed on a test assertion about the VoiceOver label format; it was corrected and rerun.
+
+## V5 — minimal onboarding redesign (7 October 2026)
+
+[docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md) is implemented after design feedback on the first V5 pass (too red, too much text, rudimentary and laggy motion). Changes: near-black stage with a static dotted grid; white primary button; red reserved for one focal element per page; SF Pro Dynamic Type; a fixed grid where the headline box, stage and primary action never move; one headline per page with no subtitles or progress text; the minutes question now asks per rest (default 2 min); a live estimate page with five native dials; paired story pages that morph a shared stage; no Preview bypass on the paywall.
+
+Performance: the animated ember backdrop, button shimmer, per-word blur, full-page blur transitions and per-frame Canvas/filters were removed. The arm's CPU mesh is now pre-rendered once into 24 poses off the main thread and played back as a flipbook with a GPU tint. A 75-second recorded walkthrough had 1,583 of 1,638 frames at ≥ 40 fps cadence in the simulator (gaps were page settles), versus visibly stuttering playback before. Hardware frame rates remain unmeasured.
+
+**All 53 model checks and five onboarding UI journeys pass on GymBlock Review, iPhone 18 Pro / iOS 27.0.** Model checks cover the route, legacy step migration, shared stages and the estimate (34 min phone vs 11 min lifting, ≈ 118 h/year at defaults; dial persistence; Rarely = 0; Sometimes = 1 min). UI journeys cover the full flow with a live dial change (sets 3 → 4 updates phone time to 46 min), blocking selection and recap, the disabled Subscribe with no Preview; Rarely skipping the minutes page; Sometimes, Not now and relaunch resuming on the offer; accessibility-medium text with Reduced Motion through every page; and the primary action staying within 3 pt of the same height on every page. The first UI run had three test-script errors (picker value label, two Continue counts), fixed and rerun.
+
+Every page was inspected in simulator captures (`screenshots/onboarding-v5/`). Visual review fixed: the welcome glow inflating the phone frame, a locked phone shown beside “Do you use your phone?”, dial rows overlapping labels, the nerve stopping short of the bicep, a loud overrun ring, too much red on the timed-rest end state, faint memory values and a left-hugging offer list.
+
+Unverified: hardware haptic feel and frame rate, full VoiceOver navigation, small screens, Spanish layouts and user comprehension. Blocking and purchases remain unconfigured; nothing was pushed or purchased.
 
 ## Workout action placement
 

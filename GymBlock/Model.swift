@@ -56,6 +56,9 @@ struct Profile: Codable {
   var onboardingSkippedQuestions: Bool?
   var soundEnabled: Bool?
   var hapticsEnabled: Bool?
+  var gender: String?
+  var heightCM: Double?
+  var bodyWeightKG: Double?
 }
 struct LoggedSet: Codable, Identifiable {
   var id = UUID()

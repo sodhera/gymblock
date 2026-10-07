@@ -2,30 +2,56 @@ import XCTest
 @testable import GymBlock
 
 @MainActor final class BenefitSceneTests: XCTestCase {
-  func testTimedRestReachesPumpOnFifthContractionWhileLongRestResets() {
-    XCTAssertEqual(RestIllustration.pose(time: 0, timed: true).warmth, 0)
-    XCTAssertEqual(RestIllustration.pose(time: 0, timed: false).curl, 0)
-    for (cycle, peak) in [0.25, 0.45, 0.65, 0.85, 1.0].enumerated() {
-      let t = 0.6 + Double(cycle) * 1.7 + 0.65
-      XCTAssertEqual(RestIllustration.pose(time: t, timed: true).warmth, peak, accuracy: 0.0001)
-    }
-    XCTAssertLessThan(RestIllustration.pose(time: RestIllustration.pumpTime - 0.01, timed: true).warmth, 1)
-    XCTAssertEqual(RestIllustration.pose(time: 10.6, timed: true).warmth, 1)
-    for cycle in 0..<3 {
-      let t = 0.6 + Double(cycle) * 2.4
-      XCTAssertEqual(RestIllustration.pose(time: t + 0.65, timed: false).warmth, 0.25, accuracy: 0.0001)
-      XCTAssertEqual(RestIllustration.pose(time: t + 2.399, timed: false).warmth, 0, accuracy: 0.001)
-    }
-  }
-  func testEveryRouteShowsThreeBenefitsBeforeSubscription() {
+  func testEveryRouteShowsPairedStoryPagesThenBlockingThenOffer() {
     for answer in HabitAnswer.allCases {
       var b = RoutineBaseline(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(4)), [.reveal, .restStory, .progressStory, .subscription])
-      XCTAssertEqual(route.contains(.minutes), answer != .no)
-      XCTAssertEqual(route.contains(.breaks), answer == .sometimes)
+      XCTAssertEqual(Array(route.suffix(9)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .commit, .subscription])
+      XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
+      XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
+      XCTAssertEqual(Array(route.prefix(4)), [.name, .gender, .body, .scrolling])  // Profile first, then habits.
     }
     XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .subscription)
+  }
+  func testContinueWaitsOnlyOnAnimatedPages() {
+    XCTAssertTrue(OnboardingStep.restA.animated); XCTAssertTrue(OnboardingStep.days.animated)
+    XCTAssertFalse(OnboardingStep.scrolling.animated); XCTAssertFalse(OnboardingStep.commit.animated)
+    XCTAssertEqual(PumpPlot.scrolling.map(\.y).max()!, 0.34, accuracy: 0.001)  // Scrolling never reaches the pump line.
+    XCTAssertEqual(PumpPlot.timed.map(\.y).max(), 1)
+    XCTAssertEqual(PumpPlot.restEnds(PumpPlot.scrolling).count, 3)
+  }
+  func testPairedPagesShareOneStage() {
+    XCTAssertEqual(OnboardingStep.mindA.stage, OnboardingStep.mindB.stage)
+    XCTAssertEqual(OnboardingStep.restA.stage, OnboardingStep.restB.stage)
+    XCTAssertEqual(OnboardingStep.logA.stage, OnboardingStep.logB.stage)
+    XCTAssertEqual(OnboardingStep.welcome.stage, OnboardingStep.scrolling.stage)
+    XCTAssertNotEqual(OnboardingStep.reveal.stage, OnboardingStep.mindA.stage)
+  }
+  func testGymTimeEstimateUsesTheirMinutesAndAdjustableDefaults() {
+    var b = RoutineBaseline(); b.scrollFrequency = .yes; b.scrollingMinutes = 2
+    var e = GymTimeEstimate(b)
+    XCTAssertEqual(e.rests, 17)
+    XCTAssertEqual(e.phoneMinutes, 34)
+    XCTAssertEqual(e.days, 5)
+    XCTAssertEqual(e.yearlyPhoneHours, 34 * 5 * 52 / 60, accuracy: 0.001)
+    XCTAssertEqual(e.yearlyWorkouts, 196)  // 147.3 h as 45-minute workouts.
+    e.sets = 4
+    XCTAssertEqual(e.phoneMinutes, 46)
+    e.write(into: &b)
+    XCTAssertEqual(GymTimeEstimate(b), e)  // Adjustments persist and restore exactly.
+    var none = RoutineBaseline(); none.scrollFrequency = .no
+    XCTAssertEqual(GymTimeEstimate(none).phoneMinutes, 0)
+    var sometimes = RoutineBaseline(); sometimes.scrollFrequency = .sometimes
+    XCTAssertEqual(GymTimeEstimate(sometimes).minutesPerRest, 1)
+    XCTAssertEqual(GymTimeEstimate(RoutineBaseline(exercises: 1, sets: 1)).rests, 0)
+  }
+  func testBodyAnswersDecodeOptionallyForExistingProfiles() throws {
+    var p = Profile(); p.gender = "female"; p.heightCM = 165; p.bodyWeightKG = 61.5
+    let decoded = try JSONDecoder().decode(Profile.self, from: JSONEncoder().encode(p))
+    XCTAssertEqual(decoded.gender, "female"); XCTAssertEqual(decoded.heightCM, 165); XCTAssertEqual(decoded.bodyWeightKG, 61.5)
+    let legacy = try JSONDecoder().decode(Profile.self, from: JSONEncoder().encode(Profile()))
+    XCTAssertNil(legacy.gender); XCTAssertNil(legacy.heightCM)
+    XCTAssertEqual(BodyUnits.feet(70), "5′ 10″")
   }
   func testUnconfiguredPurchaseCannotInventEntitlement() async {
     let purchase = GymSubscription()

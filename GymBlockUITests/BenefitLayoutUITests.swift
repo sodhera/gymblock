@@ -1,27 +1,45 @@
 import XCTest
 
 final class BenefitLayoutUITests: XCTestCase {
-  func testCompactBenefits() {
+  /// The primary action sits at the same height on every page, so the thumb never hunts.
+  func testPrimaryActionNeverMoves() {
     continueAfterFailure = false
     let app = XCUIApplication()
     app.launchArguments = ["--ui-reset", "--ui-reduced-motion"]
     app.launch()
     func tap(_ id: String) {
       let b = app.buttons[id].firstMatch
-      XCTAssertTrue(b.waitForExistence(timeout: 6)); b.tap()
+      XCTAssertTrue(b.waitForExistence(timeout: 6), id)
+      let ready = expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: b)
+      wait(for: [ready], timeout: 6); b.tap()
     }
-    func snap(_ name: String) {
-      let screenshot = app.screenshot()
-      try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(name + ".png"))
-      let a = XCTAttachment(screenshot: screenshot); a.name = name; a.lifetime = .keepAlways; add(a)
+    let first = app.buttons["onboarding.continue"]
+    XCTAssertTrue(first.waitForExistence(timeout: 6))
+    let anchor = first.frame.midY
+    tap("onboarding.continue")
+    let field = app.textFields["profile.name"]
+    XCTAssertTrue(field.waitForExistence(timeout: 6)); field.typeText("Sam\n")  // Keyboard page: the button rides the keyboard.
+    XCTAssertTrue(app.buttons["profile.gender.other"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["profile.gender.other"].frame.midY, anchor, accuracy: 3)
+    tap("profile.gender.other")
+    XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["onboarding.continue"].frame.midY, anchor, accuracy: 3)
+    tap("onboarding.continue")
+    XCTAssertTrue(app.buttons["habit.scrolling.no"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["habit.scrolling.no"].frame.midY, anchor, accuracy: 3)
+    tap("habit.scrolling.yes")
+    for _ in 0..<9 {
+      let button = app.buttons["onboarding.continue"]
+      XCTAssertTrue(button.waitForExistence(timeout: 6))
+      XCTAssertEqual(button.frame.midY, anchor, accuracy: 3)
+      tap("onboarding.continue")
     }
-    tap("onboarding.secondary"); snap("v4-final-brains")
-    tap("onboarding.continue"); snap("v4-final-arms")
-    tap("journey.replay"); tap("onboarding.continue")
-    XCTAssertTrue(app.staticTexts["This looks motivating."].waitForExistence(timeout: 6))
-    XCTAssertTrue(app.staticTexts["This looks motivating."].isHittable)
-    XCTAssertTrue(app.staticTexts["You can't tell if you're doing well or not."].isHittable)
-    XCTAssertTrue(app.staticTexts["Percentages compare weight × reps with the previous record."].isHittable)
-    snap("v4-final-records"); tap("onboarding.continue"); snap("v4-final-offer")
+    XCTAssertEqual(app.buttons["blocking.on"].frame.midY, anchor, accuracy: 3)
+    tap("blocking.on")
+    XCTAssertTrue(app.buttons["commit.hold"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["commit.hold"].frame.midY, anchor, accuracy: 3)
+    app.buttons["commit.hold"].press(forDuration: 2.2)
+    XCTAssertTrue(app.buttons["subscription.buy"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["subscription.buy"].frame.midY, anchor, accuracy: 3)
   }
 }

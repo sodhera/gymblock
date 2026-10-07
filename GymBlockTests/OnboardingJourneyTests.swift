@@ -61,7 +61,7 @@ import XCTest
     p.onboardingStep = 5
     XCTAssertEqual(OnboardingStep.restored(p), .reveal)
     p.onboardingStepID = "duration"
-    XCTAssertEqual(OnboardingStep.restored(p), .duration)
+    XCTAssertEqual(OnboardingStep.restored(p), .scrolling)  // Removed V4 questions resume at the nearest V5 page.
     p.onboardingStepID = nil
     p.baseline?.minutesPerBreak = nil
     XCTAssertEqual(OnboardingStep.restored(p), .reveal)  // Unknown estimates use the qualitative focus scene.

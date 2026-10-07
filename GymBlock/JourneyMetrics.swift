@@ -81,3 +81,38 @@ enum JourneyFormat {
     return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min"
   }
 }
+
+/// The onboarding estimate: their own minutes per rest, with typical routine defaults they can adjust.
+/// Self-reported time arithmetic only — never a measured or body-outcome claim.
+struct GymTimeEstimate: Equatable {
+  var minutesPerRest = 2.0
+  var exercises = 6
+  var sets = 3
+  var days = 5
+  var rests: Int { max(0, exercises * sets - 1) }
+  var phoneMinutes: Double { Double(rests) * minutesPerRest }
+  var yearlyPhoneHours: Double { phoneMinutes * Double(days) * 52 / 60 }
+  static let workoutMinutes = 45.0
+  /// The yearly phone time expressed as 45-minute workouts.
+  var yearlyWorkouts: Int { Int((yearlyPhoneHours * 60 / Self.workoutMinutes).rounded()) }
+  init() {}
+  init(_ b: RoutineBaseline) {
+    if b.scrollFrequency == .no { minutesPerRest = b.scrollingMinutes ?? 0 }
+    else { minutesPerRest = b.scrollingMinutes ?? (b.scrollFrequency == .sometimes ? 1 : 2) }
+    if let e = b.exercises, (1...15).contains(e) { exercises = e }
+    if let s = b.sets, (1...10).contains(s) { sets = s }
+    if let d = b.trainingDays, (1...7).contains(d) { days = d }
+  }
+  func write(into b: inout RoutineBaseline) {
+    b.scrollingMinutes = minutesPerRest
+    b.minutesPerBreak = nil
+    b.details = []
+    b.exercises = exercises; b.sets = sets
+    b.trainingDays = days
+  }
+}
+
+enum BodyUnits {
+  static var defaultMetric: Bool { Locale.current.measurementSystem != .us }
+  static func feet(_ inches: Double) -> String { "\(Int(inches) / 12)′ \(Int(inches) % 12)″" }
+}

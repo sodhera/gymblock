@@ -1,6 +1,6 @@
 # GymBlock design
 
-Onboarding follows **docs/ONBOARDING-CLEAR-JOURNEY-V4.md**. Training and navigation retain **docs/UX-RESET-V3.md**, especially section 13 for text, icons and placement.
+Onboarding follows **docs/ONBOARDING-V5-PLAN.md** (V5 replaces V4). Training and navigation retain **docs/UX-RESET-V3.md**, especially section 13 for text, icons and placement.
 
 ## Visual system
 
@@ -10,19 +10,9 @@ Keep 24-point page margins, related elements together and a stable bottom action
 
 ## Onboarding
 
-Welcome → days/week → visit length → reps → sets → exercises → scrolling → conditional minutes and Sometimes break count → rest measurement → records/review → set measurement → brain comparison → rest illustration → record comparison → subscription offer.
+Full spec: docs/ONBOARDING-V5-PLAN.md. Seventeen pages (fifteen for Rarely): welcome; name, gender, height and weight; phone between sets and minutes per rest; one plain estimate (“34 min on your phone, every workout”) with four live − / + rows; an hours-a-year page shown as 45-minute workouts; three paired story stages (mind-muscle, pump, progress); app blocking; hold to commit; offer. Continue appears only after each scene finishes. Every page must be understood at a glance — no charts that need decoding, no jargon.
 
-Welcome says “Stay focused. Stay intentional.” Frequency uses the real seven-tick UISlider on iOS 26+, storing whole days 1–7. Other numeric questions use one inline UIPickerView. Continue confirms numbers; Not sure stores unknown. Full questions explain what is being asked. Habit choices save and advance with one tap. Timed exercises can skip reps while answering the other questions. Existing ranges/per-exercise details remain unchanged unless explicitly edited. Saved route IDs and completed onboarding persist.
-
-Skip questions enters the benefits, not a real workout. Back preserves answers and follows the entry path. No scrolling clears obsolete minute/break answers and bypasses those questions while retaining all three benefit scenes. Estimates remain optional, self-reported and editable; no body-growth or transformation prediction is invented.
-
-Two opaque brain characters shrink/frown or grow/smile beside red meters, with tired/social-logo or lightning particles behind them. The finite sequence lasts 9.2 seconds. The exact requested nervous-system sentence is preserved as quoted draft copy immediately labeled **Your proposed copy · Unverified health claim**. It is not presented as an established fact.
-
-The original approved PNG arm illustration is tinted as a whole, with a blended elbow deformation. Both begin relaxed and blue. The chosen stylized model adds 25 points per contraction and loses 5/25 points in timed/longer rests; the timed meter reaches Perfect Pump on rep five. A single optional completion chime, brief bar vibration and aura mark the event. The 10.6-second sequence ends still. There are no numeric activation claims. **Stylized model · Not measured muscle activation** stays visible.
-
-The record comparison shows five rows, chronological from Week 1 to Today. Older values are unknown on the left; right-hand weight × reps comparisons show +25%, −10%, +25%, +33.3%. Both have the same latest record. Examples never enter History. Normal text compares side by side; accessibility text stacks whole panels without shrinking their text. Scenes can replay, cancel on disappearance/backgrounding, and never disable Continue. Reduced Motion renders stable final states. Sound defaults off and can be enabled in the benefit header.
-
-The final action opens the subscription offer before Workout home. StoreKit loading, verified purchase, pending/cancel/failure, restore and transaction updates are implemented behind explicit configuration. Actual product IDs, legal URLs and working shielding are absent, so live purchasing is disabled. No fake price/trial or false purchase success appears. Debug builds have a clearly labeled **Preview workout** entry to test the app without payment; Release does not have this bypass. Existing completed onboarding, records and active workouts are preserved.
+Onboarding has its own system, separate from the warm light app: near-black stage with a faint static dotted grid; white and two greys; one red accent reserved for the single thing to notice on a page; white primary button. SF Pro Dynamic Type text styles. A fixed grid — progress line (no text), two-line headline box, stage, one-line caption, bottom actions — keeps every element in the same place; the primary action never moves. One headline per page, no subtitles. Paired pages share a stage that morphs in place while only the words change. Motion uses native SwiftUI animations on shapes, trims, opacity and a pre-rendered arm flipbook; nothing is redrawn per frame by the app. No preview bypass: the offer is the end of onboarding.
 
 ## Training and navigation
 

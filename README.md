@@ -21,17 +21,15 @@ The Debug scheme opens onboarding for a new store. Add `--demo` when needed: an 
 
 ## Onboarding
 
-Workout questions precede habits. A native glass slider covers 1–7 days; other numeric answers use one wheel. Each full question asks for one answer. Habit choices advance on tap; Not sure stores unknown. Sometimes scrolling asks for its break count, and No scrolling clears obsolete scrolling inputs.
+Seventeen short pages: name, gender, height and weight; one tap for how often you use your phone between sets and one wheel for how long; then one plain fact (“Sirish, here’s your phone time — 34 min every workout, ≈ 147 hours a year, or 196 workouts of 45 min”) with − / + rows for exercises, sets, minutes per rest and workouts per week. Three paired animated stages follow — mind-muscle connection, timed rests, memory vs log — then choosing apps to block, a hold-to-commit pledge and the offer. Minimal dark stage, SF Pro Dynamic Type, one red accent; see [DESIGN.md](DESIGN.md) and [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md).
 
-The welcome says **Stay focused. Stay intentional.** Three finite benefit scenes follow: expressive brain characters, the approved arm artwork with **Perfect Pump on the fifth rep**, and two five-row record tables. The progress table includes a week-three dip and changes computed from weight × reps. Examples never create workout history. Reduce Motion shows stable final states. Optional sound defaults off; the benefit header exposes its toggle.
+The estimate is the person's own minutes multiplied out — not measured phone use or a body-outcome prediction. Height, weight and gender stay on the device and are not used yet; the weight unit sets kg/lb for logging. The mind-muscle headline is the user-approved “Scrolling weakens your mind-muscle connection.”; scenes are labelled illustrations, examples never create workout history, and blocking remains simulated and labelled.
 
-Skip questions opens the benefits. The last scene opens a subscription offer before Workout home. StoreKit handling exists behind explicit configuration, but no live subscription, product price, legal URL or shielding service is configured. The review offer says subscriptions are unavailable. **Preview workout** is Debug-only and clearly states that no payment or subscription occurs. Real purchasing requires `GymBlockPurchasesEnabled`, `GymBlockMonthlyProductID`, `GymBlockTermsURL` and `GymBlockPrivacyURL`, plus verified blocking and release validation; do not enable billing to sell simulated blocking.
-
-Onboarding estimates remain self-reported scrolling time, not guaranteed shorter visits or predicted body outcomes. The requested nervous-system sentence remains quoted proposed wording with a visible **Unverified health claim** label.
+The offer ends onboarding; there is no preview bypass. StoreKit handling exists behind explicit configuration, but no live subscription, product price, legal URL or shielding service is configured, so Subscribe stays disabled with an honest caption. In Debug, launch with `--demo` to enter the app. Real purchasing requires `GymBlockPurchasesEnabled`, `GymBlockMonthlyProductID`, `GymBlockTermsURL` and `GymBlockPrivacyURL`, plus verified blocking and release validation; do not enable billing to sell simulated blocking.
 
 ## Current design and proof
 
-The native onboarding follows [docs/ONBOARDING-CLEAR-JOURNEY-V4.md](docs/ONBOARDING-CLEAR-JOURNEY-V4.md); training/navigation retain [docs/UX-RESET-V3.md](docs/UX-RESET-V3.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
+The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); training/navigation retain [docs/UX-RESET-V3.md](docs/UX-RESET-V3.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
 
 `project.yml` is the XcodeGen source of truth. Product → Test runs model checks and simulator journeys; use `-parallel-testing-enabled NO` for UI testing on one simulator.
 

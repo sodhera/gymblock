@@ -19,6 +19,7 @@
 		2E74CBB270312313000E124C /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A16A247D69006A1651F96 /* Progress.swift */; };
 		30EE11CCA6770E2393AF2B92 /* ArmIllustration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */; };
 		3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */; };
+		3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */; };
 		41D1A27CDD3EB2CF558F5AC4 /* BenefitScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */; };
 		46F7BCEED35CC504B1CC1677 /* OnboardingFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */; };
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
@@ -40,6 +41,7 @@
 		B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */; };
 		BA1DF825647D7E912AA1D15F /* WorkoutActionsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7315D2C38D55280BA06B5B1B /* WorkoutActionsUITests.swift */; };
 		BB3D6624D0A7D9FDDB187F22 /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777BA2A5696BA38746AE2AF3 /* DemoData.swift */; };
+		CCDA787E895E557D4DE31B7E /* OnboardingPremium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 008F01AA301B4482E1045797 /* OnboardingPremium.swift */; };
 		E8AD2D368E149D3D084E3B1A /* JourneyV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238EA8ACA13F757D4010AA57 /* JourneyV2UITests.swift */; };
 		E917A985EAF4D2A7FFDD60D1 /* RoutineBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */; };
 		EA9C8D16D36FD80170CEBB50 /* OnboardingJourney.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */; };
@@ -67,6 +69,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		008F01AA301B4482E1045797 /* OnboardingPremium.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPremium.swift; sourceTree = "<group>"; };
 		01F36AF90BEFC089EC199AD3 /* GymBlockFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockFlowTests.swift; sourceTree = "<group>"; };
 		035738BD5F0A726CE372A9EE /* GymBlock.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymBlock.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		18BD74A4F712847C40F46201 /* GymStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymStoreTests.swift; sourceTree = "<group>"; };
@@ -81,6 +84,7 @@
 		2B1F47BAD59FB5F3B4443457 /* Splits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Splits.swift; sourceTree = "<group>"; };
 		2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourney.swift; sourceTree = "<group>"; };
 		371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressData.swift; sourceTree = "<group>"; };
+		3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingScenes.swift; sourceTree = "<group>"; };
 		456C8F918D647C27F97E22CF /* JourneyV2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyV2Tests.swift; sourceTree = "<group>"; };
 		4F4A06E7386D08074CB79CA7 /* DMSans.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = DMSans.ttf; sourceTree = "<group>"; };
 		4F60F86A83F2D70198BDC549 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
@@ -173,6 +177,8 @@
 				9A5029EB289FB5CF493FAF16 /* OnboardingControls.swift */,
 				DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */,
 				2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */,
+				008F01AA301B4482E1045797 /* OnboardingPremium.swift */,
+				3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
 				371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */,
 				7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */,
@@ -380,6 +386,8 @@
 				5B36CD8D5448E7C1D2A16483 /* OnboardingControls.swift in Sources */,
 				46F7BCEED35CC504B1CC1677 /* OnboardingFeedback.swift in Sources */,
 				EA9C8D16D36FD80170CEBB50 /* OnboardingJourney.swift in Sources */,
+				CCDA787E895E557D4DE31B7E /* OnboardingPremium.swift in Sources */,
+				3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */,
 				2E74CBB270312313000E124C /* Progress.swift in Sources */,
 				7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */,
 				E917A985EAF4D2A7FFDD60D1 /* RoutineBaseline.swift in Sources */,
