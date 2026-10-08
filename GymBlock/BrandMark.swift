@@ -1,62 +1,62 @@
 import SwiftUI
 
-/// The brand mark: a padlock whose keyhole is a barbell. The barbell is the key. Solid ink body
-/// and shackle; the barbell cut in the emerald signal is the only colour. The same geometry, in the
-/// same unit square (y down), as the app icon in `scripts/generate-app-icon.swift`; keep the two
-/// tables identical.
+/// The brand mark: a kettlebell that is a padlock. The handle is the shackle, the bell is the body,
+/// and the keyhole is cut in the emerald signal, the only colour. Chosen on 8 Oct 2026 from rendered
+/// options (plate dial, stacked plates). The same geometry as the app icon in
+/// `scripts/generate-app-icon.swift`: unit square, y down, angles in degrees counter-clockwise with
+/// 90 pointing up. Keep the two in step.
 struct BrandMark: View {
   var size: CGFloat = 28
-
-  enum Piece {
-    /// A stroked arc over the top of (cx, cy): the shackle's bend.
-    case arc(cx: CGFloat, cy: CGFloat, r: CGFloat, w: CGFloat)
-    case rect(x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, r: CGFloat)
-  }
-  /// Ink, in drawing order.
-  static let ink: [Piece] = [
-    .arc(cx: 0.5, cy: 0.43, r: 0.21, w: 0.11),
-    .rect(x: 0.235, y: 0.43, w: 0.11, h: 0.08, r: 0),
-    .rect(x: 0.655, y: 0.43, w: 0.11, h: 0.08, r: 0),
-    .rect(x: 0.12, y: 0.45, w: 0.76, h: 0.52, r: 0.185),
-  ]
-  /// The keyhole, in the signal colour.
-  static let keyhole: [Piece] = [
-    .rect(x: 0.26, y: 0.675, w: 0.48, h: 0.07, r: 0.035),
-    .rect(x: 0.28, y: 0.585, w: 0.085, h: 0.25, r: 0.034),
-    .rect(x: 0.635, y: 0.585, w: 0.085, h: 0.25, r: 0.034),
-  ]
-
   var body: some View {
     ZStack {
-      BrandMarkShape(pieces: Self.ink).fill(JourneyColor.text)
-      BrandMarkShape(pieces: Self.keyhole).fill(JourneyColor.signal)
+      BrandMarkShape(part: .body).fill(JourneyColor.text)
+      BrandMarkShape(part: .keyhole).fill(JourneyColor.signal)
     }
     .frame(width: size, height: size)
     .accessibilityHidden(true)
   }
+
+  enum Geometry {
+    /// The bell: a circle with a flattened base.
+    static let bell = (cx: 0.5, cy: 0.665, r: 0.285, from: 236.0, to: -56.0)
+    /// The handle: a thick loop over the top whose horns land on the bell's shoulders.
+    static let handle = (cx: 0.5, cy: 0.39, outer: 0.235, inner: 0.125, hornY: 0.53, innerY: 0.47)
+    /// The keyhole: a round head and a tapered slot.
+    static let head = (cx: 0.5, cy: 0.635, r: 0.06)
+    static let slot = (top: 0.655, bottom: 0.80, topHalf: 0.023, bottomHalf: 0.042)
+  }
 }
 
-/// A list of pieces as one shape, scaled to the square inside its rect.
 private struct BrandMarkShape: Shape {
-  let pieces: [BrandMark.Piece]
+  enum Part { case body, keyhole }
+  let part: Part
   func path(in rect: CGRect) -> Path {
-    var path = Path()
     let s = min(rect.width, rect.height)
     let o = CGPoint(x: rect.midX - s / 2, y: rect.midY - s / 2)
-    for piece in pieces {
-      switch piece {
-      case .rect(let x, let y, let w, let h, let r):
-        path.addRoundedRect(in: CGRect(x: o.x + x * s, y: o.y + y * s, width: w * s, height: h * s),
-                            cornerSize: CGSize(width: r * s, height: r * s), style: .continuous)
-      case .arc(let cx, let cy, let r, let w):
-        // The bend as a filled half-annulus, so it joins the legs with no seam.
-        let c = CGPoint(x: o.x + cx * s, y: o.y + cy * s)
-        var bend = Path()
-        bend.addArc(center: c, radius: (r + w / 2) * s, startAngle: .degrees(180), endAngle: .degrees(360), clockwise: false)
-        bend.addArc(center: c, radius: (r - w / 2) * s, startAngle: .degrees(360), endAngle: .degrees(180), clockwise: true)
-        bend.closeSubpath()
-        path.addPath(bend)
+    func p(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: o.x + x * s, y: o.y + y * s) }
+    func arc(_ cx: Double, _ cy: Double, _ r: Double, _ a0: Double, _ a1: Double) -> [CGPoint] {
+      (0...96).map { i in
+        let a = (a0 + (a1 - a0) * Double(i) / 96) * .pi / 180
+        return p(cx + r * cos(a), cy - r * sin(a))
       }
+    }
+    var path = Path()
+    typealias G = BrandMark.Geometry
+    switch part {
+    case .body:
+      path.addLines(arc(G.bell.cx, G.bell.cy, G.bell.r, G.bell.from, G.bell.to)); path.closeSubpath()
+      let h = G.handle
+      path.addLines(arc(h.cx, h.cy, h.outer, 180, 0)
+        + [p(h.cx + h.outer, h.hornY), p(h.cx + h.inner, h.innerY)]
+        + arc(h.cx, h.cy, h.inner, 0, 180)
+        + [p(h.cx - h.inner, h.innerY), p(h.cx - h.outer, h.hornY)])
+      path.closeSubpath()
+    case .keyhole:
+      let r = G.head.r
+      path.addEllipse(in: CGRect(origin: p(G.head.cx - r, G.head.cy - r), size: CGSize(width: 2 * r * s, height: 2 * r * s)))
+      let t = G.slot
+      path.addLines([p(0.5 - t.topHalf, t.top), p(0.5 + t.topHalf, t.top), p(0.5 + t.bottomHalf, t.bottom), p(0.5 - t.bottomHalf, t.bottom)])
+      path.closeSubpath()
     }
     return path
   }
