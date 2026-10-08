@@ -16,10 +16,30 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.sodhera.gymblock.auth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>gymblock</string>
+				<string>com.sodhera.gymblock</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GymBlockPrivacyURL</key>
+	<string>https://www.orecci.com/gymblock/privacy-policy.html</string>
+	<key>GymBlockTermsURL</key>
+	<string>https://www.orecci.com/gymblock/terms-of-service.html</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>RevenueCatAPIKey</key>
+	<string>$(REVENUECAT_API_KEY)</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

@@ -40,7 +40,7 @@ struct JourneyWheel: UIViewRepresentable {
     init(_ parent: JourneyWheel) { self.parent = parent }
     func numberOfComponents(in pickerView: UIPickerView) -> Int { 1 }
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int { parent.values.count }
-    func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat { 52 }
+    func pickerView(_ pickerView: UIPickerView, rowHeightForComponent component: Int) -> CGFloat { 46 }
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
       parent.text(parent.values[row])
     }
@@ -48,8 +48,8 @@ struct JourneyWheel: UIViewRepresentable {
       let label = (view as? UILabel) ?? UILabel()
       label.text = parent.text(parent.values[row])
       label.textAlignment = .center
-      label.font = journeyWheelFont(30)
-      label.textColor = .white
+      label.font = journeyWheelFont(26)
+      label.textColor = UIColor(JourneyColor.text)
       label.adjustsFontForContentSizeCategory = true
       label.adjustsFontSizeToFitWidth = true
       label.minimumScaleFactor = 0.6

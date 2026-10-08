@@ -66,7 +66,7 @@ final class JourneyV5UITests: XCTestCase {
     page("How much do you weigh?")
     XCTAssertTrue(app.pickerWheels["80 kg"].exists || app.pickerWheels["176 lb"].exists); snap("05-weight"); next()
     page("Do you use your phone between sets?"); snap("06-scrolling"); answer("habit.scrolling.yes")
-    page("Between sets, how long are you on your phone?")
+    page("How long on your phone, each rest?")
     XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 6))
     app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "2 min"); snap("03-minutes"); next()
     page("Sirish, here’s your phone time.")
@@ -95,6 +95,7 @@ final class JourneyV5UITests: XCTestCase {
     app.buttons["commit.hold"].press(forDuration: 0.4)  // Releasing early does not commit.
     XCTAssertTrue(app.buttons["commit.hold"].exists); page("Sirish, commit to focus.")
     app.buttons["commit.hold"].press(forDuration: 2.2)
+    page("Keep your progress safe."); snap("14b-account"); tap("account.debugSkip")
     page("Stay focused, Sirish.")
     XCTAssertTrue(app.staticTexts["Blocks Instagram, TikTok +2"].waitForExistence(timeout: 6))
     XCTAssertFalse(app.buttons["subscription.buy"].isEnabled)  // No product configured; nothing fake.
@@ -115,17 +116,19 @@ final class JourneyV5UITests: XCTestCase {
     next(); profile("Ana", gender: "female")
     XCTAssertTrue(app.pickerWheels["165 cm"].waitForExistence(timeout: 4) || app.pickerWheels["5′ 5″"].exists)
     body(); answer("habit.scrolling.sometimes")
-    page("Between sets, how long are you on your phone?"); next()
+    page("How long on your phone, each rest?"); next()
     page("Ana, here’s your phone time.")
     XCTAssertTrue(any("reveal.phone").label.contains("17 min on your phone"))  // Sometimes defaults to 1 min per rest.
     for _ in 0..<8 { next() }
     page("Block what distracts you."); tap("blocking.later")
     page("Get a buzz when rest is up."); tap("alerts.later")
     page("Ana, commit to focus."); app.buttons["commit.hold"].press(forDuration: 2.2)
+    page("Keep your progress safe."); tap("account.debugSkip")
     page("Stay focused, Ana.")
     XCTAssertTrue(app.staticTexts["Blocks the apps you choose"].waitForExistence(timeout: 5))
-    app.terminate(); app.launchArguments = []; app.launch()
+    app.terminate(); app.launchArguments = ["--offline"]; app.launch()  // No reset, no skip: the offer is where it resumes.
     page("Stay focused, Ana.")
+    tap("onboarding.back"); page("Keep your progress safe.")
     tap("onboarding.back"); page("Ana, commit to focus.")
     tap("onboarding.back"); page("Get a buzz when rest is up.")
     tap("onboarding.back"); page("Block what distracts you.")

@@ -12,20 +12,20 @@ struct PreferencesView: View {
           Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
             ForEach(GymStore.restChoices, id: \.self) { Text(clockString($0)).tag($0) }
           }.accessibilityIdentifier("settings.rest")
-          Toggle(store.t("Rest alert"), isOn: Binding(get: { store.profile.restAlerts == true }, set: setAlerts)).tint(JourneyColor.signalRed)
+          Toggle(store.t("Rest alert"), isOn: Binding(get: { store.profile.restAlerts == true }, set: setAlerts)).tint(JourneyColor.signal)
             .accessibilityIdentifier("settings.restAlert")
-          Toggle(store.t("Time each set"), isOn: Binding(get: { store.timesSets }, set: { v in store.updateProfile { $0.timeSets = v } })).tint(JourneyColor.signalRed)
+          Toggle(store.t("Time each set"), isOn: Binding(get: { store.timesSets }, set: { v in store.updateProfile { $0.timeSets = v } })).tint(JourneyColor.signal)
             .accessibilityIdentifier("settings.timeSets")
         } header: { Text(store.t("Workout")) } footer: {
           Text(store.t(denied ? "Notifications are off for GymBlock. Turn them on in iOS Settings."
                        : store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
         }
         Section {
-          Toggle(store.t("Block apps during workouts"), isOn: Binding(get: { store.profile.focusEnabled == true }, set: { v in store.updateProfile { $0.focusEnabled = v } })).tint(JourneyColor.signalRed)
+          Toggle(store.t("Block apps during workouts"), isOn: Binding(get: { store.profile.focusEnabled == true }, set: { v in store.updateProfile { $0.focusEnabled = v } })).tint(JourneyColor.signal)
             .accessibilityIdentifier("focus.enabled")
         } header: { Text(store.t("Blocking")) } footer: {
           Text((store.profile.blockedApps.isEmpty ? "" : store.profile.blockedApps.joined(separator: ", ") + ". ")
-               + store.t("Blocking is simulated in this build."))
+               + store.t("Blocking is a preview in this build: nothing is enforced yet."))
         }
         Section {
           HStack {
@@ -40,15 +40,16 @@ struct PreferencesView: View {
           Picker(store.t("Language"), selection: Binding(get: { store.profile.language }, set: { v in store.updateProfile { $0.language = v } })) {
             Text("English").tag("en"); Text("Español").tag("es")
           }
-          Toggle(store.t("Haptics"), isOn: Binding(get: { store.profile.hapticsEnabled ?? true }, set: { v in store.updateProfile { $0.hapticsEnabled = v } })).tint(JourneyColor.signalRed)
-          Toggle(store.t("Sound"), isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } })).tint(JourneyColor.signalRed)
+          Toggle(store.t("Haptics"), isOn: Binding(get: { store.profile.hapticsEnabled ?? true }, set: { v in store.updateProfile { $0.hapticsEnabled = v } })).tint(JourneyColor.signal)
+          Toggle(store.t("Sound"), isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } })).tint(JourneyColor.signal)
         } header: { Text(store.t("You")) }
         Section {
           NavigationLink(store.t("Training answers")) { TrainingAnswersForm() }.accessibilityIdentifier("settings.baseline")
           NavigationLink(store.t("Data")) { DataSettingsView() }.accessibilityIdentifier("settings.data")
         }
         AccountSection { dismiss() }
-      }.gymPage().tint(JourneyColor.secondary)
+        LegalSection()
+      }.gymPage().tint(JourneyColor.secondary).track(screen: "settings")
         .navigationTitle(store.t("Settings")).navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() }.tint(JourneyColor.text).accessibilityIdentifier("preferences.done") } }
     }
@@ -73,7 +74,7 @@ struct DataSettingsView: View {
         Button(store.t("Load sample workouts")) { store.loadDemoIfEmpty() }.accessibilityIdentifier("settings.demo")
       }
       Button(store.t("Delete training answers"), role: .destructive) { deleting = true }
-    }.gymPage().navigationTitle(store.t("Data")).navigationBarTitleDisplayMode(.inline)
+    }.gymPage().navigationTitle(store.t("Data")).navigationBarTitleDisplayMode(.inline).track(screen: "settings.data")
       .confirmationDialog(store.t("Delete training answers?"), isPresented: $deleting, titleVisibility: .visible) {
         Button(store.t("Delete answers"), role: .destructive) { store.deleteRoutineAnswers() }
         Button(store.t("Cancel"), role: .cancel) {}
@@ -101,7 +102,7 @@ struct TrainingAnswersForm: View {
         number("Days / week", value: Binding(get: { draft.trainingDays.map(String.init) ?? "" }, set: { draft.trainingDays = Int($0) }))
       }
       if error { Text(store.t("Check the entered values.")).foregroundStyle(GymColor.red) }
-    }.gymPage().navigationTitle(store.t("Training answers")).navigationBarTitleDisplayMode(.inline)
+    }.gymPage().navigationTitle(store.t("Training answers")).navigationBarTitleDisplayMode(.inline).track(screen: "settings.answers")
       .navigationBarBackButtonHidden()
       .toolbar {
         ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }

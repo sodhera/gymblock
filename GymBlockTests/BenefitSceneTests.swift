@@ -6,12 +6,12 @@ import XCTest
     for answer in HabitAnswer.allCases {
       var b = RoutineBaseline(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(10)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .subscription])
+      XCTAssertEqual(Array(route.suffix(12)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits])
       XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
       XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
       XCTAssertEqual(Array(route.prefix(5)), [.name, .gender, .height, .weight, .scrolling])  // Profile first, one question a page.
     }
-    XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .subscription)
+    XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .splits)
   }
   func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
     let domain = "Account.\(UUID())"
@@ -84,7 +84,7 @@ import XCTest
   func testUnconfiguredPurchaseCannotInventEntitlement() async {
     let purchase = GymSubscription()
     XCTAssertFalse(purchase.configured)
-    await purchase.load(); XCTAssertNil(purchase.product); XCTAssertFalse(purchase.hasAccess)
+    await purchase.load(); XCTAssertNil(purchase.plan); XCTAssertTrue(purchase.plans.isEmpty); XCTAssertFalse(purchase.hasAccess)
     await purchase.buy(); XCTAssertFalse(purchase.hasAccess)
     await purchase.restore(); XCTAssertFalse(purchase.hasAccess)
     XCTAssertNotNil(purchase.message)

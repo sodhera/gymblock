@@ -12,13 +12,13 @@ The design follows from that:
 2. **Everything is pre-filled.** Last time's weight and reps load for every exercise. The common case is that nothing needs changing.
 3. **Every tap is reversible, and nothing is lost.** Each set, rest, draft and running set clock is saved as it happens, so it survives backgrounding, locking, a call or a relaunch.
 4. **You don't need to unlock the phone.** The rest counts on the Lock Screen and in the Dynamic Island, and a button there starts and finishes sets.
-5. **Same look as onboarding.** The app uses the same dark ember-dotted background, SF Pro Dynamic Type and Liquid Glass. White marks the primary action and red only marks the signal: the live set, a finished rest, today, a gain.
+5. **Same look as onboarding.** The app uses the same paper background, SF Pro Dynamic Type and Liquid Glass. Ink marks the primary action and emerald only marks the signal: the live set, a finished rest, today, a gain.
 
 ## Screens
 
 **Home: one decision.**
 - The headline is the workout (`Up next · Push` with its exercises) and the primary button is Start workout.
-- The middle holds one glass card: this week as seven day dots (today in red), "2 of 5" against the onboarding goal, and the last workout. Tapping the card opens History.
+- The middle holds one glass card: this week as seven day dots (today in emerald), "2 of 5" against the onboarding goal, and the last workout. Tapping the card opens History.
 - History and Settings are glass buttons at the top.
 - There's no tab bar.
 - Splits rotate: finishing Push makes Legs next, so the usual case is **one tap to start**. Tapping the workout name opens a chooser with Free workout, the splits and a New split option. Each split has an `…` menu to edit or delete it.
@@ -29,7 +29,7 @@ The design follows from that:
 - **Ring:** a Liquid Glass disc inside a ring.
   - Ready: last time's best set and its date.
   - Set: the set clock sweeps once a minute.
-  - Rest: the ring fills toward the rest length, then turns red with "Rest's up" and a double haptic. The rest length ("of 1:30 ⌃⌄") is changed right there.
+  - Rest: the ring fills toward the rest length, then turns emerald with "Rest's up" and a double haptic. The rest length ("of 1:30 ⌃⌄") is changed right there.
 - **Weight and reps:** two glass steppers, always in the same place.
   - `−` and `+` step on the plate grid (2.5 kg / 5 lb), and holding repeats.
   - Tapping a value types it. While typing, the ring hides so the button stays above the keyboard; type 60 and tap Start set in one motion.
@@ -73,8 +73,8 @@ A split of 6 exercises × 3 sets with no changes takes 1 + 36 + 5 + 2 + 1 = **45
 | You need a break: a call, the bathroom, a chat, waiting for a machine | **Pause.** The workout clock and the running rest or set freeze where they are; the ring dims and says "Paused". Rest alerts are held, blocking is lifted (simulated, labelled), and the Lock Screen shows "Paused" with a Resume button. Resume carries on from the same second. Paused time never counts as training, rest or set time. Starting or finishing a set resumes on its own. Ending while paused ends the workout when the pause began. Paused for an hour or more: "Still working out?" offers Resume or Finish. |
 | Phone locks, app is backgrounded, a call comes in | Nothing is lost. Timers are timestamps, so they show the true time on return. The Lock Screen and Dynamic Island keep counting. |
 | iOS closes the app mid-set or mid-rest | On relaunch the same set clock, draft reps and rest are back. Tested by terminating mid-set. |
-| Rest length passes with the phone locked | A local "Rest's up" notification (if alerts are on). The Live Activity turns red as the rest goes stale. |
-| Rest length passes in the app | A double haptic, the ring turns red, "Rest's up". No banner over the app. |
+| Rest length passes with the phone locked | A local "Rest's up" notification (if alerts are on). The Live Activity (which stays dark, as the Lock Screen is) turns emerald as the rest goes stale. |
+| Rest length passes in the app | A double haptic, the ring turns emerald, "Rest's up". No banner over the app. |
 | Sweaty double tap | The primary button ignores a second tap within 0.6 s, so one tap can't start and finish a set. Tested with `doubleTap()`. |
 | Forgot to tap Start (Start and Finish back to back) | The set is logged; a set clock under 3 s is marked unknown, never treated as measured. |
 | Forgot to tap Finish | A rep set over 15 min is logged with its duration marked unknown. |

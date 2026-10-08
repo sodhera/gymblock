@@ -1,162 +1,150 @@
 import SwiftUI
 
-/// Home is one decision: what you're training today, and Start. Splits rotate, so the next
-/// one is already chosen. The week sits in the middle; History and Settings are one tap away.
+/// Home: the streak, workouts per week against the goal, and one button. Start workout opens the
+/// chooser: a split, or a free workout.
 struct HomeView: View {
   @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
   @State private var choosing = false
   @State private var settings = false
   @State private var history = false
-  private var split: Workout? { store.data.workouts.first { $0.id == store.profile.preferredSplitID } }
+  @State private var appeared = false
+  private enum Detail: Hashable { case exercise(Exercise, UUID?), time }
+  @State private var detail: Detail?
+  /// A brand-new log shows a labelled example until the first workout is saved.
+  private var example: Bool { store.data.history.isEmpty }
+  private var stats: HomeStats { example ? GymStore.exampleStats(goal: min(7, max(1, store.profile.baseline?.trainingDays ?? 5))) : store.homeStats() }
+  private var trends: [ExerciseTrend] { example ? GymStore.exampleTrends(unit: store.profile.unit) : store.exerciseTrends() }
   var body: some View {
     NavigationStack {
       ZStack {
         DotGrid()
         VStack(alignment: .leading, spacing: 0) {
-          HStack(spacing: 10) {
-            if store.data.demoLoaded == true {
-              Text(store.t("Sample data")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
-                .padding(.horizontal, 12).padding(.vertical, 6).journeyGlass(Capsule())
-                .accessibilityIdentifier("home.sample")
-            }
-            Spacer()
-            GlassIconButton(symbol: "clock.arrow.circlepath", label: store.t("History"), id: "home.history") { history = true }
-            GlassIconButton(symbol: "gearshape", label: store.t("Settings"), id: "home.preferences") { settings = true }
-          }.frame(minHeight: 52).padding(.top, 6)
-          VStack(alignment: .leading, spacing: 10) {
-            Text(store.t(split == nil ? "Today" : "Up next")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-            Button { choosing = true } label: {
-              HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(split?.name ?? store.t("Free workout")).font(.system(.largeTitle, weight: .bold))
-                  .foregroundStyle(JourneyColor.text).lineLimit(2).minimumScaleFactor(0.7).multilineTextAlignment(.leading)
-                Image(systemName: "chevron.down").font(.system(.title3, weight: .bold)).foregroundStyle(JourneyColor.secondary)
-                  .accessibilityHidden(true)
-                Spacer(minLength: 0)
-              }.contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("home.workout")
-              .accessibilityLabel(store.t("Workout") + ", " + (split?.name ?? store.t("Free workout")))
-              .accessibilityHint(store.t("Choose another workout"))
-            Text(preview).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(2)
-          }.padding(.top, 18)
-          Spacer(minLength: 24)
-          WeekCard { history = true }
-          Spacer(minLength: 24)
+          if typeSize.isAccessibilitySize {
+            ScrollView { content.padding(.bottom, 12) }.scrollIndicators(.hidden).frame(maxHeight: .infinity)
+          } else {
+            content
+            Spacer(minLength: 0)
+          }
           VStack(spacing: 10) {
-            Color.clear.frame(height: 20)
+            caption.frame(minHeight: 20)
             JourneyButton(title: store.t("Start workout"), id: "home.start") {
               JourneyHaptic.play(.medium, store.profile, intensity: 0.8)
-              store.startSession(workout: split)
+              choosing = true
             }
-            Color.clear.frame(height: 44)
+            Color.clear.frame(height: 20)
           }.padding(.top, 8)
         }.padding(.horizontal, 24).padding(.bottom, 4)
       }
-      .toolbar(.hidden, for: .navigationBar)
+      .navigationTitle(greeting).navigationBarTitleDisplayMode(.inline).track(screen: "home", ["example": example])
+      .navigationDestination(item: $detail) { which in
+        switch which {
+        case .exercise(let exercise, let splitID): ExerciseProgressView(exercise: exercise, split: store.data.workouts.first { $0.id == splitID })
+        case .time: TimeTrainingView()
+        }
+      }
+      .toolbar {
+        ToolbarItemGroup(placement: .topBarTrailing) {
+          Button { history = true } label: { Label(store.t("History"), systemImage: "clock.arrow.circlepath") }
+            .accessibilityIdentifier("home.history")
+          Button { settings = true } label: { Label(store.t("Settings"), systemImage: "gearshape") }
+            .accessibilityIdentifier("home.preferences")
+        }
+      }
       .navigationDestination(isPresented: $history) { HistoryHubView() }
       .sheet(isPresented: $settings) { PreferencesView() }
       .sheet(isPresented: $choosing) { WorkoutChoiceView() }
     }
   }
-  private var preview: String {
-    guard let split else { return store.t("Pick exercises as you go.") }
-    return split.exercises.map { store.t($0.name) }.joined(separator: " · ")
-  }
-}
 
-/// This week at a glance: a dot per day, today in red. Opens History.
-struct WeekCard: View {
-  @EnvironmentObject private var store: GymStore
-  let action: () -> Void
-  private var goal: Int { min(7, max(1, store.profile.baseline?.trainingDays ?? 5)) }
-  private var last: Session? { store.data.history.filter { !$0.completedSets.isEmpty }.max { ($0.ended ?? $0.started) < ($1.ended ?? $1.started) } }
-  var body: some View {
-    Button(action: action) {
-      VStack(alignment: .leading, spacing: 18) {
-        HStack(alignment: .firstTextBaseline) {
-          Text(store.t("This week")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-          Spacer()
-          Text("\(store.weekCount) " + store.t("of") + " \(goal)").font(.system(.headline, weight: .semibold))
-            .monospacedDigit().foregroundStyle(JourneyColor.text)
-        }
-        HStack(spacing: 0) {
-          ForEach(store.weekDays, id: \.self) { day in
-            VStack(spacing: 8) {
-              Text(day.formatted(.dateTime.weekday(.narrow))).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
-              dot(day)
-            }.frame(maxWidth: .infinity)
-          }
-        }
-        if let last {
-          Rectangle().fill(JourneyColor.hairline).frame(height: 1)
-          HStack(alignment: .firstTextBaseline) {
-            Text(store.t("Last workout")).foregroundStyle(JourneyColor.secondary)
-            Spacer()
-            Text(store.t(last.name) + " · " + relative(last.ended ?? last.started)).foregroundStyle(JourneyColor.text)
-              .lineLimit(1)
-            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(JourneyColor.tertiary)
-          }.font(.subheadline)
-        }
-      }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .journeyGlass(RoundedRectangle(cornerRadius: 26, style: .continuous), interactive: true)
-    }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("home.week")
-      .accessibilityLabel(store.t("This week") + ", \(store.weekCount) " + store.t("of") + " \(goal). " + store.t("Opens History"))
-  }
-  private func dot(_ day: Date) -> some View {
-    let calendar = Calendar.current
-    let today = calendar.isDateInToday(day)
-    let trained = store.trained(on: day)
-    let future = day > Date() && !today
-    return Circle()
-      .fill(trained ? (today ? JourneyColor.signalRed : JourneyColor.text) : Color.white.opacity(future ? 0 : 0.06))
-      .overlay(Circle().strokeBorder(today && !trained ? JourneyColor.signalRed : Color.white.opacity(future ? 0.16 : 0), lineWidth: 1.5))
-      .overlay {
-        if trained {
-          Image(systemName: "checkmark").font(.system(size: 11, weight: .bold))
-            .foregroundStyle(today ? JourneyColor.onAccent : JourneyColor.onButton)
-        }
+  /// Cards settle in one after another the first time Home appears.
+  private var content: some View {
+    let s = stats
+    let trends = trends
+    return VStack(alignment: .leading, spacing: 12) {
+      StreakCard(stats: s) { history = true }.reveal(appeared, 0).padding(.top, 8)
+      if !trends.isEmpty {
+        ExerciseCarousel(trends: trends, example: example) { trend in
+          if example { history = true } else { detail = .exercise(trend.exercise, trend.splitID) }
+        }.reveal(appeared, 1)
       }
-      .frame(width: 26, height: 26)
+      HStack(spacing: 12) {
+        InfoCard(symbol: "trophy.fill", value: s.lastPR.map { relative($0.date) } ?? "—", label: store.t("since last PR"),
+                 detail: s.lastPR.map { store.t($0.exercise.name) + " " + $0.text } ?? store.t("Beat a set to earn one."), id: "home.pr") {
+          if example { history = true } else if let pr = s.lastPR { detail = .exercise(pr.exercise, pr.splitID) } else { history = true }
+        }
+        InfoCard(symbol: "clock.fill", value: JourneyFormat.minutes(Double(s.totalMinutes)), label: store.t("time training"),
+                 detail: "\(s.totalWorkouts) " + store.t("workouts"), id: "home.time") { if example { history = true } else { detail = .time } }
+      }.reveal(appeared, 2)
+    }
+    .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.12)) { appeared = true } }
+  }
+  private var greeting: String {
+    let hour = Calendar.current.component(.hour, from: Date())
+    let base = hour < 5 ? "Good evening" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+    let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    return store.t(base) + (name.isEmpty ? "" : ", " + name)
   }
   private func relative(_ date: Date) -> String {
-    let calendar = Calendar.current
-    if calendar.isDateInToday(date) { return store.t("today") }
-    if calendar.isDateInYesterday(date) { return store.t("yesterday") }
-    let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: date), to: calendar.startOfDay(for: Date())).day ?? 0
-    return days < 7 ? date.formatted(.dateTime.weekday(.wide)) : date.formatted(.dateTime.day().month(.abbreviated))
+    let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: date), to: Calendar.current.startOfDay(for: Date())).day ?? 0
+    if days == 0 { return store.t("today") }
+    if days == 1 { return store.t("yesterday") }
+    if days < 14 { return "\(days) " + store.t("days ago") }
+    return "\(days / 7) " + store.t("weeks ago")
+  }
+
+  /// One honest line above the button, the same one the workout shows.
+  @ViewBuilder private var caption: some View {
+    if store.data.demoLoaded == true {
+      Text(store.t("Sample data")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).accessibilityIdentifier("home.sample")
+    } else if example {
+      Text(store.t("Example until your first workout")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
+    } else if store.profile.focusEnabled == true {
+      let apps = store.profile.blockedApps
+      HStack(spacing: 6) {
+        Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
+        Text((apps.isEmpty ? store.t("Apps") : apps.prefix(2).joined(separator: ", ") + (apps.count > 2 ? " +\(apps.count - 2)" : ""))
+             + " · " + store.t("blocked while you train · preview"))
+      }.font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+        .accessibilityElement(children: .combine).accessibilityIdentifier("home.blocking")
+    } else {
+      Color.clear.frame(height: 20)
+    }
   }
 }
 
-/// Choose today's workout. Choosing is one tap; splits are created and edited here too.
+/// Choose today's workout and go: the split that's up next is marked, a free workout is one row,
+/// and splits are created and edited here too.
 struct WorkoutChoiceView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
   @State private var creating = false
   @State private var editing: Workout?
   @State private var deleting: Workout?
+  private var next: UUID? { store.profile.preferredSplitID }
   var body: some View {
     NavigationStack {
       ScrollView {
         JourneyGlassGroup(spacing: 10) {
           VStack(spacing: 10) {
-            row(store.t("Free workout"), detail: store.t("Pick exercises as you go."), id: nil)
             ForEach(store.data.workouts) { split in
               row(split.name, detail: split.exercises.map { store.t($0.name) }.joined(separator: " · "), id: split.id, split: split)
             }
+            row(store.t("Free workout"), detail: store.t("Pick exercises as you go."), id: nil)
             Button { creating = true } label: {
-              Label(store.t("New split"), systemImage: "plus").font(JourneyType.option).foregroundStyle(JourneyColor.text)
-                .frame(maxWidth: .infinity, minHeight: 60)
-                .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-                  .strokeBorder(JourneyColor.hairline, style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
+              Label(store.t("New split"), systemImage: "plus").font(JourneyType.option).foregroundStyle(JourneyColor.secondary)
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                  .strokeBorder(JourneyColor.ink(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
             }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("split.add")
           }
         }.padding(.horizontal, 20).padding(.vertical, 12)
-      }.gymPage().navigationTitle(store.t("Choose workout")).navigationBarTitleDisplayMode(.inline)
+      }.gymPage().navigationTitle(store.t("Start workout")).navigationBarTitleDisplayMode(.inline).track(screen: "home.choose")
         .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } } }
         .navigationDestination(isPresented: $creating) {
           SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
-            store.updateProfile { $0.preferredSplitID = split.id }; dismiss()
+            store.updateProfile { $0.preferredSplitID = split.id }; creating = false
           }
         }
         .navigationDestination(item: $editing) { split in
@@ -170,24 +158,30 @@ struct WorkoutChoiceView: View {
     }.presentationDetents([.medium, .large])
   }
   private func row(_ name: String, detail: String, id: UUID?, split: Workout? = nil) -> some View {
-    let selected = store.profile.preferredSplitID == id
+    let upNext = split != nil && next == id
     return HStack(spacing: 12) {
       Button {
-        JourneyHaptic.play(.selection, store.profile)
-        store.updateProfile { $0.preferredSplitID = id }; dismiss()
+        JourneyHaptic.play(.medium, store.profile, intensity: 0.8)
+        store.updateProfile { $0.preferredSplitID = id }
+        store.startSession(workout: split)
+        dismiss()
       } label: {
         HStack(spacing: 12) {
           VStack(alignment: .leading, spacing: 4) {
-            Text(name).font(JourneyType.option).foregroundStyle(JourneyColor.text).lineLimit(1)
-            Text(detail).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+            HStack(spacing: 8) {
+              Text(name).font(JourneyType.option).foregroundStyle(JourneyColor.text).lineLimit(1)
+              if upNext {
+                Text(store.t("Up next")).font(.caption.weight(.semibold)).foregroundStyle(JourneyColor.onAccent)
+                  .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(JourneyColor.signal))
+              }
+            }
+            Text(detail).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1)
           }
           Spacer(minLength: 8)
-          Image(systemName: "checkmark.circle.fill").font(.system(.title3, weight: .semibold))
-            .symbolRenderingMode(.palette).foregroundStyle(JourneyColor.onAccent, JourneyColor.accent)
-            .opacity(selected ? 1 : 0).accessibilityHidden(true)
-        }.frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
+          Image(systemName: "arrow.right").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
+        }.frame(maxWidth: .infinity, minHeight: 46, alignment: .leading).contentShape(Rectangle())
       }.buttonStyle(.plain).accessibilityIdentifier(split.map { "choice.\($0.name)" } ?? "choice.free")
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityHint(store.t("Starts this workout"))
       if let split {
         Menu {
           Button(store.t("Edit split"), systemImage: "pencil") { editing = split }
@@ -198,9 +192,6 @@ struct WorkoutChoiceView: View {
         }.accessibilityLabel(store.t("Edit") + " " + name).accessibilityIdentifier("split.menu.\(split.name)")
       }
     }.padding(.leading, 20).padding(.trailing, split == nil ? 20 : 8).padding(.vertical, 6)
-      .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous),
-                    tint: selected ? JourneyColor.accent.opacity(0.22) : nil, interactive: true)
-      .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
-        .strokeBorder(JourneyColor.accent.opacity(selected ? 0.7 : 0), lineWidth: 1.5))
+      .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous), tint: upNext ? JourneyColor.ink(0.06) : nil, interactive: true)
   }
 }

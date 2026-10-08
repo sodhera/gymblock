@@ -45,11 +45,19 @@ struct StepButton: View {
   let action: () -> Void
   var body: some View {
     Button(action: action) {
-      Image(systemName: symbol).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text)
-        .frame(width: 44, height: 44).background(Circle().fill(Color.white.opacity(0.08)))
+      Image(systemName: symbol).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+        .frame(width: 40, height: 40).background(Circle().fill(JourneyColor.ink(0.08)))
         .contentShape(Circle())
     }.buttonStyle(JourneyPressStyle()).buttonRepeatBehavior(.enabled)
       .accessibilityLabel(label).accessibilityIdentifier(id)
+  }
+}
+
+extension View {
+  /// Staggered entrance: fades up into place, each index a little after the last.
+  func reveal(_ shown: Bool, _ index: Int) -> some View {
+    opacity(shown ? 1 : 0).offset(y: shown ? 0 : 10)
+      .animation(.spring(duration: 0.55, bounce: 0.12).delay(Double(index) * 0.06), value: shown)
   }
 }
 

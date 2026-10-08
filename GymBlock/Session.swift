@@ -89,7 +89,7 @@ struct SessionRecordsView: View {
                             cancelSet: session.stage == .active || session.stage == .log ? { store.cancelSet(); dismiss() } : nil)
         }
       }
-        .gymPage().navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).toolbar {
+        .gymPage().navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).track(screen: "workout.sets").toolbar {
           ToolbarItem(placement: .confirmationAction) {
             Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("records.done")
           }

@@ -6,8 +6,8 @@ import WidgetKit
   var body: some Widget { WorkoutLiveActivity() }
 }
 
-private let stage = Color(red: 0.035, green: 0.031, blue: 0.035)
-private let signal = Color(red: 1, green: 0x62 / 255, blue: 0x6B / 255)
+private let stage = Color(red: 0.043, green: 0.047, blue: 0.059)
+private let signal = Color(red: 0x3E / 255, green: 0xE8 / 255, blue: 0xB5 / 255)
 
 /// The rest counts on the Lock Screen and in the Dynamic Island, so you never need to unlock
 /// the phone between sets. When the rest length passes, the activity goes stale and turns red.

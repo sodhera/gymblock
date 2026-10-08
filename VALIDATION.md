@@ -1,6 +1,32 @@
-# Validation — 7 October 2026
+# Validation — 8 October 2026
 
 Native Swift/SwiftUI simulator prototype with one app extension (GymBlockLive, the Live Activity). Latest checks use Xcode 27 / iPhone 18 Pro / iOS 27.0. Signing is disabled. No external services or package dependencies are configured.
+
+## Redesign pass (8 October 2026)
+
+The review in [docs/UX-REVIEW-2026-10-08.md](docs/UX-REVIEW-2026-10-08.md) was implemented in full the same day. What changed, and how it was checked:
+
+- **Brand and launch.** App icon rendered by `scripts/generate-app-icon.swift` (paper stage, ink rest ring, emerald dot); the wordmark on the welcome page and the offer card. The white launch cover is gone: a screen recording of a cold launch measured per-frame brightness and no longer shows the spike the old build had (old: 0 → 114 → 0 on a 0–255 scale over ~10 frames; new: Home Screen → stage colour with no rise).
+- **Palette and scale.** The red ember was rejected (alarming), then a graphite-and-mint scheme (still black). Three directions were rendered on the same four screens (paper, an indigo dusk, a slate) and the person chose **paper**: warm off-white stage, ink type, white Liquid Glass, an ink primary button, emerald (#0F9A6B) as the only signal, light appearance. Every colour comes from `JourneyTheme.paper`; literal whites in views became `JourneyColor.ink(_:)` so tracks and hairlines read on a light stage. In the same pass every element was scaled down (28-pt headlines, 50-pt buttons, 52-pt rows, 18–20-pt radii, 16-pt padding, 160–220-pt ring, 44-pt hero numbers). The Live Activity keeps its dark palette because it sits on the Lock Screen.
+- **Type and voice.** Headlines are `.largeTitle` bold, centred in the two-line box; eyebrows label blocks. Captions and qualifiers rewritten in plain words (listed in DESIGN.md); the Debug paywall link reads "Continue without subscribing · Debug".
+- **Illustration.** The approved arm and brain scenes are unchanged (an interim replacement was reverted the same day). Blocked apps are monograms on glass.
+- **Onboarding.** A chosen answer rises with a white edge and a red check instead of a red block. Continue fades in when a scene ends, as before.
+- **Navigation.** The global transparent navigation-bar appearance is gone, so History, Settings and every editor get the native iOS 26 Liquid Glass bar; Home and the workout put their controls (History, Settings; the pause clock, Sets, End) in that bar as glass toolbar items instead of custom buttons.
+- **Home.** Greeting, the split's exercises with last time's best set, the last gain on the week card, a "How it works" card before the first workout. A plain column at normal text sizes (nothing moves), a scroll view at accessibility sizes.
+- **Workout.** Ember glow behind the ring disc, a visible track, larger set dots, the pause control as a white play/pause disc, the End confirmation as an alert so Keep going is always visible, and accessibility sizes no longer clip the reps stepper or the ring clock (ring 176 pt, clock 44 pt, captions on two lines).
+- **Summary.** A headline that changes with the workout (gain / first workout / otherwise), one hero number with a glow, three small tiles, red arrows on gains.
+- **History and progress.** Weekly bar chart with this week in red and Reps / Weight moved pills; exercise progress defaults to the most recent workout's scope (it opened on an empty "Free workouts" scope before); Before/After tiles, the difference as a headline, the line chart inline; workout list without truncated exercise names.
+- **Spanish.** Every new string has an entry in `JourneyLanguage.swift`.
+
+Proof: [screenshots/redesign-2026-10-08](screenshots/redesign-2026-10-08/) (31 captures: icon, every onboarding page, Home empty and with sample data, the workout in ready, rest and rest's-up states, the End alert, Summary, History, exercise progress, a workout detail, Home and the workout at Accessibility M). The previous state is in [screenshots/review-2026-10-08](screenshots/review-2026-10-08/) for comparison.
+
+**Splits step and de-templating (8 October, later).** A twentieth onboarding page, Set up your splits, follows the offer: add a split (the existing editor as a sheet: name, Add exercises with search, reorder, delete), rows spring in, the first split becomes Home's Up next, Start training finishes onboarding; Skip for now while empty. The interim templated styling was removed (tracked uppercase labels, monogram tiles, the Get started tagline, the numbered How-it-works card, fixed-size hero fonts) and directional page motion plus staggered Home reveals were added. Proven by a fresh-install walk from welcome to Home: `screenshots/redesign-2026-10-08/onboarding-*.png` and `onboarding-overview.png`. No test suite was run after this change (running tests spawns hidden simulator clones; see the note below).
+
+**Split editor, exercise picker, Home progress (8 October, later still).** The editor shows the name as a title-sized field, numbered rows with the exercise's area, drag/swipe editing and a count; the picker groups by area with signal-coloured checks and a count pill on Done. Home's week card became a Progress card: weekly weight-moved line (Swift Charts, animated draw-in), a guarded four-week comparison, a streak and the week dots. First build crashed on a chart axis type mismatch (Int x against a Double domain), fixed by using Double x values; the first chart frame takes about half a second on first launch while Charts compiles its pipeline. Captures: `21-home.png`, `20-home-first-run.png`, `onboarding-21`–`24`.
+
+**Home scoreboard (8 October, evening).** The person found the exercise card and the "Up next" headline noise and asked what stats the app should actually show. Home now measures the three onboarding promises: a Consistency card (twelve-week day grid, streak, this week vs goal; `HomeStats.swift`), Rests on time (rests within target + 30 s grace over 28 days, average shown) and Lifts up (like-for-like improvements over 28 days). Start workout opens the chooser, whose rows now start the workout; the up-next split is marked. UI tests were updated for the new start path (`freeWorkout()` and `start(_:)` helpers, `choice.Push` taps) but not run. That scoreboard was then cut back on request to what the mainstream gym apps show: the streak number, "2/5 this week", and a bar chart of workouts per week with a goal line (`HomeScoreboard.swift`). That read as empty, so the final Home is the gamified one: streak card with flame, goal ring and day dots; three chips (workouts, PRs, rests on time); then, on request, an auto-advancing per-exercise carousel (`ExerciseCarousel`, `exerciseTrends`) instead of the weekly chart, the day dots removed from the streak card (the ring already says 2/5), the greeting removed from the bar, and a labelled example scoreboard for a new log. Then: day dots back on the streak card, dots under the carousel card, the greeting back as the title, Start 24 pt lower, the counters replaced by Since-last-PR and Time-training cards, and every card tappable (streak → History, a graph → that exercise's progress, PR → its exercise, time → `TimeTrainingView`). Captures: `21-home.png`, `20-home-first-run.png`, `23-home-pr-detail.png`, `24-home-time-detail.png`. Streaks count consecutive weeks with any workout, as Hevy does. Captures: `21-home.png`, `20-home-first-run.png`, `22-start-chooser.png`.
+
+Tests (earlier the same day): **all 72 model checks pass and all 17 UI tests pass** (BenefitLayout, GymBlockFlow, JourneyV5, WorkoutActions; iPhone 18 Pro / iOS 27.0, `-parallel-testing-enabled NO`). One UI test string was updated for the reworded minutes headline ("How long on your phone, each rest?"). The UI run was made on the build before the last two layout fixes (a fixed-height caption spacer on Home and the workout, and the large-text ring size); those were re-checked by hand with captures of Home and the workout at Accessibility M and at the default size.
 
 ## V6 rev. 1 — pause (8 October 2026)
 
@@ -298,8 +324,26 @@ Actual captures are in `screenshots/redesign/`, with dark/large-text/increased-c
 
 The simulator is left in light appearance with its original text-size/contrast settings, on Home with Arms, Push and Legs splits and six weeks of sample workouts. The Demo label identifies sample history. Test resets apply only to this prototype's local storage.
 
+## Account, cloud, analytics, billing and logo (8 Oct 2026, evening)
+
+Built and run on the iOS 27.0 iPhone simulator (`GymBlock Review`), bundle id `com.sodhera.gymblock`, with the Supabase and RevenueCat Swift packages resolved (supabase-swift 2.55, purchases-ios 5.x). Captures in `screenshots/redesign-2026-10-08/`:
+
+| Capture | Shows |
+| --- | --- |
+| `30-reveal-red-green.png` | The phone arc is red, the training arc emerald, legend dots match. |
+| `31-days-red.png` | The hours-a-year dots are red. |
+| `32-welcome-signin.png` | The new padlock-barbell wordmark and "I already have an account". |
+| `33-account.png` | The account page: card with the mark, three promises, Continue with Apple, and (offline Debug run) the labelled skip in place of Google. |
+| `34-offer.png` | GymBlock Pro card with the mark; with no RevenueCat key the primary is disabled and the caption says subscriptions aren't switched on. |
+| `35-settings-account.png` | Settings with the Account and Legal sections. |
+| `logo-1024.png`, `logo-180.png`, `logo-60.png` | The icon at three sizes; opaque, no alpha. |
+
+What was verified by running: build, launch, every onboarding page above, Home with sample data, Settings. What was verified by reading, not running, because the dashboards could not be reached from this machine (no Safari scripting, no Chrome, expired tokens): the SQL migration (repeat-safe statements, owner-only RLS, insert-only analytics for anon, `gb_delete_account` security definer), the Apple id-token and Google OAuth paths, the sync push/pull and the RevenueCat purchase path. They follow the same calls the shipped Speaking Coach app uses. Sign-in, sync, analytics inserts and purchases cannot succeed until the steps in `supabase/README.md` are done; until then the app reports the provider's error and never pretends.
+
+Tests, run non-parallel on the one simulator: all 72 model checks pass (`GymBlockTests`, 1.0 s). UI: `BenefitLayoutUITests` (the primary action, now Continue with Apple on the account page, never moves), `JourneyV5UITests/testFullJourney…` (through the account page's Debug skip to the offer), `JourneyV5UITests/testRelaunchResumesWithoutBypassingOffer` (relaunch resumes on the offer; Back passes the account page), and `GymBlockFlowTests/testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything` (device-only semantics in offline runs) all pass. The remaining UI classes were not re-run in this round.
+
 ## Limits
 
-Real Screen Time blocking, billing, accounts, backend, signing and App Store delivery are not configured. Physical-iPhone ergonomics and manual VoiceOver navigation remain unverified. The current onboarding revision above verifies OS Reduce Motion/Reduce Transparency on an iOS 26.5 simulator; iOS 17–25 runtime appearance remains unverified. The source uses native system materials, scaled DM Sans typography and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
+Real Screen Time blocking is not implemented. Accounts, sync, analytics and billing are implemented but their dashboards (Supabase providers and schema, RevenueCat, App Store Connect) are not yet configured; signing uses team 6LYZDNCM4M with automatic signing and App Store delivery has not been attempted. Physical-iPhone ergonomics and manual VoiceOver navigation remain unverified. The current onboarding revision above verifies OS Reduce Motion/Reduce Transparency on an iOS 26.5 simulator; iOS 17–25 runtime appearance remains unverified. The source uses native system materials, scaled DM Sans typography and a Reduce Motion branch, with an iOS 17–25 native-control fallback.
 
 Animation preference and usability claims still require the proposed friend/user study. No muscle-gain, fat-loss or optimal-workout-time prediction is made.

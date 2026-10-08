@@ -5,10 +5,10 @@ import UIKit
 /// and red only as the signal (the live set, a finished rest, a record).
 enum GymColor {
   static let ground = JourneyColor.stage
-  static let surface = Color(white: 0.11)
+  static let surface = JourneyColor.raised
   static let ink = JourneyColor.text
   static let dim = JourneyColor.secondary
-  static let red = JourneyColor.signalRed
+  static let red = JourneyColor.signal
   static let action = red
   static let wash = JourneyColor.fill
 }

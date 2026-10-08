@@ -33,7 +33,7 @@ final class WorkoutActionsUITests: XCTestCase {
     snap(app, "actions-home")
     let home = app.buttons["home.start"]; XCTAssertTrue(home.waitForExistence(timeout: 6))
     let homeFrame = home.frame
-    home.tap()
+    home.tap(); tap(app, "choice.Push")
     let ready = primary(app, "Start set"); snap(app, "actions-ready")
     XCTAssertEqual(ready.frame, homeFrame)  // Home's Start and the workout's button share one place.
     Thread.sleep(forTimeInterval: 0.7); ready.tap()
@@ -59,7 +59,7 @@ final class WorkoutActionsUITests: XCTestCase {
 
   func testADoubleTapNeverStartsAndFinishesASetAtOnce() {
     let app = launch()
-    tap(app, "home.start")
+    tap(app, "home.start"); tap(app, "choice.Push")
     primary(app, "Start set").doubleTap()
     XCTAssertEqual(primary(app, "Finish set").label, "Finish set")  // Started once, not finished.
     Thread.sleep(forTimeInterval: 0.7)
@@ -73,8 +73,7 @@ final class WorkoutActionsUITests: XCTestCase {
 
   func testAfterTheLastSetTheNextExerciseIsOneTapAndTheRestKeepsCounting() {
     let app = launch()
-    tap(app, "home.workout"); tap(app, "choice.Push")
-    tap(app, "home.start")
+    tap(app, "home.start"); tap(app, "choice.Push")
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Bench press")
     for _ in 0..<3 {
       Thread.sleep(forTimeInterval: 0.7); primary(app, "Start set").tap()
@@ -123,7 +122,7 @@ final class WorkoutActionsUITests: XCTestCase {
   func testActionsRemainReachableAtLargerText() {
     let app = launch(["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityM"])
     snap(app, "actions-large-home")
-    tap(app, "home.start")
+    tap(app, "home.start"); tap(app, "choice.Push")
     XCTAssertTrue(app.buttons["set.change"].isHittable)
     XCTAssertTrue(primary(app, "Start set").isHittable)
     snap(app, "actions-large-ready")

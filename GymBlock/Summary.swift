@@ -1,6 +1,8 @@
 import SwiftUI
 
-/// After a workout: what you did, and anything you beat like for like. One tap back to Home.
+/// After a workout: one headline number, the rest of the story beneath it, and anything you beat
+/// like for like. One tap back to Home. The first workout and a workout with gains each get their
+/// own headline, so the page never reads the same twice in a row.
 struct SummaryView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
@@ -14,59 +16,58 @@ struct SummaryView: View {
   private var canSaveSplit: Bool {
     session.splitID == nil && !session.completedSets.isEmpty && !saved
   }
+  private var first: Bool { store.data.history.filter { !$0.completedSets.isEmpty }.count <= 1 }
+  private var name: String { store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines) }
+  private var title: String {
+    if !gains.isEmpty { return store.t("Stronger than last time") + (name.isEmpty ? "." : ", " + name + ".") }
+    if first { return store.t("First one in the log") + (name.isEmpty ? "." : ", " + name + ".") }
+    return name.isEmpty ? store.t("Workout saved.") : store.t("Nice work,") + " " + name + "."
+  }
   var body: some View {
     ZStack {
       DotGrid()
       VStack(alignment: .leading, spacing: 0) {
         ScrollView {
-        VStack(alignment: .leading, spacing: 0) {
-        VStack(alignment: .leading, spacing: 8) {
-          Text(store.profile.name.isEmpty ? store.t("Workout saved.") : store.t("Nice work,") + " " + store.profile.name + ".")
-            .font(JourneyType.headline).foregroundStyle(JourneyColor.text)
-            .accessibilityAddTraits(.isHeader).accessibilityIdentifier("summary.title")
-          Text(store.t(session.name) + " · " + (session.ended ?? session.started).formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-            .font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-        }.padding(.top, 64).padding(.bottom, 32)
-        JourneyGlassGroup(spacing: 12) {
-          VStack(spacing: 12) {
-            HStack(spacing: 12) {
-              tile("Time", value: Double(max(1, Int(session.duration / 60))), format: { "\(Int($0)) " + store.t("min") }, id: "summary.time")
-              tile("Sets", value: Double(session.completedSets.count), format: { "\(Int($0))" }, id: "summary.sets")
-            }
-            HStack(spacing: 12) {
-              if session.volumeKG > 0 {
-                tile("Weight moved", value: GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit),
-                     format: { formatNumber($0.rounded()) + " " + store.profile.unit }, id: "summary.volume")
-              } else {
-                tile("Reps", value: Double(session.totalReps), format: { "\(Int($0))" }, id: "summary.reps")
-              }
-              if let rest = session.averageRest {
-                tile("Average rest", value: rest, format: { clockString(Int($0)) }, id: "summary.rest")
-              } else {
-                tile("Reps", value: Double(session.totalReps), format: { "\(Int($0))" }, id: "summary.reps")
-                  .opacity(session.volumeKG > 0 ? 1 : 0).accessibilityHidden(session.volumeKG == 0)
-              }
-            }
-          }
-        }
-        if !gains.isEmpty {
+          Color.clear.frame(height: 0).track(screen: "summary", ["sets": session.completedSets.count])
           VStack(alignment: .leading, spacing: 14) {
-            Text(store.t("Better than last time")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-            ForEach(gains) { gain in
-              HStack(alignment: .firstTextBaseline) {
-                Text(store.t(gain.exercise.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
-                Spacer(minLength: 8)
-                Text(gainText(gain)).font(.system(.body, weight: .semibold)).monospacedDigit()
-                  .foregroundStyle(JourneyColor.signalRed).lineLimit(1).minimumScaleFactor(0.8)
-              }.accessibilityElement(children: .combine)
+            VStack(alignment: .leading, spacing: 10) {
+              Eyebrow(text: store.t(session.name) + " · " + (session.ended ?? session.started).formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+              Text(title).font(JourneyType.headline).tracking(-0.4).foregroundStyle(JourneyColor.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader).accessibilityIdentifier("summary.title")
+            }.padding(.top, 48).padding(.bottom, 10)
+            hero
+            JourneyGlassGroup(spacing: 12) {
+              HStack(spacing: 12) {
+                tile("Time", value: Double(max(1, Int(session.duration / 60))), format: { "\(Int($0)) " + store.t("min") }, id: "summary.time")
+                tile("Sets", value: Double(session.completedSets.count), format: { "\(Int($0))" }, id: "summary.sets")
+                if let rest = session.averageRest {
+                  tile("Avg rest", value: rest, format: { clockString(Int($0)) }, id: "summary.rest")
+                } else {
+                  tile("Reps", value: Double(session.totalReps), format: { "\(Int($0))" }, id: "summary.reps")
+                }
+              }
             }
-          }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
-            .journeyGlass(RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .padding(.top, 12).accessibilityIdentifier("summary.gains")
-            .opacity(shown ? 1 : 0).offset(y: shown || reduceMotion ? 0 : 8)
-        }
-        recap.padding(.top, 12).opacity(shown ? 1 : 0).offset(y: shown || reduceMotion ? 0 : 8)
-        }.padding(.top, 0).padding(.bottom, 16)
+            if !gains.isEmpty {
+              VStack(alignment: .leading, spacing: 12) {
+                Eyebrow(text: store.t("Better than last time"))
+                ForEach(gains) { gain in
+                  HStack(alignment: .firstTextBaseline) {
+                    Text(store.t(gain.exercise.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+                    Spacer(minLength: 8)
+                    HStack(spacing: 4) {
+                      Image(systemName: "arrow.up").font(.system(.caption, weight: .bold))
+                      Text(gainText(gain)).font(.system(.body, weight: .semibold)).monospacedDigit()
+                    }.foregroundStyle(JourneyColor.signal).lineLimit(1).minimumScaleFactor(0.8)
+                  }.accessibilityElement(children: .combine)
+                }
+              }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                .journeySurface()
+                .accessibilityIdentifier("summary.gains")
+                .opacity(shown ? 1 : 0).offset(y: shown || reduceMotion ? 0 : 8)
+            }
+            recap.opacity(shown ? 1 : 0).offset(y: shown || reduceMotion ? 0 : 8)
+          }.padding(.bottom, 16)
         }.scrollIndicators(.hidden).scrollBounceBehavior(.basedOnSize)
         VStack(spacing: 10) {
           Color.clear.frame(height: 20)
@@ -101,11 +102,43 @@ struct SummaryView: View {
       JourneyHaptic.land(store.profile)
     }
   }
+
+  /// The headline number: weight moved, or reps for bodyweight and timed work.
+  private var hero: some View {
+    let volume = session.volumeKG > 0
+    let value = volume ? GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit) : Double(session.totalReps)
+    return VStack(alignment: .leading, spacing: 6) {
+      Eyebrow(text: store.t(volume ? "Weight moved" : "Reps"))
+      HStack(alignment: .firstTextBaseline, spacing: 8) {
+        CountingText(value: shown ? value : 0) { formatNumber($0.rounded()) }
+          .font(.system(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+          .lineLimit(1).minimumScaleFactor(0.5)
+        if volume { Text(store.profile.unit).font(.system(.title2, weight: .semibold)).foregroundStyle(JourneyColor.secondary) }
+      }
+      Text(heroNote).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
+    }.padding(18).frame(maxWidth: .infinity, alignment: .leading)
+      .background(alignment: .topTrailing) {
+        Circle().fill(RadialGradient(colors: [JourneyColor.glow.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 130))
+          .frame(width: 260, height: 260).offset(x: 60, y: -90).allowsHitTesting(false)
+      }
+      .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+      .journeySurface()
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(store.t(volume ? "Weight moved" : "Reps") + ", " + formatNumber(value.rounded()) + (volume ? " " + store.profile.unit : ""))
+      .accessibilityIdentifier(volume ? "summary.volume" : "summary.reps")
+  }
+  private var heroNote: String {
+    var seen = Set<String>()
+    let count = session.sets.map(\.exercise).filter { seen.insert($0.id).inserted }.count
+    let exercises = count == 1 ? store.t("1 exercise") : "\(count) " + store.t("exercises")
+    return exercises + " · " + setCount(session.completedSets.count, store: store)
+  }
   /// What you did, exercise by exercise: sets and the best set.
   private var recap: some View {
     var seen = Set<String>()
     let exercises = session.sets.map(\.exercise).filter { seen.insert($0.id).inserted }
     return VStack(alignment: .leading, spacing: 0) {
+      Eyebrow(text: store.t("Exercises")).padding(.top, 14).padding(.bottom, 4)
       ForEach(Array(exercises.prefix(6).enumerated()), id: \.element.id) { index, exercise in
         let sets = session.sets.filter { $0.exercise.id == exercise.id && $0.completed }
         let best = sets.max { exercise.timed ? $0.minutes < $1.minutes : ($0.weightKG == $1.weightKG ? $0.reps < $1.reps : $0.weightKG < $1.weightKG) }
@@ -122,27 +155,27 @@ struct SummaryView: View {
       if exercises.count > 6 {
         Text("+\(exercises.count - 6) " + store.t("more")).font(.subheadline).foregroundStyle(JourneyColor.tertiary).padding(.vertical, 10)
       }
-    }.padding(.horizontal, 20).padding(.vertical, 6).frame(maxWidth: .infinity, alignment: .leading)
-      .journeyGlass(RoundedRectangle(cornerRadius: 26, style: .continuous))
+    }.padding(.horizontal, 16).padding(.bottom, 4).frame(maxWidth: .infinity, alignment: .leading)
+      .journeySurface()
       .accessibilityIdentifier("summary.recap")
   }
   private func tile(_ title: String, value: Double, format: @escaping (Double) -> String, id: String) -> some View {
     VStack(alignment: .leading, spacing: 6) {
-      Text(store.t(title)).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
+      Text(store.t(title)).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1).minimumScaleFactor(0.8)
       CountingText(value: shown ? value : 0, format: format)
-        .font(.system(.title, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+        .font(.system(.title3, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
         .lineLimit(1).minimumScaleFactor(0.6)
-    }.padding(18).frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
-      .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }.padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+      .journeySurface(cornerRadius: 18)
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(store.t(title) + ", " + format(value)).accessibilityIdentifier(id)
   }
   private func gainText(_ gain: Improvement) -> String {
     if let kg = gain.weightGainKG {
-      return "+" + formatNumber(GymStore.displayedWeight(kg, unit: store.profile.unit)) + " " + store.profile.unit
+      return formatNumber(GymStore.displayedWeight(kg, unit: store.profile.unit)) + " " + store.profile.unit
         + " · \(gain.reps) " + store.t("reps")
     }
-    return "+\(gain.repGain ?? 0) " + store.t("reps") + " · "
+    return "\(gain.repGain ?? 0) " + store.t("reps") + " · "
       + (gain.weightKG == 0 ? store.t("BW") : formatNumber(GymStore.displayedWeight(gain.weightKG, unit: store.profile.unit)) + " " + store.profile.unit)
   }
 }

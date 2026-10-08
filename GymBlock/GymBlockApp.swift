@@ -2,18 +2,11 @@ import SwiftUI
 
 @main struct GymBlockApp: App {
   @StateObject private var store: GymStore
+  @StateObject private var account = Account()
+  @StateObject private var subscription = GymSubscription()
+  @Environment(\.scenePhase) private var scenePhase
   init() {
-    let navigation = UINavigationBarAppearance()
-    navigation.configureWithTransparentBackground()
-    navigation.titleTextAttributes = [
-      .font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor(GymColor.ink),
-    ]
-    navigation.largeTitleTextAttributes = [
-      .font: UIFont.systemFont(ofSize: 34, weight: .bold), .foregroundColor: UIColor(GymColor.ink),
-    ]
-    UINavigationBar.appearance().standardAppearance = navigation
-    UINavigationBar.appearance().scrollEdgeAppearance = navigation
-
+    // No navigation bar appearance override: iOS 26 draws its own Liquid Glass bar and toolbar items.
     #if DEBUG
       if ProcessInfo.processInfo.arguments.contains("--ui-reset") {
         UserDefaults.standard.removeObject(forKey: GymStore.storageKey)
@@ -45,15 +38,34 @@ import SwiftUI
     #endif
     GymStore.live = store
     _store = StateObject(wrappedValue: store)
+    CloudSync.shared.attach(store)
+    Analytics.launched()
     // Onboarding's arm illustration is pre-rendered in the background from launch.
     if !store.profile.onboarded { ArmFrames.shared.prepare() }
   }
   var body: some Scene {
     WindowGroup {
-      // One dark ember look everywhere, as in onboarding.
-      RootView().environmentObject(store).tint(GymColor.ink).foregroundStyle(GymColor.ink)
-        .preferredColorScheme(.dark)
+      RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
+        .tint(GymColor.ink).foregroundStyle(GymColor.ink)
+        .preferredColorScheme(JourneyColor.theme.scheme)
+        .onOpenURL { account.handle($0) }
+        .task { wire() }
     }
+    .onChange(of: scenePhase) { _, phase in
+      Analytics.scene(phase)
+      if phase == .active { Task { await CloudSync.shared.push() } }
+    }
+  }
+  /// The account drives everything that is per user: sync, purchases and analytics identity.
+  private func wire() {
+    account.onUserChange = { user in
+      Analytics.identify(user?.id)
+      CloudSync.shared.setUser(user?.id)
+      Task { await subscription.identify(user?.id) }
+    }
+    subscription.onEntitlement = { CloudSync.shared.snapshot($0) }
+    subscription.configure()
+    account.start()
   }
 }
 struct RootView: View {

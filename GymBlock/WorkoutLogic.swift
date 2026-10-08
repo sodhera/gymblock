@@ -18,6 +18,7 @@ extension GymStore {
   func pause() {
     guard session != nil, session?.pausedAt == nil else { return }
     data.session?.pausedAt = Date()
+    Analytics.track("workout_paused", ["stage": session?.stage.rawValue])
     persist()
   }
 
@@ -26,6 +27,7 @@ extension GymStore {
   func resume() {
     guard let at = session?.pausedAt else { return }
     let paused = max(0, Date().timeIntervalSince(at))
+    Analytics.track("workout_resumed", ["paused_seconds": paused])
     data.session?.pausedSeconds = (session?.pausedSeconds ?? 0) + paused
     data.session?.restStarted = session?.restStarted?.addingTimeInterval(paused)
     data.session?.setStarted = session?.setStarted?.addingTimeInterval(paused)
@@ -36,6 +38,7 @@ extension GymStore {
 
   func setRestTarget(_ seconds: Int) {
     guard (10...900).contains(seconds) else { return }
+    Analytics.track("rest_length_changed", ["seconds": seconds])
     updateProfile { $0.restSeconds = seconds }
   }
 

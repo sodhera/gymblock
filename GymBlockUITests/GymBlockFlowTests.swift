@@ -44,17 +44,16 @@ final class GymBlockFlowTests: XCTestCase {
     let pieces = app.staticTexts["rest.elapsed"].label.split(separator: ":").compactMap { Int($0) }
     return pieces.count == 2 ? pieces[0] * 60 + pieces[1] : -1
   }
-  private func freeWorkout() {
-    tap("home.workout"); tap("choice.free")
-    XCTAssertTrue(app.buttons["home.workout"].label.contains("Free workout"))
-  }
+  /// Start workout opens the chooser; a row starts that workout.
+  private func freeWorkout() { tap("home.start"); tap("choice.free") }
+  private func start(_ split: String) { tap("home.start"); tap("choice." + split) }
   private func endWorkout() {
     tap("session.finish"); tap("session.endConfirm")
     XCTAssertTrue(app.buttons["summary.done"].waitForExistence(timeout: 6))
   }
 
   func testFreeWorkoutTypingCorrectionSwitchAndRelaunch() {
-    snap("v6-01-home"); freeWorkout(); tap("home.start")
+    snap("v6-01-home"); freeWorkout()
     search("dum"); snap("v6-02-picker"); tap("exercise.curl")
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Dumbbell curl")
     snap("v6-03-ready")
@@ -102,23 +101,21 @@ final class GymBlockFlowTests: XCTestCase {
 
   func testSplitCreateRotateAndProgress() {
     // Sample splits rotate from the most recent sample workout, which depends on today's weekday.
-    XCTAssertTrue(["Arms", "Push", "Legs"].contains { app.buttons["home.workout"].label.contains($0) })
-    tap("home.workout"); snap("v6-13-choose-workout"); tap("split.add"); fill("split.name", "Monday")
+    tap("home.start"); snap("v6-13-choose-workout"); tap("split.add"); fill("split.name", "Monday")
     tap("split.exercises"); tap("split.exercise.curl"); tap("split.exercise.hammer"); tap("split.exercises.done"); tap("split.save")
-    XCTAssertTrue(app.buttons["home.workout"].waitForExistence(timeout: 6))
-    XCTAssertTrue(app.buttons["home.workout"].label.contains("Monday"))
-    tap("home.start")
+    XCTAssertTrue(app.buttons["choice.Monday"].waitForExistence(timeout: 6)); tap("choice.Monday")
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Dumbbell curl")  // The split's first exercise, ready.
     primary("Start set"); fill("set.reps", "11"); primary("Finish set")
     endWorkout(); tap("summary.done")
-    XCTAssertTrue(app.buttons["home.workout"].label.contains("Arms"))  // Rotated past the last split.
+    tap("home.start"); XCTAssertTrue(app.buttons["choice.Arms"].label.contains("Up next"))  // Rotated past the last split.
+    app.navigationBars.buttons["Cancel"].tap()
     tap("home.history"); tap("history.progress")
     tap("progress.scope"); app.buttons["Arms"].tap(); tap("progress.exercise.curl")
     XCTAssertTrue(app.staticTexts["progress.change"].waitForExistence(timeout: 6)); snap("v6-14-before-after")
   }
 
   func testMissedAttemptOneTapLoggingAndAnEmptyWorkout() {
-    freeWorkout(); tap("home.start"); tap("exercise.curl")
+    freeWorkout(); tap("exercise.curl")
     primary("Start set")
     for _ in 0..<12 { app.buttons["set.reps.minus"].tap() }
     XCTAssertEqual(app.textFields["set.reps"].value as? String, "0")
@@ -129,11 +126,11 @@ final class GymBlockFlowTests: XCTestCase {
     tap("home.preferences"); snap("v6-15-settings"); tap("settings.baseline"); snap("v6-16-training-answers")
     app.navigationBars.buttons["Cancel"].tap()
     app.switches["settings.timeSets"].switches.firstMatch.tap(); tap("preferences.done")
-    tap("home.start"); tap("exercise.curl")
+    freeWorkout(); tap("exercise.curl")
     primary("Log set")  // One tap per set.
     XCTAssertTrue(app.staticTexts["rest.elapsed"].waitForExistence(timeout: 5))
     endWorkout(); tap("summary.done")
-    tap("home.start"); tap("exercise.cancel")
+    freeWorkout(); tap("exercise.cancel")
     XCTAssertEqual(app.buttons["workout.primary"].label, "Choose exercise")
     tap("session.finish")  // Nothing logged: ends at once, with no summary.
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 6)); XCTAssertFalse(app.buttons["summary.done"].exists)
@@ -158,7 +155,7 @@ final class GymBlockFlowTests: XCTestCase {
   }
 
   func testCustomExerciseAndTypedDigitsAreNeverDropped() {
-    freeWorkout(); tap("home.start"); search("Cable curl"); tap("exercise.custom")
+    freeWorkout(); search("Cable curl"); tap("exercise.custom")
     XCTAssertEqual(app.textFields["custom.name"].value as? String, "Cable curl")
     tap("custom.add")
     XCTAssertTrue(app.staticTexts["set.exercise"].waitForExistence(timeout: 6))

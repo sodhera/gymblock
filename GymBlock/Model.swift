@@ -166,6 +166,8 @@ struct LocalData: Codable {
   private var deletionWasRest = false
   let defaults: UserDefaults
   static let storageKey = "gymblock.local.v1"
+  /// Called after every save; the cloud sync listens here.
+  var onPersist: (() -> Void)?
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
     if let encoded = defaults.data(forKey: Self.storageKey),
@@ -193,6 +195,7 @@ struct LocalData: Codable {
     } catch { storageError = true }
     syncRestAlert()
     LiveWorkout.sync(self)
+    onPersist?()
   }
   private var scheduledRest: Date?
   private var scheduledIdle: Date?
@@ -219,8 +222,11 @@ struct LocalData: Codable {
       } else { RestAlert.cancelIdle() }
     }
   }
-  /// Signs out of this device: onboarding starts again; workouts, splits and history stay on this iPhone.
+  /// Signs out of this device without an account: onboarding starts again; workouts, splits and
+  /// history stay on this iPhone. With an account, the device copy is cleared instead (`deleteAccount`)
+  /// and comes back from the cloud at the next sign-in.
   func logOut() {
+    Analytics.track("log_out")
     summary = nil
     updateProfile {
       $0.onboarded = false
@@ -228,8 +234,9 @@ struct LocalData: Codable {
       $0.onboardingStoryStage = nil
     }
   }
-  /// Permanently erases everything GymBlock stores on this iPhone.
+  /// Erases everything GymBlock stores on this iPhone (the server account is deleted by `Account`).
   func deleteAccount() {
+    Analytics.track("local_data_cleared")
     RestAlert.cancel()
     RestAlert.cancelIdle()
     summary = nil
@@ -259,6 +266,7 @@ struct LocalData: Codable {
     session.splitID = workout?.id
     session.exercises = workout?.exercises ?? []
     data.session = session
+    Analytics.track("workout_started", ["split": workout?.id, "exercises": workout?.exercises.count ?? 0, "free": workout == nil])
     if let first = workout?.exercises.first { chooseExercise(first) } else { persist() }
   }
   func chooseWorkout(_ workout: Workout?) {
@@ -290,6 +298,7 @@ struct LocalData: Codable {
       data.session?.exercises.append(exercise)
     }
     data.session?.stage = current.restStarted == nil ? .setup : .rest
+    Analytics.track("exercise_chosen", ["exercise": exercise.id, "timed": exercise.timed, "custom": !Exercise.catalog.contains { $0.id == exercise.id }])
     persist()
   }
   func saveCurrentDraft() {
@@ -326,6 +335,7 @@ struct LocalData: Codable {
     data.session?.stage = .active
     data.session?.setStarted = Date()
     if data.session?.selected?.timed == true { data.session?.draftMinutes = 0 }
+    Analytics.track("set_started", ["exercise": session?.selected?.id, "weight_kg": session?.weightKG, "rest_seconds": session?.pendingGapSeconds])
     persist()
   }
   func showLog() {
@@ -352,6 +362,9 @@ struct LocalData: Codable {
     data.session?.stage = .rest
     data.session?.restStarted = Date()
     data.session?.restSourceID = data.session?.sets.last?.id
+    Analytics.track("set_logged", ["exercise": exercise.id, "weight_kg": exercise.timed ? nil : s.weightKG, "reps": exercise.timed ? nil : reps,
+                                   "minutes": exercise.timed ? minutes : nil, "set_seconds": elapsed, "gap_seconds": s.pendingGapSeconds,
+                                   "set_number": data.session?.sets.filter { $0.exercise.id == exercise.id && $0.completed }.count ?? 0])
     data.session?.draftReps = exercise.timed ? s.draftReps : reps
     if !exercise.timed { data.session?.draftRepsText = String(reps) }
     data.session?.draftMinutes = exercise.timed ? minutes : s.draftMinutes
@@ -407,15 +420,18 @@ struct LocalData: Codable {
     var seen = Set<String>()
     let workout = Workout(
       id: id, name: clean, exercises: exercises.filter { seen.insert($0.id).inserted })
-    if let i = data.workouts.firstIndex(where: { $0.id == id }) {
+    let existing = data.workouts.firstIndex(where: { $0.id == id })
+    if let i = existing {
       data.workouts[i] = workout
     } else {
       data.workouts.append(workout)
     }
+    Analytics.track(existing == nil ? "split_created" : "split_edited", ["split": id, "exercises": workout.exercises.count, "splits": data.workouts.count])
     persist()
     return true
   }
   func deleteSplit(_ id: UUID) {
+    Analytics.track("split_deleted", ["split": id])
     data.workouts.removeAll { $0.id == id }
     if profile.preferredSplitID == id { data.profile.preferredSplitID = nil }
     persist()
@@ -491,6 +507,7 @@ struct LocalData: Codable {
     data.session?.stage = .rest
     data.session?.restSourceID = attempt.id
     data.session?.restStarted = Date()
+    Analytics.track("set_failed", ["exercise": exercise.id, "weight_kg": s.weightKG, "set_seconds": attempt.elapsedSetSeconds])
     persist()
   }
   func editSet(_ set: LoggedSet, sessionID: UUID) -> Bool {
@@ -530,10 +547,12 @@ struct LocalData: Codable {
     } else {
       return false
     }
+    Analytics.track("set_edited", ["exercise": set.exercise.id, "current": session?.id == sessionID])
     persist()
     return true
   }
   func deleteSet(_ set: LoggedSet, sessionID: UUID) {
+    Analytics.track("set_deleted", ["exercise": set.exercise.id, "current": session?.id == sessionID])
     deletedSet = set
     deletionSessionID = sessionID
     deletionWasRest = false
@@ -602,6 +621,9 @@ struct LocalData: Codable {
       }
     }
     summary = session.sets.isEmpty ? nil : session
+    Analytics.track("workout_finished", ["sets": session.completedSets.count, "exercises": session.exercises.count, "split": session.splitID,
+                                         "minutes": session.duration(at: session.ended ?? Date()) / 60, "volume_kg": session.volumeKG,
+                                         "paused_seconds": session.pausedSeconds, "empty": session.sets.isEmpty, "left_running": endedAt != nil])
     data.session = nil  // The simulated block ends before the summary appears.
     persist()
   }

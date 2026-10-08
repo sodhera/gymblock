@@ -47,6 +47,9 @@ final class BenefitLayoutUITests: XCTestCase {
     XCTAssertTrue(app.buttons["commit.hold"].waitForExistence(timeout: 6))
     XCTAssertEqual(app.buttons["commit.hold"].frame.midY, anchor, accuracy: 3)
     app.buttons["commit.hold"].press(forDuration: 2.2)
+    XCTAssertTrue(app.buttons["account.apple"].waitForExistence(timeout: 6))
+    XCTAssertEqual(app.buttons["account.apple"].frame.midY, anchor, accuracy: 3)
+    tap("account.debugSkip")
     XCTAssertTrue(app.buttons["subscription.buy"].waitForExistence(timeout: 6))
     XCTAssertEqual(app.buttons["subscription.buy"].frame.midY, anchor, accuracy: 3)
   }
