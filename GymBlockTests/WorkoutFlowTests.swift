@@ -257,6 +257,67 @@ import XCTest
     XCTAssertEqual(s.session?.sets.count, 2)
   }
 
+  func testPauseFreezesEveryClockAndResumeNeverCountsThePause() {
+    let s = GymStore(defaults: defaults)
+    s.startSession()
+    s.data.session?.started = Date().addingTimeInterval(-1000)
+    s.chooseExercise(exercise("bench"))
+    s.updateWeight(60, unit: "kg")
+    logSet(s, reps: 5)
+    let rest = Date().addingTimeInterval(-360)  // Rested a minute, then paused five minutes ago.
+    s.data.session?.restStarted = rest
+    s.pause()
+    XCTAssertTrue(s.isPaused)
+    s.data.session?.pausedAt = Date().addingTimeInterval(-300)  // Paused five minutes ago.
+    XCTAssertEqual(s.session!.duration, 700, accuracy: 2)  // The pause isn't training time.
+    XCTAssertEqual(GymStore(defaults: defaults).session?.pausedAt != nil, true)  // Survives relaunch.
+    s.resume()
+    XCTAssertFalse(s.isPaused)
+    XCTAssertEqual(s.session!.pausedSeconds!, 300, accuracy: 1)
+    XCTAssertEqual(s.session!.restStarted!.timeIntervalSince(rest), 300, accuracy: 1)  // Rest picks up where it stopped.
+    XCTAssertEqual(s.session!.duration, 700, accuracy: 2)
+    s.startSet(weight: 60, unit: "kg")
+    XCTAssertEqual(s.session!.pendingGapSeconds!, 60, accuracy: 2)  // The measured rest excludes the pause.
+    // Paused mid-set: the set clock excludes the pause too, and Start/Finish resume first.
+    s.data.session?.setStarted = Date().addingTimeInterval(-430)
+    s.pause()
+    s.data.session?.pausedAt = Date().addingTimeInterval(-400)
+    s.finishSet(reps: 5, minutes: 0)
+    XCTAssertFalse(s.isPaused)
+    XCTAssertEqual(s.session!.sets.last!.elapsedSetSeconds!, 30, accuracy: 2)
+    XCTAssertEqual(s.session!.pausedSeconds!, 700, accuracy: 2)
+  }
+
+  func testPausedWorkoutsResumeFromTheLockScreenAndEndWhenThePauseBegan() {
+    let s = GymStore(defaults: defaults)
+    s.startSession()
+    s.chooseExercise(exercise("bench"))
+    s.updateWeight(60, unit: "kg")
+    let id = s.session!.id.uuidString
+    logSet(s, reps: 5)
+    // The workout and its set happened three hours ago.
+    let earlier = Date().addingTimeInterval(-3 * 3600)
+    s.data.session?.started = earlier
+    s.data.session?.sets[0].date = earlier
+    s.data.session?.restStarted = earlier
+    s.pause()
+    XCTAssertFalse(s.stepFromLockScreen(id, expecting: "start"))  // A stale Start does nothing while paused.
+    XCTAssertTrue(s.stepFromLockScreen(id, expecting: "resume"))
+    XCTAssertFalse(s.isPaused)
+    XCTAssertEqual(s.session?.stage, .rest)
+    s.data.session?.restStarted = earlier
+    s.pause()
+    let pausedAt = Date().addingTimeInterval(-2 * 3600)
+    s.data.session?.pausedAt = pausedAt
+    XCTAssertTrue(s.isStale())  // Paused for hours: offer to finish.
+    s.data.session?.pausedAt = Date().addingTimeInterval(-600)
+    XCTAssertFalse(s.isStale())
+    s.data.session?.pausedAt = pausedAt
+    s.finish()
+    XCTAssertEqual(s.data.history.first?.ended, pausedAt)  // Not hours later.
+    XCTAssertNil(s.data.history.first?.pausedAt)
+  }
+
   func testAverageRestUsesOnlyKnownGapsAndDeletingAWorkoutKeepsTheRest() {
     let s = GymStore(defaults: defaults)
     s.startSession()

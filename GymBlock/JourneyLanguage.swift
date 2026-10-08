@@ -418,5 +418,13 @@ extension Spanish {
     "Average rest": "Descanso medio",
     "Your exercises": "Tus ejercicios",
     "Undo delete": "Deshacer",
+    "Pause workout": "Pausar entrenamiento",
+    "Resume workout": "Reanudar entrenamiento",
+    "Resume": "Reanudar",
+    "Paused": "En pausa",
+    "Paused at": "En pausa desde las",
+    "Finishing ends it at your last set.": "Al terminarlo, acaba en tu última serie.",
+    "Paused · clocks stopped": "En pausa · relojes detenidos",
+    "Paused · clocks stopped · blocking lifted (simulated)": "En pausa · relojes detenidos · bloqueo quitado (simulado)",
   ]
 }

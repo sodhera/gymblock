@@ -101,7 +101,8 @@ final class GymBlockFlowTests: XCTestCase {
   }
 
   func testSplitCreateRotateAndProgress() {
-    XCTAssertTrue(app.buttons["home.workout"].label.contains("Push"))  // Arms was last: Push is up next.
+    // Sample splits rotate from the most recent sample workout, which depends on today's weekday.
+    XCTAssertTrue(["Arms", "Push", "Legs"].contains { app.buttons["home.workout"].label.contains($0) })
     tap("home.workout"); snap("v6-13-choose-workout"); tap("split.add"); fill("split.name", "Monday")
     tap("split.exercises"); tap("split.exercise.curl"); tap("split.exercise.hammer"); tap("split.exercises.done"); tap("split.save")
     XCTAssertTrue(app.buttons["home.workout"].waitForExistence(timeout: 6))

@@ -25,12 +25,13 @@ import Foundation
       readyLabel: store.t("Ready"),
       progress: done >= target && phase != .set ? "\(done) " + store.t("of") + " \(target) " + store.t("done")
         : store.t("Set") + " \(done + 1) " + store.t("of") + " \(target)",
-      action: phase == .set ? store.t("Finish set")
+      action: session.pausedAt != nil ? store.t("Resume") : phase == .set ? store.t("Finish set")
         : !exercise.timed && session.weightIsSet == false ? ""
-        : store.timesSets || exercise.timed ? store.t("Start set") : store.t("Log set"))
+        : store.timesSets || exercise.timed ? store.t("Start set") : store.t("Log set"),
+      pausedAt: session.pausedAt, pausedLabel: store.t("Paused"))
     guard state != last else { return }
     last = state
-    let stale = phase == .rest ? state.since.addingTimeInterval(Double(state.restSeconds)) : nil
+    let stale = phase == .rest && session.pausedAt == nil ? state.since.addingTimeInterval(Double(state.restSeconds)) : nil
     let content = ActivityContent(state: state, staleDate: stale)
     let id = session.id.uuidString
     let activities = Activity<WorkoutActivityAttributes>.activities

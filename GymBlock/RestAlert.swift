@@ -26,12 +26,14 @@ enum RestAlert {
   static let idleID = "gymblock.idle"
   /// "Still training?" when a workout has had no activity for a while. Only delivered if
   /// notifications were allowed; never asks for permission by itself.
-  static func scheduleIdle(at date: Date, spanish: Bool) {
+  static func scheduleIdle(at date: Date, paused: Bool, spanish: Bool) {
     let wait = date.timeIntervalSinceNow
     guard wait > 1 else { return }
     let content = UNMutableNotificationContent()
     content.title = spanish ? "¿Sigues entrenando?" : "Still training?"
-    content.body = spanish ? "Tu entrenamiento sigue abierto. Ábrelo para terminarlo." : "Your workout is still running. Open GymBlock to finish it."
+    content.body = paused
+      ? (spanish ? "Tu entrenamiento sigue en pausa. Ábrelo para reanudarlo o terminarlo." : "Your workout is still paused. Open GymBlock to resume or finish it.")
+      : (spanish ? "Tu entrenamiento sigue abierto. Ábrelo para terminarlo." : "Your workout is still running. Open GymBlock to finish it.")
     let request = UNNotificationRequest(identifier: idleID, content: content,
                                         trigger: UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false))
     UNUserNotificationCenter.current().add(request)

@@ -132,11 +132,19 @@ struct Session: Codable, Identifiable {
   var weightIsSet: Bool?
   var drafts: [String: ExerciseDraft]?
   var restSourceID: UUID?
+  /// Set while paused. On resume the set and rest anchors move forward by the pause, so paused
+  /// time never counts as set time, rest time or workout time.
+  var pausedAt: Date?
+  var pausedSeconds: Double?
   var completedSets: [LoggedSet] { sets.filter(\.completed) }
   var repSets: [LoggedSet] { completedSets.filter { !$0.exercise.timed } }
   var totalReps: Int { repSets.reduce(0) { $0 + $1.reps } }
   var volumeKG: Double { repSets.reduce(0) { $0 + $1.weightKG * Double($1.reps) } }
-  var duration: TimeInterval { max(0, (ended ?? Date()).timeIntervalSince(started)) }
+  /// Training time: wall time minus every pause.
+  var duration: TimeInterval { duration(at: Date()) }
+  func duration(at now: Date) -> TimeInterval {
+    max(0, (ended ?? pausedAt ?? now).timeIntervalSince(started) - (pausedSeconds ?? 0))
+  }
   var isBlockingSimulated: Bool { ended == nil }
 }
 enum Stage: String, Codable { case workout, exercise, setup, active, log, rest }
@@ -192,7 +200,8 @@ struct LocalData: Codable {
   /// and removed when it ends. A second one reminds you if a workout is left running.
   private func syncRestAlert() {
     let target = Double(profile.restSeconds ?? 90)
-    let rest = profile.restAlerts == true && data.session?.stage == .rest
+    // A paused rest never says "rest's up"; resuming reschedules it from the shifted start.
+    let rest = profile.restAlerts == true && data.session?.stage == .rest && data.session?.pausedAt == nil
       ? data.session?.restStarted?.addingTimeInterval(target) : nil
     if rest != scheduledRest {
       scheduledRest = rest
@@ -205,7 +214,9 @@ struct LocalData: Codable {
     let idle = lastActivity.map { $0.addingTimeInterval(GymStore.staleAfter) }
     if idle != scheduledIdle {
       scheduledIdle = idle
-      if let idle { RestAlert.scheduleIdle(at: idle, spanish: profile.language == "es") } else { RestAlert.cancelIdle() }
+      if let idle {
+        RestAlert.scheduleIdle(at: idle, paused: data.session?.pausedAt != nil, spanish: profile.language == "es")
+      } else { RestAlert.cancelIdle() }
     }
   }
   /// Signs out of this device: onboarding starts again; workouts, splits and history stay on this iPhone.
@@ -299,6 +310,7 @@ struct LocalData: Codable {
     guard weight.isFinite, weight >= 0, weight <= 500, data.session?.selected != nil,
       data.session?.stage == .setup || data.session?.stage == .rest
     else { return }
+    resume()  // Starting a set means you're back.
     data.session?.weightKG = Self.kilograms(weight, unit: unit)
     data.session?.weightIsSet = true
     data.session?.pendingGapStarted = session?.restStarted ?? session?.pendingGapStarted
@@ -318,6 +330,7 @@ struct LocalData: Codable {
   }
   func showLog() {
     guard session?.stage == .active else { return }
+    resume()
     data.session?.setStopped = Date()
     data.session?.stage = .log
     persist()
@@ -350,6 +363,7 @@ struct LocalData: Codable {
     guard exercise.timed ? minutes.isFinite && minutes > 0 : (1...999).contains(reps) else {
       return
     }
+    resume()  // The set clock excludes the pause.
     data.session?.setStopped = Date()
     data.session?.stage = .log
     data.session?.draftReps = reps
@@ -465,9 +479,9 @@ struct LocalData: Codable {
     data.session?.pendingGapSourceID = nil
   }
   func recordAttempt() {
-    guard let s = session, let exercise = s.selected, !exercise.timed, s.stage == .active else {
-      return
-    }
+    guard session?.selected?.timed == false, session?.stage == .active else { return }
+    resume()
+    guard let s = session, let exercise = s.selected else { return }
     let attempt = LoggedSet(
       exercise: exercise, weightKG: s.weightKG, reps: 0, minutes: 0, unsuccessful: true,
       elapsedSetSeconds: s.setStarted.map { max(0, Date().timeIntervalSince($0)) },
@@ -575,7 +589,9 @@ struct LocalData: Codable {
   /// `endedAt` lets a workout that was left running end at its last activity, not hours later.
   func finish(endedAt: Date? = nil) {
     guard var session = data.session else { return }
-    session.ended = max(session.started, endedAt ?? Date())
+    // Ending while paused ends the workout when the pause began.
+    session.ended = max(session.started, endedAt ?? session.pausedAt ?? Date())
+    session.pausedAt = nil
     session.restEnds = nil
     session.restStarted = nil
     if !session.sets.isEmpty {

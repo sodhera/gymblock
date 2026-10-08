@@ -73,6 +73,7 @@ final class WorkoutActionsUITests: XCTestCase {
 
   func testAfterTheLastSetTheNextExerciseIsOneTapAndTheRestKeepsCounting() {
     let app = launch()
+    tap(app, "home.workout"); tap(app, "choice.Push")
     tap(app, "home.start")
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Bench press")
     for _ in 0..<3 {
@@ -86,6 +87,26 @@ final class WorkoutActionsUITests: XCTestCase {
     XCTAssertEqual(app.staticTexts["set.exercise"].label, "Dumbbell shoulder press")
     XCTAssertTrue(app.staticTexts["rest.elapsed"].exists)
     XCTAssertEqual(primary(app, "Start set").label, "Start set")
+  }
+
+  func testPauseStopsTheClocksAndResumeCarriesOn() {
+    let app = launch(["-workoutStage", "rest"])
+    tap(app, "workout.pause")
+    XCTAssertTrue(app.staticTexts["workout.paused"].waitForExistence(timeout: 6))
+    let resume = primary(app, "Resume")
+    let frozen = app.staticTexts["rest.elapsed"].label
+    let clock = app.staticTexts["workout.clock"].label
+    Thread.sleep(forTimeInterval: 2.5)
+    XCTAssertEqual(app.staticTexts["rest.elapsed"].label, frozen)  // Nothing counts while paused.
+    XCTAssertEqual(app.staticTexts["workout.clock"].label, clock)
+    snap(app, "actions-paused")
+    Thread.sleep(forTimeInterval: 0.7); resume.tap()
+    XCTAssertEqual(primary(app, "Start set").label, "Start set")
+    XCTAssertFalse(app.staticTexts["workout.paused"].exists)
+    let seconds = { (text: String) -> Int in
+      let p = text.split(separator: ":").compactMap { Int($0) }; return p.count == 2 ? p[0] * 60 + p[1] : -1
+    }
+    XCTAssertLessThanOrEqual(seconds(app.staticTexts["rest.elapsed"].label) - seconds(frozen), 3)  // Carries on from the pause.
   }
 
   func testAWorkoutLeftRunningOffersToFinishAtItsLastSet() {

@@ -2,6 +2,32 @@
 
 Native Swift/SwiftUI simulator prototype with one app extension (GymBlockLive, the Live Activity). Latest checks use Xcode 27 / iPhone 18 Pro / iOS 27.0. Signing is disabled. No external services or package dependencies are configured.
 
+## V6 rev. 1 — pause (8 October 2026)
+
+The workout clock in the top bar is now also the pause control.
+- **While paused:**
+  - The workout clock and whatever is counting (a rest or a set) freeze where they are. The ring dims and says "Paused" in red, and Resume becomes the primary action.
+  - Rest alerts are held and the simulated block lifts (the caption says so).
+  - The Lock Screen activity shows "Paused" with frozen clocks and a Resume button.
+- **On resume:** the set and rest anchors move forward by the pause, so paused time never counts as training, rest or set time, and the clocks carry on from the same second.
+- **Edge cases:** starting or finishing a set while paused resumes first. Ending while paused ends the workout when the pause began. A pause of an hour or more brings up "Still working out? Paused at 19:42." with Resume or Finish.
+
+Two new model checks cover frozen and shifted clocks, a set paused mid-way, Lock Screen resume ignoring a stale Start, and the stale prompt and end time while paused. A new UI test pauses mid-rest, confirms both clocks stay frozen for 2.5 s, then resumes. Two tests had depended on the weekday through the rotating sample split and now choose it explicitly.
+
+**All 72 model checks pass, and the 12 workout UI tests pass**, including the new pause journey (iPhone 18 Pro / iOS 27.0).
+- The pause, resume and Next tests and the split journey passed on the final build.
+- The other five flow journeys passed on the build just before; the only change since was a label's test identifier.
+
+The first run caught two real problems, both fixed:
+- Glass applied to the clock's label swallowed the tap.
+- The rest label's identifier overrode "Paused".
+
+Checked by hand in the simulator:
+- Resume continues the workout clock from 9:00 and the rest from 1:20.
+- The Lock Screen shows Paused with a Resume button.
+
+Screens: `screenshots/app-v6/16-paused.png`, `17-lock-screen-paused.png`.
+
 ## V6 — the app after onboarding (7 October 2026)
 
 [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md) is implemented. The app now matches onboarding (ember stage, SF Pro, Liquid Glass, white action and red signal only; DM Sans removed) and has no tab bar.

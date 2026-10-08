@@ -74,7 +74,7 @@ extension GymStore {
 #if DEBUG
 extension GymStore {
   /// Puts a sample split workout into one state for screenshots: ready, active, rest, restUp,
-  /// next (target reached), stale or summary. Debug builds only.
+  /// paused, next (target reached), stale or summary. Debug builds only.
   func debugWorkout(_ stage: String) {
     loadDemoIfEmpty()
     updateProfile { $0.onboarded = true; $0.name = $0.name.isEmpty ? "Sirish" : $0.name; $0.focusEnabled = true }
@@ -95,6 +95,10 @@ extension GymStore {
       startSet(weight: Self.displayedWeight(session?.weightKG ?? 0, unit: profile.unit), unit: profile.unit)
       data.session?.setStarted = Date().addingTimeInterval(-24)
     case "rest": logOne(ago: 41)
+    case "paused":
+      // Rested 1:20, then paused five minutes ago.
+      logOne(ago: 380)
+      data.session?.pausedAt = Date().addingTimeInterval(-300)
     case "restUp": logOne(ago: 104)
     case "next": logOne(ago: 400); logOne(ago: 250); logOne(ago: 70)
     case "stale":

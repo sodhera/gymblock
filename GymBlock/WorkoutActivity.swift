@@ -21,8 +21,11 @@ struct WorkoutActivityAttributes: ActivityAttributes {
     var readyLabel: String
     /// "Set 2 of 3".
     var progress: String
-    /// "Start set" or "Finish set"; empty when the app needs you (e.g. a weight is missing).
+    /// "Start set", "Finish set" or "Resume"; empty when the app needs you (e.g. a weight is missing).
     var action: String
+    /// While paused, every clock shows this moment and nothing counts.
+    var pausedAt: Date?
+    var pausedLabel: String
   }
   var id: String
   var workoutName: String

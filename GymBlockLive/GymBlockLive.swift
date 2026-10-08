@@ -19,7 +19,7 @@ struct WorkoutLiveActivity: Widget {
         .activitySystemActionForegroundColor(.white)
     } dynamicIsland: { context in
       let state = context.state
-      let up = state.phase == .rest && context.isStale
+      let up = state.phase == .rest && context.isStale && state.pausedAt == nil
       return DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
           VStack(alignment: .leading, spacing: 2) {
@@ -56,6 +56,7 @@ struct WorkoutLiveActivity: Widget {
 }
 
 private func label(_ state: WorkoutActivityAttributes.ContentState, up: Bool) -> String {
+  if state.pausedAt != nil { return state.pausedLabel }
   switch state.phase {
   case .rest: return up ? state.restUp : state.restLabel
   case .set: return state.setLabel
@@ -63,7 +64,7 @@ private func label(_ state: WorkoutActivityAttributes.ContentState, up: Bool) ->
   }
 }
 private func icon(_ state: WorkoutActivityAttributes.ContentState) -> String {
-  state.phase == .rest ? "timer" : state.phase == .set ? "dumbbell.fill" : "figure.strengthtraining.traditional"
+  state.pausedAt != nil ? "pause.fill" : state.phase == .rest ? "timer" : state.phase == .set ? "dumbbell.fill" : "figure.strengthtraining.traditional"
 }
 
 /// Counts up from the set or rest start (or the workout start when ready), with no updates needed.
@@ -71,7 +72,8 @@ private struct ClockText: View {
   let state: WorkoutActivityAttributes.ContentState
   let started: Date
   var body: some View {
-    Text(timerInterval: (state.phase == .ready ? started : state.since)...Date.distantFuture, countsDown: false)
+    Text(timerInterval: (state.phase == .ready ? started : state.since)...Date.distantFuture,
+         pauseTime: state.pausedAt, countsDown: false)
       .multilineTextAlignment(.trailing)
   }
 }
@@ -80,10 +82,16 @@ private struct RestBar: View {
   let state: WorkoutActivityAttributes.ContentState
   let up: Bool
   var body: some View {
-    ProgressView(timerInterval: state.since...state.since.addingTimeInterval(Double(state.restSeconds)), countsDown: false) {
-      EmptyView()
-    } currentValueLabel: { EmptyView() }
-      .tint(up ? signal : .white).progressViewStyle(.linear)
+    if let paused = state.pausedAt {
+      // Frozen where the pause began.
+      ProgressView(value: min(1, max(0, paused.timeIntervalSince(state.since) / Double(state.restSeconds))))
+        .tint(.white.opacity(0.4)).progressViewStyle(.linear)
+    } else {
+      ProgressView(timerInterval: state.since...state.since.addingTimeInterval(Double(state.restSeconds)), countsDown: false) {
+        EmptyView()
+      } currentValueLabel: { EmptyView() }
+        .tint(up ? signal : .white).progressViewStyle(.linear)
+    }
   }
 }
 
@@ -93,7 +101,7 @@ private struct StepButton: View {
   let id: String
   var body: some View {
     if !state.action.isEmpty {
-      Button(intent: WorkoutStepIntent(workoutID: id, step: state.phase == .set ? "finish" : "start")) {
+      Button(intent: WorkoutStepIntent(workoutID: id, step: state.pausedAt != nil ? "resume" : state.phase == .set ? "finish" : "start")) {
         Text(state.action).font(.system(.subheadline, weight: .semibold)).foregroundStyle(.black)
           .frame(maxWidth: .infinity, minHeight: 36)
       }.buttonStyle(.plain).background(Capsule().fill(.white))
@@ -105,7 +113,7 @@ private struct LockScreenWorkout: View {
   let context: ActivityViewContext<WorkoutActivityAttributes>
   var body: some View {
     let state = context.state
-    let up = state.phase == .rest && context.isStale
+    let up = state.phase == .rest && context.isStale && state.pausedAt == nil
     VStack(alignment: .leading, spacing: 12) {
       HStack(alignment: .top) {
         VStack(alignment: .leading, spacing: 3) {

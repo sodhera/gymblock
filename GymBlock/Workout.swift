@@ -32,6 +32,7 @@ struct WorkoutView: View {
   private var weightMissing: Bool { !timed && session.weightIsSet == false }
   private var oneTap: Bool { !store.timesSets && !timed }
   private var done: Int { store.doneSets(exercise) }
+  private var paused: Bool { session.pausedAt != nil }
   private var target: Int { store.targetSets(exercise) }
 
   var body: some View {
@@ -132,22 +133,36 @@ struct WorkoutView: View {
 
   private var topBar: some View {
     HStack(spacing: 10) {
-      TimelineView(.periodic(from: .now, by: 1)) { context in
-        let seconds = Int(context.date.timeIntervalSince(session.started))
-        HStack(spacing: 8) {
-          Circle().fill(JourneyColor.signalRed).frame(width: 7, height: 7)
-          Text(clockText(seconds)).font(.system(.subheadline, weight: .semibold)).monospacedDigit()
-            .foregroundStyle(JourneyColor.secondary)
-        }.accessibilityElement(children: .ignore)
-          .accessibilityLabel(store.t("Workout time") + " " + clockText(seconds))
-          .accessibilityIdentifier("workout.clock")
-      }
+      // The workout clock is also the pause control: tap to pause everything, tap to resume.
+      pauseButton
       Spacer()
       if !session.sets.isEmpty || active {
         GlassIconButton(symbol: "list.bullet", label: store.t("Sets"), id: "session.sets") { field = nil; records = true }
       }
       GlassPillButton(title: store.t("End"), id: "session.finish", action: end)
     }.frame(height: 60)
+  }
+
+  private var pauseButton: some View {
+    let label = TimelineView(.periodic(from: .now, by: 1)) { context in
+      let seconds = Int(session.duration(at: context.date))
+      HStack(spacing: 8) {
+        Image(systemName: paused ? "play.fill" : "pause.fill").font(.system(.caption, weight: .bold))
+          .foregroundStyle(paused ? JourneyColor.signalRed : JourneyColor.text)
+        Text(clockText(seconds)).font(.system(.subheadline, weight: .semibold)).monospacedDigit()
+          .foregroundStyle(paused ? JourneyColor.tertiary : JourneyColor.secondary)
+          .accessibilityIdentifier("workout.clock")
+      }.frame(minHeight: 32)
+    }
+    return Group {
+      if #available(iOS 26.0, *) {
+        Button(action: togglePause) { label }.buttonStyle(.glass).buttonBorderShape(.capsule)
+      } else {
+        Button(action: togglePause) { label.padding(.horizontal, 14).frame(minHeight: 44).background(Capsule().fill(JourneyColor.fill)) }
+          .buttonStyle(JourneyPressStyle())
+      }
+    }.accessibilityLabel(store.t(paused ? "Resume workout" : "Pause workout"))
+      .accessibilityIdentifier("workout.pause")
   }
 
   // MARK: Header
@@ -173,29 +188,44 @@ struct WorkoutView: View {
 
   @ViewBuilder private func hero(size: CGFloat) -> some View {
     TimelineView(.periodic(from: .now, by: 1)) { context in
-      let now = context.date
+      // While paused, every clock reads the moment the pause began.
+      let now = session.pausedAt ?? context.date
       switch stage {
       case .active, .log:
         let seconds = Int(now.timeIntervalSince(session.setStarted ?? now))
-        WorkoutRing(progress: Double(seconds % 60) / 60, signal: false, size: size, tick: seconds) {
-          Text(store.t("Set time")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
+        WorkoutRing(progress: Double(seconds % 60) / 60, signal: false, size: size, tick: seconds, dimmed: paused) {
+          stateLabel(store.t("Set time"))
           ringTime(seconds).accessibilityIdentifier("set.elapsed")
           Text(" ").font(JourneyType.label).frame(minHeight: 44).accessibilityHidden(true)
         }.id("active")
       case .rest:
         let seconds = Int(now.timeIntervalSince(session.restStarted ?? now))
         let up = seconds >= store.restTarget
-        WorkoutRing(progress: min(1, Double(seconds) / Double(store.restTarget)), signal: up, size: size, tick: seconds) {
-          Text(store.t(up ? "Rest’s up" : "Rest")).font(JourneyType.label)
-            .foregroundStyle(up ? JourneyColor.signalRed : JourneyColor.secondary)
-            .accessibilityIdentifier("rest.state")
+        WorkoutRing(progress: min(1, Double(seconds) / Double(store.restTarget)), signal: up && !paused, size: size,
+                    tick: seconds, dimmed: paused) {
+          stateLabel(store.t(up ? "Rest’s up" : "Rest"), signal: up, id: "rest.state")
           ringTime(seconds).accessibilityIdentifier("rest.elapsed")
           restMenu
         }.id("rest")
       default:
-        WorkoutRing(progress: 0, signal: false, size: size, tick: 0) { readyContent }.id("ready")
+        WorkoutRing(progress: 0, signal: false, size: size, tick: 0, dimmed: paused) {
+          if paused { stateLabel("") }
+          readyContent
+        }.id("ready")
       }
     }.animation(reduceMotion ? nil : .smooth(duration: 0.4), value: stage)
+    .animation(reduceMotion ? nil : .smooth(duration: 0.35), value: paused)
+  }
+
+  /// The ring's top label; while paused it says so, in red, whatever is underneath.
+  @ViewBuilder private func stateLabel(_ text: String, signal: Bool = false, id: String = "") -> some View {
+    if paused {
+      Text(store.t("Paused")).font(JourneyType.label).foregroundStyle(JourneyColor.signalRed)
+        .accessibilityIdentifier("workout.paused")
+    } else if !text.isEmpty {
+      Text(text).font(JourneyType.label).foregroundStyle(signal ? JourneyColor.signalRed : JourneyColor.secondary)
+        .accessibilityIdentifier(id)
+    }
   }
 
   private func ringTime(_ seconds: Int) -> some View {
@@ -312,8 +342,9 @@ struct WorkoutView: View {
 
   // MARK: Actions
 
-  private enum Primary: Equatable { case choose, start, log, finish, next(Exercise), pick, end }
+  private enum Primary: Equatable { case choose, start, log, finish, next(Exercise), pick, end, resume }
   private var primary: Primary {
+    if paused { return .resume }
     switch stage {
     case .workout, .exercise: return .choose
     case .active, .log: return .finish
@@ -335,6 +366,7 @@ struct WorkoutView: View {
     case .next(let next): return store.t("Next:") + " " + store.t(next.name)
     case .pick: return store.t("Next exercise")
     case .end: return store.t("Finish workout")
+    case .resume: return store.t("Resume")
     }
   }
   private var showsAnotherSet: Bool {
@@ -357,7 +389,11 @@ struct WorkoutView: View {
 
   /// One honest line above the button: what's missing, or that blocking is simulated.
   @ViewBuilder private var caption: some View {
-    if weightMissing && stage != .exercise && !active {
+    if paused {
+      Text(store.t(store.profile.focusEnabled == true ? "Paused · clocks stopped · blocking lifted (simulated)" : "Paused · clocks stopped"))
+        .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1).minimumScaleFactor(0.8)
+        .accessibilityIdentifier("session.pausedCaption")
+    } else if weightMissing && stage != .exercise && !active {
       Text(store.t("Add the weight for this set.")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
     } else if store.profile.focusEnabled == true {
       let apps = store.profile.blockedApps
@@ -376,6 +412,7 @@ struct WorkoutView: View {
     // Sweaty double taps never start and finish a set at once.
     guard Date() >= guardUntil else { return }
     switch primary {
+    case .resume: togglePause()
     case .choose, .pick: field = nil; picker = true; return
     case .next(let next):
       field = nil
@@ -426,6 +463,18 @@ struct WorkoutView: View {
     return true
   }
 
+  private func togglePause() {
+    field = nil
+    if paused {
+      store.resume()
+      JourneyHaptic.play(.medium, store.profile, intensity: 0.8)
+    } else {
+      store.pause()
+      JourneyHaptic.play(.soft, store.profile, intensity: 0.7)
+    }
+    guardUntil = Date().addingTimeInterval(0.6)
+  }
+
   private func end() {
     field = nil
     if active { confirmEndSet = true } else if session.sets.isEmpty { store.finish() } else { confirmEnd = true }
@@ -460,15 +509,15 @@ struct WorkoutView: View {
   }
 
   private var restKey: String {
-    "\(session.stage == .rest ? session.restStarted?.timeIntervalSince1970 ?? 0 : 0)-\(store.restTarget)"
+    "\(session.stage == .rest ? session.restStarted?.timeIntervalSince1970 ?? 0 : 0)-\(store.restTarget)-\(paused)"
   }
   /// In the app, rest's up is a double tap you can feel. With the phone locked, the notification does it.
   private func restAlarm() async {
-    guard session.stage == .rest, let start = session.restStarted else { return }
+    guard session.stage == .rest, !paused, let start = session.restStarted else { return }
     let due = start.addingTimeInterval(Double(store.restTarget))
     guard due.timeIntervalSinceNow > 0 else { return }
     try? await Task.sleep(for: .seconds(due.timeIntervalSinceNow))
-    guard !Task.isCancelled, store.session?.stage == .rest, store.session?.restStarted == start,
+    guard !Task.isCancelled, store.session?.stage == .rest, store.session?.restStarted == start, !store.isPaused,
       UIApplication.shared.applicationState == .active, abs(due.timeIntervalSinceNow) < 2
     else { return }
     JourneyHaptic.notification(store.profile)
@@ -519,6 +568,7 @@ struct WorkoutRing<Content: View>: View {
   let signal: Bool
   let size: CGFloat
   let tick: Int
+  var dimmed = false
   @ViewBuilder var content: Content
   var body: some View {
     let line: CGFloat = 9
@@ -529,7 +579,7 @@ struct WorkoutRing<Content: View>: View {
       Circle().trim(from: 0, to: max(0.0001, progress))
         .stroke(signal ? JourneyColor.signalRed : JourneyColor.text, style: StrokeStyle(lineWidth: line, lineCap: .round))
         .rotationEffect(.degrees(-90))
-        .opacity(progress > 0 ? 1 : 0)
+        .opacity(progress > 0 ? (dimmed ? 0.3 : 1) : 0)
         // Each second eases forward like a watch hand, then rests, so the app is idle most of the
         // time (cheap on battery, and UI tests can run); it jumps back when a minute wraps.
         .animation(progress < 0.02 ? nil : .smooth(duration: 0.4), value: tick)

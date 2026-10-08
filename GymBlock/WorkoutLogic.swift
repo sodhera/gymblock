@@ -11,6 +11,29 @@ extension GymStore {
   /// Start set → Finish set (true), or one tap logs a set (false).
   var timesSets: Bool { profile.timeSets ?? true }
 
+  var isPaused: Bool { session?.pausedAt != nil }
+
+  /// Freezes the workout clock and whatever is counting (a set or a rest). Blocking and rest
+  /// alerts stop until you resume.
+  func pause() {
+    guard session != nil, session?.pausedAt == nil else { return }
+    data.session?.pausedAt = Date()
+    persist()
+  }
+
+  /// Picks up exactly where the pause left off: the set and rest clocks move forward by the
+  /// pause, so it never counts as set time, rest time or workout time.
+  func resume() {
+    guard let at = session?.pausedAt else { return }
+    let paused = max(0, Date().timeIntervalSince(at))
+    data.session?.pausedSeconds = (session?.pausedSeconds ?? 0) + paused
+    data.session?.restStarted = session?.restStarted?.addingTimeInterval(paused)
+    data.session?.setStarted = session?.setStarted?.addingTimeInterval(paused)
+    data.session?.pendingGapStarted = session?.pendingGapStarted?.addingTimeInterval(paused)
+    data.session?.pausedAt = nil
+    persist()
+  }
+
   func setRestTarget(_ seconds: Int) {
     guard (10...900).contains(seconds) else { return }
     updateProfile { $0.restSeconds = seconds }
@@ -99,10 +122,12 @@ extension GymStore {
   /// One tap: log the set with the shown weight and reps, and start the rest.
   /// Without a set clock the set's duration and the rest before it are unknown, never guessed.
   @discardableResult func logQuickSet() -> Bool {
-    guard let s = session, let exercise = s.selected, !exercise.timed,
-      s.stage == .setup || s.stage == .rest, s.weightIsSet != false,
+    guard let first = session, first.selected?.timed == false,
+      first.stage == .setup || first.stage == .rest, first.weightIsSet != false,
       let reps = draftRepCount, (1...999).contains(reps)
     else { return false }
+    resume()
+    guard let s = session, let exercise = s.selected else { return false }
     data.session?.sets.append(
       LoggedSet(
         exercise: exercise, weightKG: s.weightKG, reps: reps, minutes: 0, timingUnknown: true,
@@ -127,7 +152,8 @@ extension GymStore {
   @discardableResult func stepFromLockScreen(_ workoutID: String, expecting step: String) -> Bool {
     guard let s = session, s.id.uuidString == workoutID, let exercise = s.selected else { return false }
     let running = s.stage == .active || s.stage == .log
-    guard step == (running ? "finish" : "start") else { return false }
+    guard step == (s.pausedAt != nil ? "resume" : running ? "finish" : "start") else { return false }
+    if s.pausedAt != nil { resume(); return true }
     switch s.stage {
     case .active, .log:
       if exercise.timed {
@@ -154,7 +180,7 @@ extension GymStore {
   /// The most recent thing that happened in the running workout.
   var lastActivity: Date? {
     guard let s = session else { return nil }
-    return ([s.started, s.setStarted, s.restStarted] + s.sets.map(\.date)).compactMap { $0 }.max()
+    return ([s.started, s.setStarted, s.restStarted, s.pausedAt] + s.sets.map(\.date)).compactMap { $0 }.max()
   }
 
   /// A workout with no activity for an hour was most likely left running.

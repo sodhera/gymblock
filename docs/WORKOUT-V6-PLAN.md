@@ -24,7 +24,7 @@ The design follows from that:
 - Splits rotate: finishing Push makes Legs next, so the usual case is **one tap to start**. Tapping the workout name opens a chooser with Free workout, the splits and a New split option. Each split has an `…` menu to edit or delete it.
 
 **Workout.** The layout is fixed from top to bottom:
-- **Top bar:** workout clock with a red live dot, Sets (the log), End.
+- **Top bar:** the workout clock, which is also the **pause** control (⏸ 14:02; tap to pause, ▶ to resume), then Sets (the log) and End.
 - **Exercise:** the name and a chevron, which opens the picker. Below it, set dots ("● ● ○ Set 3 of 3"): filled for done, red for the live set, outlined for the rest of the target.
 - **Ring:** a Liquid Glass disc inside a ring.
   - Ready: last time's best set and its date.
@@ -62,6 +62,7 @@ Settings is ordered by what matters mid-workout: rest length, rest alert, time e
 | Start or finish a set with the phone locked | not possible | **1**, on the Lock Screen |
 | Correct the last set | 2 | **2** (Last set, edit) |
 | End workout | 2 | **2** (End, confirm), with nothing to confirm if no sets |
+| Pause, then resume | not possible | **1 + 1** (the clock; Resume is the main button, and on the Lock Screen) |
 
 A split of 6 exercises × 3 sets with no changes takes 1 + 36 + 5 + 2 + 1 = **45 taps** for the whole workout. Without set timing it takes **27**. Most of those taps can be made from the Lock Screen.
 
@@ -69,6 +70,7 @@ A split of 6 exercises × 3 sets with no changes takes 1 + 36 + 5 + 2 + 1 = **45
 
 | What happens | What GymBlock does |
 |---|---|
+| You need a break: a call, the bathroom, a chat, waiting for a machine | **Pause.** The workout clock and the running rest or set freeze where they are; the ring dims and says "Paused". Rest alerts are held, blocking is lifted (simulated, labelled), and the Lock Screen shows "Paused" with a Resume button. Resume carries on from the same second. Paused time never counts as training, rest or set time. Starting or finishing a set resumes on its own. Ending while paused ends the workout when the pause began. Paused for an hour or more: "Still working out?" offers Resume or Finish. |
 | Phone locks, app is backgrounded, a call comes in | Nothing is lost. Timers are timestamps, so they show the true time on return. The Lock Screen and Dynamic Island keep counting. |
 | iOS closes the app mid-set or mid-rest | On relaunch the same set clock, draft reps and rest are back. Tested by terminating mid-set. |
 | Rest length passes with the phone locked | A local "Rest's up" notification (if alerts are on). The Live Activity turns red as the rest goes stale. |
