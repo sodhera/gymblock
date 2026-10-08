@@ -6,7 +6,7 @@ Everything the app needs from the dashboards, in the order to do it, with what i
 | --- | --- |
 | 1. Schema | **Done** (run in the SQL editor; 7 tables, 3 views, `gb_delete_account`). |
 | 2. Apple provider | **Done** (enabled, client id `com.sodhera.gymblock`). Apple Developer capability: pending until the App ID exists. |
-| 3. Google provider | **Blocked**: Google Cloud Console refuses to open until the Google account turns on 2-step verification. |
+| 3. Google provider | **Done**: Google Cloud project `gymblock` (org sodhera.com, account authuser=2), consent screen "GymBlock" (External, admin@sodhera.com), web client "GymBlock Supabase" with the Supabase callback; ID and secret saved in Supabase → Google. |
 | 3b. Redirect URL | **Done** (`gymblock://auth/callback`). |
 | 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock`, products, entitlement `pro`, offering `default`; keys in `Secrets.xcconfig` (Test Store for Debug, App Store for Release). |
 | 5. App Store Connect | **Pending**: the session had expired; sign in, then create the app and the two subscriptions. |
@@ -42,9 +42,14 @@ Xcode automatic signing on first device build) → enable the *Sign In with Appl
 
 ## 3. Sign in with Google
 
-Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → *Web application*:
+Google Cloud Console (the sodhera.com account, project `gymblock`) → Google Auth Platform → Clients →
+"GymBlock Supabase" (*Web application*):
 - Authorized redirect URI: `https://tlcmpgxuyngsbjuhring.supabase.co/auth/v1/callback`
-- Copy the client ID and client secret.
+- The client secret is shown only once, at creation; it lives in Supabase now. To rotate it, create a
+  new secret on the client and paste it into Supabase → Authentication → Google.
+- Branding carries the orecci.com home, privacy and terms links; authorized domains are the Supabase
+  host and orecci.com. Audience is published to production (basic email/profile scopes need no
+  verification), so any Google account can sign in.
 
 Supabase → Authentication → Providers → Google → enable → paste client ID and secret → Save.
 Authentication → URL Configuration → Redirect URLs → add `gymblock://auth/callback`.
