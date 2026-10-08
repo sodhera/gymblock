@@ -25,6 +25,8 @@ enum AppConfig {
   static var offline: Bool {
     #if DEBUG
       let args = ProcessInfo.processInfo.arguments
+      // `--online` keeps the account, purchases and analytics live even on a page jump, for checking them by hand.
+      if args.contains("--online") { return false }
       return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") }
     #else
       return false

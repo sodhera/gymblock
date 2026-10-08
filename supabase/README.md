@@ -1,9 +1,18 @@
 # GymBlock cloud: Supabase, RevenueCat, App Store
 
-Everything the app needs from the dashboards, in the order to do it. The app code is complete and
-points at the real project; each step below is a copy-and-paste in a browser. Until a step is done,
-the app degrades honestly (sign-in reports the provider error, the offer page says subscriptions
-are off and shows the Debug-only skip, analytics inserts fail quietly and retry).
+Everything the app needs from the dashboards, in the order to do it, with what is already done.
+
+| Step | State on 8 Oct 2026 |
+| --- | --- |
+| 1. Schema | **Done** (run in the SQL editor; 7 tables, 3 views, `gb_delete_account`). |
+| 2. Apple provider | **Done** (enabled, client id `com.sodhera.gymblock`). Apple Developer capability: pending until the App ID exists. |
+| 3. Google provider | **Blocked**: Google Cloud Console refuses to open until the Google account turns on 2-step verification. |
+| 3b. Redirect URL | **Done** (`gymblock://auth/callback`). |
+| 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock`, products, entitlement `pro`, offering `default`; keys in `Secrets.xcconfig` (Test Store for Debug, App Store for Release). |
+| 5. App Store Connect | **Pending**: the session had expired; sign in, then create the app and the two subscriptions. |
+
+Until a step is done the app degrades honestly (sign-in reports the provider error, the offer page
+says subscriptions are off and shows the Debug-only skip, analytics inserts fail quietly and retry).
 
 Project: https://supabase.com/dashboard/project/tlcmpgxuyngsbjuhring (shared with premiumaccess;
 GymBlock's tables are prefixed `gb_`). Client values live in `GymBlock/AppConfig.swift`.
@@ -50,7 +59,9 @@ https://app.revenuecat.com → the Sodhera project (or a new "GymBlock" project)
 3. Entitlements → + New: identifier `pro`, attach both products.
 4. Offerings → `default` → packages: `$rc_monthly` → monthly product, `$rc_annual` → yearly product.
 5. Apps → GymBlock → copy the *Public app-specific API key* (`appl_…`) into `Secrets.xcconfig`:
-   `REVENUECAT_API_KEY = appl_…` — then rebuild. The key is public; commit it.
+   `REVENUECAT_API_KEY = appl_…` — then rebuild. The key is public; commit it. Debug builds use the
+   project's *Test Store* key (`REVENUECAT_API_KEY[config=Debug]`), so `--online` runs on the
+   simulator show real offerings and a RevenueCat test purchase sheet without App Store Connect.
 
 ## 5. App Store Connect
 

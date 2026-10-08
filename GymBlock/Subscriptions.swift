@@ -92,8 +92,10 @@ import SwiftUI
         let yearly = package.packageType == .annual || product.productIdentifier == AppConfig.yearlyProductID
         let monthly = package.packageType == .monthly || product.productIdentifier == AppConfig.monthlyProductID
         guard yearly || monthly else { continue }
+        // The product's own formatter carries the store's currency; never the phone's locale.
         let perMonth = yearly ? product.pricePerMonth.flatMap { price -> String? in
-          let formatter = NumberFormatter(); formatter.numberStyle = .currency; formatter.locale = product.priceFormatter?.locale ?? .current
+          if let formatter = product.priceFormatter { return formatter.string(from: price) }
+          let formatter = NumberFormatter(); formatter.numberStyle = .currency; formatter.currencyCode = product.currencyCode
           return formatter.string(from: price)
         } : nil
         let trial = product.introductoryDiscount?.paymentMode == .freeTrial ? (product.introductoryDiscount?.subscriptionPeriod.value ?? 0) : 0
