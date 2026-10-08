@@ -1,5 +1,5 @@
 // Renders the app icon: the paper stage (warm glow, quiet ink dots) with the brand mark, a padlock
-// whose shackle is a barbell. Ink geometry with the emerald signal dot as the keyhole; the same
+// whose keyhole is a barbell. Ink body and shackle; the emerald barbell is the only colour. The same
 // shapes as `BrandMark` in GymBlock/BrandMark.swift (unit square, y down). Run from the repository root:
 //   swift scripts/generate-app-icon.swift                 # 1024 px → the asset catalogue
 //   swift scripts/generate-app-icon.swift 180 out.png     # a preview at another size
@@ -29,7 +29,7 @@ func radial(_ alpha: CGFloat, _ radius: CGFloat, at p: CGPoint) {
   let g = CGGradient(colorsSpace: space, colors: colors, locations: [0, 0.45, 1])!
   c.drawRadialGradient(g, startCenter: p, startRadius: 0, endCenter: p, endRadius: radius, options: [])
 }
-let centre = CGPoint(x: side / 2, y: side * 0.53)
+let centre = CGPoint(x: side / 2, y: side * 0.50)
 radial(0.9, side * 0.95, at: centre)
 radial(0.8, side * 0.46, at: centre)
 // Dots.
@@ -46,30 +46,46 @@ while y < side {
   y += step
 }
 
-// The mark, in a unit square (y down) filling the central 64% of the icon, centred on the glow.
-// Keep these numbers identical to `BrandMark.ink` / `BrandMark.keyhole` in GymBlock/BrandMark.swift.
-let markSide = side * 0.64
+// The mark, in a unit square (y down) filling the central 62% of the icon, centred on the glow.
+// Keep these tables identical to `BrandMark.ink` / `BrandMark.keyhole` in GymBlock/BrandMark.swift.
+enum Piece {
+  case arc(cx: CGFloat, cy: CGFloat, r: CGFloat, w: CGFloat)
+  case rect(x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, r: CGFloat)
+}
+let inkPieces: [Piece] = [
+  .arc(cx: 0.5, cy: 0.43, r: 0.21, w: 0.11),
+  .rect(x: 0.235, y: 0.43, w: 0.11, h: 0.08, r: 0),
+  .rect(x: 0.655, y: 0.43, w: 0.11, h: 0.08, r: 0),
+  .rect(x: 0.12, y: 0.45, w: 0.76, h: 0.52, r: 0.185),
+]
+let keyholePieces: [Piece] = [
+  .rect(x: 0.26, y: 0.675, w: 0.48, h: 0.07, r: 0.035),
+  .rect(x: 0.28, y: 0.585, w: 0.085, h: 0.25, r: 0.034),
+  .rect(x: 0.635, y: 0.585, w: 0.085, h: 0.25, r: 0.034),
+]
+let markSide = side * 0.62
 c.saveGState()
 c.translateBy(x: centre.x - markSide / 2, y: centre.y + markSide / 2)
 c.scaleBy(x: markSide, y: -markSide)
-let inkShapes: [(x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, radius: CGFloat)] = [
-  (0.08, 0.50, 0.84, 0.50, 0.17),   // lock body
-  (0.00, 0.14, 1.00, 0.10, 0.05),   // bar
-  (0.16, 0.00, 0.22, 0.38, 0.08),   // left plate
-  (0.62, 0.00, 0.22, 0.38, 0.08),   // right plate
-  (0.20, 0.36, 0.14, 0.22, 0.00),   // left shackle post
-  (0.66, 0.36, 0.14, 0.22, 0.00),   // right shackle post
-]
-c.setFillColor(ink)
-for s in inkShapes {
-  c.addPath(CGPath(roundedRect: CGRect(x: s.x, y: s.y, width: s.w, height: s.h),
-                   cornerWidth: s.radius, cornerHeight: s.radius, transform: nil))
+func draw(_ pieces: [Piece], _ color: CGColor) {
+  c.setFillColor(color)
+  for piece in pieces {
+    switch piece {
+    case .rect(let x, let y, let w, let h, let r):
+      c.addPath(CGPath(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerWidth: r, cornerHeight: r, transform: nil))
+    case .arc(let cx, let cy, let r, let w):
+      // Half-annulus over the top (y-down space): outer arc 180→360, back along the inner arc.
+      c.move(to: CGPoint(x: cx - (r + w / 2), y: cy))
+      c.addArc(center: CGPoint(x: cx, y: cy), radius: r + w / 2, startAngle: .pi, endAngle: 2 * .pi, clockwise: false)
+      c.addLine(to: CGPoint(x: cx + (r - w / 2), y: cy))
+      c.addArc(center: CGPoint(x: cx, y: cy), radius: r - w / 2, startAngle: 2 * .pi, endAngle: .pi, clockwise: true)
+      c.closePath()
+    }
+  }
+  c.fillPath()
 }
-c.fillPath()
-// The keyhole: the one signal.
-let keyhole = (cx: CGFloat(0.5), cy: CGFloat(0.75), d: CGFloat(0.17))
-c.setFillColor(signal)
-c.fillEllipse(in: CGRect(x: keyhole.cx - keyhole.d / 2, y: keyhole.cy - keyhole.d / 2, width: keyhole.d, height: keyhole.d))
+draw(inkPieces, ink)
+draw(keyholePieces, signal)
 c.restoreGState()
 
 let image = c.makeImage()!
