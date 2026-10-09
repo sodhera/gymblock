@@ -37,6 +37,7 @@
 		5344BF389B159F48B1698803 /* advance.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C25C3FE16037D11BD08D732 /* advance.wav */; };
 		540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C32DC47F5228BD30518BAB /* Typography.swift */; };
 		5B36CD8D5448E7C1D2A16483 /* OnboardingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5029EB289FB5CF493FAF16 /* OnboardingControls.swift */; };
+		636724D9FC6AFD47EC6E5B37 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 850E0F527201E54B9ABC6131 /* AppIcon.icon */; };
 		666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D599A2899F5D63D89F8AEF /* Navigation.swift */; };
 		68D56E6C4D6BF0A849BA9EA1 /* HomeScoreboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
@@ -152,6 +153,7 @@
 		7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineBaseline.swift; sourceTree = "<group>"; };
 		7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSplits.swift; sourceTree = "<group>"; };
 		82559945550DCB076E35D35D /* RedesignTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignTests.swift; sourceTree = "<group>"; };
+		850E0F527201E54B9ABC6131 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		854264B8D10EA53FE36D44B2 /* HomeStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStats.swift; sourceTree = "<group>"; };
 		8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8F4562DF53998B70DF9E5B51 /* BenefitLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitLayoutUITests.swift; sourceTree = "<group>"; };
@@ -247,6 +249,7 @@
 				B9A0E88CE0E1647679F6856C /* Analytics.swift */,
 				F1C23F4F4C175A9CE78D7C7A /* AppConfig.swift */,
 				D412D86E746B7AEB2DCFDCED /* AppControls.swift */,
+				850E0F527201E54B9ABC6131 /* AppIcon.icon */,
 				625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */,
 				284030AE460C4F499D46BE48 /* Assets.xcassets */,
 				AB4882431BE1CE28C0353541 /* Backend.swift */,
@@ -477,6 +480,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				636724D9FC6AFD47EC6E5B37 /* AppIcon.icon in Resources */,
 				F47983419F84D898BAF0C3DB /* Assets.xcassets in Resources */,
 				5344BF389B159F48B1698803 /* advance.wav in Resources */,
 				8B1A2887B864CD5D8FE3AEEF /* complete.wav in Resources */,

@@ -1,0 +1,71 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.06000,0.60000,0.42000,1.00000"
+  },
+  "groups": [
+    {
+      "name": "lock",
+      "layers": [
+        {
+          "image-name": "lock.svg",
+          "name": "lock",
+          "glass": true
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      }
+    },
+    {
+      "name": "dumbbell",
+      "layers": [
+        {
+          "image-name": "plates.svg",
+          "name": "plates",
+          "glass": true
+        },
+        {
+          "image-name": "bar.svg",
+          "name": "bar",
+          "glass": true
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      }
+    },
+    {
+      "name": "shackle",
+      "layers": [
+        {
+          "image-name": "shackle.svg",
+          "name": "shackle",
+          "glass": true
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.4
+      },
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "iOS"
+    ]
+  }
+}
