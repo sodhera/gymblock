@@ -7,7 +7,7 @@
 - Keep splits optional, preserve their IDs on edits and compare progress only within the same split and exercise, with rep count or load held constant.
 - Demo loading must be explicit, idempotent and never overwrite existing local work. Keep the sample-history marker visible on Home.
 - Blocking is a prototype representation. Keep honest visible labels; do not claim real enforcement. Billing is real only once the RevenueCat and App Store Connect steps in `supabase/README.md` are done.
-- The brand mark is a kettlebell that is a padlock (handle = shackle, emerald keyhole); the icon is that mark in paper white on ink (`BrandMark.swift`, `scripts/generate-app-icon.swift`); the only warm colour is `JourneyColor.danger` for time on the phone. Legal documents live in `docs/legal/` and are published at https://www.orecci.com/gymblock/ from the `orecci` repo.
+- The brand mark is a cast-iron kettlebell with an emerald keyhole (wide trapezoid handle, flat-based bell; it must read as a kettlebell first); the icon is that mark in ink on paper (`BrandMark.swift`, `scripts/generate-app-icon.swift`); the only warm colour is `JourneyColor.danger` for time on the phone. Legal documents live in `docs/legal/` and are published at https://www.orecci.com/gymblock/ from the `orecci` repo.
 - Read DESIGN.md before visual edits. Keep README.md and VALIDATION.md current for material changes.
 - Prove visual changes with actual simulator screenshots or Device Hub. Build/install/launch alone is insufficient.
 - Preserve read-only boundaries around SleepBlock and Speaking Coach reference sources.
