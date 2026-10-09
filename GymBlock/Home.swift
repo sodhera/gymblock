@@ -4,6 +4,7 @@ import SwiftUI
 /// chooser: a split, or a free workout.
 struct HomeView: View {
   @EnvironmentObject private var store: GymStore
+  @ObservedObject private var blocking = AppBlocking.shared
   @Environment(\.dynamicTypeSize) private var typeSize
   @State private var choosing = false
   @State private var settings = false
@@ -100,11 +101,11 @@ struct HomeView: View {
     } else if example {
       Text(store.t("Example until your first workout")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
     } else if store.profile.focusEnabled == true {
-      let apps = store.profile.blockedApps
       HStack(spacing: 6) {
         Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
-        Text((apps.isEmpty ? store.t("Apps") : apps.prefix(2).joined(separator: ", ") + (apps.count > 2 ? " +\(apps.count - 2)" : ""))
-             + " · " + store.t("blocked while you train · preview"))
+        BlockedIcons(size: 14, limit: 3)
+        Text(blocking.ready ? blocking.summary(store.t) + " · " + store.t("blocked while you train")
+             : store.t("Choose apps to block in Settings"))
       }.font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).lineLimit(1)
         .accessibilityElement(children: .combine).accessibilityIdentifier("home.blocking")
     } else {

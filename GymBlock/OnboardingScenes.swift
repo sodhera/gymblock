@@ -1,3 +1,5 @@
+import FamilyControls
+import ManagedSettings
 import SwiftUI
 
 /// Lays a fixed reference composition into whatever space the stage zone offers.
@@ -73,9 +75,8 @@ struct NotificationStage: View {
         }
       }.frame(maxWidth: 360).frame(maxHeight: .infinity)
       VStack(spacing: 14) {
-        Image(systemName: "lock.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(JourneyColor.onAccent)
-          .frame(width: 60, height: 60).background(Circle().fill(JourneyColor.accent))
-          .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.28), .clear], center: .center, startRadius: 0, endRadius: 110)).frame(width: 220, height: 220))
+        BrandMark(size: 92)
+          .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 120)).frame(width: 240, height: 240))
         Text(store.t("Apps locked while you train")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
       }.scaleEffect(locked ? 1 : 0.7).opacity(locked ? 1 : 0)
     }.frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -649,15 +650,17 @@ struct LogStage: View {
       withAnimation(.smooth(duration: 0.3)) { line = 0; best = false }
       if reduced { revealed = 5; forgotten = 4; done(); return }
       revealed = 0; forgotten = 0
+      // One week at a time: it appears in full, holds, fades to "?" in full, and only then does the
+      // next appear. Today's stays.
       for i in 0..<5 {
-        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.55) else { return }
-        withAnimation(.smooth(duration: 0.45)) { revealed = i + 1 }
+        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.12) else { return }
+        withAnimation(.smooth(duration: 0.35)) { revealed = i + 1 }
         JourneyHaptic.play(.light, store.profile, intensity: 0.5)
-        if i > 0 {
-          guard await pause(0.25) else { return }
-          withAnimation(.smooth(duration: 0.6)) { forgotten = i }
-          JourneyHaptic.play(.soft, store.profile, intensity: 0.25)
-        }
+        guard i < 4 else { break }
+        guard await pause(0.35 + 0.3) else { return }
+        withAnimation(.smooth(duration: 0.22)) { forgotten = i + 1 }
+        JourneyHaptic.play(.soft, store.profile, intensity: 0.25)
+        guard await pause(0.25) else { return }
       }
       guard await pause(0.5) else { return }
       done()
@@ -680,61 +683,52 @@ struct LogStage: View {
 
 // MARK: - Choose apps to block
 
-/// The apps as symbols on glass: no borrowed logos.
-struct BlockedApp: Identifiable {
-  let name: String
-  let symbol: String
-  var id: String { name }
-  static let all: [BlockedApp] = [
-    BlockedApp(name: "Instagram", symbol: "camera"), BlockedApp(name: "TikTok", symbol: "music.note"),
-    BlockedApp(name: "YouTube", symbol: "play.rectangle"), BlockedApp(name: "X", symbol: "xmark"),
-    BlockedApp(name: "Snapchat", symbol: "bubble.left"), BlockedApp(name: "Reddit", symbol: "bubble.left.and.bubble.right"),
-  ]
-}
-
+/// The chosen apps, categories and sites on glass, drawn by iOS from Screen Time's opaque tokens
+/// (GymBlock never learns which they are). Empty slots before anything is chosen; any tile opens
+/// the system picker. Turn on blocking stamps a lock on each.
 struct BlockStage: View {
-  @Binding var selected: Set<String>
   let locking: Bool
+  let choose: () -> Void
   @EnvironmentObject private var store: GymStore
+  @ObservedObject private var blocking = AppBlocking.shared
   @State private var stamped = 0
-  private var order: [String] { BlockedApp.all.map(\.name).filter(selected.contains) }
+  enum Item: Hashable { case app(ApplicationToken), category(ActivityCategoryToken), site(WebDomainToken) }
+  private var items: [Item] {
+    let s = blocking.selection
+    return s.applicationTokens.map(Item.app) + s.categoryTokens.map(Item.category) + s.webDomainTokens.map(Item.site)
+  }
   var body: some View {
+    let all = items
+    let shown = Array(all.prefix(all.count > 6 ? 5 : 6))
     VStack(spacing: 22) {
       Spacer(minLength: 0)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 3), spacing: 22) {
-        ForEach(BlockedApp.all) { app in tile(app) }
+        ForEach(Array(shown.enumerated()), id: \.element) { i, item in tile(item, locked: i < stamped) }
+        if all.count > 6 { more(all.count - 5) }
+        ForEach(0..<max(0, 6 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
       }.frame(maxWidth: 300)
-      Text(selected.isEmpty ? store.t("Choose at least one app.")
-           : String(format: store.t("%@ blocked from Start to Finish."), selected.count == 1 ? store.t("1 app") : "\(selected.count) " + store.t("apps")))
-        .font(JourneyType.label).foregroundStyle(JourneyColor.secondary).monospacedDigit()
-        .contentTransition(.numericText()).animation(.smooth(duration: 0.3), value: selected.count)
+      Text(all.isEmpty ? store.t("Choose the apps that pull you in.")
+           : String(format: store.t("%@ blocked from Start to Finish."), blocking.summary(store.t)))
+        .font(JourneyType.label).foregroundStyle(JourneyColor.secondary).monospacedDigit().multilineTextAlignment(.center)
+        .contentTransition(.numericText()).animation(.smooth(duration: 0.3), value: all.count)
+        .accessibilityIdentifier("blocking.summary")
       Spacer(minLength: 0)
     }
     .task(id: locking) {
       guard locking else { stamped = 0; return }
-      for i in 0..<order.count {
+      for i in 0..<min(6, all.count) {
         guard await pause(i == 0 ? 0.05 : 0.14) else { return }
         withAnimation(.spring(duration: 0.5, bounce: 0.25)) { stamped = i + 1 }
         JourneyHaptic.play(.rigid, store.profile)
       }
     }
   }
-  private func tile(_ app: BlockedApp) -> some View {
-    let on = selected.contains(app.name)
-    let locked = (order.firstIndex(of: app.name).map { $0 < stamped }) ?? false
-    return Button {
-      guard !locking else { return }
-      withAnimation(JourneyMotion.gentle) { if on { selected.remove(app.name) } else { selected.insert(app.name) } }
-      JourneyHaptic.play(.selection, store.profile)
-    } label: {
+  private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 18, style: .continuous) }
+  private func slot<Icon: View, Name: View>(locked: Bool = false, id: String, @ViewBuilder icon: () -> Icon, @ViewBuilder name: () -> Name) -> some View {
+    Button { guard !locking else { return }; JourneyHaptic.play(.selection, store.profile); choose() } label: {
       VStack(spacing: 10) {
-        Image(systemName: app.symbol).font(.system(.title3, weight: .semibold))
-          .foregroundStyle(on ? JourneyColor.onButton : JourneyColor.secondary)
-          .frame(width: 60, height: 60)
-          .background {
-            RoundedRectangle(cornerRadius: 18, style: .continuous).fill(JourneyColor.button).opacity(on ? 1 : 0)
-          }
-          .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous), interactive: true)
+        icon().frame(width: 60, height: 60)
+          .journeyGlass(shape, interactive: true)
           .opacity(locked ? 0.55 : 1)
           .overlay(alignment: .topTrailing) {
             Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(JourneyColor.onAccent)
@@ -742,11 +736,30 @@ struct BlockStage: View {
               .overlay(Circle().strokeBorder(JourneyColor.stage, lineWidth: 2))
               .offset(x: 9, y: -9).scaleEffect(locked ? 1 : 0.3).opacity(locked ? 1 : 0)
           }
-        Text(app.name).font(JourneyType.caption).foregroundStyle(on ? JourneyColor.text : JourneyColor.tertiary)
+        name().font(JourneyType.caption).lineLimit(1).frame(height: 16)
       }.frame(maxWidth: .infinity).contentShape(Rectangle())
-    }.buttonStyle(JourneyPressStyle())
-      .accessibilityLabel(app.name).accessibilityAddTraits(on ? .isSelected : [])
-      .accessibilityIdentifier("block." + app.name)
+    }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier(id)
+  }
+  @ViewBuilder private func tile(_ item: Item, locked: Bool) -> some View {
+    switch item {
+    case .app(let token):
+      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+    case .category(let token):
+      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+    case .site(let token):
+      slot(locked: locked, id: "block.item") { Image(systemName: "globe").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text) }
+        name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+    }
+  }
+  private func more(_ n: Int) -> some View {
+    slot(id: "block.more") { Text("+\(n)").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).monospacedDigit() }
+      name: { Text(store.t("more")).foregroundStyle(JourneyColor.secondary) }
+  }
+  private func empty(first: Bool) -> some View {
+    slot(id: first ? "block.add" : "block.empty") {
+      Image(systemName: "plus").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary).opacity(first ? 1 : 0)
+    } name: { Text(first ? store.t("Choose") : " ").foregroundStyle(JourneyColor.tertiary) }
+      .accessibilityLabel(store.t("Choose apps")).accessibilityHidden(!first)
   }
 }
 
@@ -912,17 +925,28 @@ struct AccountButtons: View {
       #endif
     }
   }
+  /// The same shape and size as Continue with Apple, in white with Google's own G.
   private var google: some View {
-    Button {
+    let label = HStack(spacing: 8) {
+      Image("GoogleG").resizable().frame(width: 18, height: 18).accessibilityHidden(true)
+      Text(store.t("Continue with Google")).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+    }.foregroundStyle(JourneyColor.text).frame(maxWidth: .infinity, minHeight: 22)
+    let tapped = {
       Analytics.tap("account.google")
       Task { await account.signInWithGoogle() }
-    } label: {
-      HStack(spacing: 8) {
-        Text("G").font(.system(size: 12, weight: .bold, design: .rounded)).foregroundStyle(JourneyColor.text)
-          .frame(width: 20, height: 20).overlay(Circle().strokeBorder(JourneyColor.ink(0.35), lineWidth: 1.2)).accessibilityHidden(true)
-        Text(store.t("Continue with Google")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-      }.frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-    }.buttonStyle(.plain).disabled(account.busy).accessibilityIdentifier("account.google")
+    }
+    return Group {
+      if #available(iOS 26.0, *) {
+        Button(action: tapped) { label }.buttonStyle(.glassProminent).tint(.white)
+          .overlay(Capsule().strokeBorder(JourneyColor.ink(0.12), lineWidth: 1).allowsHitTesting(false))
+      } else {
+        Button(action: tapped) {
+          label.frame(minHeight: 50).background(Capsule().fill(.white)).overlay(Capsule().strokeBorder(JourneyColor.ink(0.12), lineWidth: 1))
+        }.buttonStyle(JourneyPressStyle())
+      }
+    }.controlSize(.large).buttonBorderShape(.capsule)
+      .disabled(account.busy).opacity(account.busy ? 0.38 : 1)
+      .accessibilityIdentifier("account.google").padding(.top, 6)
   }
 }
 
@@ -958,9 +982,8 @@ struct OfferStage: View {
   @ObservedObject var subscription: GymSubscription
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    let apps = store.profile.blockedApps
-    let blocking = store.profile.focusEnabled == true && !apps.isEmpty
-    let list = apps.prefix(2).joined(separator: ", ") + (apps.count > 2 ? " +\(apps.count - 2)" : "")
+    let blocker = AppBlocking.shared
+    let blocking = store.profile.focusEnabled == true && blocker.ready
     VStack(spacing: 0) {
       Spacer(minLength: 0)
       VStack(alignment: .leading, spacing: 0) {
@@ -969,7 +992,7 @@ struct OfferStage: View {
           Text("GymBlock Pro").font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text)
           Spacer()
         }.padding(.bottom, 18)
-        FeatureRow(symbol: "lock.fill", text: blocking ? store.t("Blocks") + " " + list : store.t("Blocks the apps you choose"),
+        FeatureRow(symbol: "lock.fill", text: blocking ? store.t("Blocks") + " " + blocker.summary(store.t) : store.t("Blocks the apps you choose"),
                    detail: store.t("From Start workout to Finish."))
         FeatureRow(symbol: "timer", text: store.t("Times every rest"), detail: store.t("A buzz on the Lock Screen when it’s up."))
         FeatureRow(symbol: "chart.line.uptrend.xyaxis", text: store.t("Keeps your progress"), detail: store.t("Every set logged, every gain shown."))

@@ -17,7 +17,7 @@ import XCTest
   func testBlockStartsBeforeWorkoutChoiceAndEndsBeforeSummary() {
     let store = GymStore(defaults: defaults)
     store.startSession()
-    XCTAssertTrue(store.session!.isBlockingSimulated)
+    XCTAssertTrue(store.session!.isBlocking)
     XCTAssertEqual(store.session?.stage, .exercise)
     store.chooseWorkout(nil)
     store.chooseExercise(Exercise.catalog[0])
@@ -26,7 +26,7 @@ import XCTest
     store.logSet(reps: 12, minutes: 0)
     store.finish()
     XCTAssertNil(store.session)
-    XCTAssertFalse(store.summary!.isBlockingSimulated)
+    XCTAssertFalse(store.summary!.isBlocking)
     XCTAssertEqual(store.data.history.count, 1)
     XCTAssertEqual(store.summary?.totalReps, 12)
     XCTAssertEqual(store.summary?.volumeKG, 120)

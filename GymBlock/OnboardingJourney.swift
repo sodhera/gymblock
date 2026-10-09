@@ -1,3 +1,4 @@
+import FamilyControls
 import SwiftUI
 
 /// Onboarding: one question or one idea per page, on a fixed grid —
@@ -60,7 +61,11 @@ struct OnboardingView: View {
   @State private var returning = false
   @State private var draft = 2.0
   @State private var estimate = GymTimeEstimate()
-  @State private var apps: Set<String> = []
+  @ObservedObject private var blocking = AppBlocking.shared
+  /// The system app picker, its working copy, and a note when Screen Time access is refused.
+  @State private var picking = false
+  @State private var pickDraft = FamilyActivitySelection()
+  @State private var blockMessage: String?
   @State private var locking = false
   @State private var nameDraft = ""
   @State private var gender: String?
@@ -106,14 +111,17 @@ struct OnboardingView: View {
     }
     .foregroundStyle(JourneyColor.text)
     .preferredColorScheme(JourneyColor.theme.scheme)
-    // Safety net: Continue always appears, even if a sequence is interrupted.
-    .task(id: step) { if !ready { try? await Task.sleep(for: .seconds(6)); markReady() } }
+    // Continue waits for the page's animation to finish. Safety net, well past the longest
+    // sequence: it still appears if one is interrupted.
+    .task(id: step) { if !ready { try? await Task.sleep(for: .seconds(20)); markReady() } }
     .task(id: step == .subscription) { if step == .subscription { await subscription.load() } }
     .onChange(of: subscription.hasAccess) { _, access in if access, step == .subscription { move(.splits) } }
     .onChange(of: account.userID) { _, id in if id != nil, step == .account { signedIn() } }
     .onChange(of: step) { old, new in Analytics.leave("onboarding." + old.rawValue); Analytics.enter("onboarding." + new.rawValue, ["step": stepIndex(new)]) }
     .onAppear { Analytics.enter("onboarding." + step.rawValue, ["step": stepIndex(step)]) }
     .onDisappear { Analytics.leave("onboarding." + step.rawValue) }
+    .familyActivityPicker(headerText: store.t("Choose what to block from Start workout to Finish."), isPresented: $picking, selection: $pickDraft)
+    .onChange(of: pickDraft) { _, chosen in blocking.choose(chosen) }
     .onAppear {
       if reduceMotion || Self.coverShown { covered = false } else {
         Self.coverShown = true
@@ -169,7 +177,7 @@ struct OnboardingView: View {
         Text(store.t(headlineCopy))
       }
     }.font(JourneyType.headline).tracking(-0.3).multilineTextAlignment(.center)
-      .lineLimit(2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
+      .lineLimit(step == .reveal ? 3 : 2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
   }
   private var headlineCopy: String {
@@ -181,7 +189,7 @@ struct OnboardingView: View {
     case .alerts: return "Get a buzz when rest is up."
     case .scrolling: return "Do you use your phone between sets?"
     case .phoneMinutes: return "How long on your phone, each rest?"
-    case .reveal: return "Here’s your phone time."
+    case .reveal: return "Here’s how much time you spend on your phone during your workout session."
     case .days: return daysHeadline
     case .commit: return "Commit to focus."
     case .mindA: return "Scrolling weakens your mind-muscle connection."
@@ -201,7 +209,7 @@ struct OnboardingView: View {
     let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !name.isEmpty else { return nil }
     switch step {
-    case .reveal: return name + ", " + store.t("here’s your phone time.")
+    case .reveal: return name + ", " + store.t("here’s how much time you spend on your phone during your workout session.")
     case .subscription: return store.t("Stay focused,") + " " + name + "."
     case .commit: return name + ", " + store.t("commit to focus.")
     default: return nil
@@ -219,7 +227,7 @@ struct OnboardingView: View {
     case .commit: return "Hold the button until it fills."
     case .mindA, .mindB, .restA, .restB: return "Illustrative, not a measurement."
     case .logA, .logB: return "An example log, not your data."
-    case .blocking: return "Blocking is a preview in this build: nothing is enforced yet."
+    case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Pausing your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
     case .subscription: return subscription.message ?? (subscription.plans.isEmpty ? nil : "Auto-renews. Cancel anytime in iOS Settings.")
     case .splits: return store.data.workouts.isEmpty ? "Optional. You can always train freely and add splits later." : "Home lines up the next split and its last weights."
@@ -257,7 +265,7 @@ struct OnboardingView: View {
     case .restA, .restB: RestStage(timed: step == .restB, done: markReady)
     case .logA, .logB: LogStage(remembered: step == .logB, done: markReady)
     case .commit: CommitStage(lit: pledged)
-    case .blocking: BlockStage(selected: Binding(get: { apps }, set: { apps = $0; saveApps() }), locking: locking)
+    case .blocking: BlockStage(locking: locking, choose: chooseApps)
     case .account: AccountStage()
     case .subscription: OfferStage(subscription: subscription)
     case .splits: SplitsStage()
@@ -315,7 +323,11 @@ struct OnboardingView: View {
                    onComplete: commit)
         Color.clear.frame(height: 44)
       case .blocking:
-        JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !apps.isEmpty && !locking, action: turnOnBlocking)
+        if blocking.ready {
+          JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking)
+        } else {
+          JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps)
+        }
         JourneyTextButton(title: store.t("Not now"), id: "blocking.later") {
           guard !locking else { return }
           store.updateProfile { $0.focusEnabled = false }
@@ -415,10 +427,7 @@ struct OnboardingView: View {
       draft = saved > 0 ? min(10, (saved * 2).rounded() / 2) : (baseline.scrollFrequency == .sometimes ? 1 : 2)
     case .reveal, .days: estimate = GymTimeEstimate(baseline)
     case .commit: pledged = 0; committed = false
-    case .blocking:
-      var chosen = Set(store.profile.blockedApps)
-      if chosen == ["Instagram", "TikTok"] && baseline.scrollFrequency != .no { chosen.insert("YouTube") }
-      apps = chosen
+    case .blocking: blockMessage = nil
     default: break
     }
   }
@@ -446,16 +455,25 @@ struct OnboardingView: View {
     if step == .account && returning { move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
-  private func saveApps() {
-    let ordered = BlockedApp.all.map(\.name).filter(apps.contains)
-    store.updateProfile { $0.blockedApps = ordered }
+  /// Apple's picker only returns a choice once Screen Time access is granted, so tapping Choose apps
+  /// asks for it first (iOS asks once). Choosing never advances the page.
+  private func chooseApps() {
+    guard !locking, !picking else { return }
+    Task { @MainActor in
+      guard await blocking.requestAccess() else {
+        blockMessage = "Screen Time access is off. Allow it in iOS Settings, or choose Not now."
+        return
+      }
+      blockMessage = nil
+      pickDraft = blocking.selection
+      picking = true
+    }
   }
   private func turnOnBlocking() {
-    guard !locking, !apps.isEmpty else { return }
-    saveApps()
+    guard !locking, blocking.ready else { return }
     store.updateProfile { $0.focusEnabled = true }
     locking = true
-    let wait = reduceMotion ? 0.25 : 0.14 * Double(apps.count) + 0.7
+    let wait = reduceMotion ? 0.25 : 0.14 * Double(min(6, blocking.apps + blocking.categories)) + 0.7
     Task { @MainActor in
       try? await Task.sleep(for: .seconds(wait))
       JourneyHaptic.play(.success, store.profile)

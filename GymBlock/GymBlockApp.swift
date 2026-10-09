@@ -37,6 +37,8 @@ import SwiftUI
       if let stage = UserDefaults.standard.string(forKey: "workoutStage") { store.debugWorkout(stage) }
     #endif
     GymStore.live = store
+    // Lifts a shield the last run left up if no workout is running any more.
+    AppBlocking.shared.sync(store)
     _store = StateObject(wrappedValue: store)
     CloudSync.shared.attach(store)
     Analytics.launched()
@@ -53,7 +55,10 @@ import SwiftUI
     }
     .onChange(of: scenePhase) { _, phase in
       Analytics.scene(phase)
-      if phase == .active { Task { await CloudSync.shared.push() } }
+      if phase == .active {
+        AppBlocking.shared.refresh()
+        Task { await CloudSync.shared.push() }
+      }
     }
   }
   /// The account drives everything that is per user: sync, purchases and analytics identity.

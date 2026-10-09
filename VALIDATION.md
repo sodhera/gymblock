@@ -1,5 +1,18 @@
 # Validation — 8 October 2026
 
+## Real app blocking (9 October 2026)
+
+Blocking is no longer simulated. `AppBlocking.swift` uses Apple's Screen Time (FamilyControls, ManagedSettings): onboarding's blocking page and Settings → Apps to block ask for Screen Time access, then open Apple's picker; the choice (opaque tokens, on this iPhone only) is shielded from Start workout to Finish, lifted while paused, and cleared at launch when no workout is running. Two new extensions: **GymBlockShield** ("You're mid-workout." over a blocked app) and **GymBlockShieldAction** (Back to training closes it). The app and both extensions carry `com.apple.developer.family-controls`.
+
+Checked in the simulator (iPhone 18 Pro / iOS 27.0), captures in [screenshots/blocking-2026-10-09](screenshots/blocking-2026-10-09/):
+- The blocking page with empty tiles and **Choose apps**; Apple's Screen Time prompt and its Allow with Passcode page; after declining, "Screen Time access is off…" and the page stays put.
+- The workout caption when blocking is on but nothing is chosen ("Choose apps to block in Settings"), the paused caption, and Settings → Blocking.
+- The simulator stops at the iPhone passcode, so **the picker, the app icons on the tiles, the shield and enforcement are not yet verified; they need a real iPhone.**
+
+Tests: **71 model checks pass, 1 skipped.** `testUnconfiguredPurchaseCannotInventEntitlement` is now skipped when `REVENUECAT_API_KEY` is set, because its `buy()` opened a real App Store sheet and hung the run. UI: BenefitLayout `testPrimaryActionNeverMoves` and three JourneyV5 tests pass, including the full journey through the new blocking page. `testLargeTextReducedMotionKeepsEveryPageReachable` was updated for the account page that follows the commit, but its re-run stalled in testmanagerd before launch and is unverified. The rest of the UI suite was not run.
+
+Also fixed: a duplicate `"First time"` key in `Spanish.v6`, which would have crashed the first Spanish lookup.
+
 Native Swift/SwiftUI simulator prototype with one app extension (GymBlockLive, the Live Activity). Latest checks use Xcode 27 / iPhone 18 Pro / iOS 27.0. Signing is disabled. No external services or package dependencies are configured.
 
 ## Redesign pass (8 October 2026)

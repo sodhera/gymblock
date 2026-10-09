@@ -1,3 +1,4 @@
+import FamilyControls
 import SwiftUI
 
 /// Settings, ordered by how often they matter during a workout.
@@ -5,6 +6,10 @@ struct PreferencesView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
   @State private var denied = false
+  @ObservedObject private var blocking = AppBlocking.shared
+  @State private var picking = false
+  @State private var pickDraft = FamilyActivitySelection()
+  @State private var blockDenied = false
   var body: some View {
     NavigationStack {
       Form {
@@ -21,11 +26,20 @@ struct PreferencesView: View {
                        : store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
         }
         Section {
-          Toggle(store.t("Block apps during workouts"), isOn: Binding(get: { store.profile.focusEnabled == true }, set: { v in store.updateProfile { $0.focusEnabled = v } })).tint(JourneyColor.signal)
+          Toggle(store.t("Block apps during workouts"), isOn: Binding(get: { store.profile.focusEnabled == true }, set: setBlocking)).tint(JourneyColor.signal)
             .accessibilityIdentifier("focus.enabled")
+          Button(action: chooseApps) {
+            HStack(spacing: 8) {
+              Text(store.t("Apps to block")).foregroundStyle(JourneyColor.text)
+              Spacer()
+              BlockedIcons(size: 18, limit: 3).foregroundStyle(JourneyColor.secondary)
+              if blocking.isEmpty { Text(store.t("None")).foregroundStyle(JourneyColor.secondary) }
+              Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(JourneyColor.tertiary)
+            }
+          }.accessibilityIdentifier("settings.blockedApps")
         } header: { Text(store.t("Blocking")) } footer: {
-          Text((store.profile.blockedApps.isEmpty ? "" : store.profile.blockedApps.joined(separator: ", ") + ". ")
-               + store.t("Blocking is a preview in this build: nothing is enforced yet."))
+          Text(store.t(blockDenied && !blocking.authorized ? "Screen Time access is off for GymBlock. Allow it in iOS Settings."
+                       : "Uses Apple’s Screen Time from Start workout to Finish. Pausing lifts it."))
         }
         Section {
           HStack {
@@ -50,8 +64,28 @@ struct PreferencesView: View {
         AccountSection { dismiss() }
         LegalSection()
       }.gymPage().tint(JourneyColor.secondary).track(screen: "settings")
+        .familyActivityPicker(headerText: store.t("Choose what to block from Start workout to Finish."), isPresented: $picking, selection: $pickDraft)
+        .onChange(of: pickDraft) { _, chosen in blocking.choose(chosen) }
         .navigationTitle(store.t("Settings")).navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { dismiss() }.tint(JourneyColor.text).accessibilityIdentifier("preferences.done") } }
+    }
+  }
+  /// Turning blocking on asks for Screen Time access, then for the apps if none are chosen yet.
+  private func setBlocking(_ on: Bool) {
+    guard on else { store.updateProfile { $0.focusEnabled = false }; return }
+    Task { @MainActor in
+      let granted = await blocking.requestAccess()
+      blockDenied = !granted
+      store.updateProfile { $0.focusEnabled = granted }
+      if granted && blocking.isEmpty { pickDraft = blocking.selection; picking = true }
+    }
+  }
+  private func chooseApps() {
+    Task { @MainActor in
+      guard await blocking.requestAccess() else { blockDenied = true; return }
+      blockDenied = false
+      pickDraft = blocking.selection
+      picking = true
     }
   }
   /// Turning the alert on asks iOS once; if notifications are off, say where to fix it.

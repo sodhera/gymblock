@@ -37,8 +37,8 @@ final class BenefitLayoutUITests: XCTestCase {
       XCTAssertEqual(button.frame.midY, anchor, accuracy: 3)
       tap("onboarding.continue")
     }
-    XCTAssertEqual(app.buttons["blocking.on"].frame.midY, anchor, accuracy: 3)
-    tap("blocking.on")
+    XCTAssertEqual(app.buttons["blocking.choose"].frame.midY, anchor, accuracy: 3)
+    tap("blocking.later")
     XCTAssertTrue(app.buttons["alerts.later"].waitForExistence(timeout: 6))
     let alertsOn = app.buttons["alerts.on"]
     wait(for: [expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: alertsOn)], timeout: 6)

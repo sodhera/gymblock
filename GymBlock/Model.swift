@@ -62,6 +62,8 @@ struct Profile: Codable {
   var training: [String] = []
   var favorites: [String] = []
   var blockWholePhone = true
+  /// Legacy: app names from the old simulated picker, still synced but no longer shown. The real
+  /// choice is Screen Time tokens that stay on this iPhone (`AppBlocking`).
   var blockedApps: [String] = ["Instagram", "TikTok"]
   var unit = "kg"
   var onboardingStep = 0
@@ -145,7 +147,8 @@ struct Session: Codable, Identifiable {
   func duration(at now: Date) -> TimeInterval {
     max(0, (ended ?? pausedAt ?? now).timeIntervalSince(started) - (pausedSeconds ?? 0))
   }
-  var isBlockingSimulated: Bool { ended == nil }
+  /// Blocking (when it's on) runs from Start workout to Finish; pausing lifts it.
+  var isBlocking: Bool { ended == nil && pausedAt == nil }
 }
 enum Stage: String, Codable { case workout, exercise, setup, active, log, rest }
 struct LocalData: Codable {
@@ -195,6 +198,7 @@ struct LocalData: Codable {
     } catch { storageError = true }
     syncRestAlert()
     LiveWorkout.sync(self)
+    AppBlocking.shared.sync(self)
     onPersist?()
   }
   private var scheduledRest: Date?
@@ -239,6 +243,7 @@ struct LocalData: Codable {
     Analytics.track("local_data_cleared")
     RestAlert.cancel()
     RestAlert.cancelIdle()
+    AppBlocking.shared.forget()
     summary = nil
     deletedSet = nil
     data = LocalData()
@@ -624,7 +629,7 @@ struct LocalData: Codable {
     Analytics.track("workout_finished", ["sets": session.completedSets.count, "exercises": session.exercises.count, "split": session.splitID,
                                          "minutes": session.duration(at: session.ended ?? Date()) / 60, "volume_kg": session.volumeKG,
                                          "paused_seconds": session.pausedSeconds, "empty": session.sets.isEmpty, "left_running": endedAt != nil])
-    data.session = nil  // The simulated block ends before the summary appears.
+    data.session = nil  // The block ends before the summary appears.
     persist()
   }
   func saveWorkout(from session: Session, name: String) {

@@ -54,6 +54,8 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - target: GymBlockLive
+      - target: GymBlockShield
+      - target: GymBlockShieldAction
       - package: Supabase
         product: Supabase
       - package: RevenueCat
@@ -77,6 +79,52 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sodhera.gymblock.live
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) LIVE_EXTENSION
+        TARGETED_DEVICE_FAMILY: '1'
+        MARKETING_VERSION: '1.0.0'
+        CURRENT_PROJECT_VERSION: '1'
+        SKIP_INSTALL: YES
+  GymBlockShield:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: GymBlockShield
+        excludes: ["*.entitlements"]
+    info:
+      path: GymBlockShield/Info.plist
+      properties:
+        CFBundleDisplayName: GymBlock
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettingsUI.shield-configuration-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).WorkoutShield
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sodhera.gymblock.shield
+        CODE_SIGN_ENTITLEMENTS: GymBlockShield/GymBlockShield.entitlements
+        TARGETED_DEVICE_FAMILY: '1'
+        MARKETING_VERSION: '1.0.0'
+        CURRENT_PROJECT_VERSION: '1'
+        SKIP_INSTALL: YES
+  GymBlockShieldAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: GymBlockShieldAction
+        excludes: ["*.entitlements"]
+    info:
+      path: GymBlockShieldAction/Info.plist
+      properties:
+        CFBundleDisplayName: GymBlock
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.ManagedSettings.shield-action-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).WorkoutShieldAction
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sodhera.gymblock.shield-action
+        CODE_SIGN_ENTITLEMENTS: GymBlockShieldAction/GymBlockShieldAction.entitlements
         TARGETED_DEVICE_FAMILY: '1'
         MARKETING_VERSION: '1.0.0'
         CURRENT_PROJECT_VERSION: '1'

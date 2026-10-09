@@ -7,6 +7,7 @@ import UIKit
 /// relaunch never loses a set or a rest.
 struct WorkoutView: View {
   @EnvironmentObject private var store: GymStore
+  @ObservedObject private var blocking = AppBlocking.shared
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @Environment(\.dynamicTypeSize) private var typeSize
   @State private var picker = false
@@ -385,17 +386,17 @@ struct WorkoutView: View {
   /// One honest line above the button: what's missing, or that blocking is simulated.
   @ViewBuilder private var caption: some View {
     if paused {
-      Text(store.t(store.profile.focusEnabled == true ? "Paused · clocks stopped · apps unblocked (preview)" : "Paused · every clock is stopped"))
+      Text(store.t(store.profile.focusEnabled == true && blocking.ready ? "Paused · clocks stopped · apps unblocked" : "Paused · every clock is stopped"))
         .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1).minimumScaleFactor(0.8)
         .accessibilityIdentifier("session.pausedCaption")
     } else if weightMissing && stage != .exercise && !active {
       Text(store.t("Add the weight for this set.")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
     } else if store.profile.focusEnabled == true {
-      let apps = store.profile.blockedApps
       HStack(spacing: 6) {
         Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
-        Text((apps.isEmpty ? store.t("Apps") : apps.prefix(2).joined(separator: ", ") + (apps.count > 2 ? " +\(apps.count - 2)" : ""))
-             + " · " + store.t("blocked while you train · preview"))
+        BlockedIcons(size: 14, limit: 3)
+        Text(blocking.ready ? blocking.summary(store.t) + " · " + store.t("blocked while you train")
+             : store.t("Choose apps to block in Settings"))
       }.font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).lineLimit(typeSize.isAccessibilitySize ? 2 : 1).minimumScaleFactor(0.85)
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .combine).accessibilityIdentifier("session.blocking")

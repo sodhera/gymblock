@@ -69,7 +69,7 @@ final class JourneyV5UITests: XCTestCase {
     page("How long on your phone, each rest?")
     XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 6))
     app.pickerWheels.firstMatch.adjust(toPickerWheelValue: "2 min"); snap("03-minutes"); next()
-    page("Sirish, here’s your phone time.")
+    page("Sirish, here’s how much time you spend on your phone during your workout session.")
     // 17 rests × 2 min on the phone, against 18 sets × 40 s of training.
     XCTAssertTrue(any("reveal.phone").label.contains("34 min on your phone"), any("reveal.phone").label)
     XCTAssertTrue(any("reveal.phone").label.contains("12 min training"))
@@ -88,16 +88,17 @@ final class JourneyV5UITests: XCTestCase {
     next(); page("Memory forgets your progress."); settle(4); snap("09-log-a")
     next(); page("Your log doesn’t."); settle(3); snap("10-log-b")
     next(); page("Block what distracts you.")
-    XCTAssertTrue(app.buttons["block.Instagram"].isSelected); XCTAssertFalse(app.buttons["block.X"].isSelected)
-    tap("block.X"); XCTAssertTrue(app.buttons["block.X"].isSelected); snap("11-blocking")
-    tap("blocking.on"); allowAlerts(); snap("13-alerts")
+    // Apps come from Screen Time's own picker, which needs the iPhone passcode: not reachable from a UI test.
+    XCTAssertEqual(app.staticTexts["blocking.summary"].label, "Choose the apps that pull you in.")
+    XCTAssertTrue(app.buttons["blocking.choose"].exists); XCTAssertTrue(app.buttons["block.add"].exists); snap("11-blocking")
+    tap("blocking.later"); allowAlerts(); snap("13-alerts")
     page("Sirish, commit to focus."); snap("14-commit")
     app.buttons["commit.hold"].press(forDuration: 0.4)  // Releasing early does not commit.
     XCTAssertTrue(app.buttons["commit.hold"].exists); page("Sirish, commit to focus.")
     app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Keep your progress safe."); snap("14b-account"); tap("account.debugSkip")
     page("Stay focused, Sirish.")
-    XCTAssertTrue(app.staticTexts["Blocks Instagram, TikTok +2"].waitForExistence(timeout: 6))
+    XCTAssertTrue(app.staticTexts["Blocks the apps you choose"].waitForExistence(timeout: 6))
     XCTAssertFalse(app.buttons["subscription.buy"].isEnabled)  // No product configured; nothing fake.
     XCTAssertFalse(app.buttons["subscription.preview"].exists)
     snap("12-offer")
@@ -105,7 +106,7 @@ final class JourneyV5UITests: XCTestCase {
 
   func testRarelySkipsMinutesShowsNoPhoneTimeAndBackFollowsRoute() {
     next(); profile(); body(); answer("habit.scrolling.no")
-    page("Sam, here’s your phone time.")
+    page("Sam, here’s how much time you spend on your phone during your workout session.")
     XCTAssertTrue(any("reveal.phone").label.hasPrefix("0 min"))  // Rarely: no phone time assumed.
     XCTAssertFalse(app.staticTexts["days.workouts"].exists)  // Nothing to add up, so no days page.
     tap("onboarding.back"); page("Do you use your phone between sets?")
@@ -117,7 +118,7 @@ final class JourneyV5UITests: XCTestCase {
     XCTAssertTrue(app.pickerWheels["165 cm"].waitForExistence(timeout: 4) || app.pickerWheels["5′ 5″"].exists)
     body(); answer("habit.scrolling.sometimes")
     page("How long on your phone, each rest?"); next()
-    page("Ana, here’s your phone time.")
+    page("Ana, here’s how much time you spend on your phone during your workout session.")
     XCTAssertTrue(any("reveal.phone").label.contains("17 min on your phone"))  // Sometimes defaults to 1 min per rest.
     for _ in 0..<8 { next() }
     page("Block what distracts you."); tap("blocking.later")
@@ -140,11 +141,13 @@ final class JourneyV5UITests: XCTestCase {
     app.launchArguments = ["--ui-reset", "--ui-reduced-motion", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityM"]
     app.launch()
     next(); profile(); snap("large-height"); body(); answer("habit.scrolling.yes"); next()
-    page("Sam, here’s your phone time."); snap("large-reveal")
+    page("Sam, here’s how much time you spend on your phone during your workout session."); snap("large-reveal")
     for name in ["days", "mind-a", "mind-b", "rest-a", "rest-b", "log-a", "log-b"] { next(); snap("large-" + name) }
     next(); page("Block what distracts you."); snap("large-blocking")
-    tap("blocking.on"); page("Get a buzz when rest is up."); snap("large-alerts"); tap("alerts.later")
+    tap("blocking.later"); page("Get a buzz when rest is up."); snap("large-alerts"); tap("alerts.later")
     page("Sam, commit to focus."); snap("large-commit")
-    app.buttons["commit.hold"].press(forDuration: 2.2); page("Stay focused, Sam."); snap("large-offer")
+    app.buttons["commit.hold"].press(forDuration: 2.2)
+    page("Keep your progress safe."); tap("account.debugSkip")
+    page("Stay focused, Sam."); snap("large-offer")
   }
 }

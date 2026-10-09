@@ -29,7 +29,7 @@ import XCTest
       store.saveSplit(id: id, name: "Arms", exercises: [Exercise.catalog[0], Exercise.catalog[1]]))
     let split = store.data.workouts[0]
     store.startSession(workout: split)
-    XCTAssertTrue(store.session!.isBlockingSimulated)
+    XCTAssertTrue(store.session!.isBlocking)
     XCTAssertEqual(store.session?.stage, .setup)
     XCTAssertEqual(store.session?.exercises.count, 2)
     XCTAssertEqual(store.session?.splitID, id)
