@@ -653,14 +653,14 @@ struct LogStage: View {
       // One week at a time: it appears in full, holds, fades to "?" in full, and only then does the
       // next appear. Today's stays.
       for i in 0..<5 {
-        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.12) else { return }
-        withAnimation(.smooth(duration: 0.35)) { revealed = i + 1 }
+        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.08) else { return }
+        withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
         JourneyHaptic.play(.light, store.profile, intensity: 0.5)
         guard i < 4 else { break }
-        guard await pause(0.35 + 0.3) else { return }
-        withAnimation(.smooth(duration: 0.22)) { forgotten = i + 1 }
+        guard await pause(0.25 + 0.2) else { return }
+        withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
         JourneyHaptic.play(.soft, store.profile, intensity: 0.25)
-        guard await pause(0.25) else { return }
+        guard await pause(0.16) else { return }
       }
       guard await pause(0.5) else { return }
       done()

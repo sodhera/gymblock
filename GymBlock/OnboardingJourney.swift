@@ -75,6 +75,8 @@ struct OnboardingView: View {
   @State private var weightKG = 75.0
   @State private var covered = true
   @State private var ready = true
+  /// When the current page appeared, for the minimum time before Continue.
+  @State private var pageShownAt = Date()
   /// Page changes run on one clock: everything changing fades out, the page swaps unseen, everything fades in.
   @State private var shown = true
   @State private var stageLeaving = false
@@ -129,6 +131,7 @@ struct OnboardingView: View {
       }
       ArmFrames.shared.prepare()
       ready = reduceMotion || !step.animated
+      pageShownAt = Date()
       prepare()
       store.updateProfile {
         $0.onboardingStepID = step.rawValue
@@ -377,10 +380,20 @@ struct OnboardingView: View {
     button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 8).allowsHitTesting(ready).accessibilityHidden(!ready)
       .animation(.smooth(duration: 0.5), value: ready)
   }
+  /// A scene has finished. Continue still waits a beat after it, and until the page has been up a
+  /// minimum time, so nobody taps through before the point lands.
   private func markReady() {
     guard !ready else { return }
-    withAnimation(.smooth(duration: 0.5)) { ready = true }
+    let page = step
+    let wait = reduceMotion ? 0 : max(Self.readyHold, Self.minimumDwell - Date().timeIntervalSince(pageShownAt))
+    Task { @MainActor in
+      if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+      guard step == page, !ready else { return }
+      withAnimation(.smooth(duration: 0.5)) { ready = true }
+    }
   }
+  private static let readyHold = 1.0
+  private static let minimumDwell = 4.5
 
   private func commit() {
     guard !committed else { return }
@@ -496,6 +509,7 @@ struct OnboardingView: View {
       // Swap while nothing changing is visible. Views keep their own `.animation(value:)` morphs.
       withTransaction(Transaction(animation: nil)) {
         ready = reduceMotion || !next.animated
+        pageShownAt = Date()
         store.updateProfile { $0.onboardingStepID = next.rawValue; $0.onboardingStoryStage = 0 }
         prepare()
         slide = forward ? travel : -travel
