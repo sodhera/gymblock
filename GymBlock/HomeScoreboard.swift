@@ -1,39 +1,25 @@
 import Charts
 import SwiftUI
 
-/// The streak with its flame and this week's goal as a ring. Opens History.
+/// The streak with its flame, then this week's days. Opens History.
 struct StreakCard: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   let stats: HomeStats
   let action: () -> Void
   @State private var drawn = false
-  private var ringProgress: Double { min(1, Double(stats.thisWeek) / Double(stats.goal)) }
   var body: some View {
     Button(action: action) {
       VStack(spacing: 0) {
-      HStack(alignment: .center, spacing: 16) {
-        VStack(alignment: .leading, spacing: 2) {
-          HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Image(systemName: "flame.fill").font(.system(.title2, weight: .bold))
-              .foregroundStyle(stats.streakWeeks > 0 ? JourneyColor.signal : JourneyColor.tertiary)
-              .symbolEffect(.bounce, value: drawn)
-            Text("\(stats.streakWeeks)").font(.system(size: 44, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
-          }
-          Text(store.t("week streak")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-          Text(stats.streakWeeks > 0 ? store.t("Train this week to keep it.") : store.t("One workout starts it.")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
-        }
-        Spacer(minLength: 8)
-        ZStack {
-          Circle().stroke(JourneyColor.ink(0.08), lineWidth: 9)
-          Circle().trim(from: 0, to: drawn ? ringProgress : 0)
-            .stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 9, lineCap: .round)).rotationEffect(.degrees(-90))
-          VStack(spacing: 0) {
-            Text("\(stats.thisWeek)/\(stats.goal)").font(.system(.headline, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
-            Text(store.t("this week")).font(.system(size: 10)).foregroundStyle(JourneyColor.secondary)
-          }
-        }.frame(width: 84, height: 84)
-      }.padding(.bottom, 16)
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Image(systemName: "flame.fill").font(.system(.title2, weight: .bold))
+          .foregroundStyle(stats.streakWeeks > 0 ? JourneyColor.signal : JourneyColor.tertiary)
+          .symbolEffect(.bounce, value: drawn)
+        Text("\(stats.streakWeeks)").font(.system(size: 44, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+        Text(store.t("week streak")).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+          .padding(.leading, 2)
+        Spacer(minLength: 0)
+      }.padding(.bottom, 14)
       HStack(spacing: 0) {
         ForEach(0..<7, id: \.self) { d in
           let on = stats.grid.last?[d] ?? false
