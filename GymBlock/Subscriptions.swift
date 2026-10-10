@@ -14,6 +14,10 @@ import SwiftUI
     /// Yearly only: the same amount spread over twelve months, for comparison.
     let perMonth: String?
     let trialDays: Int
+    /// Yearly only: twelve months at the monthly price, struck through beside the yearly one.
+    var anchor: String? = nil
+    /// Yearly only: how much less than twelve monthly payments, in whole percent.
+    var savings: Int? = nil
     static func == (a: Plan, b: Plan) -> Bool { a.id == b.id }
   }
   @Published private(set) var plans: [Plan] = []
@@ -24,6 +28,9 @@ import SwiftUI
   @Published private(set) var willRenew = true
   @Published private(set) var expiration: Date?
   @Published private(set) var productID: String?
+  /// True once RevenueCat has answered for the signed-in account (not the anonymous one it starts as).
+  /// The paywall gate waits for this, so a subscriber never sees the offer flash on launch.
+  @Published private(set) var resolved = false
   /// Called with each entitlement change (the cloud keeps a snapshot).
   var onEntitlement: ((CustomerInfo) -> Void)?
 
@@ -51,15 +58,18 @@ import SwiftUI
     guard configured else { return }
     guard let id else {
       userID = nil
+      resolved = false
       if !Purchases.shared.isAnonymous { _ = try? await Purchases.shared.logOut() }
       hasAccess = false
       return
     }
     guard id != userID else { return }
     userID = id
+    resolved = false
     do {
       let (info, _) = try await Purchases.shared.logIn(id.uuidString.lowercased())
       apply(info)
+      if userID == id { resolved = true }
     } catch {
       AppLog.error("RevenueCat logIn failed: \(error.localizedDescription)")
       Analytics.error("purchases_login", error)
@@ -86,6 +96,8 @@ import SwiftUI
       let offerings = try await Purchases.shared.offerings()
       guard let current = offerings.current else { message = "The subscription is unavailable. Try again later."; return }
       var found: [Plan] = []
+      var amounts: [String: Decimal] = [:]
+      var formatters: [String: NumberFormatter] = [:]
       packages = [:]
       for package in current.availablePackages {
         let product = package.storeProduct
@@ -98,9 +110,25 @@ import SwiftUI
           let formatter = NumberFormatter(); formatter.numberStyle = .currency; formatter.currencyCode = product.currencyCode
           return formatter.string(from: price)
         } : nil
-        let trial = product.introductoryDiscount?.paymentMode == .freeTrial ? (product.introductoryDiscount?.subscriptionPeriod.value ?? 0) : 0
-        let plan = Plan(id: product.productIdentifier, yearly: yearly, price: product.localizedPriceString, perMonth: perMonth, trialDays: trial)
+        // The period is a count of units (1 week, 3 days…), so it's turned into days here.
+        let trial = product.introductoryDiscount.flatMap { $0.paymentMode == .freeTrial ? Self.days($0.subscriptionPeriod) : nil } ?? 0
+        // One formatter for the price and the struck-through anchor, so both read alike ("US$59.99", not "USD 59.99" beside "US$71.88").
+        let price = product.priceFormatter?.string(from: product.price as NSDecimalNumber) ?? product.localizedPriceString
+        let plan = Plan(id: product.productIdentifier, yearly: yearly, price: price, perMonth: perMonth, trialDays: trial)
         found.append(plan); packages[plan.id] = package
+        amounts[plan.id] = product.price
+        formatters[plan.id] = product.priceFormatter
+      }
+      // The comparison is the stores' own prices, never an invented "was" price.
+      if let monthly = found.first(where: { !$0.yearly }), let month = amounts[monthly.id],
+         let index = found.firstIndex(where: { $0.yearly }), let year = amounts[found[index].id] {
+        let twelve = month * 12
+        if twelve > year {
+          let formatter = formatters[found[index].id] ?? formatters[monthly.id]
+          found[index].anchor = formatter?.string(from: twelve as NSDecimalNumber)
+          let percent = NSDecimalNumber(decimal: (twelve - year) / twelve * 100).doubleValue
+          if percent >= 1 { found[index].savings = Int(percent.rounded(.down)) }
+        }
       }
       plans = found.sorted { $0.yearly && !$1.yearly }
       if selected == nil || !plans.contains(where: { $0.id == selected }) { selected = plans.first?.id }
@@ -109,6 +137,16 @@ import SwiftUI
     } catch {
       message = "Could not load the subscription. Please try again."
       Analytics.error("paywall_load", error)
+    }
+  }
+
+  private static func days(_ period: SubscriptionPeriod) -> Int {
+    switch period.unit {
+    case .day: return period.value
+    case .week: return period.value * 7
+    case .month: return period.value * 30
+    case .year: return period.value * 365
+    @unknown default: return period.value
     }
   }
 

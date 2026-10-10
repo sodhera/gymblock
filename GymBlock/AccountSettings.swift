@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 
 /// Gender, height and weight from onboarding, editable at any time.
@@ -40,36 +41,31 @@ struct AccountSection: View {
   @State private var failed = false
   private var cloud: Bool { account.user != nil }
   var body: some View {
-    Section {
-      if cloud {
-        HStack {
-          Text(store.t("Signed in"))
-          Spacer()
-          Text(account.email ?? account.displayName ?? "—").foregroundStyle(JourneyColor.secondary).lineLimit(1).truncationMode(.middle)
-        }.accessibilityIdentifier("settings.account")
-        if subscription.hasAccess {
-          HStack {
-            Text("GymBlock Pro")
-            Spacer()
-            if let date = subscription.expiration {
-              Text(store.t(subscription.willRenew ? "Renews" : "Expires") + " " + date.formatted(date: .abbreviated, time: .omitted))
-                .foregroundStyle(JourneyColor.secondary)
-            }
-          }
+    SettingsSection(store.t("Account")) {
+      SettingsGroup {
+        if !cloud && !AppConfig.offline {
+          Button { signingIn = true } label: {
+            SettingsRow(icon: "person.crop.circle.badge.plus", title: store.t("Sign in"), chevron: true)
+          }.buttonStyle(.plain).accessibilityIdentifier("settings.signin")
+          SettingsDivider()
         }
-      } else if !AppConfig.offline {
-        Button(store.t("Sign in")) { signingIn = true }.foregroundStyle(GymColor.ink).accessibilityIdentifier("settings.signin")
+        Button { confirmLogOut = true } label: {
+          SettingsRow(icon: "rectangle.portrait.and.arrow.right", tint: JourneyColor.secondary,
+                      title: store.t(cloud || AppConfig.offline ? "Log out" : "Clear this iPhone"), titleColor: JourneyColor.secondary)
+        }.buttonStyle(.plain).accessibilityIdentifier("settings.logout")
       }
-      Button(store.t(cloud || AppConfig.offline ? "Log out" : "Clear this iPhone")) { confirmLogOut = true }
-        .foregroundStyle(GymColor.ink).accessibilityIdentifier("settings.logout")
-      if cloud || AppConfig.offline {
-        Button(store.t("Delete account"), role: .destructive) { confirmDelete = true }
-          .foregroundStyle(Color(uiColor: .systemRed)).accessibilityIdentifier("settings.delete")
-      }
-    } header: { Text(store.t("Account")) } footer: {
       Text(store.t(cloud ? "Log out keeps your account. Delete removes it and everything synced to it."
                    : AppConfig.offline ? "Development run: both act on this iPhone only."
-                   : "Sign in to back up your workouts and keep them on any iPhone.")).font(.footnote)
+                   : "Sign in to back up your workouts and keep them on any iPhone."))
+        .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
+        .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 4)
+      // Rare and permanent, so it sits outside the card as faint text that never competes.
+      if cloud || AppConfig.offline {
+        Button(role: .destructive) { confirmDelete = true } label: {
+          Text(store.t("Delete account")).font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }.buttonStyle(.plain).accessibilityIdentifier("settings.delete").padding(.top, 4)
+      }
     }
     .confirmationDialog(store.t(cloud ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
       Button(store.t(cloud || AppConfig.offline ? "Log out" : "Clear")) { logOut() }.accessibilityIdentifier("settings.logout.confirm")
@@ -145,16 +141,44 @@ struct SignInSheet: View {
   }
 }
 
-/// The documents and where to get help.
+/// The documents and where to get help, then the version.
 struct LegalSection: View {
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    Section {
-      Link(store.t("Privacy Policy"), destination: AppConfig.privacyURL).foregroundStyle(GymColor.ink)
-      Link(store.t("Terms of Service"), destination: AppConfig.termsURL).foregroundStyle(GymColor.ink)
-      Link(store.t("Support"), destination: AppConfig.supportURL).foregroundStyle(GymColor.ink)
-    } header: { Text(store.t("Legal")) } footer: {
-      Text("GymBlock " + Analytics.appVersion + " (" + Analytics.build + ")").font(.footnote)
+    SettingsSection(store.t("Help")) {
+      SettingsGroup {
+        Link(destination: AppConfig.supportURL) { SettingsRow(icon: "questionmark.circle.fill", title: store.t("Support"), chevron: true) }
+        SettingsDivider()
+        Link(destination: AppConfig.privacyURL) { SettingsRow(icon: "hand.raised.fill", title: store.t("Privacy Policy"), chevron: true) }
+        SettingsDivider()
+        Link(destination: AppConfig.termsURL) { SettingsRow(icon: "doc.text.fill", title: store.t("Terms of Service"), chevron: true) }
+      }
     }
+  }
+}
+
+/// GymBlock Pro: what the account is on and a way to manage it in the App Store. Hidden when there
+/// is nothing true to show (no subscription, or a development run), never a pretend plan.
+struct SubscriptionSettingsSection: View {
+  @EnvironmentObject private var store: GymStore
+  @EnvironmentObject private var subscription: GymSubscription
+  @State private var managing = false
+  var body: some View {
+    if subscription.hasAccess {
+      SettingsSection(store.t("Subscription")) {
+        SettingsGroup {
+          SettingsRow(icon: "crown.fill", title: "Gym Block Pro", value: renewal)
+          SettingsDivider()
+          Button { managing = true } label: {
+            SettingsRow(icon: "creditcard.fill", tint: JourneyColor.secondary, title: store.t("Manage subscription"), chevron: true)
+          }.buttonStyle(.plain).accessibilityIdentifier("settings.manageSubscription")
+        }
+      }
+      .manageSubscriptionsSheet(isPresented: $managing)
+    }
+  }
+  private var renewal: String? {
+    guard let date = subscription.expiration else { return nil }
+    return store.t(subscription.willRenew ? "Renews" : "Ends") + " " + date.formatted(date: .abbreviated, time: .omitted)
   }
 }

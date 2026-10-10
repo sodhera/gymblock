@@ -26,6 +26,8 @@ enum OnboardingStep: String, CaseIterable {
     default: return self
     }
   }
+  /// The account step or later: the answers are worth keeping in the account from here on.
+  var reachedAccount: Bool { [.account, .subscription, .splits].contains(current) }
   /// Pages whose animation must finish before Continue appears.
   var animated: Bool { [.welcome, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .alerts].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
@@ -57,8 +59,8 @@ struct OnboardingView: View {
   private var reduceMotion: Bool { JourneyMotion.reduced(systemReduceMotion) }
   @EnvironmentObject private var subscription: GymSubscription
   @EnvironmentObject private var account: Account
-  /// Signing in from the welcome page: a returning account goes straight in, a new one starts the questions.
-  @State private var returning = false
+  /// "I already have an account": the standalone sign-in, which RootView shows.
+  var onSignIn: () -> Void = {}
   @State private var draft = 2.0
   @State private var estimate = GymTimeEstimate()
   @ObservedObject private var blocking = AppBlocking.shared
@@ -116,9 +118,6 @@ struct OnboardingView: View {
     // Continue waits for the page's animation to finish. Safety net, well past the longest
     // sequence: it still appears if one is interrupted.
     .task(id: step) { if !ready { try? await Task.sleep(for: .seconds(20)); markReady() } }
-    .task(id: step == .subscription) { if step == .subscription { await subscription.load() } }
-    .onChange(of: subscription.hasAccess) { _, access in if access, step == .subscription { move(.splits) } }
-    .onChange(of: account.userID) { _, id in if id != nil, step == .account { signedIn() } }
     .onChange(of: step) { old, new in Analytics.leave("onboarding." + old.rawValue); Analytics.enter("onboarding." + new.rawValue, ["step": stepIndex(new)]) }
     .onAppear { Analytics.enter("onboarding." + step.rawValue, ["step": stepIndex(step)]) }
     .onDisappear { Analytics.leave("onboarding." + step.rawValue) }
@@ -149,7 +148,9 @@ struct OnboardingView: View {
   private var topBar: some View {
     ZStack {
       HStack(spacing: 8) {
+        // Past the offer there is no going back to it.
         JourneyBackButton(label: store.t("Back"), action: back).disabled(locking)
+          .opacity(step == .splits ? 0 : 1).allowsHitTesting(step != .splits)
         JourneyProgress(value: progress).padding(.horizontal, 8)
         Color.clear.frame(width: 36, height: 36).accessibilityHidden(true)
       }.opacity(step == .welcome ? 0 : 1).allowsHitTesting(step != .welcome)
@@ -232,7 +233,6 @@ struct OnboardingView: View {
     case .logA, .logB: return "An example log, not your data."
     case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Pausing your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
-    case .subscription: return subscription.message ?? (subscription.plans.isEmpty ? nil : "Auto-renews. Cancel anytime in iOS Settings.")
     case .splits: return store.data.workouts.isEmpty ? "Optional. You can always train freely and add splits later." : "Home lines up the next split and its last weights."
     default: return nil
     }
@@ -270,7 +270,6 @@ struct OnboardingView: View {
     case .commit: CommitStage(lit: pledged)
     case .blocking: BlockStage(locking: locking, choose: chooseApps)
     case .account: AccountStage()
-    case .subscription: OfferStage(subscription: subscription)
     case .splits: SplitsStage()
     default: Color.clear
     }
@@ -312,11 +311,15 @@ struct OnboardingView: View {
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
       case .welcome:
-        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { returning = false; move(.name) })
-        JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn") { returning = true; move(.account) }
+        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.name) })
+        JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn", action: onSignIn)
           .opacity(ready ? 1 : 0).allowsHitTesting(ready).accessibilityHidden(!ready)
       case .account:
-        AccountButtons { move(.subscription) }
+        // The last step of sign-up. An account that turns out to exist already is RootView's
+        // notice to give; anything else carries on to the offer, which RootView shows.
+        AccountButtons(intent: .signUp, skip: { move(.subscription) }) { found in
+          if found != .profile(onboarded: true) { move(.subscription) }
+        }
       case .commit:
         HoldButton(title: store.t("Hold to commit"), doneTitle: store.t("Committed"), committed: committed,
                    onProgress: { p in
@@ -337,19 +340,8 @@ struct OnboardingView: View {
           next()
         }
       case .subscription:
-        JourneyButton(title: subscribeTitle, id: "subscription.buy", enabled: subscription.plan != nil && !subscription.busy) {
-          Task { await subscription.buy() }
-        }
-        #if DEBUG
-          // Simulator use only: with no product configured, step into the app. Never in Release.
-          if subscription.plan == nil {
-            JourneyTextButton(title: "Continue without subscribing · Debug", id: "subscription.debugSkip") { move(.splits) }
-          } else {
-            JourneyTextButton(title: store.t("Restore purchases"), id: "subscription.restore") { Task { await subscription.restore() } }
-          }
-        #else
-          JourneyTextButton(title: store.t("Restore purchases"), id: "subscription.restore") { Task { await subscription.restore() } }
-        #endif
+        // RootView shows the offer in place of this page.
+        EmptyView()
       case .splits:
         JourneyButton(title: store.t(store.data.workouts.isEmpty ? "Continue" : "Start training"), id: "onboarding.continue", action: finish)
         JourneyTextButton(title: store.t("Skip for now"), id: "splits.skip") { finish() }
@@ -358,20 +350,6 @@ struct OnboardingView: View {
         gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: ready, action: advance))
         Color.clear.frame(height: 44)
       }
-    }
-  }
-  private var subscribeTitle: String {
-    guard let plan = subscription.plan else { return store.t("Subscribe") }
-    if plan.trialDays > 0 { return String(format: store.t("Start %@-day free trial"), "\(plan.trialDays)") }
-    return store.t("Subscribe") + " · " + plan.price + " / " + store.t(plan.yearly ? "year" : "month")
-  }
-  /// After sign-in: a returning account is already onboarded (RootView opens the app once its
-  /// profile arrives); a new account carries on to the offer, or to the questions if it came from welcome.
-  private func signedIn() {
-    Task { @MainActor in
-      await CloudSync.shared.awaitPull()
-      guard step == .account, !store.profile.onboarded else { return }
-      move(returning ? .name : .subscription)
     }
   }
   /// Continue holds its place and fades in once the page's scene has played.
@@ -465,7 +443,6 @@ struct OnboardingView: View {
   private func back() {
     guard !locking else { return }
     if step == .name { dismissKeyboard(); move(.welcome); return }
-    if step == .account && returning { move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
   /// Apple's picker only returns a choice once Screen Time access is granted, so tapping Choose apps

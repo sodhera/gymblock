@@ -892,7 +892,6 @@ struct AccountStage: View {
           BrandMark(size: 22)
           Text(store.t("Your account")).font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text)
           Spacer()
-          if account.busy { ProgressView().tint(JourneyColor.secondary) }
         }.padding(.bottom, 18)
         FeatureRow(symbol: "icloud.fill", text: store.t("Backed up as you train"), detail: store.t("Every set is saved to your account."))
         FeatureRow(symbol: "iphone.gen3", text: store.t("Same log on any iPhone"), detail: store.t("Sign in and it’s all there."))
@@ -905,16 +904,24 @@ struct AccountStage: View {
   }
 }
 
-/// Sign in with Apple as the primary, Google beneath it, in the same footprint as every other page's
-/// actions. Development runs replace Google with a labelled skip, so tests never touch a real sheet.
+/// Apple as the primary, Google beneath it, in the same footprint as every other page's actions.
+/// The intent names the action ("Sign up with…" at the end of sign-up, "Sign in with…" on the
+/// returning path) and is what the account uses to tell a surprise from the expected. Each button
+/// keeps its own spinner until the account's data has arrived. Development runs replace Google with
+/// a labelled skip, so tests never touch a real sheet.
 struct AccountButtons: View {
   @EnvironmentObject private var store: GymStore
   @EnvironmentObject private var account: Account
+  var intent: Account.Intent = .link
   var skip: (() -> Void)? = nil
+  /// What the account held, after a sign-in that went through.
+  var signedIn: (CloudSync.Found) -> Void = { _ in }
+  private var verb: String { intent == .signUp ? "Sign up with" : intent == .signIn ? "Sign in with" : "Continue with" }
   var body: some View {
     VStack(spacing: 4) {
-      JourneyButton(title: store.t("Continue with Apple"), symbol: "apple.logo", id: "account.apple", enabled: !account.busy) {
-        Task { await account.signInWithApple() }
+      JourneyButton(title: store.t(verb + " Apple"), symbol: "apple.logo", id: "account.apple",
+                    enabled: !account.busy || account.loading == .apple, loading: account.loading == .apple) {
+        run(.apple)
       }
       #if DEBUG
         if AppConfig.offline, let skip {
@@ -925,16 +932,28 @@ struct AccountButtons: View {
       #endif
     }
   }
-  /// The same shape and size as Continue with Apple, in white with Google's own G.
+  private func run(_ provider: Account.Provider) {
+    guard !account.busy else { return }
+    JourneyHaptic.play(.medium, store.profile)
+    Task { @MainActor in
+      if let found = await account.signIn(provider, intent: intent) { signedIn(found) }
+    }
+  }
+  /// The same shape and size as the Apple button, in white with Google's own G.
   private var google: some View {
-    let label = HStack(spacing: 8) {
-      Image("GoogleG").resizable().frame(width: 18, height: 18).accessibilityHidden(true)
-      Text(store.t("Continue with Google")).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+    let loading = account.loading == .google
+    let label = ZStack {
+      HStack(spacing: 8) {
+        Image("GoogleG").resizable().frame(width: 18, height: 18).accessibilityHidden(true)
+        Text(store.t(verb + " Google")).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+      }.opacity(loading ? 0 : 1)
+      if loading { ProgressView().tint(JourneyColor.text) }
     }.foregroundStyle(JourneyColor.text).frame(maxWidth: .infinity, minHeight: 22)
     let tapped = {
       Analytics.tap("account.google")
-      Task { await account.signInWithGoogle() }
+      run(.google)
     }
+    let dimmed = account.busy && !loading
     return Group {
       if #available(iOS 26.0, *) {
         Button(action: tapped) { label }.buttonStyle(.glassProminent).tint(.white)
@@ -945,80 +964,11 @@ struct AccountButtons: View {
         }.buttonStyle(JourneyPressStyle())
       }
     }.controlSize(.large).buttonBorderShape(.capsule)
-      .disabled(account.busy).opacity(account.busy ? 0.38 : 1)
+      .disabled(dimmed).opacity(dimmed ? 0.38 : 1)
       .accessibilityIdentifier("account.google").padding(.top, 6)
   }
 }
 
-/// A plan to choose: the period, the billed amount, and what a year works out to per month.
-struct PlanCard: View {
-  let plan: GymSubscription.Plan
-  let selected: Bool
-  let action: () -> Void
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    Button(action: action) {
-      VStack(alignment: .leading, spacing: 4) {
-        HStack(spacing: 6) {
-          Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
-          if plan.yearly {
-            Text(store.t("Best value")).font(.system(.caption2, weight: .semibold)).foregroundStyle(JourneyColor.onAccent)
-              .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(JourneyColor.signal))
-          }
-        }
-        Text(plan.price).font(.system(.title3, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
-        Text(plan.yearly ? (plan.perMonth.map { $0 + " / " + store.t("month") } ?? store.t("per year")) : store.t("per month"))
-          .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
-      }.frame(maxWidth: .infinity, alignment: .leading).padding(14)
-        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous), tint: selected ? JourneyColor.ink(0.12) : nil, interactive: true)
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(JourneyColor.ink(selected ? 0.5 : 0), lineWidth: 1.5))
-    }.buttonStyle(JourneyPressStyle()).animation(JourneyMotion.gentle, value: selected)
-      .accessibilityIdentifier("plan." + (plan.yearly ? "yearly" : "monthly")).accessibilityAddTraits(selected ? .isSelected : [])
-  }
-}
-
-struct OfferStage: View {
-  @ObservedObject var subscription: GymSubscription
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    let blocker = AppBlocking.shared
-    let blocking = store.profile.focusEnabled == true && blocker.ready
-    VStack(spacing: 0) {
-      Spacer(minLength: 0)
-      VStack(alignment: .leading, spacing: 0) {
-        HStack(spacing: 10) {
-          BrandMark(size: 22)
-          Text("GymBlock Pro").font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text)
-          Spacer()
-        }.padding(.bottom, 18)
-        FeatureRow(symbol: "lock.fill", text: blocking ? store.t("Blocks") + " " + blocker.summary(store.t) : store.t("Blocks the apps you choose"),
-                   detail: store.t("From Start workout to Finish."))
-        FeatureRow(symbol: "timer", text: store.t("Times every rest"), detail: store.t("A buzz on the Lock Screen when it’s up."))
-        FeatureRow(symbol: "chart.line.uptrend.xyaxis", text: store.t("Keeps your progress"), detail: store.t("Every set logged, every gain shown."))
-      }.fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
-        .padding(18).journeySurface()
-        .accessibilityIdentifier("journey.recap")
-      if !subscription.plans.isEmpty {
-        HStack(spacing: 10) {
-          ForEach(subscription.plans) { plan in
-            PlanCard(plan: plan, selected: subscription.selected == plan.id) {
-              withAnimation(JourneyMotion.gentle) { subscription.selected = plan.id }
-              JourneyHaptic.play(.selection, store.profile)
-              Analytics.tap("plan." + (plan.yearly ? "yearly" : "monthly"))
-            }
-          }
-        }.padding(.top, 12)
-      }
-      Spacer(minLength: 0)
-      HStack {
-        Link(store.t("Terms of Use"), destination: AppConfig.termsURL)
-        Spacer()
-        Link(store.t("Privacy Policy"), destination: AppConfig.privacyURL)
-      }.font(.caption).foregroundStyle(JourneyColor.secondary)
-    }
-  }
-}
 
 // MARK: - Name, height and weight
 

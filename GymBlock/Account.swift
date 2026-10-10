@@ -18,12 +18,30 @@ enum AuthFailure: LocalizedError, Equatable {
 /// The signed-in account. Sign in with Apple (native sheet) or Google (web sheet through Supabase)
 /// are the only two ways in; every path ends in a Supabase session, which the rest of the app
 /// observes. Development runs (`--demo`, UI tests, page jumps) stay offline with no account at all.
+///
+/// Signing up and signing in are separate screens, but Apple and Google are find-or-create: the
+/// grant is the same either way. What differs is what the account turns out to hold, so every
+/// sign-in waits for the account's data and reports it, and a surprise becomes a `notice`.
 @MainActor final class Account: ObservableObject {
   enum State: Equatable { case loading, signedOut, signedIn }
+  enum Provider: String { case apple, google }
+  /// Which screen asked: the last step of sign-up, the standalone sign-in, or Settings attaching
+  /// an account to a phone that already has its workouts.
+  enum Intent: String { case signUp = "sign_up", signIn = "sign_in", link }
+  /// A sign-in that didn't do what the screen promised, shown on its own page before anything else.
+  enum Notice: Equatable {
+    /// Sign-up reached an account that already finished onboarding: we signed them in instead.
+    case existingAccount
+    /// Sign-in reached no GymBlock account: nothing to restore, so they sign up instead.
+    case notFound
+  }
   @Published private(set) var state: State = .loading
   @Published private(set) var user: User?
-  @Published var busy = false
+  /// The provider whose button was tapped, until the account's data has arrived.
+  @Published private(set) var loading: Provider?
   @Published var message: String?
+  @Published var notice: Notice?
+  var busy: Bool { loading != nil }
   /// Fires whenever the signed-in user changes (sync, subscriptions and analytics follow it).
   var onUserChange: ((User?) -> Void)?
   private var observer: Task<Void, Never>?
@@ -73,40 +91,60 @@ enum AuthFailure: LocalizedError, Equatable {
     if changed { onUserChange?(newUser) }
   }
 
-  // MARK: Apple
+  // MARK: In
 
-  func signInWithApple() async {
-    guard !busy else { return }
-    busy = true; message = nil; defer { busy = false }
+  /// Signs in with the provider, then waits for the account's data, so the button keeps its
+  /// spinner until there is somewhere to go. Returns what the account held, or nil when the
+  /// sign-in was cancelled or failed (the reason is in `message`).
+  @discardableResult
+  func signIn(_ provider: Provider, intent: Intent) async -> CloudSync.Found? {
+    guard loading == nil else { return nil }
+    loading = provider; message = nil; notice = nil
+    defer { loading = nil }
+    Analytics.track("sign_in_started", ["provider": provider.rawValue, "intent": intent.rawValue])
     do {
-      let nonce = Self.randomNonce()
-      let credential = try await AppleSignInSheet.present(hashedNonce: Self.sha256(nonce))
-      guard let data = credential.identityToken, let idToken = String(data: data, encoding: .utf8) else {
-        throw AuthFailure.message("Apple didn’t return a sign-in token. Please try again.")
+      let session = provider == .apple ? try await apple() : try await google()
+      // Adopt the session now rather than waiting for the auth event, so the pull starts at once.
+      set(session.user)
+      let found = await CloudSync.shared.awaitPull() ?? .failed
+      if found == .failed {
+        // Without the account's data there is no telling a new account from an old one, and
+        // pushing this phone's answers could overwrite it. Step back out and let them retry.
+        await signOut()
+        message = "Couldn’t reach your account. Check your connection and try again."
+        return nil
       }
-      try await auth.signInWithIdToken(credentials: .init(provider: .apple, idToken: idToken, nonce: nonce))
-      // Apple shares the name only on the very first authorization; keep it.
-      if let given = credential.fullName?.givenName, !given.isEmpty {
-        _ = try? await auth.update(user: UserAttributes(data: ["full_name": .string(given)]))
+      switch (intent, found) {
+      case (.signUp, .profile(onboarded: true)): notice = .existingAccount
+      case (.signIn, .none): notice = .notFound
+      default: break
       }
-      Analytics.track("sign_in", ["provider": "apple"])
+      Analytics.track("sign_in", ["provider": provider.rawValue, "intent": intent.rawValue, "found": found.label])
+      return found
     } catch {
-      fail(error, provider: "apple")
+      fail(error, provider: provider.rawValue)
+      return nil
     }
   }
 
-  // MARK: Google
+  private func apple() async throws -> Auth.Session {
+    let nonce = Self.randomNonce()
+    let credential = try await AppleSignInSheet.present(hashedNonce: Self.sha256(nonce))
+    guard let data = credential.identityToken, let idToken = String(data: data, encoding: .utf8) else {
+      throw AuthFailure.message("Apple didn’t return a sign-in token. Please try again.")
+    }
+    var session = try await auth.signInWithIdToken(credentials: .init(provider: .apple, idToken: idToken, nonce: nonce))
+    // Apple shares the name only on the very first authorization; keep it.
+    if let given = credential.fullName?.givenName, !given.isEmpty,
+       let updated = try? await auth.update(user: UserAttributes(data: ["full_name": .string(given)])) {
+      session.user = updated
+    }
+    return session
+  }
 
-  func signInWithGoogle() async {
-    guard !busy else { return }
-    busy = true; message = nil; defer { busy = false }
-    do {
-      try await auth.signInWithOAuth(provider: .google, redirectTo: AppConfig.authCallback) { session in
-        session.prefersEphemeralWebBrowserSession = false
-      }
-      Analytics.track("sign_in", ["provider": "google"])
-    } catch {
-      fail(error, provider: "google")
+  private func google() async throws -> Auth.Session {
+    try await auth.signInWithOAuth(provider: .google, redirectTo: AppConfig.authCallback) { session in
+      session.prefersEphemeralWebBrowserSession = false
     }
   }
 
@@ -119,6 +157,7 @@ enum AuthFailure: LocalizedError, Equatable {
   // MARK: Out
 
   func signOut() async {
+    notice = nil
     guard !AppConfig.offline else { set(nil); return }
     do {
       try await auth.signOut(scope: .local)
@@ -143,6 +182,7 @@ enum AuthFailure: LocalizedError, Equatable {
       return false
     }
     try? await auth.signOut(scope: .local)
+    notice = nil
     set(nil)
     return true
   }
@@ -184,7 +224,10 @@ enum AuthFailure: LocalizedError, Equatable {
 /// Presents the native Sign in with Apple sheet and bridges it to async.
 @MainActor private final class AppleSignInSheet: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
   private var continuation: CheckedContinuation<ASAuthorizationAppleIDCredential, Error>?
+  /// The sheet and its controller are held until the delegate answers: the controller does not
+  /// keep itself alive, and a fast, already-authorized Apple ID can otherwise lose its callback.
   private static var current: AppleSignInSheet?
+  private var controller: ASAuthorizationController?
 
   static func present(hashedNonce: String) async throws -> ASAuthorizationAppleIDCredential {
     let sheet = AppleSignInSheet()
@@ -198,6 +241,7 @@ enum AuthFailure: LocalizedError, Equatable {
       let controller = ASAuthorizationController(authorizationRequests: [request])
       controller.delegate = sheet
       controller.presentationContextProvider = sheet
+      sheet.controller = controller
       controller.performRequests()
     }
   }

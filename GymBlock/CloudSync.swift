@@ -12,7 +12,7 @@ import Supabase
   private weak var store: GymStore?
   private(set) var userID: UUID?
   private var pushTask: Task<Void, Never>?
-  private var pullTask: Task<Void, Never>?
+  private var pullTask: Task<Found, Never>?
   private var pushing = false
   private var dirty = false
   /// Fingerprints of the rows the server has, per entity key, kept per account.
@@ -28,20 +28,40 @@ import Supabase
     store.onPersist = { [weak self] in self?.schedulePush() }
   }
 
+  /// What the account held when it was pulled.
+  enum Found: Equatable {
+    /// No GymBlock profile: a new account, or one that never reached the account step.
+    case none
+    case profile(onboarded: Bool)
+    /// The pull didn't complete, so nothing is known about the account.
+    case failed
+    var label: String {
+      switch self {
+      case .none: return "none"
+      case .profile(let onboarded): return onboarded ? "onboarded" : "profile"
+      case .failed: return "failed"
+      }
+    }
+  }
+
   /// The signed-in user changed: forget the old fingerprints, pull the new account, then push.
   func setUser(_ id: UUID?) {
     pushTask?.cancel(); pushTask = nil
     pullTask?.cancel()
+    pullTask = nil
     userID = id
     known = id == nil ? [:] : (UserDefaults.standard.dictionary(forKey: knownKey) as? [String: String] ?? [:])
     guard id != nil, !AppConfig.offline else { return }
     pullTask = Task { [weak self] in
-      await self?.pull()
-      await self?.push()
+      guard let self else { return .failed }
+      let found = await self.pull()
+      // A failed pull pushes nothing: this phone's copy could overwrite an account it never saw.
+      if found != .failed { await self.push() }
+      return found
     }
   }
-  /// Waits for the sign-in pull, so callers can see whether the account was already onboarded.
-  func awaitPull() async { await pullTask?.value }
+  /// Waits for the sign-in pull and reports what the account held (nil when signed out).
+  func awaitPull() async -> Found? { await pullTask?.value }
 
   // MARK: Rows
 
@@ -176,8 +196,8 @@ import Supabase
 
   private struct Tombstone: Encodable { var deleted_at: Date }
 
-  func pull() async {
-    guard let store, let uid = userID else { return }
+  @discardableResult func pull() async -> Found {
+    guard let store, let uid = userID else { return .failed }
     do {
       let profiles: [ProfileRow] = try await client.from("gb_profiles").select().eq("id", value: uid).execute().value
       let splits: [SplitRow] = try await client.from("gb_splits").select("id, user_id, name, exercises, position")
@@ -187,9 +207,11 @@ import Supabase
       let sets: [SetRow] = try await client.from("gb_sets").select().eq("user_id", value: uid).order("position").execute().value
       merge(profile: profiles.first, splits: splits, workouts: workouts, sets: sets, into: store)
       Analytics.track("sync_pulled", ["splits": splits.count, "workouts": workouts.count, "sets": sets.count])
+      return profiles.first.map { .profile(onboarded: $0.onboarded) } ?? .none
     } catch {
       AppLog.error("Sync pull failed: \(error.localizedDescription)")
       Analytics.error("sync_pull", error)
+      return .failed
     }
   }
 
@@ -246,6 +268,9 @@ import Supabase
 
   func push() async {
     guard let store, let uid = userID, !AppConfig.offline else { return }
+    // A phone that signed in from the welcome page holds no answers yet; pushing it would make an
+    // empty profile that later reads as an existing account. Its data follows once onboarding reaches the account step.
+    guard store.profile.onboarded || OnboardingStep.restored(store.profile).reachedAccount else { return }
     guard !pushing else { dirty = true; return }
     pushing = true; dirty = false
     defer { pushing = false; if dirty { schedulePush() } }

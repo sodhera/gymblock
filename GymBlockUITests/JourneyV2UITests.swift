@@ -96,9 +96,12 @@ final class JourneyV5UITests: XCTestCase {
     app.buttons["commit.hold"].press(forDuration: 0.4)  // Releasing early does not commit.
     XCTAssertTrue(app.buttons["commit.hold"].exists); page("Sirish, commit to focus.")
     app.buttons["commit.hold"].press(forDuration: 2.2)
-    page("Keep your progress safe."); snap("14b-account"); tap("account.debugSkip")
-    page("Stay focused, Sirish.")
-    XCTAssertTrue(app.staticTexts["Blocks the apps you choose"].waitForExistence(timeout: 6))
+    page("Keep your progress safe."); snap("14b-account")
+    XCTAssertEqual(app.buttons["account.apple"].label, "Sign up with Apple")  // Sign-up's own words.
+    tap("account.debugSkip")
+    page("Your workouts, back under your control.")
+    XCTAssertTrue(any("journey.recap").waitForExistence(timeout: 6))
+    XCTAssertTrue(app.staticTexts["subscription.message"].exists)  // Says why there are no plans.
     XCTAssertFalse(app.buttons["subscription.buy"].isEnabled)  // No product configured; nothing fake.
     XCTAssertFalse(app.buttons["subscription.preview"].exists)
     snap("12-offer")
@@ -113,6 +116,20 @@ final class JourneyV5UITests: XCTestCase {
     XCTAssertTrue(app.buttons["habit.scrolling.no"].isSelected)
   }
 
+  /// Sign-in is its own screen, not sign-up's account step: its own words, "Sign in with…", no progress line.
+  func testSignInIsItsOwnScreenApartFromSignUp() {
+    // The welcome scene plays before its actions appear.
+    settle(8); snap("20-welcome")
+    tap("welcome.signIn"); page("Welcome back")
+    XCTAssertEqual(app.buttons["account.apple"].label, "Sign in with Apple")
+    XCTAssertTrue(app.buttons["account.google"].exists)
+    XCTAssertFalse(app.buttons["account.debugSkip"].exists)  // Signing in has nothing to skip to.
+    snap("21-sign-in")
+    tap("onboarding.back")
+    wait(for: [expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: app.buttons["onboarding.continue"])], timeout: 20)
+    tap("onboarding.continue"); page("What should we call you?")
+  }
+
   func testRelaunchResumesWithoutBypassingOffer() {
     next(); profile("Ana", gender: "female")
     XCTAssertTrue(app.pickerWheels["165 cm"].waitForExistence(timeout: 4) || app.pickerWheels["5′ 5″"].exists)
@@ -125,15 +142,15 @@ final class JourneyV5UITests: XCTestCase {
     page("Get a buzz when rest is up."); tap("alerts.later")
     page("Ana, commit to focus."); app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Keep your progress safe."); tap("account.debugSkip")
-    page("Stay focused, Ana.")
-    XCTAssertTrue(app.staticTexts["Blocks the apps you choose"].waitForExistence(timeout: 5))
+    page("Your workouts, back under your control.")
+    XCTAssertTrue(any("journey.recap").waitForExistence(timeout: 5))
     app.terminate(); app.launchArguments = ["--offline"]; app.launch()  // No reset, no skip: the offer is where it resumes.
-    page("Stay focused, Ana.")
-    tap("onboarding.back"); page("Keep your progress safe.")
-    tap("onboarding.back"); page("Ana, commit to focus.")
-    tap("onboarding.back"); page("Get a buzz when rest is up.")
-    tap("onboarding.back"); page("Block what distracts you.")
+    page("Your workouts, back under your control.")
+    // The offer is a wall, as in SleepBlock: no way back into the questions, none into the app.
+    XCTAssertFalse(app.buttons["onboarding.back"].exists)
     XCTAssertFalse(app.buttons["home.start"].exists)
+    tap("subscription.debugSkip"); page("Set up your splits.")
+    XCTAssertFalse(app.buttons["onboarding.back"].isHittable)  // Past the offer there is no going back to it.
   }
 
   func testLargeTextReducedMotionKeepsEveryPageReachable() {
@@ -148,6 +165,6 @@ final class JourneyV5UITests: XCTestCase {
     page("Sam, commit to focus."); snap("large-commit")
     app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Keep your progress safe."); tap("account.debugSkip")
-    page("Stay focused, Sam."); snap("large-offer")
+    page("Your workouts, back under your control."); snap("large-offer")
   }
 }

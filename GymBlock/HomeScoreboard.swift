@@ -39,7 +39,7 @@ struct StreakCard: View {
         .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .journeyGlass(RoundedRectangle(cornerRadius: 22, style: .continuous), interactive: true)
     }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("home.week")
-      .accessibilityLabel("\(stats.streakWeeks) " + store.t("week streak") + ", \(stats.thisWeek) " + store.t("of") + " \(stats.goal) " + store.t("this week") + ". " + store.t("Opens History"))
+      .accessibilityLabel("\(stats.streakWeeks) \(store.t("week streak")), \(stats.thisWeek) \(store.t("of")) \(stats.goal) \(store.t("this week")). \(store.t("Opens History"))")
       .onAppear { withAnimation(reduceMotion ? nil : .spring(duration: 0.8, bounce: 0.1).delay(0.1)) { drawn = true } }
   }
 }

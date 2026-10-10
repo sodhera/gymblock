@@ -3,6 +3,8 @@
 // Run from the repository root:
 //   swift scripts/generate-app-icon.swift                       # 1024 px → the asset catalogue
 //   swift scripts/generate-app-icon.swift 180 out.png --mask    # a preview with the iOS corner mask
+//   swift scripts/generate-app-icon.swift 270 GymBlockShield/Assets.xcassets/ShieldMark.imageset/ShieldMark.png --mark
+//                                                               # the mark alone, transparent, for the shield screen
 import Foundation
 import CoreGraphics
 import ImageIO
@@ -12,11 +14,13 @@ let arguments = CommandLine.arguments
 let side: CGFloat = arguments.count > 1 ? CGFloat(Double(arguments[1]) ?? 1024) : 1024
 let output = arguments.count > 2 ? arguments[2] : "GymBlock/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
 let mask = arguments.contains("--mask")
+/// Just the mark, edge to edge on a transparent ground (the shield screen's icon).
+let markOnly = arguments.contains("--mark")
 
 let space = CGColorSpaceCreateDeviceRGB()
 // The asset is opaque RGB (App Store icons must be opaque); masked previews keep alpha for the corners.
 let c = CGContext(data: nil, width: Int(side), height: Int(side), bitsPerComponent: 8, bytesPerRow: 0, space: space,
-                  bitmapInfo: (mask ? CGImageAlphaInfo.premultipliedLast : CGImageAlphaInfo.noneSkipLast).rawValue)!
+                  bitmapInfo: (mask || markOnly ? CGImageAlphaInfo.premultipliedLast : CGImageAlphaInfo.noneSkipLast).rawValue)!
 func rgb(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> CGColor { CGColor(red: r, green: g, blue: b, alpha: 1) }
 let paper = rgb(0.961, 0.953, 0.937), ink = rgb(0.08, 0.08, 0.09), signal = rgb(0.06, 0.60, 0.42)
 
@@ -24,10 +28,10 @@ if mask {
   let r = side * 0.2237
   c.addPath(CGPath(roundedRect: CGRect(x: 0, y: 0, width: side, height: side), cornerWidth: r, cornerHeight: r, transform: nil)); c.clip()
 }
-c.setFillColor(paper); c.fill(CGRect(x: 0, y: 0, width: side, height: side))
+if !markOnly { c.setFillColor(paper); c.fill(CGRect(x: 0, y: 0, width: side, height: side)) }
 
-// The mark fills the central 78%.
-let m = side * 0.78, ox = (side - m) / 2, oy = (side - m) / 2
+// The mark fills the central 78% of the icon, or all of a mark-only image.
+let m = side * (markOnly ? 1 : 0.78), ox = (side - m) / 2, oy = (side - m) / 2
 func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ox + x * m, y: oy + (1 - y) * m) }
 func outline(_ pts: [(CGFloat, CGFloat, CGFloat)]) -> CGMutablePath {
   let path = CGMutablePath()

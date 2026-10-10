@@ -2,14 +2,14 @@
 
 Everything the app needs from the dashboards, in the order to do it, with what is already done.
 
-| Step | State on 8 Oct 2026 |
+| Step | State (last updated 10 Oct 2026) |
 | --- | --- |
 | 1. Schema | **Done** (run in the SQL editor; 7 tables, 3 views, `gb_delete_account`). |
 | 2. Apple provider | **Done** (enabled, client id `com.sodhera.gymblock`). Apple Developer capability: pending until the App ID exists. |
 | 3. Google provider | **Done**: Google Cloud project `gymblock` (org sodhera.com, account authuser=2), consent screen "GymBlock" (External, admin@sodhera.com), web client "GymBlock Supabase" with the Supabase callback; ID and secret saved in Supabase → Google. |
 | 3b. Redirect URL | **Done** (`gymblock://auth/callback`). |
-| 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock`, products, entitlement `pro`, offering `default`; keys in `Secrets.xcconfig` (Test Store for Debug, App Store for Release). |
-| 5. App Store Connect | **Pending**: the session had expired; sign in, then create the app and the two subscriptions. |
+| 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock` with valid In-App Purchase key (34ZCA5L925) and App Store Connect API key (ZH27RWPG5Q), issuer `5f9e6892-8b98-4334-97fb-1c6ca8ad9229`; entitlement `pro`; offering `default` (`$rc_annual`, `$rc_monthly`). Since 10 Oct every build (Debug too) uses the App Store app's `appl_` key in `Secrets.xcconfig`; the Test Store is no longer used, and Debug purchases go through Apple's sandbox (Sandbox Apple Account on the device). Verified on the simulator: the offer loads the real products ($49.99 yearly with the 1-week trial, $4.99 monthly). |
+| 5. App Store Connect | **Done except submission** (10 Oct): app "Gym Block" (Apple ID 6821339641, SKU `gymblock`, bundle `com.sodhera.gymblock`); subscription group "Gym Block Pro" (22461908) with `com.sodhera.gymblock.pro.yearly` (1 year, $49.99, 1-week free trial, Apple ID 6821340362) and `com.sodhera.gymblock.pro.monthly` (1 month, $4.99); all countries, App Store only, no multiseat; display name "Gym Block Pro"; review screenshot `screenshots/app-store-review/subscription-review-paywall.png`. The first subscriptions go to review with version 1.0 (tick them on the version page) — not "Add for Review" on their own. Paid Apps agreement, bank and tax are active; the EU Digital Services Act status is **Rejected**, so the EU is blocked until it's fixed under Business. |
 
 Until a step is done the app degrades honestly (sign-in reports the provider error, the offer page
 says subscriptions are off and shows the Debug-only skip, analytics inserts fail quietly and retry).
@@ -64,16 +64,17 @@ https://app.revenuecat.com → the Sodhera project (or a new "GymBlock" project)
 3. Entitlements → + New: identifier `pro`, attach both products.
 4. Offerings → `default` → packages: `$rc_monthly` → monthly product, `$rc_annual` → yearly product.
 5. Apps → GymBlock → copy the *Public app-specific API key* (`appl_…`) into `Secrets.xcconfig`:
-   `REVENUECAT_API_KEY = appl_…` — then rebuild. The key is public; commit it. Debug builds use the
-   project's *Test Store* key (`REVENUECAT_API_KEY[config=Debug]`), so `--online` runs on the
-   simulator show real offerings and a RevenueCat test purchase sheet without App Store Connect.
+   `REVENUECAT_API_KEY = appl_…` — then rebuild. The key is public; commit it. Debug and Release use
+   the same key; Debug purchases are sandbox purchases (Settings → Developer → Sandbox Apple Account).
 
 ## 5. App Store Connect
 
 1. My Apps → + → iOS app → GymBlock, bundle id `com.sodhera.gymblock`, SKU `gymblock`.
-2. Subscriptions → Subscription group "GymBlock Pro":
+2. Subscriptions → Subscription group "Gym Block Pro":
    - `com.sodhera.gymblock.pro.monthly` — 1 month — USD 4.99 (tier equivalent elsewhere)
-   - `com.sodhera.gymblock.pro.yearly` — 1 year — USD 49.99
+   - `com.sodhera.gymblock.pro.yearly` — 1 year — USD 49.99, introductory offer: free, 1 week
+   - Purchase options: App Store only, no multiseat (it's a personal, account-bound subscription).
+   - Review screenshot: `screenshots/app-store-review/subscription-review-paywall.png`.
    - Localised name "GymBlock Pro", description "Blocks the apps you choose while you train, times
      every rest and keeps your like-for-like progress."
 3. App Privacy → Privacy Policy URL `https://www.orecci.com/gymblock/privacy-policy.html`.

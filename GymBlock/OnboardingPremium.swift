@@ -276,11 +276,16 @@ struct JourneyButton: View {
   var symbol: String? = nil
   var id = ""
   var enabled = true
+  /// A spinner in place of the label, at the same size, while the tap is being answered.
+  var loading = false
   let action: () -> Void
   var body: some View {
-    let label = HStack(spacing: 8) {
-      if let symbol { Image(systemName: symbol).font(.system(.headline, weight: .semibold)).accessibilityHidden(true) }
-      Text(title).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+    let label = ZStack {
+      HStack(spacing: 8) {
+        if let symbol { Image(systemName: symbol).font(.system(.headline, weight: .semibold)).accessibilityHidden(true) }
+        Text(title).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+      }.opacity(loading ? 0 : 1)
+      if loading { ProgressView().tint(JourneyColor.onButton) }
     }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
     let tapped = { Analytics.tap(id); action() }
     Group {
