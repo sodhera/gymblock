@@ -214,6 +214,8 @@ struct WorkoutView: View {
       .accessibilityIdentifier("exercise.section.\(item.id)")
       ForEach(Array(logged.enumerated()), id: \.element.id) { index, set in loggedRow(set, number: index + 1) }
       if live { liveRow(number: logged.count + 1).id("live") } else if current { Color.clear.frame(height: 0).id("live") }
+      // Under the set that's next (or, after an exercise's last set, the one just done).
+      if current && stage == .rest { restStrip }
       if live && firstEver && !timed && !active {
         Text(store.t("Tap a number to type it.")).font(.footnote).foregroundStyle(JourneyColor.tertiary)
           .padding(.leading, 32).padding(.bottom, 4).accessibilityIdentifier("hint.type")
@@ -345,6 +347,24 @@ struct WorkoutView: View {
           .accessibilityLabel(store.t("Cancel set")).accessibilityIdentifier("set.cancel")
       }
     }.frame(minHeight: 56)
+  }
+
+  /// The rest as a line across the page: it fills from left to right as the rest runs, in step with
+  /// the dock's clock, and turns emerald when the rest is up, so it reads from across the bench.
+  private var restStrip: some View {
+    TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 15)) { context in
+      let now = session.pausedAt ?? context.date
+      let progress = min(1, max(0, now.timeIntervalSince(session.restStarted ?? now) / Double(max(1, store.restTarget))))
+      GeometryReader { geometry in
+        ZStack(alignment: .leading) {
+          Capsule().fill(JourneyColor.ink(0.08))
+          Capsule().fill(progress >= 1 ? JourneyColor.signal : JourneyColor.ink(0.45))
+            .frame(width: max(3, geometry.size.width * progress))
+        }
+      }.frame(height: 3).animation(.easeOut(duration: 0.3), value: progress >= 1)
+    }
+    .padding(.top, 2).padding(.bottom, 10)
+    .accessibilityHidden(true).accessibilityIdentifier("rest.strip")
   }
 
   /// A set still to come: last time's numbers, in grey.

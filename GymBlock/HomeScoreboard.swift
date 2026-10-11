@@ -1,33 +1,71 @@
+import Charts
 import SwiftUI
 
-/// This week as one quiet line: seven small dots (emerald for a day trained, an ink ring on today)
-/// and the streak beside them.
-struct WeekLine: View {
+/// One exercise's progress as a quiet line, in place of the week dots (11 Oct 2026): the exercise
+/// and what's held constant, the gain in emerald, the line itself (no axes; the latest workout a dot),
+/// then where it started and where it is now. Only comparable sets, from the same split with the
+/// reps or the load held constant (`exerciseTrends`). Home shows it only once there is a line to
+/// draw: a new account sees no empty chart, and the first real gain is what brings it in.
+struct ProgressLine: View {
   @EnvironmentObject private var store: GymStore
-  let stats: HomeStats
+  let trend: ExerciseTrend
   var body: some View {
-    HStack(spacing: 14) {
-      HStack(spacing: 7) {
-        ForEach(0..<7, id: \.self) { d in
-          let on = stats.grid.last?[d] ?? false
-          let today = d == stats.todayIndex
-          Circle().fill(on ? JourneyColor.signal : today ? Color.clear : JourneyColor.ink(0.12))
-            .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: today && !on ? 1.25 : 0))
-            .frame(width: 9, height: 9)
-        }
-      }
-      Text(label).font(.system(.subheadline, weight: .medium)).monospacedDigit()
-        .foregroundStyle(JourneyColor.secondary)
-    }
-    .accessibilityElement(children: .ignore).accessibilityIdentifier("home.week")
-    .accessibilityLabel(label + ", \(stats.thisWeek) \(store.t("of")) \(stats.goal) \(store.t("this week"))")
+    chart(trend).accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityIdentifier("home.progress")
   }
-  /// The truth, never an example: "Week 1" before the first workout, the streak once there is one,
-  /// otherwise this week against the goal.
+
+  /// The last eight comparable workouts.
+  private func shown(_ trend: ExerciseTrend) -> [(date: Date, value: Double)] { Array(trend.points.suffix(8)) }
+
+  private func chart(_ trend: ExerciseTrend) -> some View {
+    let points = shown(trend)
+    let values = points.map(\.value)
+    let low = values.min() ?? 0, high = values.max() ?? 0
+    let pad = max((high - low) * 0.25, trend.repMode ? 1 : 1.25)
+    return VStack(alignment: .leading, spacing: 8) {
+      HStack(alignment: .firstTextBaseline, spacing: 6) {
+        Text(store.t(trend.exercise.name)).font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+          .lineLimit(1)
+        Text(trend.constant).font(.subheadline).foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+        Spacer(minLength: 8)
+        Text(gainText(points, trend)).font(.system(.subheadline, weight: .semibold)).monospacedDigit()
+          .foregroundStyle(gain(points) > 0 ? JourneyColor.signal : JourneyColor.secondary).fixedSize()
+      }
+      Chart {
+        ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+          LineMark(x: .value("Workout", index), y: .value("Best", point.value))
+            .interpolationMethod(.monotone)
+            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+            .foregroundStyle(JourneyColor.ink(0.5))
+        }
+        PointMark(x: .value("Workout", points.count - 1), y: .value("Best", values.last ?? 0))
+          .symbolSize(70).foregroundStyle(JourneyColor.signal)
+      }
+      .chartXAxis(.hidden).chartYAxis(.hidden).chartLegend(.hidden)
+      .chartXScale(domain: 0...max(1, points.count - 1), range: .plotDimension(padding: 5))
+      .chartYScale(domain: (low - pad)...(high + pad))
+      .frame(height: 52)
+      HStack {
+        Text(points.first?.date.formatted(.dateTime.month(.abbreviated).day()) ?? "")
+        Spacer()
+        Text(value(values.last ?? 0, trend))
+      }.font(.footnote).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+    }
+  }
+
+  private func gain(_ points: [(date: Date, value: Double)]) -> Double { (points.last?.value ?? 0) - (points.first?.value ?? 0) }
+  /// "+2.5 kg", "+2 reps"; "Holding" when level; a drop says so in grey, never in red.
+  private func gainText(_ points: [(date: Date, value: Double)], _ trend: ExerciseTrend) -> String {
+    let change = gain(points)
+    guard abs(change) > 0.001 else { return store.t("Holding") }
+    let amount = trend.repMode ? "\(Int(abs(change).rounded())) " + store.t("reps") : formatNumber(abs(change)) + " " + store.profile.unit
+    return (change > 0 ? "+" : "−") + amount
+  }
+  private func value(_ v: Double, _ trend: ExerciseTrend) -> String {
+    trend.repMode ? "\(Int(v.rounded())) " + store.t("reps") : formatNumber(v) + " " + store.profile.unit
+  }
   private var label: String {
-    if stats.streakWeeks > 0 { return "\(stats.streakWeeks) " + store.t("week streak") }
-    if stats.totalWorkouts == 0 { return store.t("Week 1") }
-    return "\(stats.thisWeek) " + store.t("of") + " \(stats.goal) " + store.t("this week")
+    let points = shown(trend)
+    return store.t(trend.exercise.name) + " " + trend.constant + ", " + gainText(points, trend) + ", " + value(points.last?.value ?? 0, trend)
   }
 }
 

@@ -14,7 +14,6 @@ struct HomeView: View {
   @State private var free = false
   /// Nothing logged yet: Home shows the truth (an empty week) and guides to the first workout.
   private var firstRun: Bool { store.data.history.allSatisfy { $0.completedSets.isEmpty } }
-  private var stats: HomeStats { store.homeStats() }
   @State private var creatingSplit = false
   /// The split the rotation has queued, else the first split; none means a free workout.
   private var nextSplit: Workout? {
@@ -60,10 +59,11 @@ struct HomeView: View {
     }
   }
 
-  /// The week at the top, then the queued workout centred in the space above the button.
+  /// Progress at the top (once there is some), then the queued workout centred in the space above
+  /// the button.
   private var content: some View {
     VStack(alignment: .leading, spacing: 0) {
-      WeekLine(stats: stats).padding(.top, 24).reveal(appeared, 0)
+      if let progress { ProgressLine(trend: progress).padding(.top, 24).reveal(appeared, 0) }
       Spacer(minLength: 32)
       // No split yet and nothing logged: "Your first workout", with setting up a split one tap away.
       UpNext(split: nextSplit, detail: nextDetail,
@@ -75,6 +75,12 @@ struct HomeView: View {
   }
 
   private var nextDetail: String { store.summary(of: nextSplit) }
+  /// The split that's up next shows its best gain; otherwise the biggest gain anywhere. Nothing
+  /// until some exercise has two comparable workouts.
+  private var progress: ExerciseTrend? {
+    let trends = store.exerciseTrends(limit: .max).filter { $0.points.count >= 2 }
+    return trends.first { $0.splitID != nil && $0.splitID == nextSplit?.id } ?? trends.first
+  }
   /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to change it.
   private func startNext() {
     if let split = nextSplit { store.updateProfile { $0.preferredSplitID = split.id } }
