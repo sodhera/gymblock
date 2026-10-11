@@ -69,16 +69,15 @@ Privacy Policy: https://www.orecci.com/gymblock/privacy-policy
 
 ## Screenshots
 
-These are the captions, in order. Search results show the first three.
+Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setgraph, Opal, ScreenZen, one sec, Brick and others: a verb-led headline with a short second line, one word in red. Search results show the first three. Captures are 1320×2868 (6.9-inch) in `screenshots/store-picks/`; the framed versions (deep blue stage, white headline with one red word, a thick phone running off the bottom edge) are in `screenshots/store-final/`, made by `python3 scripts/frame-store-screenshots.py`.
 
-| # | Caption | Screen |
-| --- | --- | --- |
-| 1 | Stop scrolling between sets. | The "You're mid-workout." shield over a locked app |
-| 2 | Your rest counts down on the Lock Screen. | Live Activity and Dynamic Island |
-| 3 | One tap per set. Last time already filled in. | Workout screen |
-| 4 | Stronger than last time? See it, like for like. | Summary |
-| 5 | Splits that rotate: push, pull, legs, or free. | Start workout chooser |
-| 6 | Every set saved as it happens, and synced. | History |
+| # | Headline | Second line | Screen |
+|---|---|---|---|
+| 1 | Stop **scrolling** in the gym | Block apps | The blocking page with six locked apps (`-storeShots YES -journeyStep blocking`); alternative: the rebuilt shield over Instagram (`-shieldPreview Instagram`) |
+| 2 | Track your **workouts** | Time your rests | Workout mid-rest (`-workoutStage rest`) |
+| 3 | Plan your **progress** | Stay motivated | Home with the week streak, no "Sample data" line (`--demo -storeShots YES`) |
+| 4 | Beat your record | | Squat before/after, +25 kg |
+| 5 | Keep your streak alive | | Workout summary |
 
 Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screenshots. They are the user's own numbers, not a measurement.
 
@@ -135,12 +134,12 @@ This is based on what the code does today. Check it against `CloudSync.swift`, `
 | --- | --- | --- | --- | --- |
 | User ID | Yes | Yes | No | App functionality (account and sync) |
 | Email address (from Apple or Google sign-in) | Yes | Yes | No | App functionality (account) |
-| Fitness (workouts, sets, splits) | Yes | Yes | No | App functionality (sync) |
+| Fitness (workouts, sets, splits; onboarding answers such as phone time per rest, height and weight in 5-unit bands) | Yes | Yes | No | App functionality (sync), Analytics |
 | Product interaction (screens, taps, timings) | Yes | Yes | No | Analytics |
 | Purchase history | Yes | Yes | No | App functionality |
 | Crash and error data | Yes | Yes | No | App functionality |
 
-The chosen apps, the onboarding phone-time estimates and free text are never sent to analytics. Data does not leave our own Supabase project, and no third-party ads or tracking SDKs are used.
+The chosen apps, names and free text are never sent to analytics. Since 11 Oct 2026 onboarding answers are (gender, height and weight in 5-unit bands, phone time per rest and the resulting estimate), so declare gender under Other Data if Apple asks. Data does not leave our own Supabase project, and no third-party ads or tracking SDKs are used.
 
 ## Before submitting
 

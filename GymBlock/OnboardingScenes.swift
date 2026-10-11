@@ -26,10 +26,11 @@ struct Ping: Identifiable {
   let symbol: String
   let text: String
   static let all: [Ping] = [
-    Ping(id: 0, app: "Instagram", symbol: "camera", text: "maya.lifts liked your photo"),
+    // The last one in ends on top of the locked stack, so it's a feed, not a friend's message.
+    Ping(id: 0, app: "Messages", symbol: "message.fill", text: "You coming to the gym?"),
     Ping(id: 1, app: "TikTok", symbol: "music.note", text: "Videos you might like"),
     Ping(id: 2, app: "YouTube", symbol: "play.rectangle.fill", text: "New: 10 min ab burner"),
-    Ping(id: 3, app: "Messages", symbol: "message.fill", text: "You coming to the gym?"),
+    Ping(id: 3, app: "Instagram", symbol: "camera", text: "maya.lifts liked your photo"),
   ]
 }
 
@@ -55,39 +56,62 @@ struct PingCard: View {
   }
 }
 
-/// Notifications pile up, then sweep away, leaving one lock. On the first question they creep back.
+/// Notifications pile up, then fold into one dimmed, locked stack with the kettlebell resting on
+/// it, so the page ends full rather than on an empty stage. On the first question they creep back.
 struct NotificationStage: View {
   let awake: Bool
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var shown = 0
-  @State private var cleared = false
+  @State private var stacked = false
   @State private var locked = false
+  /// Card pitch while the notifications are spread out, and the gap that shows between stacked cards.
+  private let pitch: CGFloat = 74
+  private let peek: CGFloat = 13
+  /// Where the stacked front card sits; the kettlebell rests above it and the caption sits below.
+  private let stackY: CGFloat = 36
   var body: some View {
+    let visible = Array(Ping.all.prefix(shown).reversed())
     ZStack {
-      VStack(spacing: 10) {
-        ForEach(Array(Ping.all.prefix(shown).reversed())) { ping in
-          PingCard(ping: ping)
-            .offset(x: cleared ? 420 : 0).opacity(cleared ? 0 : 1)
-            .animation(.smooth(duration: 0.6).delay(cleared ? Double(ping.id) * 0.08 : 0), value: cleared)
-            .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
-        }
-      }.frame(maxWidth: 360).frame(maxHeight: .infinity)
-      VStack(spacing: 14) {
-        BrandMark(size: 92)
-          .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 120)).frame(width: 240, height: 240))
-        Text(store.t("Apps locked while you train")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
-      }.scaleEffect(locked ? 1 : 0.7).opacity(locked ? 1 : 0)
+      ForEach(Array(visible.enumerated()), id: \.element.id) { k, ping in
+        PingCard(ping: ping)
+          // Stacked, the front card stays solid but greyed out; the ones behind show only their edges.
+          .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+              .fill(JourneyColor.stage.opacity(k == 0 ? 0.5 : 1))
+              .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(JourneyColor.hairline, lineWidth: 1))
+              .opacity(stacked ? 1 : 0)
+          }
+          .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(JourneyColor.stage).opacity(stacked ? 1 : 0))
+          .shadow(color: .black.opacity(stacked ? 0.06 : 0), radius: 8, y: 3)
+          .overlay(alignment: .topTrailing) {
+            if k == 0 { lockBadge.offset(x: 6, y: -8).scaleEffect(locked ? 1 : 0.3).opacity(locked ? 1 : 0) }
+          }
+          .scaleEffect(stacked ? 1 - CGFloat(k) * 0.055 : 1, anchor: .bottom)
+          .offset(y: stacked ? stackY + CGFloat(k) * peek : (CGFloat(k) - CGFloat(visible.count - 1) / 2) * pitch)
+          .zIndex(Double(-k))
+          .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+      }.frame(maxWidth: 360)
+      BrandMark(size: 92)
+        .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 120)).frame(width: 240, height: 240))
+        .offset(y: locked ? stackY - 118 : stackY - 280).opacity(locked ? 1 : 0)
+      Text(store.t("Apps locked while you train")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+        .offset(y: stackY + 112).opacity(locked ? 1 : 0)
     }.frame(maxWidth: .infinity, maxHeight: .infinity)
       .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
       .accessibilityLabel(store.t(awake ? "Notifications arriving." : "Notifications are cleared and apps are locked while you train."))
       .task(id: awake) { await play() }
   }
+  private var lockBadge: some View {
+    Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(JourneyColor.onAccent)
+      .frame(width: 26, height: 26).background(Circle().fill(JourneyColor.accent))
+      .overlay(Circle().strokeBorder(JourneyColor.stage, lineWidth: 2))
+  }
   private func play() async {
     let reduced = JourneyMotion.reduced(systemReduceMotion)
     if awake {
-      withAnimation(.smooth(duration: 0.4)) { locked = false; cleared = false; shown = 0 }
+      withAnimation(.smooth(duration: 0.4)) { locked = false; stacked = false; shown = 0 }
       if reduced { shown = 3; return }
       for i in 0..<3 {
         guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
@@ -97,17 +121,17 @@ struct NotificationStage: View {
       return
     }
     var t = Transaction(); t.disablesAnimations = true
-    withTransaction(t) { shown = 0; cleared = false; locked = false }
-    if reduced { locked = true; done(); return }
+    withTransaction(t) { shown = 0; stacked = false; locked = false }
+    if reduced { shown = Ping.all.count; stacked = true; locked = true; done(); return }
     for i in 0..<Ping.all.count {
       guard await pause(i == 0 ? JourneyMotion.settle + 0.15 : 0.5) else { return }
       withAnimation(JourneyMotion.gentle) { shown = i + 1 }
       JourneyHaptic.notification(store.profile)
     }
     guard await pause(0.9) else { return }
-    cleared = true
+    withAnimation(.smooth(duration: 0.7)) { stacked = true }
     JourneyHaptic.play(.soft, store.profile, intensity: 0.7)
-    guard await pause(0.6) else { return }
+    guard await pause(0.55) else { return }
     withAnimation(.spring(duration: 0.7, bounce: 0.18)) { locked = true }
     JourneyHaptic.play(.rigid, store.profile)
     guard await pause(0.12) else { return }
@@ -356,7 +380,7 @@ struct MindStage: View {
     VStack(alignment: .leading, spacing: b.len(6)) {
       ForEach(0..<2, id: \.self) { i in
         HStack(spacing: b.len(5)) {
-          Image(systemName: Ping.all[i].symbol).font(.system(size: b.len(11), weight: .bold)).foregroundStyle(JourneyColor.text)
+          Image(systemName: ["camera", "music.note"][i]).font(.system(size: b.len(11), weight: .bold)).foregroundStyle(JourneyColor.text)
             .frame(width: b.len(22), height: b.len(22))
             .background(RoundedRectangle(cornerRadius: b.len(6), style: .continuous).fill(JourneyColor.ink(0.22)))
           VStack(alignment: .leading, spacing: b.len(4)) {
@@ -697,17 +721,24 @@ struct BlockStage: View {
     let s = blocking.selection
     return s.applicationTokens.map(Item.app) + s.categoryTokens.map(Item.category) + s.webDomainTokens.map(Item.site)
   }
+  /// Development only (`-storeShots YES`): six sample apps, locked, for App Store screenshots.
+  private let samples = StoreShots.apps
   var body: some View {
     let all = items
     let shown = Array(all.prefix(all.count > 6 ? 5 : 6))
     VStack(spacing: 22) {
       Spacer(minLength: 0)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 3), spacing: 22) {
-        ForEach(Array(shown.enumerated()), id: \.element) { i, item in tile(item, locked: i < stamped) }
-        if all.count > 6 { more(all.count - 5) }
-        ForEach(0..<max(0, 6 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
+        if !samples.isEmpty {
+          ForEach(samples, id: \.self) { sample($0) }
+        } else {
+          ForEach(Array(shown.enumerated()), id: \.element) { i, item in tile(item, locked: i < stamped) }
+          if all.count > 6 { more(all.count - 5) }
+          ForEach(0..<max(0, 6 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
+        }
       }.frame(maxWidth: 300)
-      Text(all.isEmpty ? store.t("Choose the apps that pull you in.")
+      Text(!samples.isEmpty ? String(format: store.t("%@ blocked from Start to Finish."), "\(samples.count) " + store.t("apps"))
+           : all.isEmpty ? store.t("Choose the apps that pull you in.")
            : String(format: store.t("%@ blocked from Start to Finish."), blocking.summary(store.t)))
         .font(JourneyType.label).foregroundStyle(JourneyColor.secondary).monospacedDigit().multilineTextAlignment(.center)
         .contentTransition(.numericText()).animation(.smooth(duration: 0.3), value: all.count)
@@ -750,6 +781,12 @@ struct BlockStage: View {
       slot(locked: locked, id: "block.item") { Image(systemName: "globe").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text) }
         name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
     }
+  }
+  private func sample(_ app: StoreShots.App) -> some View {
+    slot(locked: true, id: "block.item") {
+      Image(app.asset).resizable().scaledToFill().frame(width: 46, height: 46)
+        .clipShape(RoundedRectangle(cornerRadius: 10.5, style: .continuous))
+    } name: { Text(app.name).foregroundStyle(JourneyColor.text) }
   }
   private func more(_ n: Int) -> some View {
     slot(id: "block.more") { Text("+\(n)").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).monospacedDigit() }

@@ -131,6 +131,9 @@ struct RootView: View {
       }
       .transition(.identity)
       .opacity(visible ? 1 : 0)
+      #if DEBUG
+        if let app = StoreShots.shieldApp { ShieldPreview(app: app) }
+      #endif
     }
     .task(id: screen) {
       if screen != .launch { launched = true }

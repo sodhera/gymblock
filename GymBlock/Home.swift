@@ -96,7 +96,7 @@ struct HomeView: View {
 
   /// One honest line above the button, the same one the workout shows.
   @ViewBuilder private var caption: some View {
-    if store.data.demoLoaded == true {
+    if store.data.demoLoaded == true && !StoreShots.on {
       Text(store.t("Sample data")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).accessibilityIdentifier("home.sample")
     } else if example {
       Text(store.t("Example until your first workout")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)

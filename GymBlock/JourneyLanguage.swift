@@ -222,6 +222,7 @@ extension Spanish {
   /// Onboarding V5 copy.
   static let v5: [String: String] = [
     "Stay focused.": "Mantente enfocado.",
+    "Stop scrolling": "Deja el scroll", "in the gym.": "en el gym.",
     "min training": "min entrenando",
     "Training": "Entrenando",
     "On your phone": "Con el teléfono",

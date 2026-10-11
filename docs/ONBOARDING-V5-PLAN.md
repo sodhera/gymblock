@@ -22,7 +22,7 @@ The person should leave thinking: *“I lose a lot of my gym time to my phone. G
 
 | # | Headline | Stage | Action |
 |---|---|---|---|
-| 1 | Stay focused. / Stay intentional. | Glass notifications stack, sweep away, a lock lands | Get started |
+| 1 | Stop scrolling / in the gym. | Glass notifications arrive, fold into one dimmed stack with a lock badge, and the kettlebell lands on it (since 11 Oct 2026; before, they swept away and left the lock alone on an empty stage) | Get started |
 | 2 | What should we call you? | Glass name field, keyboard up | Continue |
 | 3 | What’s your gender? | Male · Female · Other glass cards | Continue (after choosing) |
 | 4 | How tall are you? | One wheel, cm / ft · in | Continue |
