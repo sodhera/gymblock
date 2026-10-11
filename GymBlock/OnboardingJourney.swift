@@ -174,7 +174,7 @@ struct OnboardingView: View {
   private var headlineText: some View {
     Group {
       if step == .welcome {
-        Text(store.t("Stay focused.")) + Text("\n" + store.t("Stay intentional.")).foregroundColor(JourneyColor.secondary)
+        Text(store.t("Stop scrolling")) + Text("\n" + store.t("in the gym.")).foregroundColor(JourneyColor.secondary)
       } else if let personal {
         Text(personal)
       } else {
@@ -299,11 +299,13 @@ struct OnboardingView: View {
         gated(JourneyButton(title: store.t("Turn on rest alerts"), id: "alerts.on", enabled: ready) {
           Task { @MainActor in
             let granted = await RestAlert.requestPermission()
+            Analytics.track("onboarding_alerts", ["choice": "on", "granted": granted])
             store.updateProfile { $0.restAlerts = granted }
             if step == .alerts { next() }
           }
         })
         JourneyTextButton(title: store.t("Not now"), id: "alerts.later") {
+          Analytics.track("onboarding_alerts", ["choice": "later"])
           store.updateProfile { $0.restAlerts = false }
           next()
         }
@@ -329,13 +331,14 @@ struct OnboardingView: View {
                    onComplete: commit)
         Color.clear.frame(height: 44)
       case .blocking:
-        if blocking.ready {
+        if blocking.ready || StoreShots.on {
           JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking)
         } else {
           JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps)
         }
         JourneyTextButton(title: store.t("Not now"), id: "blocking.later") {
           guard !locking else { return }
+          Analytics.track("onboarding_blocking", ["choice": "later", "chosen": blocking.ready])
           store.updateProfile { $0.focusEnabled = false }
           next()
         }
@@ -343,8 +346,8 @@ struct OnboardingView: View {
         // RootView shows the offer in place of this page.
         EmptyView()
       case .splits:
-        JourneyButton(title: store.t(store.data.workouts.isEmpty ? "Continue" : "Start training"), id: "onboarding.continue", action: finish)
-        JourneyTextButton(title: store.t("Skip for now"), id: "splits.skip") { finish() }
+        JourneyButton(title: store.t(store.data.workouts.isEmpty ? "Continue" : "Start training"), id: "onboarding.continue") { finish(skipped: false) }
+        JourneyTextButton(title: store.t("Skip for now"), id: "splits.skip") { finish(skipped: true) }
           .opacity(store.data.workouts.isEmpty ? 1 : 0).allowsHitTesting(store.data.workouts.isEmpty)
       default:
         gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: ready, action: advance))
@@ -376,6 +379,7 @@ struct OnboardingView: View {
   private func commit() {
     guard !committed else { return }
     withAnimation(JourneyMotion.gentle) { committed = true; pledged = 3 }
+    Analytics.track("onboarding_committed", ["hold_ms": Int(Date().timeIntervalSince(pageShownAt) * 1000)])
     store.updateProfile { $0.onboardingStoryStage = 1 }
     Task { @MainActor in
       try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 900))
@@ -435,7 +439,25 @@ struct OnboardingView: View {
       store.updateProfile { $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = weightUnit == 0 ? "kg" : "lb" }
     }
     if step == .phoneMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
+    trackAnswer()
     next()
+  }
+  /// What each question page was answered with. Never the name itself; body measures in 5-unit bands.
+  private func trackAnswer() {
+    var props: [String: Any?] = ["question": step.rawValue]
+    switch step {
+    case .name: props["answered"] = true
+    case .gender: props["value"] = gender
+    case .height: props["cm_band"] = Int((heightCM / 5).rounded()) * 5; props["unit"] = heightUnit == 0 ? "cm" : "ft_in"
+    case .weight: props["kg_band"] = Int((weightKG / 5).rounded()) * 5; props["unit"] = weightUnit == 0 ? "kg" : "lb"
+    case .scrolling: props["value"] = baseline.scrollFrequency?.rawValue
+    case .phoneMinutes: props["minutes_per_rest"] = draft
+    case .reveal, .days:
+      props["phone_minutes"] = Int(estimate.phoneMinutes.rounded()); props["training_minutes"] = Int(estimate.trainingMinutes.rounded())
+      props["yearly_phone_hours"] = Int(estimate.yearlyPhoneHours.rounded())
+    default: return
+    }
+    Analytics.track("onboarding_answer", props)
   }
   private func next() {
     if let index = route.firstIndex(of: step), index + 1 < route.count { move(route[index + 1]) }
@@ -461,6 +483,7 @@ struct OnboardingView: View {
   }
   private func turnOnBlocking() {
     guard !locking, blocking.ready else { return }
+    Analytics.track("onboarding_blocking", ["choice": "on", "apps": blocking.apps, "categories": blocking.categories, "sites": blocking.sites])
     store.updateProfile { $0.focusEnabled = true }
     locking = true
     let wait = reduceMotion ? 0.25 : 0.14 * Double(min(6, blocking.apps + blocking.categories)) + 0.7
@@ -479,6 +502,10 @@ struct OnboardingView: View {
     stageLeaving = next.stage != step.stage
     let all = [OnboardingStep.welcome] + route
     let forward = (all.firstIndex(of: next) ?? 0) >= (all.firstIndex(of: step) ?? 0)
+    Analytics.track("onboarding_step", ["from": step.rawValue, "to": next.rawValue, "direction": forward ? "forward" : "back",
+                                        "index": stepIndex(next), "total": all.count,
+                                        "dwell_ms": Int(Date().timeIntervalSince(pageShownAt) * 1000)])
+    if step == .welcome && forward { OnboardingAnalytics.started() }
     let travel: CGFloat = reduceMotion ? 0 : 18
     withAnimation(.easeIn(duration: out)) { shown = false; slide = forward ? -travel : travel }
     Task { @MainActor in
@@ -503,8 +530,13 @@ struct OnboardingView: View {
     }
   }
   /// The end of onboarding: into the app, with the first split (if any) lined up on Home.
-  private func finish() {
+  private func finish(skipped: Bool) {
     JourneyHaptic.play(.success, store.profile)
+    let p = store.profile
+    OnboardingAnalytics.completed([
+      "splits": store.data.workouts.count, "splits_skipped": skipped, "blocking": p.focusEnabled, "rest_alerts": p.restAlerts,
+      "subscribed": subscription.hasAccess, "signed_in": account.state == .signedIn, "pages": route.count + 1,
+    ])
     store.updateProfile {
       if $0.preferredSplitID == nil { $0.preferredSplitID = store.data.workouts.first?.id }
       $0.onboarded = true; $0.onboardingStepID = OnboardingStep.splits.rawValue

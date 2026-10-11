@@ -91,7 +91,27 @@ https://app.revenuecat.com → the Sodhera project (or a new "GymBlock" project)
 | Delete account | Settings → Delete account | `gb_delete_account()` then local wipe |
 
 Reporting views for the dashboard (service role only): `gb_daily_actives`, `gb_onboarding_funnel`,
-`gb_workout_stats`. Useful queries:
+`gb_workout_stats`, and from `20261011000100_onboarding_funnel.sql` (run in the SQL editor on
+11 Oct 2026) `gb_onboarding_dwell`, `gb_onboarding_answers`, `gb_onboarding_summary`.
+
+### Onboarding events
+
+Besides a `screen` / `screen_left` pair per page (with `step` and the time it was open) and a `tap`
+per button, onboarding sends:
+
+| Event | When | Properties |
+| --- | --- | --- |
+| `onboarding_started` | Get started, once per install | |
+| `onboarding_step` | every page change | `from`, `to`, `direction` (forward/back), `index`, `total`, `dwell_ms` |
+| `onboarding_answer` | Continue on a question | `question` plus `value` (gender, scrolling), `minutes_per_rest`, `cm_band` / `kg_band` (5-unit bands) with `unit`, `answered` (name; never the name itself), or the estimate (`phone_minutes`, `training_minutes`, `yearly_phone_hours`) on the reveal and days pages |
+| `onboarding_blocking` | Turn on blocking / Not now | `choice`, app/category/site counts or `chosen` |
+| `onboarding_alerts` | Turn on rest alerts / Not now | `choice`, `granted` |
+| `onboarding_committed` | the hold completes | `hold_ms` |
+| `onboarding_completed` | into the app from splits | `splits`, `splits_skipped`, `blocking`, `rest_alerts`, `subscribed`, `signed_in`, `pages`, `total_ms` |
+
+Sign-in (`sign_in_started`, `sign_in`, `sign_in_cancelled`), the offer (`paywall_loaded`, `plan.*` taps,
+`purchase_*`) and Screen Time (`blocking_access`, `blocking_chosen`) have their own events. Events from
+Debug builds run with `--online` carry `debug: true`. Useful queries:
 
 ```sql
 -- Where people drop off in onboarding

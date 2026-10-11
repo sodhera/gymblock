@@ -181,6 +181,9 @@ import UserNotifications
     pending.removeAll()
     do {
       try await Backend.supabase.from("gb_events").insert(batch).execute()
+      #if DEBUG
+        NSLog("GymBlock analytics: sent %d events (%@)", batch.count, Set(batch.map(\.name)).sorted().joined(separator: ", "))
+      #endif
     } catch {
       AppLog.error("Analytics flush failed: \(error.localizedDescription)")
       pending = Array((batch + pending).suffix(limit))
@@ -210,7 +213,32 @@ import UserNotifications
       default: out[k] = .string(String(String(describing: value).prefix(120)))
       }
     }
+    #if DEBUG
+      // Debug builds that reach the server (`--online`) are marked, so they can be filtered out.
+      out["debug"] = .bool(true)
+    #endif
     return out
+  }
+}
+
+/// The onboarding funnel's two ends. Every page in between is an `onboarding_step` (from, to,
+/// direction, how long the page was open) and every question an `onboarding_answer`.
+@MainActor enum OnboardingAnalytics {
+  private static let startedKey = "gymblock.onboardingStartedAt"
+  /// Get started on the welcome page, once per install.
+  static func started() {
+    guard UserDefaults.standard.object(forKey: startedKey) == nil else { return }
+    UserDefaults.standard.set(Date(), forKey: startedKey)
+    Analytics.track("onboarding_started")
+  }
+  /// Into the app from the splits page, with how long onboarding took from Get started.
+  static func completed(_ properties: [String: Any?]) {
+    var props = properties
+    if let start = UserDefaults.standard.object(forKey: startedKey) as? Date {
+      props["total_ms"] = min(Int(Date().timeIntervalSince(start) * 1000), 86_400_000 * 30)
+    }
+    Analytics.track("onboarding_completed", props)
+    Task { await Analytics.flushNow() }
   }
 }
 
