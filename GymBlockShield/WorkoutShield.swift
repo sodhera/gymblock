@@ -35,8 +35,9 @@ final class WorkoutShield: ShieldConfigurationDataSource {
       backgroundColor: Self.paper,
       icon: icon,
       title: .init(text: es ? "Estás entrenando." : "You’re mid-workout.", color: Self.ink),
-      subtitle: .init(text: es ? "\(subject) se abre cuando termines o pauses el entrenamiento en GymBlock."
-                               : "\(subject) opens when you finish or pause your workout in GymBlock.", color: Self.secondary),
+      // No pausing since 11 Oct 2026: the block lifts only when the workout ends.
+      subtitle: .init(text: es ? "\(subject) se abre cuando termines el entrenamiento en GymBlock."
+                               : "\(subject) opens when you finish your workout in GymBlock.", color: Self.secondary),
       // Pure white: the paper tone read as a dimmed, disabled label on the ink button.
       primaryButtonLabel: .init(text: es ? "Volver al entrenamiento" : "Back to training", color: .white),
       primaryButtonBackgroundColor: Self.ink)

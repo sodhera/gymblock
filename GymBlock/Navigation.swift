@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// No tabs: Home, the workout or its summary fills the screen. A running workout always comes
-/// back first, on relaunch too; one left running for an hour asks before anything else.
+/// Home and Profile sit under a floating Liquid Glass tab bar; the workout and its summary fill the
+/// screen without it. A running workout always comes back first, on relaunch too; one left running
+/// for an hour asks before anything else.
 struct GymNavigationView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.scenePhase) private var scenePhase
@@ -13,7 +14,7 @@ struct GymNavigationView: View {
       switch screen {
       case .summary: if let summary = store.summary { SummaryView(session: summary).transition(.opacity) }
       case .workout: WorkoutView().transition(.opacity)
-      case .home: HomeView().transition(.opacity)
+      case .home: MainTabs().transition(.opacity)
       }
     }
     .animation(.smooth(duration: 0.45), value: screen)
@@ -38,3 +39,28 @@ struct GymNavigationView: View {
     return store.t("Last activity at") + " " + time(last) + ". " + store.t("Finishing ends it then.") + open
   }
 }
+
+/// The two places outside a workout. The system tab bar is Liquid Glass and floats over the page on
+/// iOS 26; earlier versions get the standard bar. Ink marks the chosen tab, as it marks every action.
+struct MainTabs: View {
+  @EnvironmentObject private var store: GymStore
+  private enum Place: String { case home, profile }
+  @State private var place = Place.home
+  var body: some View {
+    TabView(selection: $place) {
+      HomeView()
+        .tabItem { Label(store.t("Home"), systemImage: "house.fill") }
+        .tag(Place.home)
+      ProfileTab()
+        .tabItem { Label(store.t("Profile"), systemImage: "person.crop.circle.fill") }
+        .tag(Place.profile)
+    }
+    // The chosen tab is the accent; ink stays the action colour everywhere else.
+    .tint(JourneyColor.signal)
+    .onChange(of: place) { _, chosen in
+      Analytics.tap("tab." + chosen.rawValue)
+      JourneyHaptic.play(.selection, store.profile)
+    }
+  }
+}
+

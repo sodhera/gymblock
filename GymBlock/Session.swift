@@ -2,6 +2,9 @@ import SwiftUI
 
 /// One tap chooses. This workout's exercises come first (with sets done), then recent ones,
 /// then everything by body area.
+/// Pick the next exercise during a workout: the same ruled list as Add exercises. This workout's
+/// exercises first (the one you're on checked, the others with their sets done), then recent ones,
+/// then the catalogue by area; search in the bar; "New exercise" last.
 struct ExercisePickerContent: View {
   @EnvironmentObject private var store: GymStore
   @State private var search = ""
@@ -29,39 +32,45 @@ struct ExercisePickerContent: View {
   var body: some View {
     List {
       if search.isEmpty {
-        if !current.isEmpty { Section(store.t("This workout")) { ForEach(current) { exerciseRow($0) } } }
-        if !recent.isEmpty { Section(store.t("Recent")) { ForEach(recent) { exerciseRow($0) } } }
-        ForEach(areas, id: \.0) { area, items in
-          Section(store.t(area)) { ForEach(items) { exerciseRow($0) } }
-        }
+        if !current.isEmpty { group(store.t("This workout"), current) }
+        if !recent.isEmpty { group(store.t("Recent"), recent) }
+        ForEach(areas, id: \.0) { area, items in group(store.t(area), items) }
       } else {
-        Section { ForEach(matches) { exerciseRow($0) } }
-        if matches.isEmpty { Text(store.t("No matches")).foregroundStyle(GymColor.dim) }
+        // No "No matches" line: the Create row below names the search instead.
+        ForEach(matches) { exerciseRow($0) }
       }
-      Button {
-        custom = true
-      } label: {
-        Label(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’", systemImage: "plus")
-          .foregroundStyle(GymColor.ink)
-      }.accessibilityIdentifier("exercise.custom")
-    }.gymPage().searchable(text: $search, prompt: store.t("Search exercises")).gymSearchNavigation()
-      .navigationDestination(isPresented: $custom) {
-        CustomExerciseView(embedded: true, initialName: search) { onChoose($0) }
-      }
+      Button { custom = true } label: {
+        HStack(spacing: 10) {
+          Image(systemName: "plus").font(.system(.body, weight: .semibold))
+          Text(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’").font(.body).lineLimit(1)
+        }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
+      }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
+        .accessibilityIdentifier("exercise.custom")
+    }
+    .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
+    .searchable(text: $search, prompt: store.t("Search exercises")).gymSearchNavigation()
+    .navigationDestination(isPresented: $custom) {
+      CustomExerciseView(embedded: true, initialName: search) { onChoose($0) }
+    }
+  }
+  @ViewBuilder private func group(_ label: String, _ items: [Exercise]) -> some View {
+    PageLabel(text: label).padding(.top, 18).pageRow().listRowSeparator(.hidden, edges: .top)
+    ForEach(items) { exerciseRow($0) }
   }
   private func exerciseRow(_ exercise: Exercise) -> some View {
     let done = store.doneSets(exercise)
     return Button { dismissKeyboard(); onChoose(exercise) } label: {
-      HStack {
-        Text(store.t(exercise.name)).foregroundStyle(GymColor.ink)
-        Spacer()
+      HStack(spacing: 12) {
+        Text(store.t(exercise.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Spacer(minLength: 8)
         if store.session?.selected?.id == exercise.id {
-          Image(systemName: "checkmark").foregroundStyle(GymColor.red).accessibilityHidden(true)
+          Image(systemName: "checkmark").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal)
+            .accessibilityHidden(true)
         } else if done > 0 {
-          Text(setCount(done, store: store)).font(.subheadline).foregroundStyle(GymColor.dim).monospacedDigit()
+          Text(setCount(done, store: store)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
         }
-      }.frame(minHeight: 44)
-    }.accessibilityIdentifier("exercise." + exercise.id)
+      }.frame(maxWidth: .infinity, minHeight: 50, alignment: .leading).contentShape(Rectangle())
+    }.buttonStyle(.plain).pageRow().accessibilityIdentifier("exercise." + exercise.id)
   }
 }
 struct SelectNumberOnFocus: ViewModifier {
@@ -255,6 +264,8 @@ struct SetEditor: View {
     }
   }
 }
+/// A new exercise: its name as the page's title, typed in place, and whether it's counted in reps
+/// or timed with the set clock. Cancel and Save sit in the bar.
 struct CustomExerciseView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
@@ -262,29 +273,42 @@ struct CustomExerciseView: View {
   var initialName = ""
   @State private var name = ""
   @State private var timed = false
+  @FocusState private var naming: Bool
   let onAdd: (Exercise) -> Void
+  private var clean: String { String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)) }
   var body: some View {
-    Group { if embedded { form } else { NavigationStack { form } } }
-      .onAppear { name = initialName }
+    Group { if embedded { page } else { NavigationStack { page } } }
+      .onAppear { name = initialName; naming = true }
   }
-  private var form: some View {
-    Form {
-      LabeledContent(store.t("Name")) {
-        TextField(store.t("Name"), text: $name).multilineTextAlignment(.trailing).accessibilityIdentifier("custom.name")
-      }
-      Picker(store.t("Measure"), selection: $timed) {
-        Text(store.t("Reps")).tag(false); Text(store.t("Time")).tag(true)
-      }
-    }.gymPage().navigationTitle(store.t("New exercise")).navigationBarTitleDisplayMode(.inline)
-      .navigationBarBackButtonHidden().toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
-        ToolbarItem(placement: .confirmationAction) {
-          Button(store.t("Save")) {
-            onAdd(Exercise(id: UUID().uuidString, name: String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)), area: "Your training", timed: timed))
-            dismiss()
-          }.disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityIdentifier("custom.add")
+  private var page: some View {
+    ScrollView {
+      VStack(alignment: .leading, spacing: 30) {
+        TextField(store.t("Exercise name"), text: $name)
+          .font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          .textInputAutocapitalization(.words).submitLabel(.done).focused($naming).tint(JourneyColor.signal)
+          .accessibilityIdentifier("custom.name")
+        VStack(alignment: .leading, spacing: 10) {
+          PageLabel(text: store.t("Measure"))
+          Picker(store.t("Measure"), selection: $timed) {
+            Text(store.t("Reps")).tag(false); Text(store.t("Time")).tag(true)
+          }.pickerStyle(.segmented).accessibilityIdentifier("custom.measure")
+          Text(store.t(timed ? "The set clock times it." : "You log weight and reps."))
+            .font(.subheadline).foregroundStyle(JourneyColor.tertiary)
         }
+      }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.top, 12)
+    }
+    .scrollDismissesKeyboard(.interactively).background(DotGrid())
+    .navigationTitle(store.t("New exercise")).navigationBarTitleDisplayMode(.inline)
+    .navigationBarBackButtonHidden()
+    .toolbar {
+      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+      ToolbarItem(placement: .confirmationAction) {
+        Button(store.t("Save")) {
+          onAdd(Exercise(id: UUID().uuidString, name: clean, area: "Your training", timed: timed))
+          dismiss()
+        }.fontWeight(.semibold).disabled(clean.isEmpty).accessibilityIdentifier("custom.add")
       }
+    }
   }
 }
 func parseNumber(_ text: String) -> Double? {

@@ -87,7 +87,11 @@ extension GymStore {
       data.session?.setStarted = Date().addingTimeInterval(-ago - 38)
       finishSet(reps: draftRepCount ?? 8, minutes: 0)
       data.session?.restStarted = Date().addingTimeInterval(-ago)
-      if let i = data.session?.sets.indices.last { data.session?.sets[i].date = Date().addingTimeInterval(-ago) }
+      if let i = data.session?.sets.indices.last {
+        data.session?.sets[i].date = Date().addingTimeInterval(-ago)
+        // The set took 38 s, not the time since launch, so per-exercise times add up.
+        data.session?.sets[i].elapsedSetSeconds = 38
+      }
     }
     switch stage {
     case "active":
@@ -106,8 +110,9 @@ extension GymStore {
       logOne(ago: 2 * 3600)
     case "summary":
       logOne(ago: 400); logOne(ago: 250); logOne(ago: 70)
-      // Realistic measured rests between the sample sets.
+      // Realistic measured rests between the sample sets, and one set beating last time by a plate.
       for (i, gap) in [(1, 96.0), (2, 108.0)] { data.session?.sets[i].gapBeforeSeconds = gap }
+      data.session?.sets[2].weightKG += 2.5
       finish()
     default: break
     }

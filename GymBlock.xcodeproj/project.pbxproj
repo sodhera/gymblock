@@ -20,6 +20,7 @@
 		28E63A5C8EE3E5BA2E71E2BD /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B951846726741284DB93304B /* CloudSync.swift */; };
 		2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95245B0AE197664243A1DF54 /* GymBlockApp.swift */; };
 		2DDB2091A254AB357E74F556 /* JourneyV2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456C8F918D647C27F97E22CF /* JourneyV2Tests.swift */; };
+		2DDE9AE21905208FFEE59D50 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61737D64AB2427868DBA6FAC /* Profile.swift */; };
 		2DDFB32A602FD39B3661DBAB /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DAC4943DCBF0AC9D680A77 /* Settings.swift */; };
 		2E74CBB270312313000E124C /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A16A247D69006A1651F96 /* Progress.swift */; };
 		30EE11CCA6770E2393AF2B92 /* ArmIllustration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */; };
@@ -171,6 +172,7 @@
 		5AD5009E70EBA3A94854B117 /* JourneyArt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyArt.swift; sourceTree = "<group>"; };
 		5DA1D7B99F91FDC5215A97C4 /* GymBlockTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FBE6BF65D0F2D525A3338F1 /* AppBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocking.swift; sourceTree = "<group>"; };
+		61737D64AB2427868DBA6FAC /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
 		625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArmIllustration.swift; sourceTree = "<group>"; };
 		69016298FD0530DCDF640BEC /* GymBlockUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6AAD0535255FB7A0DBAB3743 /* GymBlockShieldAction.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GymBlockShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -179,6 +181,7 @@
 		6C68A7495A1C719F65837674 /* History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = History.swift; sourceTree = "<group>"; };
 		6DBCF67E32FD7B7E541E7F55 /* GymBlockShield.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GymBlockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7315D2C38D55280BA06B5B1B /* WorkoutActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActionsUITests.swift; sourceTree = "<group>"; };
+		74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		7576AF5B4BE365CAF8006511 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		75F70F4B27F004B995455CBB /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		777BA2A5696BA38746AE2AF3 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
@@ -187,7 +190,6 @@
 		7F18599E2CD2FD02DB528BE8 /* WorkoutShield.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutShield.swift; sourceTree = "<group>"; };
 		82559945550DCB076E35D35D /* RedesignTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedesignTests.swift; sourceTree = "<group>"; };
 		854264B8D10EA53FE36D44B2 /* HomeStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStats.swift; sourceTree = "<group>"; };
-		8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8F4562DF53998B70DF9E5B51 /* BenefitLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitLayoutUITests.swift; sourceTree = "<group>"; };
 		91D599A2899F5D63D89F8AEF /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		95245B0AE197664243A1DF54 /* GymBlockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockApp.swift; sourceTree = "<group>"; };
@@ -263,7 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				61B3E35BE7BD60F8E6487626 /* GymBlock */,
-				E1EA912447F60D09109C4063 /* GymBlock */,
+				EF8C297EB6B9290718C9281C /* gymblock */,
 				3B17A4900E23F40F368BC8CD /* GymBlockLive */,
 				29F6943ABD0070B93745F414 /* GymBlockShield */,
 				9611A3DD6202B186DC0C1BB6 /* GymBlockShieldAction */,
@@ -327,6 +329,7 @@
 				008F01AA301B4482E1045797 /* OnboardingPremium.swift */,
 				3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */,
 				7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */,
+				61737D64AB2427868DBA6FAC /* Profile.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
 				371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */,
 				2D3906A6BC255DCB1E84CD32 /* RestAlert.swift */,
@@ -396,12 +399,12 @@
 			path = GymBlockTests;
 			sourceTree = "<group>";
 		};
-		E1EA912447F60D09109C4063 /* GymBlock */ = {
+		EF8C297EB6B9290718C9281C /* gymblock */ = {
 			isa = PBXGroup;
 			children = (
-				8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */,
+				74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */,
 			);
-			name = GymBlock;
+			name = gymblock;
 			path = .;
 			sourceTree = "<group>";
 		};
@@ -698,6 +701,7 @@
 				CCDA787E895E557D4DE31B7E /* OnboardingPremium.swift in Sources */,
 				3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */,
 				4E13B1EE61AE6E2E2939ABFC /* OnboardingSplits.swift in Sources */,
+				2DDE9AE21905208FFEE59D50 /* Profile.swift in Sources */,
 				2E74CBB270312313000E124C /* Progress.swift in Sources */,
 				7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */,
 				80FF09942F36799439D912B5 /* RestAlert.swift in Sources */,
@@ -835,7 +839,7 @@
 		};
 		1F7D946BD1E7EBE47CAB49AC /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */;
+			baseConfigurationReference = 74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;
@@ -897,7 +901,7 @@
 		};
 		4C9A7A7F1D472D58188873C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */;
+			baseConfigurationReference = 74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;

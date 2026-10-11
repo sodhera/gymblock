@@ -35,10 +35,15 @@ final class WorkoutActionsUITests: XCTestCase {
     let homeFrame = home.frame
     home.tap(); tap(app, "choice.Push")
     let ready = primary(app, "Start set"); snap(app, "actions-ready")
-    XCTAssertEqual(ready.frame, homeFrame)  // Home's Start and the workout's button share one place.
+    // Home's Start rides just above the floating tab bar; the workout fills the screen, so from the
+    // first set to the summary the button keeps one place.
+    let place = ready.frame
+    XCTAssertFalse(app.tabBars.firstMatch.exists)  // No tab bar during a workout.
+    XCTAssertEqual(homeFrame.width, place.width); XCTAssertEqual(homeFrame.height, place.height)
+    XCTAssertLessThan(homeFrame.maxY, place.maxY)
     Thread.sleep(forTimeInterval: 0.7); ready.tap()
     let active = primary(app, "Finish set")
-    XCTAssertEqual(active.frame, homeFrame)
+    XCTAssertEqual(active.frame, place)
     let reps = app.textFields["set.reps"]; reps.tap(); reps.typeText("12")
     tap(app, "session.finish")
     XCTAssertTrue(app.buttons["session.saveEnd"].waitForExistence(timeout: 6))
@@ -47,14 +52,15 @@ final class WorkoutActionsUITests: XCTestCase {
     XCTAssertEqual(reps.value as? String, "12")
     Thread.sleep(forTimeInterval: 0.7); active.tap()
     XCTAssertTrue(app.staticTexts["rest.elapsed"].waitForExistence(timeout: 6))
-    XCTAssertEqual(primary(app, "Start set").frame, homeFrame)
+    XCTAssertEqual(primary(app, "Start set").frame, place)
     snap(app, "actions-rest")
     tap(app, "session.finish")  // A saved set means ending needs a deliberate second tap.
     tap(app, "session.endConfirm")
     XCTAssertEqual(app.descendants(matching: .any)["summary.sets"].firstMatch.label, "Sets, 1")
-    XCTAssertEqual(app.buttons["summary.done"].frame, homeFrame)
+    XCTAssertEqual(app.buttons["summary.done"].frame, place)
     tap(app, "summary.done")
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 6))
+    XCTAssertTrue(app.tabBars.buttons["Profile"].exists)  // Home and Profile return after the summary.
   }
 
   func testADoubleTapNeverStartsAndFinishesASetAtOnce() {

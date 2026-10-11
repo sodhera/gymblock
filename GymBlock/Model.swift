@@ -138,6 +138,9 @@ struct Session: Codable, Identifiable {
   /// time never counts as set time, rest time or workout time.
   var pausedAt: Date?
   var pausedSeconds: Double?
+  /// Sets planned per exercise for this workout (exercise ID → count), changed with − and + on the
+  /// page; without one, an exercise gets last time's count.
+  var targets: [String: Int]?
   var completedSets: [LoggedSet] { sets.filter(\.completed) }
   var repSets: [LoggedSet] { completedSets.filter { !$0.exercise.timed } }
   var totalReps: Int { repSets.reduce(0) { $0 + $1.reps } }

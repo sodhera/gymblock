@@ -6,11 +6,13 @@ import SwiftUI
 
 /// Shown while the saved session (and, for a subscriber, the entitlement) is being restored, so a
 /// returning user never sees the welcome page or the offer flash first.
+/// The splash: the kettlebell locks (see `KettlebellLock`), then the app appears.
 struct LaunchView: View {
+  var done: () -> Void = {}
   var body: some View {
     ZStack {
       DotGrid()
-      BrandMark(size: 72)
+      KettlebellLock(size: 96, done: done).offset(y: -24)
     }.accessibilityHidden(true)
   }
 }

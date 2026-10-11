@@ -29,8 +29,55 @@ struct BrandMark: View {
   }
 }
 
+/// The mark as a padlock, for the launch screen (11 Oct 2026): the kettlebell's handle is the shackle.
+/// It appears unlocked (handle raised and swivelled open on one leg, the keyhole an empty cut-out),
+/// the handle swings shut and drops into the bell, it clicks (a crisp haptic, the bell gives a
+/// little), and the keyhole lights emerald: locked. Then `done`.
+struct KettlebellLock: View {
+  var size: CGFloat = 96
+  var done: () -> Void = {}
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var shown = false
+  @State private var swung = false
+  @State private var dropped = false
+  @State private var locked = false
+  var body: some View {
+    ZStack {
+      BrandMarkShape(part: .handle).fill(JourneyColor.text, style: FillStyle(eoFill: true))
+        .rotationEffect(.degrees(swung ? 0 : -16), anchor: UnitPoint(x: 0.70, y: 0.66))
+        .offset(y: dropped ? 0 : -size * 0.24)
+      BrandMarkShape(part: .bell).fill(JourneyColor.text)
+        .scaleEffect(x: locked ? 1 : 1.0, y: locked ? 1 : 0.985, anchor: .bottom)
+      BrandMarkShape(part: .keyhole).fill(locked ? JourneyColor.signal : JourneyColor.stage)
+        .scaleEffect(locked ? 1 : 0.82, anchor: UnitPoint(x: 0.5, y: 0.68))
+    }
+    .frame(width: size, height: size)
+    .padding(.top, size * 0.3)  // Room for the raised handle.
+    .opacity(shown ? 1 : 0)
+    .accessibilityHidden(true)
+    .task {
+      if reduceMotion {
+        swung = true; dropped = true; locked = true; shown = true
+        try? await Task.sleep(for: .milliseconds(350))
+        done(); return
+      }
+      withAnimation(.easeOut(duration: 0.25)) { shown = true }
+      try? await Task.sleep(for: .milliseconds(300))
+      withAnimation(.easeInOut(duration: 0.22)) { swung = true }
+      try? await Task.sleep(for: .milliseconds(240))
+      withAnimation(.spring(duration: 0.26, bounce: 0.28)) { dropped = true }
+      try? await Task.sleep(for: .milliseconds(170))
+      JourneyHaptic.play(.rigid, store.profile, intensity: 1)
+      withAnimation(.spring(duration: 0.3, bounce: 0.45)) { locked = true }
+      try? await Task.sleep(for: .milliseconds(520))
+      done()
+    }
+  }
+}
+
 private struct BrandMarkShape: Shape {
-  enum Part { case iron, keyhole }
+  enum Part { case iron, keyhole, handle, bell }
   let part: Part
   func path(in rect: CGRect) -> Path {
     typealias G = BrandMark.Geometry
@@ -61,6 +108,21 @@ private struct BrandMarkShape: Shape {
       bell.closeSubpath()
       // The bell must not punch a hole where it overlaps the handle: fill it separately with no even-odd.
       return path.normalized(eoFill: true).union(bell)
+    case .handle:
+      // The handle alone, its window cut out (even-odd), and open at the bottom: a U-shaped shackle
+      // with two legs. The cut is the bar between the feet, which sits inside the bell once locked,
+      // so the locked mark is unchanged.
+      outline(&path, G.handle)
+      outline(&path, G.window)
+      let foot = CGRect(x: o.x + 0.30 * s, y: o.y + 0.50 * s, width: 0.40 * s, height: 0.20 * s)
+      return path.normalized(eoFill: true).subtracting(Path(foot))
+    case .bell:
+      let b = G.bell, half = asin((b.base - b.cy) / b.r) * 180 / .pi
+      path.addLines(stride(from: 180 + half, through: -half, by: -2).map { a in
+        let r = a * .pi / 180
+        return p(b.cx + b.r * cos(r), b.cy - b.r * sin(r))
+      })
+      path.closeSubpath()
     case .keyhole:
       let k = G.key
       path.addEllipse(in: CGRect(origin: p(0.5 - k.r, k.cy - k.r), size: CGSize(width: 2 * k.r * s, height: 2 * k.r * s)))

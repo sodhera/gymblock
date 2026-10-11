@@ -49,7 +49,6 @@ import SwiftUI
     WindowGroup {
       RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
         .tint(GymColor.ink).foregroundStyle(GymColor.ink)
-        .preferredColorScheme(JourneyColor.theme.scheme)
         .onOpenURL { account.handle($0) }
         .task { wire() }
     }
@@ -90,10 +89,22 @@ struct RootView: View {
   @State private var launched = false
   @State private var shown: Screen = .launch
   @State private var visible = true
+  /// The lock animation plays once per launch before anything else appears.
+  @State private var splashDone = false
+  /// System, Light or Dark (Settings → Appearance), kept on this iPhone.
+  @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+  /// The app follows the appearance; onboarding, sign-in and the offer stay on paper, as drawn.
+  private var colorScheme: ColorScheme? {
+    switch shown {
+    case .app, .launch: return Appearance(rawValue: appearance)?.colorScheme ?? nil
+    default: return .light
+    }
+  }
 
   enum Screen: Equatable { case launch, onboarding, signIn, notice(Account.Notice), paywall, app }
 
   private var screen: Screen {
+    if !splashDone { return .launch }
     if !launched && !waitExpired && !AppConfig.offline {
       if account.state == .loading { return .launch }
       // A subscriber's entitlement is cached, so this is normally instant; it keeps the offer from flashing.
@@ -120,7 +131,7 @@ struct RootView: View {
       GymColor.ground.ignoresSafeArea()
       Group {
         switch shown {
-        case .launch: LaunchView()
+        case .launch: LaunchView { splashDone = true }
         case .onboarding: OnboardingView(onSignIn: openSignIn)
         case .signIn: SignInView(back: { signingIn = false; account.message = nil }, signedIn: signedIn)
         case .notice(let notice): AccountNoticeView(notice: notice, primary: { noticePrimary(notice) },
@@ -131,6 +142,7 @@ struct RootView: View {
       }
       .transition(.identity)
       .opacity(visible ? 1 : 0)
+      .preferredColorScheme(colorScheme)
       #if DEBUG
         if let app = StoreShots.shieldApp { ShieldPreview(app: app) }
       #endif
@@ -204,4 +216,12 @@ struct RootView: View {
       signingIn = true
     }
   }
+}
+
+/// The app's appearance (11 Oct 2026): follow the system, or always light or dark.
+enum Appearance: String, CaseIterable {
+  case system, light, dark
+  static let key = "gymblock.appearance"
+  var colorScheme: ColorScheme? { self == .light ? .light : self == .dark ? .dark : nil }
+  var title: String { self == .system ? "System" : self == .light ? "Light" : "Dark" }
 }

@@ -1,105 +1,89 @@
 import SwiftUI
 
-/// Home: the streak, workouts per week against the goal, and one button. Start workout opens the
-/// chooser: a split, or a free workout.
+/// Home: what's up next, and one button. The week as a quiet line at the top; the split the rotation
+/// has queued as the headline with one line of what's ahead; Start workout begins it in one tap, and
+/// "Up next" opens the chooser to pick another. The caption slot, the button and the 20-pt rest
+/// under it stay in their fixed place. (Chosen 11 Oct 2026 over a streak-first and a launcher layout.)
 struct HomeView: View {
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
   @Environment(\.dynamicTypeSize) private var typeSize
   @State private var choosing = false
-  @State private var settings = false
-  @State private var history = false
   @State private var appeared = false
-  private enum Detail: Hashable { case exercise(Exercise, UUID?), time }
-  @State private var detail: Detail?
-  /// A brand-new log shows a labelled example until the first workout is saved.
-  private var example: Bool { store.data.history.isEmpty }
-  private var stats: HomeStats { example ? GymStore.exampleStats(goal: min(7, max(1, store.profile.baseline?.trainingDays ?? 5))) : store.homeStats() }
-  private var trends: [ExerciseTrend] { example ? GymStore.exampleTrends(unit: store.profile.unit) : store.exerciseTrends() }
+  /// Free workout picked in the chooser; it lasts until the workout starts.
+  @State private var free = false
+  /// Nothing logged yet: Home shows the truth (an empty week) and guides to the first workout.
+  private var firstRun: Bool { store.data.history.allSatisfy { $0.completedSets.isEmpty } }
+  private var stats: HomeStats { store.homeStats() }
+  @State private var creatingSplit = false
+  /// The split the rotation has queued, else the first split; none means a free workout.
+  private var nextSplit: Workout? {
+    free ? nil : store.data.workouts.first { $0.id == store.profile.preferredSplitID } ?? store.data.workouts.first
+  }
   var body: some View {
     NavigationStack {
       ZStack {
         DotGrid()
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
           if typeSize.isAccessibilitySize {
-            ScrollView { content.padding(.bottom, 12) }.scrollIndicators(.hidden).frame(maxHeight: .infinity)
+            ScrollView { content.padding(.bottom, 24) }.scrollIndicators(.hidden).frame(maxHeight: .infinity)
           } else {
             content
-            Spacer(minLength: 0)
           }
           VStack(spacing: 10) {
             caption.frame(minHeight: 20)
             JourneyButton(title: store.t("Start workout"), id: "home.start") {
               JourneyHaptic.play(.medium, store.profile, intensity: 0.8)
-              choosing = true
+              startNext()
             }
             Color.clear.frame(height: 20)
           }.padding(.top, 8)
         }.padding(.horizontal, 24).padding(.bottom, 4)
       }
-      .navigationTitle(greeting).navigationBarTitleDisplayMode(.inline).track(screen: "home", ["example": example])
-      .navigationDestination(item: $detail) { which in
-        switch which {
-        case .exercise(let exercise, let splitID): ExerciseProgressView(exercise: exercise, split: store.data.workouts.first { $0.id == splitID })
-        case .time: TimeTrainingView()
+      .toolbar(.hidden, for: .navigationBar).track(screen: "home", ["first": firstRun])
+      .sheet(isPresented: $creatingSplit) {
+        NavigationStack {
+          SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
+            store.updateProfile { $0.preferredSplitID = split.id }
+            free = false
+            creatingSplit = false
+          }
+        }.tint(JourneyColor.text)
+      }
+      .sheet(isPresented: $choosing) {
+        WorkoutChoiceView(current: nextSplit?.id) { split in
+          free = split == nil
+          if let split { store.updateProfile { $0.preferredSplitID = split.id } }
         }
       }
-      .toolbar {
-        ToolbarItemGroup(placement: .topBarTrailing) {
-          Button { history = true } label: { Label(store.t("History"), systemImage: "clock.arrow.circlepath") }
-            .accessibilityIdentifier("home.history")
-          Button { settings = true } label: { Label(store.t("Settings"), systemImage: "gearshape") }
-            .accessibilityIdentifier("home.preferences")
-        }
-      }
-      .navigationDestination(isPresented: $history) { HistoryHubView() }
-      .sheet(isPresented: $settings) { PreferencesView() }
-      .sheet(isPresented: $choosing) { WorkoutChoiceView() }
+      .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.12)) { appeared = true } }
     }
   }
 
-  /// Cards settle in one after another the first time Home appears.
+  /// The week at the top, then the queued workout centred in the space above the button.
   private var content: some View {
-    let s = stats
-    let trends = trends
-    return VStack(alignment: .leading, spacing: 12) {
-      StreakCard(stats: s) { history = true }.reveal(appeared, 0).padding(.top, 8)
-      if !trends.isEmpty {
-        ExerciseCarousel(trends: trends, example: example) { trend in
-          if example { history = true } else { detail = .exercise(trend.exercise, trend.splitID) }
-        }.reveal(appeared, 1)
-      }
-      HStack(spacing: 12) {
-        InfoCard(symbol: "trophy.fill", value: s.lastPR.map { relative($0.date) } ?? "—", label: store.t("since last PR"),
-                 detail: s.lastPR.map { store.t($0.exercise.name) + " " + $0.text } ?? store.t("Beat a set to earn one."), id: "home.pr") {
-          if example { history = true } else if let pr = s.lastPR { detail = .exercise(pr.exercise, pr.splitID) } else { history = true }
-        }
-        InfoCard(symbol: "clock.fill", value: JourneyFormat.minutes(Double(s.totalMinutes)), label: store.t("time training"),
-                 detail: "\(s.totalWorkouts) " + store.t("workouts"), id: "home.time") { if example { history = true } else { detail = .time } }
-      }.reveal(appeared, 2)
-    }
-    .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.12)) { appeared = true } }
-  }
-  private var greeting: String {
-    let hour = Calendar.current.component(.hour, from: Date())
-    let base = hour < 5 ? "Good evening" : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
-    let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-    return store.t(base) + (name.isEmpty ? "" : ", " + name)
-  }
-  private func relative(_ date: Date) -> String {
-    let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: date), to: Calendar.current.startOfDay(for: Date())).day ?? 0
-    if days == 0 { return store.t("today") }
-    if days == 1 { return store.t("yesterday") }
-    if days < 14 { return "\(days) " + store.t("days ago") }
-    return "\(days / 7) " + store.t("weeks ago")
+    VStack(alignment: .leading, spacing: 0) {
+      WeekLine(stats: stats).padding(.top, 24).reveal(appeared, 0)
+      Spacer(minLength: 32)
+      // No split yet and nothing logged: "Your first workout", with setting up a split one tap away.
+      UpNext(split: nextSplit, detail: nextDetail,
+             title: nextSplit == nil && firstRun ? store.t("Your first workout") : nil,
+             link: nextSplit == nil && firstRun ? (store.t("Set up a split"), { creatingSplit = true }) : nil) { choosing = true }
+        .reveal(appeared, 1)
+      Spacer(minLength: 32)
+    }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
+  private var nextDetail: String { store.summary(of: nextSplit) }
+  /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to change it.
+  private func startNext() {
+    if let split = nextSplit { store.updateProfile { $0.preferredSplitID = split.id } }
+    store.startSession(workout: nextSplit)
+  }
   /// One honest line above the button, the same one the workout shows.
   @ViewBuilder private var caption: some View {
     if store.data.demoLoaded == true && !StoreShots.on {
       Text(store.t("Sample data")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).accessibilityIdentifier("home.sample")
-    } else if example {
-      Text(store.t("Example until your first workout")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
     } else if store.profile.focusEnabled == true {
       HStack(spacing: 6) {
         Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
@@ -114,85 +98,136 @@ struct HomeView: View {
   }
 }
 
-/// Choose today's workout and go: the split that's up next is marked, a free workout is one row,
-/// and splits are created and edited here too.
+extension GymStore {
+  /// "3 exercises · 35 min last time": what's ahead and how long it took before, never a prediction.
+  func summary(of split: Workout?) -> String {
+    guard let split else { return t("Pick exercises as you go.") }
+    let count = split.exercises.count
+    var parts = [count == 1 ? t("1 exercise") : "\(count) " + t("exercises")]
+    if let last = data.history.filter({ $0.splitID == split.id }).max(by: { $0.started < $1.started }) {
+      parts.append("\(max(1, Int(last.duration / 60))) " + t("min last time"))
+    } else {
+      parts.append(t("first time"))
+    }
+    return parts.joined(separator: "  ·  ")
+  }
+}
+
+/// Pick what's up next, opened from Home's "Up next". A 28-pt title with Edit, then plain ruled rows
+/// (the name, one quiet line, an emerald check on the chosen one) and New split as the last row. Choosing only picks: Home's Start workout is the one place a workout starts (and blocking turns
+/// on). Edit turns the split rows into editor links with a delete button; a long press does the same.
 struct WorkoutChoiceView: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.dismiss) private var dismiss
+  /// The split up next now; nil when Free workout is.
+  let current: UUID?
+  let choose: (Workout?) -> Void
+  @State private var picked: UUID??
+  @State private var editMode = false
   @State private var creating = false
   @State private var editing: Workout?
   @State private var deleting: Workout?
-  private var next: UUID? { store.profile.preferredSplitID }
+  /// Half height to pick; full height to make or edit a split.
+  @State private var detent: PresentationDetent = .medium
+  private var chosen: UUID? { picked ?? current }
   var body: some View {
     NavigationStack {
       ScrollView {
-        JourneyGlassGroup(spacing: 10) {
-          VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 18) {
+          HStack(alignment: .firstTextBaseline) {
+            Text(store.t("Up next")).font(JourneyType.headline).tracking(-0.3).foregroundStyle(JourneyColor.text)
+              .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: 12)
+            if !store.data.workouts.isEmpty {
+              Button(store.t(editMode ? "Done" : "Edit")) { withAnimation(.smooth(duration: 0.25)) { editMode.toggle() } }
+                .font(.system(.body, weight: editMode ? .semibold : .regular))
+                .foregroundStyle(editMode ? JourneyColor.text : JourneyColor.secondary).accessibilityIdentifier("split.edit")
+            }
+          }
+          // No card: the sheet is already the surface, so the rows sit on it ruled like an index.
+          VStack(alignment: .leading, spacing: 0) {
             ForEach(store.data.workouts) { split in
-              row(split.name, detail: split.exercises.map { store.t($0.name) }.joined(separator: " · "), id: split.id, split: split)
+              row(split)
+              SettingsDivider()
             }
-            row(store.t("Free workout"), detail: store.t("Pick exercises as you go."), id: nil)
+            if !editMode {
+              row(nil)
+              SettingsDivider()
+            }
             Button { creating = true } label: {
-              Label(store.t("New split"), systemImage: "plus").font(JourneyType.option).foregroundStyle(JourneyColor.secondary)
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                  .strokeBorder(JourneyColor.ink(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
-            }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("split.add")
+              HStack(spacing: 10) {
+                Image(systemName: "plus").font(.system(.body, weight: .semibold))
+                Text(store.t("New split")).font(.body)
+              }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 56, alignment: .leading).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityIdentifier("split.add")
           }
-        }.padding(.horizontal, 20).padding(.vertical, 12)
-      }.gymPage().navigationTitle(store.t("Start workout")).navigationBarTitleDisplayMode(.inline).track(screen: "home.choose")
-        .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } } }
-        .navigationDestination(isPresented: $creating) {
-          SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
-            store.updateProfile { $0.preferredSplitID = split.id }; creating = false
-          }
-        }
-        .navigationDestination(item: $editing) { split in
-          SplitEditorContent(workout: split) { _ in editing = nil }
-        }
-        .confirmationDialog(store.t("Delete this split?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
-                            titleVisibility: .visible, presenting: deleting) { split in
-          Button(store.t("Delete split"), role: .destructive) { store.deleteSplit(split.id) }
-          Button(store.t("Cancel"), role: .cancel) {}
-        } message: { _ in Text(store.t("Past workouts stay in History.")) }
-    }.presentationDetents([.medium, .large])
-  }
-  private func row(_ name: String, detail: String, id: UUID?, split: Workout? = nil) -> some View {
-    let upNext = split != nil && next == id
-    return HStack(spacing: 12) {
-      Button {
-        JourneyHaptic.play(.medium, store.profile, intensity: 0.8)
-        store.updateProfile { $0.preferredSplitID = id }
-        store.startSession(workout: split)
-        dismiss()
-      } label: {
-        HStack(spacing: 12) {
-          VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-              Text(name).font(JourneyType.option).foregroundStyle(JourneyColor.text).lineLimit(1)
-              if upNext {
-                Text(store.t("Up next")).font(.caption.weight(.semibold)).foregroundStyle(JourneyColor.onAccent)
-                  .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(JourneyColor.signal))
-              }
-            }
-            Text(detail).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1)
-          }
-          Spacer(minLength: 8)
-          Image(systemName: "arrow.right").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
-        }.frame(maxWidth: .infinity, minHeight: 46, alignment: .leading).contentShape(Rectangle())
-      }.buttonStyle(.plain).accessibilityIdentifier(split.map { "choice.\($0.name)" } ?? "choice.free")
-        .accessibilityHint(store.t("Starts this workout"))
-      if let split {
-        Menu {
-          Button(store.t("Edit split"), systemImage: "pencil") { editing = split }
-          Button(store.t("Delete split"), systemImage: "trash", role: .destructive) { deleting = split }
-        } label: {
-          Image(systemName: "ellipsis").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
-            .frame(width: 44, height: 44).contentShape(Rectangle())
-        }.accessibilityLabel(store.t("Edit") + " " + name).accessibilityIdentifier("split.menu.\(split.name)")
+        }.padding(.horizontal, 20).padding(.top, 24).padding(.bottom, 24)
       }
-    }.padding(.leading, 20).padding(.trailing, split == nil ? 20 : 8).padding(.vertical, 6)
-      .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous), tint: upNext ? JourneyColor.ink(0.06) : nil, interactive: true)
+      .scrollIndicators(.hidden).gymPage().toolbar(.hidden, for: .navigationBar).track(screen: "home.choose")
+      .navigationDestination(isPresented: $creating) {
+        SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in pick(split) }
+      }
+      .navigationDestination(item: $editing) { split in
+        SplitEditorContent(workout: split) { _ in editing = nil }
+      }
+      .alert(store.t("Delete this split?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+             presenting: deleting) { split in
+        Button(store.t("Delete split"), role: .destructive) {
+          store.deleteSplit(split.id)
+          if store.data.workouts.isEmpty { editMode = false }
+        }
+        Button(store.t("Cancel"), role: .cancel) {}
+      } message: { _ in Text(store.t("Past workouts stay in Profile.")) }
+    }.presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
+      .onChange(of: creating) { _, open in if open { withAnimation { detent = .large } } }
+      .onChange(of: editing) { _, split in if split != nil { withAnimation { detent = .large } } }
+  }
+
+  /// A split, or Free workout when nil.
+  private func row(_ split: Workout?) -> some View {
+    let selected = !editMode && chosen == split?.id
+    return Button {
+      if editMode, let split { editing = split } else { pick(split) }
+    } label: {
+      HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 3) {
+          Text(split.map { store.t($0.name) } ?? store.t("Free workout")).font(.system(.title3, weight: .semibold))
+            .foregroundStyle(JourneyColor.text).lineLimit(1)
+          Text(store.summary(of: split)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+        }
+        Spacer(minLength: 8)
+        if editMode, let split {
+          Button { deleting = split } label: {
+            Image(systemName: "trash").font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
+              .frame(width: 44, height: 44).contentShape(Rectangle())
+          }.buttonStyle(.plain).accessibilityLabel(store.t("Delete split")).accessibilityIdentifier("split.delete.\(split.name)")
+          Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
+            .accessibilityHidden(true)
+        } else if selected {
+          Image(systemName: "checkmark").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal)
+            .transition(.scale.combined(with: .opacity)).accessibilityHidden(true)
+        }
+      }.padding(.vertical, 12).frame(maxWidth: .infinity, minHeight: 64, alignment: .leading).contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .contextMenu {
+      if let split {
+        Button(store.t("Edit split"), systemImage: "pencil") { editing = split }
+        Button(store.t("Delete split"), systemImage: "trash", role: .destructive) { deleting = split }
+      }
+    }
+    .accessibilityAddTraits(selected ? .isSelected : [])
+    .accessibilityIdentifier(split.map { "choice.\($0.name)" } ?? "choice.free")
+  }
+
+  /// The check moves to the row, then the sheet closes and Home shows the choice.
+  private func pick(_ split: Workout?) {
+    JourneyHaptic.play(.selection, store.profile)
+    withAnimation(.spring(duration: 0.3, bounce: 0.2)) { picked = .some(split?.id) }
+    choose(split)
+    Task { @MainActor in
+      try? await Task.sleep(for: .milliseconds(280))
+      dismiss()
+    }
   }
 }

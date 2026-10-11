@@ -135,30 +135,4 @@ extension GymStore {
     return Array(trends.sorted { $0.gain > $1.gain }.prefix(limit))
   }
 
-  /// A labelled example for a brand-new log, so Home never opens empty. Cleared by the first workout.
-  static func exampleStats(goal: Int, now: Date = Date()) -> HomeStats {
-    let calendar = Calendar.current
-    var grid: [[Bool]] = []; var starts: [Date] = []
-    let thisWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
-    for offset in stride(from: 11, through: 0, by: -1) {
-      let start = calendar.date(byAdding: .weekOfYear, value: -offset, to: thisWeek) ?? now
-      starts.append(start)
-      grid.append(offset == 0 ? [true, false, true, false, false, false, false] : [true, false, true, false, true, false, false])
-    }
-    return HomeStats(grid: grid, weekStarts: starts, streakWeeks: 5, thisWeek: 2, goal: goal, restsOnTime: 0.82, averageRest: 95, restCount: 60,
-                     liftsUp: 9, workoutsInWindow: 12, totalWorkouts: 34, totalVolumeKG: 41_000, todayIndex: (calendar.component(.weekday, from: now) + 5) % 7,
-                     totalMinutes: 34 * 42, lastPR: (calendar.date(byAdding: .day, value: -3, to: now) ?? now, Exercise.catalog.first { $0.id == "bench" } ?? Exercise.catalog[0], nil, "+5 kg"))
-  }
-  static func exampleTrends(unit: String, now: Date = Date()) -> [ExerciseTrend] {
-    let lookup = Dictionary(uniqueKeysWithValues: Exercise.catalog.map { ($0.id, $0) })
-    func make(_ id: String, _ values: [Double], reps: Int) -> ExerciseTrend? {
-      guard let exercise = lookup[id] else { return nil }
-      let points = values.enumerated().map { i, v in
-        (date: Calendar.current.date(byAdding: .day, value: -7 * (values.count - 1 - i), to: now) ?? now,
-         value: GymStore.displayedWeight(v, unit: unit).rounded())
-      }
-      return ExerciseTrend(exercise: exercise, splitID: nil, splitName: nil, repMode: false, constant: "at \(reps) reps", points: points)
-    }
-    return [make("bench", [60, 60, 62.5, 65, 65, 70], reps: 5), make("squat", [80, 85, 85, 90, 95, 100], reps: 5), make("curl", [12.5, 12.5, 15, 15, 15, 17.5], reps: 10)].compactMap { $0 }
-  }
 }

@@ -19,8 +19,8 @@ The design follows from that:
 **Home: one decision.**
 - The headline is the workout (`Up next · Push` with its exercises) and the primary button is Start workout.
 - The middle holds one glass card: this week as seven day dots (today in emerald), "2 of 5" against the onboarding goal, and the last workout. Tapping the card opens History.
-- History and Settings are glass buttons at the top.
-- There's no tab bar.
+- History is a glass button at the top.
+- A floating Liquid Glass tab bar holds Home and Profile (settings), added 11 Oct 2026; it is hidden during a workout and its summary, and Start workout sits just above it.
 - Splits rotate: finishing Push makes Legs next, so the usual case is **one tap to start**. Tapping the workout name opens a chooser with Free workout, the splits and a New split option. Each split has an `…` menu to edit or delete it.
 
 **Workout.** The layout is fixed from top to bottom:

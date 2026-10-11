@@ -231,7 +231,7 @@ struct OnboardingView: View {
     case .commit: return "Hold the button until it fills."
     case .mindA, .mindB, .restA, .restB: return "Illustrative, not a measurement."
     case .logA, .logB: return "An example log, not your data."
-    case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Pausing your workout lifts it."
+    case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
     case .splits: return store.data.workouts.isEmpty ? "Optional. You can always train freely and add splits later." : "Home lines up the next split and its last weights."
     default: return nil

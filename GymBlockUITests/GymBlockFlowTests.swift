@@ -16,6 +16,17 @@ final class GymBlockFlowTests: XCTestCase {
     let ready = expectation(for: NSPredicate(format: "enabled == true AND hittable == true"), evaluatedWith: button)
     wait(for: [ready], timeout: 6); button.tap()
   }
+  /// Home and Profile are the two tabs of the floating tab bar.
+  private func tab(_ label: String) {
+    let button = app.tabBars.buttons[label]; XCTAssertTrue(button.waitForExistence(timeout: 6), label)
+    // Home fades in after a workout; a tap during the fade can be dropped, so wait for the selection.
+    let selected = NSPredicate(format: "selected == true")
+    for _ in 0..<2 where !button.isSelected {
+      button.tap()
+      _ = XCTWaiter.wait(for: [expectation(for: selected, evaluatedWith: button)], timeout: 2)
+    }
+    XCTAssertTrue(button.isSelected, label)
+  }
   /// The primary action, after the brief guard that stops double taps.
   private func primary(_ label: String? = nil) {
     let button = app.buttons["workout.primary"]
@@ -87,13 +98,13 @@ final class GymBlockFlowTests: XCTestCase {
   }
 
   func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
-    tap("home.preferences"); tap("settings.logout"); tap("settings.logout.confirm")
+    tab("Profile"); tap("settings.logout"); tap("settings.logout.confirm")
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))  // Back to onboarding.
     app.terminate(); app.launchArguments = ["--skip-onboarding"]; app.launch()  // Workouts survived the log-out.
     tap("home.history"); XCTAssertTrue(app.buttons["history.reps"].waitForExistence(timeout: 6))
     XCTAssertFalse(app.staticTexts["No workouts yet"].exists)
     app.navigationBars.buttons.firstMatch.tap()
-    tap("home.preferences"); tap("settings.delete"); tap("settings.delete.confirm")
+    tab("Profile"); tap("settings.delete"); tap("settings.delete.confirm")
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))
     app.terminate(); app.launchArguments = []; app.launch()
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8))  // Nothing left to resume.
@@ -123,9 +134,11 @@ final class GymBlockFlowTests: XCTestCase {
     XCTAssertTrue(app.buttons["set.saved"].waitForExistence(timeout: 5))
     XCTAssertTrue(app.buttons["set.saved"].label.contains("Attempt"), app.buttons["set.saved"].label)
     endWorkout(); tap("summary.done")
-    tap("home.preferences"); snap("v6-15-settings"); tap("settings.baseline"); snap("v6-16-training-answers")
+    tab("Profile"); snap("v6-15-settings")
+    Thread.sleep(forTimeInterval: 5); XCTAssertTrue(app.tabBars.buttons["Profile"].isSelected)  // The tab stays put.
+    tap("settings.baseline"); snap("v6-16-training-answers")
     app.navigationBars.buttons["Cancel"].tap()
-    app.switches["settings.timeSets"].switches.firstMatch.tap(); tap("preferences.done")
+    app.switches["settings.timeSets"].switches.firstMatch.tap(); tab("Home")
     freeWorkout(); tap("exercise.curl")
     primary("Log set")  // One tap per set.
     XCTAssertTrue(app.staticTexts["rest.elapsed"].waitForExistence(timeout: 5))
@@ -147,10 +160,10 @@ final class GymBlockFlowTests: XCTestCase {
     tap("history.reps")
     XCTAssertTrue(app.staticTexts["totals.amount"].waitForExistence(timeout: 6))
     app.navigationBars.buttons.firstMatch.tap(); app.navigationBars.buttons.firstMatch.tap()
-    tap("home.preferences"); tap("settings.baseline")
+    tab("Profile"); tap("settings.baseline")
     XCTAssertTrue(app.navigationBars.buttons["Cancel"].waitForExistence(timeout: 6))
     snap("v6-accessible-training-answers")
-    app.navigationBars.buttons["Cancel"].tap(); tap("preferences.done")
+    app.navigationBars.buttons["Cancel"].tap(); tab("Home")
     XCTAssertTrue(app.buttons["home.start"].waitForExistence(timeout: 6))
   }
 

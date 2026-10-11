@@ -30,18 +30,35 @@ struct JourneyTheme {
   let button: Color
   let onButton: Color
 
-  /// Warm off-white paper, ink type, emerald signal. Light appearance.
+  /// Warm off-white paper, ink type, emerald signal; at night (dark mode, 11 Oct 2026) the same page
+  /// in warm charcoal with off-white type, a slightly brighter emerald and an inverted primary button.
+  /// Every colour is dynamic, so the whole app follows the appearance.
   static let paper = JourneyTheme(
     name: "paper", scheme: .light,
-    stage: Color(red: 0.961, green: 0.953, blue: 0.937), backdrop: .solid,
-    text: Color(red: 0.08, green: 0.08, blue: 0.09), secondary: Color(red: 0.40, green: 0.40, blue: 0.42),
-    tertiary: Color(red: 0.58, green: 0.58, blue: 0.60), ink: Color(red: 0.08, green: 0.08, blue: 0.09),
-    raised: Color.white, glow: Color(red: 1, green: 0.93, blue: 0.80), glowAlpha: 0.9,
-    dot: Color(red: 0.08, green: 0.08, blue: 0.09), dotAlpha: 0.10, vignette: 0,
-    signal: Color(red: 0.06, green: 0.60, blue: 0.42), danger: Color(red: 0.86, green: 0.25, blue: 0.21), onAccent: .white,
-    button: Color(red: 0.08, green: 0.08, blue: 0.09), onButton: .white)
+    stage: .dynamic(UIColor(red: 0.961, green: 0.953, blue: 0.937, alpha: 1), UIColor(red: 0.082, green: 0.078, blue: 0.071, alpha: 1)),
+    backdrop: .solid,
+    text: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    secondary: .dynamic(UIColor(red: 0.40, green: 0.40, blue: 0.42, alpha: 1), UIColor(red: 0.69, green: 0.68, blue: 0.66, alpha: 1)),
+    tertiary: .dynamic(UIColor(red: 0.58, green: 0.58, blue: 0.60, alpha: 1), UIColor(red: 0.50, green: 0.49, blue: 0.47, alpha: 1)),
+    ink: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    raised: .dynamic(.white, UIColor(red: 0.145, green: 0.138, blue: 0.128, alpha: 1)),
+    glow: .dynamic(UIColor(red: 1, green: 0.93, blue: 0.80, alpha: 1), UIColor(red: 1, green: 0.74, blue: 0.45, alpha: 1)), glowAlpha: 0.9,
+    dot: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    dotAlpha: 0.10, vignette: 0,
+    signal: .dynamic(UIColor(red: 0.06, green: 0.60, blue: 0.42, alpha: 1), UIColor(red: 0.20, green: 0.76, blue: 0.54, alpha: 1)),
+    danger: .dynamic(UIColor(red: 0.86, green: 0.25, blue: 0.21, alpha: 1), UIColor(red: 0.95, green: 0.38, blue: 0.33, alpha: 1)),
+    onAccent: .white,
+    button: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    onButton: .dynamic(.white, UIColor(red: 0.082, green: 0.078, blue: 0.071, alpha: 1)))
   /// The app's theme. Chosen on 8 Oct 2026 from three rendered directions (paper, an indigo dusk, a slate).
   static let current: JourneyTheme = .paper
+}
+
+extension Color {
+  /// A colour that follows the appearance: `light` on paper, `dark` at night.
+  static func dynamic(_ light: UIColor, _ dark: UIColor) -> Color {
+    Color(UIColor { $0.userInterfaceStyle == .dark ? dark : light })
+  }
 }
 
 enum JourneyColor {
@@ -121,8 +138,8 @@ enum JourneyMotion {
     if let g = impacts[style] { return g }
     let g = UIImpactFeedbackGenerator(style: style); g.prepare(); impacts[style] = g; return g
   }
+  /// Haptics are always on (11 Oct 2026): designed feedback is part of the app, not a preference.
   static func play(_ kind: Self, _ profile: Profile, intensity: CGFloat = 1) {
-    guard profile.hapticsEnabled ?? true else { return }
     switch kind {
     case .selection: selector.selectionChanged(); selector.prepare()
     case .light: impact(.light).impactOccurred(intensity: intensity)
@@ -159,42 +176,45 @@ enum JourneyMotion {
 /// A wide cool wash, a tighter core behind the stage area, dots that brighten towards the glow, and a soft
 /// vignette at the edges: enough light for glass to refract, never a coloured background.
 struct DotGrid: View {
+  @Environment(\.colorScheme) private var scheme
   var body: some View {
-    GeometryReader { g in Image(uiImage: Self.image(g.size)).resizable() }
+    GeometryReader { g in Image(uiImage: Self.image(g.size, dark: scheme == .dark)).resizable() }
       .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
   }
   @MainActor private static var cache: [String: UIImage] = [:]
-  @MainActor static func image(_ size: CGSize) -> UIImage {
+  @MainActor static func image(_ size: CGSize, dark: Bool = false) -> UIImage {
     let size = CGSize(width: max(1, size.width.rounded()), height: max(1, size.height.rounded()))
-    let key = JourneyTheme.current.name + "-\(size.width)x\(size.height)"
+    let key = JourneyTheme.current.name + (dark ? "-dark" : "") + "-\(size.width)x\(size.height)"
     if let cached = cache[key] { return cached }
     let image = UIGraphicsImageRenderer(size: size).image { r in
       let c = r.cgContext
-      Self.draw(in: c, size: size)
+      Self.draw(in: c, size: size, dark: dark)
     }
     cache[key] = image
     return image
   }
   /// Shared with the app icon so every surface is the same stage.
-  static func draw(in c: CGContext, size: CGSize, glowScale: CGFloat = 1) {
+  static func draw(in c: CGContext, size: CGSize, glowScale: CGFloat = 1, dark: Bool = false) {
     let t = JourneyTheme.current
     let space = CGColorSpaceCreateDeviceRGB()
-    c.setFillColor(UIColor(t.stage).cgColor); c.fill(CGRect(origin: .zero, size: size))
+    let traits = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
+    func ui(_ color: Color) -> UIColor { UIColor(color).resolvedColor(with: traits) }
+    c.setFillColor(ui(t.stage).cgColor); c.fill(CGRect(origin: .zero, size: size))
     if case .gradient(let top, let bottom) = t.backdrop,
        let g = CGGradient(colorsSpace: space, colors: [UIColor(top).cgColor, UIColor(bottom).cgColor] as CFArray, locations: [0, 1]) {
       c.drawLinearGradient(g, start: .zero, end: CGPoint(x: 0, y: size.height), options: [])
     }
     let center = CGPoint(x: size.width / 2, y: size.height * 0.40)
     func radial(_ alpha: CGFloat, _ radius: CGFloat, at point: CGPoint) {
-      let glow = UIColor(t.glow).withAlphaComponent(alpha * t.glowAlpha)
+      let glow = ui(t.glow).withAlphaComponent(alpha * t.glowAlpha)
       let colors = [glow.cgColor, glow.withAlphaComponent(alpha * t.glowAlpha * 0.35).cgColor, glow.withAlphaComponent(0).cgColor] as CFArray
       if let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 0.45, 1]) {
         c.drawRadialGradient(gradient, startCenter: point, startRadius: 0, endCenter: point, endRadius: radius, options: [])
       }
     }
     // A wide wash, then a tighter core, so the middle of the page carries the light.
-    radial(t.scheme == .dark ? 0.07 : 0.55, size.width * 1.05 * glowScale, at: center)
-    radial(t.scheme == .dark ? 0.09 : 0.45, size.width * 0.50 * glowScale, at: center)
+    radial(dark ? 0.07 : 0.55, size.width * 1.05 * glowScale, at: center)
+    radial(dark ? 0.10 : 0.45, size.width * 0.50 * glowScale, at: center)
     // Dots, brightening towards the core.
     let step: CGFloat = 22, radius: CGFloat = 1.0
     let reach = hypot(size.width, size.height) * 0.56
@@ -203,7 +223,7 @@ struct DotGrid: View {
       var x = size.width.truncatingRemainder(dividingBy: step) / 2
       while x < size.width {
         let d = min(1, hypot(x - center.x, y - center.y) / reach)
-        c.setFillColor(UIColor(t.dot).withAlphaComponent(t.dotAlpha * (0.25 + 0.75 * pow(1 - d, 1.6))).cgColor)
+        c.setFillColor(ui(t.dot).withAlphaComponent((dark ? 0.07 : t.dotAlpha) * (0.25 + 0.75 * pow(1 - d, 1.6))).cgColor)
         c.fillEllipse(in: CGRect(x: x - radius, y: y - radius, width: 2 * radius, height: 2 * radius))
         x += step
       }
@@ -244,10 +264,10 @@ extension View {
 /// The top-lit edge every glass surface shares.
 enum JourneyRim {
   static var gradient: LinearGradient {
-    let light = JourneyTheme.current.scheme == .dark
-    return LinearGradient(
-      colors: light ? [Color.white.opacity(0.22), Color.white.opacity(0.06), Color.white.opacity(0.02)]
-                    : [Color.white.opacity(0.9), Color.white.opacity(0.5), Color.black.opacity(0.04)],
+    LinearGradient(
+      colors: [.dynamic(UIColor(white: 1, alpha: 0.9), UIColor(white: 1, alpha: 0.14)),
+               .dynamic(UIColor(white: 1, alpha: 0.5), UIColor(white: 1, alpha: 0.05)),
+               .dynamic(UIColor(white: 0, alpha: 0.04), UIColor(white: 1, alpha: 0.02))],
       startPoint: .top, endPoint: .bottom)
   }
 }

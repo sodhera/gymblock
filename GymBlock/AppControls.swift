@@ -37,22 +37,6 @@ struct GlassPillButton: View {
   }
 }
 
-/// A round step button inside a glass stepper. Holding it repeats.
-struct StepButton: View {
-  let symbol: String
-  let label: String
-  let id: String
-  let action: () -> Void
-  var body: some View {
-    Button(action: action) {
-      Image(systemName: symbol).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
-        .frame(width: 40, height: 40).background(Circle().fill(JourneyColor.ink(0.08)))
-        .contentShape(Circle())
-    }.buttonStyle(JourneyPressStyle()).buttonRepeatBehavior(.enabled)
-      .accessibilityLabel(label).accessibilityIdentifier(id)
-  }
-}
-
 extension View {
   /// Staggered entrance: fades up into place, each index a little after the last.
   func reveal(_ shown: Bool, _ index: Int) -> some View {

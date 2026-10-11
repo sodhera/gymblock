@@ -83,7 +83,7 @@ final class StoreScreenshotsUITests: XCTestCase {
 
   func testSettingsPages() {
     launch(["--ui-reset", "--demo"])
-    tap("home.preferences", scroll: false)
+    app.tabBars.buttons["Profile"].tap()
     if ProcessInfo.processInfo.environment["SETTINGS_SCROLL"] != nil {
       snap("80-settings-top"); app.swipeUp(); snap("81-settings-middle")
       app.swipeUp(); app.swipeUp(); snap("82-settings-bottom")

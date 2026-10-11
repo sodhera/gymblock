@@ -48,14 +48,39 @@ extension GymStore {
     return session.sets.filter { $0.exercise.id == exercise.id && $0.completed && $0.warmup != true }.count
   }
 
-  /// How many sets you did of this exercise last time; three when there's no history.
+  /// How many sets this exercise gets: what was planned on the page for this workout, else how many
+  /// you did last time, else three.
   func targetSets(_ exercise: Exercise?) -> Int {
     guard let exercise else { return 3 }
+    if let planned = session?.targets?[exercise.id] { return planned }
     let last = data.history.filter { $0.id != session?.id }
       .sorted { ($0.ended ?? $0.started) > ($1.ended ?? $1.started) }
       .lazy.map { $0.sets.filter { $0.exercise.id == exercise.id && $0.completed && $0.warmup != true }.count }
       .first { $0 > 0 }
     return min(10, max(1, last ?? profile.baseline?.sets ?? 3))
+  }
+
+  /// Plan one set more or fewer of an exercise for this workout; never fewer than are done (or running).
+  func changeTarget(_ exercise: Exercise, by delta: Int) {
+    guard let session, delta != 0 else { return }
+    let running = session.selected?.id == exercise.id && (session.stage == .active || session.stage == .log) ? 1 : 0
+    let planned = min(20, max(doneSets(exercise) + running, targetSets(exercise) + delta))
+    guard planned != targetSets(exercise) else { return }
+    if data.session?.targets == nil { data.session?.targets = [:] }
+    data.session?.targets?[exercise.id] = planned
+    Analytics.track("set_target_changed", ["exercise": exercise.id, "sets": planned])
+    persist()
+  }
+
+  /// Put this workout's exercises in a new order (exercise IDs, as dragged on the page).
+  func setExerciseOrder(_ ids: [String]) {
+    guard let current = data.session?.exercises else { return }
+    let byID = Dictionary(current.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    let order = ids.compactMap { byID[$0] } + current.filter { !ids.contains($0.id) }
+    guard order.map(\.id) != current.map(\.id) else { return }
+    data.session?.exercises = order
+    Analytics.track("exercises_reordered", ["exercises": order.count])
+    persist()
   }
 
   /// The next exercise in this workout's order that still has sets to do, wrapping around.
