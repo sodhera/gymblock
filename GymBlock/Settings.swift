@@ -1,4 +1,3 @@
-import FamilyControls
 import SwiftUI
 
 /// Settings, designed from a clean slate on 11 Oct 2026 in the app's own language: a large title with
@@ -12,9 +11,6 @@ struct PreferencesView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var denied = false
   @ObservedObject private var blocking = AppBlocking.shared
-  @State private var picking = false
-  @State private var pickDraft = FamilyActivitySelection()
-  @State private var blockDenied = false
   @State private var renaming = false
   @State private var draftName = ""
   @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
@@ -54,19 +50,9 @@ struct PreferencesView: View {
                              : store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
 
         SettingsLabel(store.t("Blocking"))
-        SettingToggle(title: store.t("Block apps during workouts"), id: "focus.enabled",
-                      isOn: Binding(get: { store.profile.focusEnabled == true }, set: setBlocking))
-        Button(action: chooseApps) {
-          HStack(spacing: 10) {
-            Text(store.t("Apps to block")).font(.body).foregroundStyle(JourneyColor.text)
-            Spacer(minLength: 12)
-            BlockedIcons(size: 18, limit: 3).foregroundStyle(JourneyColor.secondary)
-            if blocking.isEmpty { Text(store.t("None")).font(.body).foregroundStyle(JourneyColor.secondary) }
-            Image(systemName: "chevron.right").font(.system(.footnote, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
-          }.frame(minHeight: 50).contentShape(Rectangle())
-        }.buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.blockedApps")
-        SettingsNote(store.t(blockDenied && !blocking.authorized ? "Screen Time access is off for GymBlock. Allow it in iOS Settings."
-                             : "Uses Apple’s Screen Time from Start workout to Finish."))
+        NavigationLink { BlockedAppsView() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
+          .pageRow().accessibilityIdentifier("settings.blockedApps")
+        SettingsNote(store.t("Uses Apple’s Screen Time from Start workout to Finish."))
 
         SettingsLabel(store.t("App"))
         SettingMenu(title: store.t("Appearance"), value: store.t(Appearance(rawValue: appearance)?.title ?? "System"), id: "settings.appearance") {
@@ -101,8 +87,6 @@ struct PreferencesView: View {
       }
       .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
       .toolbar(.hidden, for: .navigationBar)
-      .familyActivityPicker(headerText: store.t("Choose what to block from Start workout to Finish."), isPresented: $picking, selection: $pickDraft)
-      .onChange(of: pickDraft) { _, chosen in blocking.choose(chosen) }
       .alert(store.t("Your name"), isPresented: $renaming) {
         TextField(store.t("Your name"), text: $draftName).textInputAutocapitalization(.words)
         Button(store.t("Cancel"), role: .cancel) {}
@@ -113,23 +97,9 @@ struct PreferencesView: View {
       .track(screen: "settings")
     }
   }
-  /// Turning blocking on asks for Screen Time access, then for the apps if none are chosen yet.
-  private func setBlocking(_ on: Bool) {
-    guard on else { store.updateProfile { $0.focusEnabled = false }; return }
-    Task { @MainActor in
-      let granted = await blocking.requestAccess()
-      blockDenied = !granted
-      store.updateProfile { $0.focusEnabled = granted }
-      if granted && blocking.isEmpty { pickDraft = blocking.selection; picking = true }
-    }
-  }
-  private func chooseApps() {
-    Task { @MainActor in
-      guard await blocking.requestAccess() else { blockDenied = true; return }
-      blockDenied = false
-      pickDraft = blocking.selection
-      picking = true
-    }
+  /// "Off", "None" or what's blocked ("3 apps").
+  private var blockingValue: String {
+    store.profile.focusEnabled != true ? store.t("Off") : blocking.isEmpty ? store.t("None") : blocking.summary(store.t)
   }
   /// Turning the alert on asks iOS once; if notifications are off, say where to fix it.
   private func setAlerts(_ on: Bool) {

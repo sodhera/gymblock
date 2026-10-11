@@ -35,6 +35,7 @@
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
 		4866B68D137EEC52585DF7C0 /* StoreScreenshotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF3242CC4AB02EB7BA6AEE3 /* StoreScreenshotsUITests.swift */; };
 		4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F47BAD59FB5F3B4443457 /* Splits.swift */; };
+		4D76DC796AE14A381625091F /* BlockedApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */; };
 		4E13B1EE61AE6E2E2939ABFC /* OnboardingSplits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */; };
 		51FC5AC05980C96047E08233 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C23F4F4C175A9CE78D7C7A /* AppConfig.swift */; };
 		5344BF389B159F48B1698803 /* advance.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C25C3FE16037D11BD08D732 /* advance.wav */; };
@@ -184,6 +185,7 @@
 		74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		7576AF5B4BE365CAF8006511 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		75F70F4B27F004B995455CBB /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockedApps.swift; sourceTree = "<group>"; };
 		777BA2A5696BA38746AE2AF3 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
 		7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineBaseline.swift; sourceTree = "<group>"; };
 		7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingSplits.swift; sourceTree = "<group>"; };
@@ -306,6 +308,7 @@
 				284030AE460C4F499D46BE48 /* Assets.xcassets */,
 				AB4882431BE1CE28C0353541 /* Backend.swift */,
 				ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */,
+				75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */,
 				A9F89F22A1A0A3FBDFE26FD2 /* BrandMark.swift */,
 				B951846726741284DB93304B /* CloudSync.swift */,
 				777BA2A5696BA38746AE2AF3 /* DemoData.swift */,
@@ -679,6 +682,7 @@
 				30EE11CCA6770E2393AF2B92 /* ArmIllustration.swift in Sources */,
 				F0EA57A1F5791A926EE00BC8 /* Backend.swift in Sources */,
 				41D1A27CDD3EB2CF558F5AC4 /* BenefitScenes.swift in Sources */,
+				4D76DC796AE14A381625091F /* BlockedApps.swift in Sources */,
 				3A993B5429D068ACDA96B585 /* BrandMark.swift in Sources */,
 				28E63A5C8EE3E5BA2E71E2BD /* CloudSync.swift in Sources */,
 				BB3D6624D0A7D9FDDB187F22 /* DemoData.swift in Sources */,

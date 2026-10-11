@@ -1,16 +1,12 @@
-import FamilyControls
 import SwiftUI
 
-/// Profile, after SleepBlock's (11 Oct 2026): the title and Settings; one honest number (the average
-/// workout over the last seven, with how many and the total); the apps GymBlock blocks, on a glass
-/// card that opens the picker; your training as a calendar of dots (a column per week); then the
-/// recent workouts as ruled rows, each opening its page. A new account sees no numbers, never examples.
+/// Profile (11 Oct 2026): the title and Settings; one honest number (the average workout over the
+/// last seven); the apps GymBlock blocks, on a glass card that opens Blocked
+/// apps; this month as a calendar of dots; then the latest five workouts as cards, each opening its
+/// page, and every workout behind "All". A new account sees no numbers, never examples.
 struct ProfileTab: View {
   @EnvironmentObject private var store: GymStore
-  @ObservedObject private var blocking = AppBlocking.shared
   @State private var settings = false
-  @State private var picking = false
-  @State private var pickDraft = FamilyActivitySelection()
   private var sessions: [Session] { store.data.history.sorted { $0.started > $1.started } }
   var body: some View {
     NavigationStack {
@@ -20,11 +16,12 @@ struct ProfileTab: View {
           VStack(alignment: .leading, spacing: 0) {
             header
             if let recent { summary(recent).padding(.top, 26) }
-            BlockedAppsCard(action: chooseApps).padding(.top, 26)
+            NavigationLink { BlockedAppsView() } label: { BlockedAppsCard() }
+              .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("profile.blocking").padding(.top, 26)
             if sessions.isEmpty {
               empty.padding(.top, 40)
             } else {
-              TrainingCalendar(sessions: sessions).padding(.top, 40)
+              MonthDots(sessions: sessions).padding(.top, 40)
               recentList.padding(.top, 40)
             }
           }.frame(maxWidth: .infinity, alignment: .leading)
@@ -40,8 +37,6 @@ struct ProfileTab: View {
       }
       .toolbar(.hidden, for: .navigationBar)
       .track(screen: "profile", ["workouts": sessions.count])
-      .familyActivityPicker(headerText: store.t("Choose what to block from Start workout to Finish."), isPresented: $picking, selection: $pickDraft)
-      .onChange(of: pickDraft) { _, chosen in blocking.choose(chosen) }
     }
     .sheet(isPresented: $settings) { PreferencesView() }
   }
@@ -58,46 +53,50 @@ struct ProfileTab: View {
 
   // MARK: The number
 
-  private struct Recent { let count: Int; let average: Int; let total: Int }
-  /// The last seven workouts: their average length, how many, and the total.
+  private struct Recent { let count: Int; let average: Int }
+  /// The last seven workouts: how many, and their average length.
   private var recent: Recent? {
     let last = sessions.prefix(7).map(workoutMinutes)
     guard !last.isEmpty else { return nil }
-    let total = last.reduce(0, +)
-    return Recent(count: last.count, average: Int((Double(total) / Double(last.count)).rounded()), total: total)
+    return Recent(count: last.count, average: Int((Double(last.reduce(0, +)) / Double(last.count)).rounded()))
   }
+  /// How long a workout takes, in plain words: "Average workout", the length large with its units
+  /// spelled out small ("35 min", "1 hr 12 min"), then what it's the average of.
   private func summary(_ r: Recent) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text(r.count == 1 ? store.t("Last workout") : store.t("Avg workout") + " · " + store.t("last") + " \(r.count) " + store.t("workouts"))
+      Text(store.t(r.count == 1 ? "Last workout" : "Average workout"))
         .font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary)
-      Text(durationText(r.average)).font(.system(size: 40, weight: .semibold)).tracking(-1).monospacedDigit()
-        .foregroundStyle(JourneyColor.text).accessibilityIdentifier("profile.average")
-      Text("\(r.count) " + store.t(r.count == 1 ? "workout" : "workouts") + "  ·  " + durationText(r.total) + " " + store.t("total"))
-        .font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+      HStack(alignment: .firstTextBaseline, spacing: 4) {
+        ForEach(Array(durationParts(r.average).enumerated()), id: \.offset) { index, part in
+          Text("\(part.value)").font(.system(size: 40, weight: .semibold)).tracking(-1).monospacedDigit()
+            .foregroundStyle(JourneyColor.text).padding(.leading, index > 0 ? 8 : 0)
+          Text(store.t(part.unit)).font(.system(size: 20, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+        }
+      }.accessibilityIdentifier("profile.average")
+      if r.count > 1 {
+        Text(store.t("Over your last") + " \(r.count) " + store.t("workouts")).font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+      }
     }.accessibilityElement(children: .combine)
   }
 
   // MARK: The log
 
   private var recentList: some View {
-    VStack(alignment: .leading, spacing: 0) {
-      PageLabel(text: store.t("Recent workouts")).padding(.bottom, 4)
-      ForEach(Array(sessions.prefix(7).enumerated()), id: \.element.id) { index, session in
-        NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutRow(session: session) }
-          .buttonStyle(.plain)
-          .overlay(alignment: .top) { if index > 0 { SettingsDivider() } }
-          .accessibilityIdentifier("history." + session.id.uuidString)
+    VStack(alignment: .leading, spacing: 12) {
+      PageLabel(text: store.t("Recent workouts"))
+      ForEach(sessions.prefix(5)) { session in
+        NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutEntryCard(session: session) }
+          .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("history." + session.id.uuidString)
       }
-      if sessions.count > 7 {
+      if sessions.count > 5 {
         NavigationLink { AllWorkoutsView() } label: {
           HStack {
             Text(store.t("All") + " \(sessions.count) " + store.t("workouts")).font(.system(.subheadline, weight: .medium))
               .foregroundStyle(JourneyColor.secondary)
             Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 12, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
-          }.padding(.vertical, 16).contentShape(Rectangle())
-        }.buttonStyle(.plain).overlay(alignment: .top) { SettingsDivider() }
-          .accessibilityIdentifier("profile.allWorkouts")
+            Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
+          }.padding(.horizontal, 20).padding(.vertical, 10).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier("profile.allWorkouts")
       }
     }
   }
@@ -112,44 +111,30 @@ struct ProfileTab: View {
       }.padding(.top, 2)
     }
   }
-
-  /// The card opens the system picker (asking for Screen Time first, and turning blocking on); if
-  /// access is refused, Settings opens, where the blocking note says how to allow it.
-  private func chooseApps() {
-    Task { @MainActor in
-      guard await blocking.requestAccess() else { settings = true; return }
-      if store.profile.focusEnabled != true { store.updateProfile { $0.focusEnabled = true } }
-      pickDraft = blocking.selection
-      picking = true
-    }
-  }
 }
 
 /// Minutes from Start workout to End.
 func workoutMinutes(_ session: Session) -> Int { max(1, Int((session.duration / 60).rounded())) }
-/// "38m", "1h 12m", "2h".
-func durationText(_ minutes: Int) -> String {
-  guard minutes >= 60 else { return "\(minutes)m" }
-  return minutes % 60 == 0 ? "\(minutes / 60)h" : "\(minutes / 60)h \(minutes % 60)m"
+/// A length as numbers with their units: 35 min, 1 hr 12 min, 2 hr.
+func durationParts(_ minutes: Int) -> [(value: Int, unit: String)] {
+  guard minutes >= 60 else { return [(minutes, "min")] }
+  return minutes % 60 == 0 ? [(minutes / 60, "hr")] : [(minutes / 60, "hr"), (minutes % 60, "min")]
 }
 
 /// The apps GymBlock blocks, on glass: their real icons with "Blocked while you train", or what's
-/// missing ("Choose apps to block", "App blocking is off"). Tapping it opens the picker.
+/// missing ("Choose apps to block", "App blocking is off"). It opens Blocked apps.
 private struct BlockedAppsCard: View {
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
-  let action: () -> Void
   var body: some View {
-    Button(action: action) {
-      HStack(spacing: 14) {
-        content
-        Spacer(minLength: 8)
-        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
-      }
-      .padding(18).frame(maxWidth: .infinity, alignment: .leading)
-      .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-      .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous), interactive: true)
-    }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("profile.blocking")
+    HStack(spacing: 14) {
+      content
+      Spacer(minLength: 8)
+      Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
+    }
+    .padding(18).frame(maxWidth: .infinity, alignment: .leading)
+    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous), interactive: true)
   }
   @ViewBuilder private var content: some View {
     if store.profile.focusEnabled != true {
@@ -172,106 +157,114 @@ private struct BlockedAppsCard: View {
   }
 }
 
-/// Training as a calendar of dots: a column per week (Monday on top), the newest week on the right,
-/// the last 16 weeks. Emerald for a day trained, a faint dot for a day without, a ring on today; no
-/// dot before your first workout or after today, so nothing reads as missed that couldn't have been.
-/// Months are named above their first column. It echoes the paper's own dots, and each column is a
-/// week the streak counts.
-private struct TrainingCalendar: View {
+/// This month as a calendar of dots, Monday first: Home's week-line dots, emerald for a day trained,
+/// a ring on today, a faint dot for a day without, fainter still for the days to come (so the rest of
+/// the month never reads as missed). How often, at a glance; no minutes, no scale.
+private struct MonthDots: View {
   @EnvironmentObject private var store: GymStore
   let sessions: [Session]
-  private let weeks = 16
-  private let dot: CGFloat = 11
+  private let dot: CGFloat = 12
   var body: some View {
     var calendar = Calendar.current
     calendar.firstWeekday = 2
     let today = calendar.startOfDay(for: Date())
-    let thisWeek = calendar.dateInterval(of: .weekOfYear, for: today)?.start ?? today
-    let starts = (0..<weeks).map { calendar.date(byAdding: .weekOfYear, value: $0 - (weeks - 1), to: thisWeek) ?? thisWeek }
+    let first = calendar.dateInterval(of: .month, for: today)?.start ?? today
+    let length = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
+    let lead = (calendar.component(.weekday, from: first) + 5) % 7
+    let monday = calendar.date(byAdding: .day, value: -lead, to: first) ?? first
+    let rows = (lead + length + 6) / 7
     let trained = Set(sessions.map { calendar.startOfDay(for: $0.started) })
-    let first = trained.min() ?? today
-    let shown = sessions.filter { $0.started >= (starts.first ?? thisWeek) }.count
-    return VStack(alignment: .leading, spacing: 10) {
-      // Month names over the column where each month starts.
+    let count = sessions.filter { calendar.isDate($0.started, equalTo: today, toGranularity: .month) }.count
+    let tally = "\(count) " + store.t(count == 1 ? "workout" : "workouts")
+    return VStack(alignment: .leading, spacing: 8) {
+      HStack(alignment: .firstTextBaseline) {
+        PageLabel(text: today.formatted(.dateTime.month(.wide)))
+        Text(tally).font(.system(.caption, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).fixedSize()
+      }
       HStack(spacing: 0) {
-        Color.clear.frame(width: 18)
-        ForEach(0..<weeks, id: \.self) { column in
-          let start = starts[column]
-          let days = (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
-          let opens = column == 0 || days.contains { calendar.component(.day, from: $0) == 1 }
-          Text(opens ? (days.first { calendar.component(.day, from: $0) == 1 } ?? start).formatted(.dateTime.month(.abbreviated)) : "")
-            .font(.system(size: 10, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
-            .lineLimit(1).fixedSize().frame(maxWidth: .infinity, alignment: .leading)
+        ForEach(0..<7, id: \.self) { column in
+          Text((calendar.date(byAdding: .day, value: column, to: monday) ?? monday).formatted(.dateTime.weekday(.narrow)))
+            .font(.system(size: 11, weight: .medium)).foregroundStyle(JourneyColor.tertiary).frame(maxWidth: .infinity)
         }
       }
-      HStack(alignment: .top, spacing: 0) {
-        // M · W · F down the side.
-        VStack(spacing: 0) {
-          ForEach(0..<7, id: \.self) { row in
-            Text(row % 2 == 0 && row < 6 ? ["M", "T", "W", "T", "F", "S", "S"][row] : "")
-              .font(.system(size: 9, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
-              .frame(width: 18, height: dot + 9, alignment: .leading)
+      VStack(spacing: 0) {
+        ForEach(0..<rows, id: \.self) { row in
+          HStack(spacing: 0) {
+            ForEach(0..<7, id: \.self) { column in
+              let index = row * 7 + column - lead
+              let day = calendar.date(byAdding: .day, value: index, to: first) ?? first
+              Group {
+                if index >= 0 && index < length {
+                  let on = trained.contains(day)
+                  Circle().fill(on ? JourneyColor.signal : day == today ? Color.clear : JourneyColor.ink(day > today ? 0.05 : 0.12))
+                    .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: day == today && !on ? 1.5 : 0))
+                } else {
+                  Color.clear
+                }
+              }.frame(width: dot, height: dot).frame(maxWidth: .infinity).frame(height: 34)
+            }
           }
         }
-        ForEach(0..<weeks, id: \.self) { column in
-          VStack(spacing: 0) {
-            ForEach(0..<7, id: \.self) { row in
-              let day = calendar.date(byAdding: .day, value: row, to: starts[column]) ?? today
-              cell(day: day, trained: trained.contains(day), today: day == today, empty: day < first || day > today)
-                .frame(height: dot + 9)
-            }
-          }.frame(maxWidth: .infinity)
-        }
       }
-      Text("\(shown) " + store.t(shown == 1 ? "workout" : "workouts") + "  ·  " + store.t("last") + " \(weeks) " + store.t("weeks"))
-        .font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary).padding(.top, 4)
     }
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(store.t("Training calendar") + ", \(shown) " + store.t("workouts") + ", " + store.t("last") + " \(weeks) " + store.t("weeks"))
+    .accessibilityLabel(today.formatted(.dateTime.month(.wide)) + ", " + tally)
     .accessibilityIdentifier("profile.calendar")
   }
-  @ViewBuilder private func cell(day: Date, trained: Bool, today: Bool, empty: Bool) -> some View {
-    if trained {
-      Circle().fill(JourneyColor.signal).frame(width: dot, height: dot)
-    } else if today {
-      Circle().strokeBorder(JourneyColor.text, lineWidth: 1.5).frame(width: dot, height: dot)
-    } else if empty {
-      Color.clear.frame(width: dot, height: dot)
-    } else {
-      Circle().fill(JourneyColor.ink(0.12)).frame(width: dot, height: dot)
-    }
-  }
 }
 
-/// A workout as a ruled row: the day, then the split and when it ran; its length on the right.
-private struct WorkoutRow: View {
+/// One workout as its own card, after JournalBlock's entries: the day, large and light, over its
+/// month; the split, with its time and exercise count as one quiet line, the same voice as the entry page.
+private struct WorkoutEntryCard: View {
   @EnvironmentObject private var store: GymStore
   let session: Session
+  private var detail: String {
+    var seen = Set<String>()
+    let count = session.sets.map(\.exercise).filter { seen.insert($0.id).inserted }.count
+    let exercises = count == 1 ? store.t("1 exercise") : "\(count) " + store.t("exercises")
+    return "\(max(1, Int(session.duration / 60))) " + store.t("min") + "  ·  " + exercises
+  }
   var body: some View {
-    let end = session.ended ?? session.started.addingTimeInterval(session.duration)
-    HStack(spacing: 16) {
-      VStack(alignment: .leading, spacing: 5) {
-        Text(session.started.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-          .font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
-        Text(store.t(session.name) + " · " + session.started.formatted(date: .omitted, time: .shortened) + " → " + end.formatted(date: .omitted, time: .shortened))
-          .font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
-      }
-      Spacer(minLength: 8)
-      Text(durationText(workoutMinutes(session))).font(.system(.title3, weight: .semibold)).monospacedDigit()
-        .foregroundStyle(JourneyColor.text)
-    }.padding(.vertical, 14).contentShape(Rectangle()).accessibilityElement(children: .combine)
+    HStack(alignment: .center, spacing: 18) {
+      VStack(spacing: 0) {
+        Text(session.started.formatted(.dateTime.day())).font(.system(.title, weight: .light)).monospacedDigit()
+          .foregroundStyle(JourneyColor.text)
+        Text(session.started.formatted(.dateTime.month(.abbreviated))).font(.system(.caption2, weight: .medium)).tracking(0.8)
+          .textCase(.uppercase).foregroundStyle(JourneyColor.tertiary)
+      }.frame(minWidth: 44)
+      VStack(alignment: .leading, spacing: 3) {
+        Text(store.t(session.name)).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(detail).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+      }.frame(maxWidth: .infinity, alignment: .leading)
+      Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
+        .accessibilityHidden(true)
+    }
+    .padding(.horizontal, 20).padding(.vertical, 16)
+    .journeySurface(cornerRadius: 20)
+    .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    .accessibilityElement(children: .combine).accessibilityAddTraits(.isButton)
   }
 }
 
-/// Every workout, newest first, as the same ruled rows.
+/// Every workout, newest first, as the same cards.
 private struct AllWorkoutsView: View {
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    SettingsSubpage(title: store.t("All workouts")) {
-      ForEach(store.data.history.sorted { $0.started > $1.started }) { session in
-        NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutRow(session: session) }.pageRow()
-      }
-    }.track(screen: "profile.all")
+    ZStack {
+      DotGrid()
+      ScrollView {
+        LazyVStack(alignment: .leading, spacing: 12) {
+          Text(store.t("All workouts")).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+            .accessibilityAddTraits(.isHeader).padding(.bottom, 8)
+          ForEach(store.data.history.sorted { $0.started > $1.started }) { session in
+            NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutEntryCard(session: session) }
+              .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("history." + session.id.uuidString)
+          }
+        }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 32)
+      }.scrollIndicators(.hidden)
+    }
+    .navigationBarTitleDisplayMode(.inline)
+    .track(screen: "profile.all")
   }
 }
 
