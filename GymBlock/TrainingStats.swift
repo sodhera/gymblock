@@ -65,13 +65,13 @@ struct WeeklyBars: View {
     .chartXAxis {
       AxisMarks(values: xValues) { _ in
         AxisValueLabel(format: .dateTime.day().month(.abbreviated), centered: true)
-          .font(.caption2).foregroundStyle(JourneyColor.tertiary)
+          .font(.app(.caption2)).foregroundStyle(JourneyColor.tertiary)
       }
     }
     .chartYAxis {
       AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
         AxisGridLine().foregroundStyle(JourneyColor.hairline)
-        AxisValueLabel().font(.caption2).foregroundStyle(JourneyColor.tertiary)
+        AxisValueLabel().font(.app(.caption2)).foregroundStyle(JourneyColor.tertiary)
       }
     }
     .frame(height: height)
@@ -110,10 +110,10 @@ struct TrainingStatsView: View {
               Eyebrow(text: scopeName + " · " + store.t(fourWeeks ? "Last 4 weeks" : "All time"))
               HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(formatNumber(points.reduce(0) { $0 + value($1) }.rounded()))
-                  .font(.system(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+                  .font(.app(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
                   .lineLimit(1).minimumScaleFactor(0.5)
                   .accessibilityIdentifier("totals.amount")
-                Text(unit).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+                Text(unit).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
               }
             }
             WeeklyBars(weeks: weeks, height: 170).accessibilityIdentifier("totals.chart")
@@ -123,11 +123,11 @@ struct TrainingStatsView: View {
             ForEach(Array(points.reversed().enumerated()), id: \.element.id) { index, point in
               if index > 0 { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
               HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(point.date, format: .dateTime.day().month(.abbreviated)).font(.subheadline).monospacedDigit()
+                Text(point.date, format: .dateTime.day().month(.abbreviated)).font(.app(.subheadline)).monospacedDigit()
                   .foregroundStyle(JourneyColor.secondary).frame(width: 64, alignment: .leading)
-                Text(store.t(point.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+                Text(store.t(point.name)).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
                 Spacer(minLength: 8)
-                Text(formatNumber(value(point)) + " " + unit).font(.system(.subheadline, weight: .medium)).monospacedDigit()
+                Text(formatNumber(value(point)) + " " + unit).font(.app(.subheadline, weight: .medium)).monospacedDigit()
                   .foregroundStyle(JourneyColor.text).lineLimit(1)
               }.padding(.vertical, 12).accessibilityElement(children: .combine)
             }

@@ -17,7 +17,7 @@ struct WeekLine: View {
             .frame(width: 9, height: 9)
         }
       }
-      Text(label).font(.system(.subheadline, weight: .medium)).monospacedDigit()
+      Text(label).font(.app(.subheadline, weight: .medium)).monospacedDigit()
         .foregroundStyle(JourneyColor.secondary)
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("home.week")
@@ -66,12 +66,12 @@ struct ProgressCard: View {
     return VStack(alignment: .leading, spacing: 10) {
       HStack(alignment: .firstTextBaseline) {
         VStack(alignment: .leading, spacing: 2) {
-          Text(store.t(trend.exercise.name)).font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
+          Text(store.t(trend.exercise.name)).font(.app(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
           Text(trend.constant)
             .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1)
         }
         Spacer(minLength: 8)
-        Text(gainText(points, trend)).font(.system(.headline, weight: .bold)).monospacedDigit()
+        Text(gainText(points, trend)).font(.app(.headline, weight: .bold)).monospacedDigit()
           .foregroundStyle(gain(points) > 0 ? JourneyColor.signal : JourneyColor.secondary).fixedSize()
       }
       Chart {
@@ -96,7 +96,7 @@ struct ProgressCard: View {
         GeometryReader { geometry in
           if let plot = proxy.plotFrame, let at = proxy.position(for: (x: points.count - 1, y: values.last ?? 0)) {
             let origin = geometry[plot].origin
-            Text(value(values.last ?? 0, trend)).font(.system(.footnote, weight: .semibold)).monospacedDigit()
+            Text(value(values.last ?? 0, trend)).font(.app(.footnote, weight: .semibold)).monospacedDigit()
               .foregroundStyle(JourneyColor.secondary).fixedSize()
               .frame(width: 140, alignment: .trailing)
               .position(x: origin.x + at.x - 70 + 5, y: origin.y + at.y - 20)
@@ -117,13 +117,18 @@ struct ProgressCard: View {
       VStack(spacing: 6) {
         Image(systemName: "chart.line.uptrend.xyaxis").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.signal)
         Text(store.t(hasHistory ? "Repeat a workout to see your progress" : "Start a workout to see your progress"))
-          .font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+          .font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
       }.frame(maxWidth: .infinity).frame(height: 132).background(DotField(hole: CGSize(width: 330, height: 96)))
     }
     .accessibilityElement(children: .combine).accessibilityIdentifier("home.progress.empty")
   }
 
-  private func gain(_ points: [(date: Date, value: Double)]) -> Double { (points.last?.value ?? 0) - (points.first?.value ?? 0) }
+  /// The change over the shown workouts, zero when it's smaller than a plate: that is kg/lb rounding
+  /// (24 lb is 10.89 kg), not progress.
+  private func gain(_ points: [(date: Date, value: Double)]) -> Double {
+    let change = (points.last?.value ?? 0) - (points.first?.value ?? 0)
+    return abs(change) < (store.profile.unit == "lb" ? 0.45 : 0.2) ? 0 : change
+  }
   /// "+2.5 kg", "+2 reps"; "Holding" when level; a drop says so in grey, never in red.
   private func gainText(_ points: [(date: Date, value: Double)], _ trend: ExerciseTrend) -> String {
     let change = gain(points)
@@ -238,7 +243,7 @@ struct UpNext: View {
         Button(action: link.action) {
           HStack(spacing: 8) {
             Image(systemName: "plus").font(.system(.subheadline, weight: .semibold))
-            Text(link.label).font(.system(.body, weight: .medium))
+            Text(link.label).font(.app(.body, weight: .medium))
           }.foregroundStyle(JourneyColor.signal).frame(minHeight: 44).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityIdentifier("home.setUpSplit")
       }
@@ -250,10 +255,10 @@ struct UpNext: View {
         HStack(spacing: 5) {
           Text(store.t("Up next"))
           Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
-        }.font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.signal)
-        Text(title ?? split.map { store.t($0.name) } ?? store.t("Free workout")).font(.system(size: heroSize, weight: .bold)).tracking(-1.2)
+        }.font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.signal)
+        Text(title ?? split.map { store.t($0.name) } ?? store.t("Free workout")).font(.app(size: heroSize, weight: .bold)).tracking(-1.2)
           .foregroundStyle(JourneyColor.text).lineLimit(2).minimumScaleFactor(0.6).multilineTextAlignment(.leading)
-        Text(detail).font(.body).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(2)
+        Text(detail).font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(2)
       }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
     }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("home.next")
       .accessibilityHint(store.t("Choose another workout"))
@@ -275,7 +280,7 @@ struct TimeTrainingView: View {
       VStack(alignment: .leading, spacing: 16) {
         VStack(alignment: .leading, spacing: 4) {
           Eyebrow(text: store.t("All time"))
-          Text(JourneyFormat.minutes(Double(total))).font(.system(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+          Text(JourneyFormat.minutes(Double(total))).font(.app(.largeTitle, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
           Text("\(store.data.history.filter { !$0.completedSets.isEmpty }.count) " + store.t("workouts")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
         }.padding(18).frame(maxWidth: .infinity, alignment: .leading).journeySurface(cornerRadius: 22)
         VStack(alignment: .leading, spacing: 12) {

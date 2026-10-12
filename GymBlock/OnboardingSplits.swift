@@ -17,7 +17,7 @@ struct SplitsStage: View {
           Image(systemName: "rectangle.stack.badge.plus").font(.title).foregroundStyle(JourneyColor.secondary)
             .accessibilityHidden(true)
           Text(store.t("A split is a workout you repeat: Push, Pull, Legs. Name one, add its exercises, and each workout starts with last time’s weights ready."))
-            .font(.subheadline).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+            .font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 12)
         }
         Spacer(minLength: 0)

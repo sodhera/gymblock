@@ -23,7 +23,7 @@ struct HistoryHubView: View {
         if store.data.history.isEmpty {
           VStack(alignment: .leading, spacing: 8) {
             Text(store.t("No workouts yet")).font(JourneyType.option).foregroundStyle(JourneyColor.text)
-            Text(store.t("Finished workouts appear here.")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+            Text(store.t("Finished workouts appear here.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
           }
         } else {
           if store.data.demoLoaded == true {
@@ -55,10 +55,10 @@ struct HistoryHubView: View {
           VStack(alignment: .leading, spacing: 6) {
             Eyebrow(text: store.t(volumeMetric ? "Weight moved" : "Reps") + " · " + store.t(fourWeeks ? "Last 4 weeks" : "All time"))
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-              Text(formatNumber(total.rounded())).font(.system(.largeTitle, weight: .bold)).monospacedDigit()
+              Text(formatNumber(total.rounded())).font(.app(.largeTitle, weight: .bold)).monospacedDigit()
                 .foregroundStyle(JourneyColor.text).lineLimit(1).minimumScaleFactor(0.5)
                 .contentTransition(.numericText())
-              Text(unit).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+              Text(unit).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
             }
           }
           Spacer(minLength: 8)
@@ -116,7 +116,7 @@ struct HistoryHubView: View {
     VStack(alignment: .leading, spacing: 0) {
       Eyebrow(text: store.t("Workouts")).padding(.top, 16).padding(.bottom, 4)
       if sessions.isEmpty {
-        Text(store.t("No workouts in this period")).font(.subheadline).foregroundStyle(JourneyColor.secondary).padding(.vertical, 14)
+        Text(store.t("No workouts in this period")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).padding(.vertical, 14)
       }
       LazyVStack(spacing: 0) {
         ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
@@ -153,12 +153,12 @@ struct WorkoutRecap: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 5) {
       HStack(alignment: .firstTextBaseline, spacing: 8) {
-        Text(store.t(session.name)).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(store.t(session.name)).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Spacer(minLength: 8)
         Text(session.ended ?? session.started, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated))
           .font(JourneyType.caption).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
       }
-      Text(detail).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+      Text(detail).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
       if !exerciseNames.isEmpty {
         Text(exerciseNames).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
           .lineLimit(2).fixedSize(horizontal: false, vertical: true)
@@ -217,7 +217,7 @@ struct WorkoutDetailView: View {
                   }
                 } else {
                   HStack {
-                    Text("\(index + 1)").font(.subheadline).foregroundStyle(JourneyColor.tertiary).frame(width: 40, alignment: .leading)
+                    Text("\(index + 1)").font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary).frame(width: 40, alignment: .leading)
                     if !exercise.timed {
                       Spacer()
                       Text(set.weightKG == 0 ? store.t("Bodyweight") : formatNumber(GymStore.displayedWeight(set.weightKG, unit: store.profile.unit)))
@@ -233,7 +233,7 @@ struct WorkoutDetailView: View {
                 .accessibilityIdentifier("saved." + set.id.uuidString)
             }
           } header: {
-            Text(store.t(exercise.name)).font(.headline).foregroundStyle(JourneyColor.text).textCase(nil)
+            Text(store.t(exercise.name)).font(.app(.headline)).foregroundStyle(JourneyColor.text).textCase(nil)
           }
         }
         if session.sets.isEmpty { Text(store.t("No sets yet")).foregroundStyle(JourneyColor.secondary) }
@@ -269,7 +269,7 @@ struct WorkoutDetailView: View {
     return Section {
       VStack(alignment: .leading, spacing: 8) {
         Eyebrow(text: (session.ended ?? session.started).formatted(.dateTime.weekday(.wide).day().month(.abbreviated).year()))
-        Text(headline.joined(separator: " · ")).font(.system(.title, weight: .bold)).tracking(-0.4).monospacedDigit()
+        Text(headline.joined(separator: " · ")).font(.app(.title, weight: .bold)).tracking(-0.4).monospacedDigit()
           .foregroundStyle(JourneyColor.text).lineLimit(2).minimumScaleFactor(0.7)
         Text(caption.joined(separator: " · ")).font(JourneyType.caption).monospacedDigit().foregroundStyle(JourneyColor.secondary)
       }.padding(.vertical, 6).frame(maxWidth: .infinity, alignment: .leading)
@@ -287,7 +287,7 @@ struct SetList: View {
         Text(store.t(set.exercise.name))
         Spacer()
         Text(setValue(set, store: store)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
-      }.font(.subheadline)
+      }.font(.app(.subheadline))
     }
   }
 }

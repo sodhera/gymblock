@@ -18,7 +18,7 @@ struct PreferencesView: View {
     NavigationStack {
       List {
         HStack(alignment: .center) {
-          Text(store.t("Settings")).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          Text(store.t("Settings")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
             .accessibilityAddTraits(.isHeader)
           Spacer()
           RoundGlassButton(symbol: "xmark", label: store.t("Close")) { dismiss() }.accessibilityIdentifier("preferences.done")
@@ -82,7 +82,7 @@ struct PreferencesView: View {
         LegalSection()
         AccountSection { dismiss() }
 
-        Text("GymBlock " + Analytics.appVersion + " (" + Analytics.build + ")").font(.footnote).foregroundStyle(JourneyColor.tertiary)
+        Text("GymBlock " + Analytics.appVersion + " (" + Analytics.build + ")").font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
           .frame(maxWidth: .infinity).padding(.top, 8).padding(.bottom, 32).pageRow().listRowSeparator(.hidden)
       }
       .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
@@ -128,7 +128,7 @@ struct SettingsNote: View {
   let text: String
   init(_ text: String) { self.text = text }
   var body: some View {
-    Text(text).font(.footnote).foregroundStyle(JourneyColor.tertiary).fixedSize(horizontal: false, vertical: true)
+    Text(text).font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).fixedSize(horizontal: false, vertical: true)
       .padding(.top, 8).padding(.bottom, 2).pageRow().listRowSeparator(.hidden)
   }
 }
@@ -143,9 +143,9 @@ struct SettingRow: View {
   var titleColor: Color = JourneyColor.text
   var body: some View {
     HStack(spacing: 10) {
-      Text(title).font(.body).foregroundStyle(titleColor).lineLimit(1)
+      Text(title).font(.app(.body)).foregroundStyle(titleColor).lineLimit(1)
       Spacer(minLength: 12)
-      if let value { Text(value).font(.body).foregroundStyle(JourneyColor.secondary).lineLimit(1) }
+      if let value { Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1) }
       if chevron { Image(systemName: "chevron.right").font(.system(.footnote, weight: .semibold)).foregroundStyle(JourneyColor.tertiary) }
       if external { Image(systemName: "arrow.up.right").font(.system(.footnote, weight: .semibold)).foregroundStyle(JourneyColor.tertiary) }
     }.frame(minHeight: 50).contentShape(Rectangle())
@@ -158,7 +158,7 @@ struct SettingToggle: View {
   let id: String
   @Binding var isOn: Bool
   var body: some View {
-    Toggle(isOn: $isOn) { Text(title).font(.body).foregroundStyle(JourneyColor.text) }
+    Toggle(isOn: $isOn) { Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text) }
       .tint(JourneyColor.signal).frame(minHeight: 50).pageRow().accessibilityIdentifier(id)
   }
 }
@@ -172,9 +172,9 @@ struct SettingMenu<Choices: View>: View {
   var body: some View {
     Menu { choices } label: {
       HStack(spacing: 6) {
-        Text(title).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Spacer(minLength: 12)
-        Text(value).font(.body).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+        Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
         Image(systemName: "chevron.up.chevron.down").font(.system(.caption, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
       }.frame(minHeight: 50).contentShape(Rectangle())
     }.buttonStyle(.plain).pageRow().accessibilityLabel(title + ", " + value).accessibilityIdentifier(id)
@@ -187,7 +187,7 @@ struct SettingsSubpage<Content: View>: View {
   @ViewBuilder var content: Content
   var body: some View {
     List {
-      Text(title).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+      Text(title).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
         .accessibilityAddTraits(.isHeader).padding(.bottom, 4).pageRow().listRowSeparator(.hidden)
       content
     }
@@ -282,7 +282,7 @@ struct TrainingAnswersForm: View {
   /// A number as a ruled row: the question on the left, the answer typed on the right.
   @ViewBuilder private func number(_ label: String, value: Binding<String>, unit: String = "") -> some View {
     HStack(spacing: 8) {
-      Text(store.t(label)).font(.body).foregroundStyle(invalid.contains(label) ? JourneyColor.signal : JourneyColor.text).lineLimit(1)
+      Text(store.t(label)).font(.app(.body)).foregroundStyle(invalid.contains(label) ? JourneyColor.signal : JourneyColor.text).lineLimit(1)
       Spacer(minLength: 12)
       TextField("—", text: Binding(get: { raw[label] ?? value.wrappedValue }, set: { text in
         raw[label] = text
@@ -296,10 +296,10 @@ struct TrainingAnswersForm: View {
         }
         if valid { invalid.remove(label); value.wrappedValue = text } else { invalid.insert(label) }
       })).keyboardType(label == "Reps / set" ? .numbersAndPunctuation : .decimalPad)
-        .font(.body).monospacedDigit().foregroundStyle(JourneyColor.text).tint(JourneyColor.signal)
+        .font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.text).tint(JourneyColor.signal)
         .multilineTextAlignment(.trailing).frame(minWidth: 60, maxWidth: 100)
         .accessibilityLabel(store.t(label)).modifier(SelectNumberOnFocus())
-      if !unit.isEmpty { Text(unit).font(.body).foregroundStyle(JourneyColor.secondary) }
+      if !unit.isEmpty { Text(unit).font(.app(.body)).foregroundStyle(JourneyColor.secondary) }
     }.frame(minHeight: 50).pageRow()
     if invalid.contains(label) { SettingsNote(store.t("Check this value.")) }
   }

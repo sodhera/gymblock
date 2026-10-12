@@ -42,7 +42,7 @@ struct ExercisePickerContent: View {
       Button { custom = true } label: {
         HStack(spacing: 10) {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
-          Text(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’").font(.body).lineLimit(1)
+          Text(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’").font(.app(.body)).lineLimit(1)
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
       }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
         .accessibilityIdentifier("exercise.custom")
@@ -61,13 +61,13 @@ struct ExercisePickerContent: View {
     let done = store.doneSets(exercise)
     return Button { dismissKeyboard(); onChoose(exercise) } label: {
       HStack(spacing: 12) {
-        Text(store.t(exercise.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(store.t(exercise.name)).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Spacer(minLength: 8)
         if store.session?.selected?.id == exercise.id {
           Image(systemName: "checkmark").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal)
             .accessibilityHidden(true)
         } else if done > 0 {
-          Text(setCount(done, store: store)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+          Text(setCount(done, store: store)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
         }
       }.frame(maxWidth: .infinity, minHeight: 50, alignment: .leading).contentShape(Rectangle())
     }.buttonStyle(.plain).pageRow().accessibilityIdentifier("exercise." + exercise.id)
@@ -284,7 +284,7 @@ struct CustomExerciseView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 30) {
         TextField(store.t("Exercise name"), text: $name)
-          .font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          .font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
           .textInputAutocapitalization(.words).submitLabel(.done).focused($naming).tint(JourneyColor.signal)
           .accessibilityIdentifier("custom.name")
         VStack(alignment: .leading, spacing: 10) {
@@ -293,7 +293,7 @@ struct CustomExerciseView: View {
             Text(store.t("Reps")).tag(false); Text(store.t("Time")).tag(true)
           }.pickerStyle(.segmented).accessibilityIdentifier("custom.measure")
           Text(store.t(timed ? "The set clock times it." : "You log weight and reps."))
-            .font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+            .font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
         }
       }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.top, 12)
     }

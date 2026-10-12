@@ -251,6 +251,9 @@ struct Improvement: Identifiable {
 }
 extension GymStore {
   func improvements(in workout: Session) -> [Improvement] {
+    // Smaller than any plate (0.25 kg, 0.5 lb): a difference under it is rounding between kg and lb,
+    // not progress (24 lb is 10.89 kg), and a weight within it is the same weight.
+    let plate = 0.2
     var seen = Set<String>()
     let exercises = workout.sets.map(\.exercise).filter { !$0.timed && seen.insert($0.id).inserted }
     return exercises.compactMap { exercise in
@@ -265,7 +268,7 @@ extension GymStore {
       var best: Improvement?
       for reps in Set(now.map(\.reps)) {
         let current = now.filter { $0.reps == reps }.map(\.weightKG).max() ?? 0
-        guard let previous = before.filter({ $0.reps == reps }).map(\.weightKG).max(), current - previous > 0.001 else { continue }
+        guard let previous = before.filter({ $0.reps == reps }).map(\.weightKG).max(), current - previous >= plate else { continue }
         if best == nil || current - previous > best!.weightGainKG! {
           best = Improvement(exercise: exercise, weightGainKG: current - previous, repGain: nil, reps: reps, weightKG: current)
         }
@@ -273,7 +276,7 @@ extension GymStore {
       if best != nil { return best }
       // Same weight, more reps.
       for set in now {
-        guard let previous = before.filter({ abs($0.weightKG - set.weightKG) < 0.001 }).map(\.reps).max(), set.reps > previous else { continue }
+        guard let previous = before.filter({ abs($0.weightKG - set.weightKG) < plate }).map(\.reps).max(), set.reps > previous else { continue }
         if best == nil || set.reps - previous > best!.repGain! {
           best = Improvement(exercise: exercise, weightGainKG: nil, repGain: set.reps - previous, reps: set.reps, weightKG: set.weightKG)
         }

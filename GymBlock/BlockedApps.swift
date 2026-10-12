@@ -19,7 +19,7 @@ struct BlockedAppsView: View {
           card.padding(.top, 24)
           if denied && !blocking.authorized {
             Text(store.t("Screen Time access is off for GymBlock. Allow it in iOS Settings."))
-              .font(.footnote).foregroundStyle(JourneyColor.secondary).padding(.top, 12)
+              .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).padding(.top, 12)
           }
           if !blocking.isEmpty { icons.padding(.top, 28) }
         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -43,7 +43,7 @@ struct BlockedAppsView: View {
       HStack(spacing: 14) {
         BlockingIcon(symbol: "lock.fill")
         Toggle(isOn: Binding(get: { store.profile.focusEnabled == true }, set: setBlocking)) {
-          Text(store.t("Block while you train")).font(.body).foregroundStyle(JourneyColor.text)
+          Text(store.t("Block while you train")).font(.app(.body)).foregroundStyle(JourneyColor.text)
         }.tint(JourneyColor.signal).accessibilityIdentifier("focus.enabled")
       }.frame(minHeight: 60)
       SettingsDivider()
@@ -58,9 +58,9 @@ struct BlockedAppsView: View {
   /// What locks, as iOS draws it: the tokens are opaque, so the icons are the only list there is.
   private var icons: some View {
     LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 14)], alignment: .leading, spacing: 14) {
-      ForEach(Array(blocking.selection.applicationTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.system(size: 34)).frame(width: 44, height: 44) }
-      ForEach(Array(blocking.selection.categoryTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.system(size: 34)).frame(width: 44, height: 44) }
-      ForEach(Array(blocking.selection.webDomainTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.system(size: 34)).frame(width: 44, height: 44) }
+      ForEach(Array(blocking.selection.applicationTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.app(size: 34)).frame(width: 44, height: 44) }
+      ForEach(Array(blocking.selection.categoryTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.app(size: 34)).frame(width: 44, height: 44) }
+      ForEach(Array(blocking.selection.webDomainTokens), id: \.self) { Label($0).labelStyle(.iconOnly).font(.app(size: 34)).frame(width: 44, height: 44) }
     }.accessibilityHidden(true)
   }
 
@@ -90,9 +90,9 @@ private struct BlockingHeader: View {
   let detail: String
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(title).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+      Text(title).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
         .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
-      Text(detail).font(.body).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
+      Text(detail).font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
     }
   }
 }
@@ -105,9 +105,9 @@ private struct BlockingRow: View {
   var body: some View {
     HStack(spacing: 14) {
       BlockingIcon(symbol: symbol)
-      Text(title).font(.body).foregroundStyle(JourneyColor.text).multilineTextAlignment(.leading)
+      Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text).multilineTextAlignment(.leading)
       Spacer(minLength: 12)
-      Text(value).font(.body).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+      Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
       Image(systemName: "chevron.right").font(.system(.footnote, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
     }.frame(minHeight: 60).contentShape(Rectangle())
   }

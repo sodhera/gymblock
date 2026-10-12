@@ -42,6 +42,8 @@ struct KettlebellLock: View {
   @State private var swung = false
   @State private var dropped = false
   @State private var locked = false
+  /// Shrunk away into its bell: the exit, in solid ink rather than a fade (12 Oct 2026).
+  @State private var gone = false
   var body: some View {
     ZStack {
       BrandMarkShape(part: .handle).fill(JourneyColor.text, style: FillStyle(eoFill: true))
@@ -53,6 +55,9 @@ struct KettlebellLock: View {
         .scaleEffect(locked ? 1 : 0.82, anchor: UnitPoint(x: 0.5, y: 0.68))
     }
     .frame(width: size, height: size)
+    // One piece: faded part by part, the handle and bell overlap into darker seams.
+    .compositingGroup()
+    .scaleEffect(gone ? 0.001 : 1, anchor: UnitPoint(x: 0.5, y: 0.68))
     .padding(.top, size * 0.3)  // Room for the raised handle.
     .opacity(shown ? 1 : 0)
     .accessibilityHidden(true)
@@ -70,7 +75,10 @@ struct KettlebellLock: View {
       try? await Task.sleep(for: .milliseconds(170))
       JourneyHaptic.play(.rigid, store.profile, intensity: 1)
       withAnimation(.spring(duration: 0.3, bounce: 0.45)) { locked = true }
-      try? await Task.sleep(for: .milliseconds(520))
+      try? await Task.sleep(for: .milliseconds(480))
+      // Out, solid all the way: it tucks into its bell, then the page arrives over the same paper.
+      withAnimation(.easeIn(duration: 0.26)) { gone = true }
+      try? await Task.sleep(for: .milliseconds(260))
       done()
     }
   }

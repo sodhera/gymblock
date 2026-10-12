@@ -45,11 +45,11 @@ struct PingCard: View {
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.ink(0.14)))
       VStack(alignment: .leading, spacing: 2) {
         HStack {
-          Text(ping.app).font(.subheadline.weight(.semibold)).foregroundStyle(JourneyColor.text)
+          Text(ping.app).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
           Spacer(minLength: 4)
-          Text(store.t("now")).font(.caption).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("now")).font(.app(.caption)).foregroundStyle(JourneyColor.secondary)
         }
-        Text(store.t(ping.text)).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+        Text(store.t(ping.text)).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
       }
     }.padding(.horizontal, 14).padding(.vertical, 12)
       .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -96,7 +96,7 @@ struct NotificationStage: View {
       BrandMark(size: 92)
         .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 120)).frame(width: 240, height: 240))
         .offset(y: locked ? stackY - 118 : stackY - 280).opacity(locked ? 1 : 0)
-      Text(store.t("Apps locked while you train")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+      Text(store.t("Apps locked while you train")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
         .offset(y: stackY + 112).opacity(locked ? 1 : 0)
     }.frame(maxWidth: .infinity, maxHeight: .infinity)
       .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
@@ -181,9 +181,9 @@ struct RevealStage: View {
         SplitRing(phone: phone, training: training)
         VStack(spacing: 2) {
           CountingText(value: counted) { "\(Int($0.rounded()))" }
-            .font(.system(size: 52, weight: .bold, design: .default)).monospacedDigit()
+            .font(.app(size: 52, weight: .bold, design: .default)).monospacedDigit()
             .foregroundStyle(JourneyColor.text).frame(minWidth: 120)
-          Text(store.t("min on your phone")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("min on your phone")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
         }
       }.frame(width: 200, height: 200)
         .accessibilityElement(children: .ignore).accessibilityIdentifier("reveal.phone")
@@ -204,9 +204,9 @@ struct RevealStage: View {
     VStack(spacing: 4) {
       HStack(spacing: 6) {
         Circle().fill(color).frame(width: 8, height: 8)
-        Text(label).font(.footnote).foregroundStyle(JourneyColor.secondary)
+        Text(label).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       }
-      Text("\(Int(minutes.rounded())) " + store.t("min")).font(.system(.title3, weight: .semibold)).monospacedDigit()
+      Text("\(Int(minutes.rounded())) " + store.t("min")).font(.app(.title3, weight: .semibold)).monospacedDigit()
         .foregroundStyle(JourneyColor.text)
     }.frame(maxWidth: .infinity).accessibilityElement(children: .combine).accessibilityIdentifier(id)
   }
@@ -271,11 +271,11 @@ struct DaysStage: View {
         .accessibilityHidden(true)
       VStack(spacing: 4) {
         Text("= \(estimate.yearlyWorkouts) " + store.t("workouts"))
-          .font(.system(.title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
+          .font(.app(.title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
           .accessibilityIdentifier("days.workouts")
         Text(perDot == 1 ? store.t("Each dot is one 45-min workout.")
              : String(format: store.t("Each dot is %@ workouts of 45 min."), "\(perDot)"))
-          .font(.footnote).foregroundStyle(JourneyColor.secondary)
+          .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       }.opacity(meaning ? 1 : 0).offset(y: meaning ? 0 : 8)
     }
     .task { await play() }
@@ -480,17 +480,17 @@ struct PumpChart: View, Animatable {
           p.move(to: CGPoint(x: plot.minX, y: plot.minY - 8)); p.addLine(to: CGPoint(x: plot.minX, y: plot.maxY))
           p.addLine(to: CGPoint(x: plot.maxX, y: plot.maxY))
         }.stroke(JourneyColor.ink(0.22), lineWidth: 1)
-        Text(axisY).font(.caption2.weight(.medium)).foregroundStyle(JourneyColor.secondary).fixedSize()
+        Text(axisY).font(.app(.caption2, weight: .medium)).foregroundStyle(JourneyColor.secondary).fixedSize()
           .rotationEffect(.degrees(-90)).position(x: 9, y: plot.midY)
-        Text(axisX + " →").font(.caption2.weight(.medium)).foregroundStyle(JourneyColor.secondary)
+        Text(axisX + " →").font(.app(.caption2, weight: .medium)).foregroundStyle(JourneyColor.secondary)
           .frame(width: plot.width, alignment: .trailing).position(x: plot.midX, y: plot.maxY + 36)
         // Target
         Path { $0.move(to: pt(CGPoint(x: 0, y: 1))); $0.addLine(to: pt(CGPoint(x: 1, y: 1))) }
           .stroke(reached ? JourneyColor.accent : JourneyColor.ink(0.28), style: StrokeStyle(lineWidth: 1.2, dash: [4, 5]))
         HStack(spacing: 6) {
-          Text(pumpLabel).font(.caption2.weight(.bold)).tracking(0.6)
+          Text(pumpLabel).font(.app(.caption2, weight: .bold)).tracking(0.6)
             .foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary)
-          if finished { Text(verdict).font(.caption2).foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary) }
+          if finished { Text(verdict).font(.app(.caption2)).foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary) }
         }.frame(width: plot.width, alignment: .trailing).position(x: plot.midX, y: plot.minY - 12)
         // Data
         line(pt).stroke(timed ? JourneyColor.ink(0.9) : JourneyColor.ink(0.45),
@@ -501,7 +501,7 @@ struct PumpChart: View, Animatable {
           let mid = (points[end - 1].x + points[end].x) / 2
           HStack(spacing: 3) {
             if !timed { Image(systemName: "iphone").font(.system(size: 9, weight: .semibold)) }
-            Text(restLabel).font(.caption2.weight(.medium)).monospacedDigit()
+            Text(restLabel).font(.app(.caption2, weight: .medium)).monospacedDigit()
           }.foregroundStyle(timed ? JourneyColor.text : JourneyColor.secondary).fixedSize()
             .position(x: plot.minX + mid * plot.width, y: plot.maxY + 14)
             .opacity(progress >= Double(end) - 0.05 ? 1 : 0)
@@ -627,9 +627,9 @@ struct LogStage: View {
           }
           Path { p in p.move(to: b.p(18, 30)); p.addLine(to: b.p(18, 222)); p.addLine(to: b.p(306, 222)) }
             .stroke(JourneyColor.ink(0.22), lineWidth: 1)
-          Text(store.t("Weight × reps")).font(.caption2.weight(.medium)).foregroundStyle(JourneyColor.secondary).fixedSize()
+          Text(store.t("Weight × reps")).font(.app(.caption2, weight: .medium)).foregroundStyle(JourneyColor.secondary).fixedSize()
             .rotationEffect(.degrees(-90)).position(b.p(6, 126))
-          Text(store.t("Week") + " →").font(.caption2.weight(.medium)).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("Week") + " →").font(.app(.caption2, weight: .medium)).foregroundStyle(JourneyColor.secondary)
             .position(b.p(282, 266))
         }.opacity(remembered ? 1 : 0)
         LogLine().trim(from: 0, to: line).stroke(JourneyColor.ink(0.8), style: StrokeStyle(lineWidth: b.len(2.2), lineCap: .round, lineJoin: .round))
@@ -643,10 +643,10 @@ struct LogStage: View {
             .position(p)
             .animation(.spring(duration: 0.45, bounce: 0.15), value: line)
           value(i, b)
-          Text(store.t(["W1", "W2", "W3", "W4", "Today"][i])).font(.caption2).foregroundStyle(JourneyColor.secondary)
+          Text(store.t(["W1", "W2", "W3", "W4", "Today"][i])).font(.app(.caption2)).foregroundStyle(JourneyColor.secondary)
             .position(b.p(34 + CGFloat(i) * 63, 240))
         }
-        Text("+5 kg").font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.accent)
+        Text("+5 kg").font(.app(.headline, weight: .semibold)).foregroundStyle(JourneyColor.accent)
           .position(b.p(286, 16)).opacity(best ? 1 : 0).offset(y: best ? 0 : 6)
           .accessibilityIdentifier("journey.newBest")
       }
@@ -663,7 +663,7 @@ struct LogStage: View {
     return ZStack {
       Text(logValues[i]).foregroundStyle(JourneyColor.text).opacity(lost ? 0 : 1).blur(radius: lost ? 4 : 0)
       Text("?").foregroundStyle(JourneyColor.text.opacity(0.75)).opacity(lost ? 1 : 0).scaleEffect(lost ? 1 : 0.6)
-    }.font(.system(remembered ? .subheadline : .title, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
+    }.font(.app(remembered ? .subheadline : .title, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.7)
       .opacity(remembered || i < revealed ? 1 : 0)
       .position(x: logPoint(i, b).x, y: y)
       .animation(.spring(duration: 0.6, bounce: 0.1).delay(remembered ? Double(i) * 0.06 : 0), value: remembered)
@@ -789,7 +789,7 @@ struct BlockStage: View {
     } name: { Text(app.name).foregroundStyle(JourneyColor.text) }
   }
   private func more(_ n: Int) -> some View {
-    slot(id: "block.more") { Text("+\(n)").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).monospacedDigit() }
+    slot(id: "block.more") { Text("+\(n)").font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).monospacedDigit() }
       name: { Text(store.t("more")).foregroundStyle(JourneyColor.secondary) }
   }
   private func empty(first: Bool) -> some View {
@@ -819,7 +819,7 @@ struct CommitStage: View {
               Circle().fill(JourneyColor.button).scaleEffect(on ? 1 : 0.3).opacity(on ? 1 : 0)
               Image(systemName: "checkmark").font(.system(size: 12, weight: .heavy)).foregroundStyle(JourneyColor.onButton).opacity(on ? 1 : 0)
             }.frame(width: 26, height: 26)
-            Text(store.t(pledge)).font(.body.weight(.medium)).foregroundStyle(on ? JourneyColor.text : JourneyColor.secondary)
+            Text(store.t(pledge)).font(.app(.body, weight: .medium)).foregroundStyle(on ? JourneyColor.text : JourneyColor.secondary)
               .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
           }.padding(.vertical, 14).padding(.horizontal, 18)
@@ -908,7 +908,7 @@ struct FeatureRow: View {
         .frame(width: 34, height: 34).background(Circle().fill(JourneyColor.ink(0.09)))
         .overlay(Circle().strokeBorder(JourneyRim.gradient, lineWidth: 0.8)).accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 2) {
-        Text(text).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+        Text(text).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
         Text(detail).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
       }.fixedSize(horizontal: false, vertical: true)
     }.padding(.vertical, 8)
@@ -925,7 +925,7 @@ struct AccountStage: View {
       VStack(alignment: .leading, spacing: 0) {
         HStack(spacing: 10) {
           BrandMark(size: 22)
-          Text(store.t("Your account")).font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text)
+          Text(store.t("Your account")).font(.app(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text)
           Spacer()
         }.padding(.bottom, 18)
         FeatureRow(symbol: "icloud.fill", text: store.t("Backed up as you train"), detail: store.t("Every set is saved to your account."))
@@ -1016,7 +1016,7 @@ struct NameStage: View {
     VStack(spacing: 10) {
       Spacer(minLength: 0)
       TextField("", text: $name, prompt: Text(store.t("Your name")).foregroundColor(JourneyColor.tertiary))
-        .font(.system(.title, weight: .semibold)).multilineTextAlignment(.center).foregroundStyle(JourneyColor.text)
+        .font(.app(.title, weight: .semibold)).multilineTextAlignment(.center).foregroundStyle(JourneyColor.text)
         .textContentType(.givenName).textInputAutocapitalization(.words).autocorrectionDisabled()
         .submitLabel(.continue).focused($focused).onSubmit(submit).tint(JourneyColor.accent)
         .padding(.vertical, 14).padding(.horizontal, 18)
@@ -1085,9 +1085,9 @@ struct AlertStage: View {
         Circle().trim(from: 0, to: ring).stroke(JourneyColor.ink(0.9), style: StrokeStyle(lineWidth: 8, lineCap: .round))
           .rotationEffect(.degrees(-90))
         VStack(spacing: 2) {
-          Text(store.t("Rest")).font(.footnote).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("Rest")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
           CountingText(value: seconds) { clockString(Int($0)) }
-            .font(.system(.largeTitle, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+            .font(.app(.largeTitle, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
         }
       }.frame(width: 150, height: 150)
       HStack(spacing: 12) {
@@ -1095,11 +1095,11 @@ struct AlertStage: View {
           .frame(width: 38, height: 38).background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.accent))
         VStack(alignment: .leading, spacing: 2) {
           HStack {
-            Text("GymBlock").font(.subheadline.weight(.semibold)).foregroundStyle(JourneyColor.text)
+            Text("GymBlock").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
             Spacer(minLength: 4)
-            Text(store.t("now")).font(.caption).foregroundStyle(JourneyColor.secondary)
+            Text(store.t("now")).font(.app(.caption)).foregroundStyle(JourneyColor.secondary)
           }
-          Text(store.t("Rest’s up. Time for your next set.")).font(.subheadline).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+          Text(store.t("Rest’s up. Time for your next set.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
         }
       }.padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: 360)
         .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))

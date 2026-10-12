@@ -79,7 +79,7 @@ struct AccountSection: View {
                          : "Sign in to back up your workouts and keep them on any iPhone."))
     if cloud || AppConfig.offline {
       Button(role: .destructive) { confirmDelete = true } label: {
-        Text(store.t("Delete account")).font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+        Text(store.t("Delete account")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
           .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
       }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden).accessibilityIdentifier("settings.delete")
         .alert(store.t("Delete your account?"), isPresented: $confirmDelete) {

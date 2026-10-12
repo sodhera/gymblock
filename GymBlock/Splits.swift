@@ -36,19 +36,19 @@ struct SplitEditorContent: View {
     List {
       VStack(alignment: .leading, spacing: 6) {
         TextField(store.t("Push, Pull, Legs…"), text: $name)
-          .font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          .font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
           .textInputAutocapitalization(.words).submitLabel(.done).focused($naming).tint(JourneyColor.signal)
           .onChange(of: name) { _, value in if value.count > 50 { name = String(value.prefix(50)) } }
           .accessibilityIdentifier("split.name")
-        Text(line).font(.subheadline).foregroundStyle(duplicate ? JourneyColor.signal : JourneyColor.tertiary)
+        Text(line).font(.app(.subheadline)).foregroundStyle(duplicate ? JourneyColor.signal : JourneyColor.tertiary)
           .accessibilityIdentifier("split.line")
       }.padding(.top, 4).padding(.bottom, 22).pageRow().listRowSeparator(.hidden)
       PageLabel(text: store.t("Exercises")).pageRow().listRowSeparator(.hidden, edges: .top)
       ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
         HStack(alignment: .firstTextBaseline, spacing: 14) {
-          Text("\(index + 1)").font(.system(.subheadline, weight: .medium)).monospacedDigit()
+          Text("\(index + 1)").font(.app(.subheadline, weight: .medium)).monospacedDigit()
             .foregroundStyle(JourneyColor.tertiary).frame(width: 20, alignment: .leading)
-          Text(store.t(exercise.name)).font(.system(.title3)).foregroundStyle(JourneyColor.text).lineLimit(1)
+          Text(store.t(exercise.name)).font(.app(.title3)).foregroundStyle(JourneyColor.text).lineLimit(1)
           Spacer(minLength: 0)
         }.frame(minHeight: 52).pageRow()
           .accessibilityIdentifier("split.row.\(exercise.id)")
@@ -58,12 +58,12 @@ struct SplitEditorContent: View {
       Button { naming = false; adding = true } label: {
         HStack(spacing: 10) {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
-          Text(store.t(exercises.isEmpty ? "Add exercises" : "Add more")).font(.body)
+          Text(store.t(exercises.isEmpty ? "Add exercises" : "Add more")).font(.app(.body))
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
       }.buttonStyle(.plain).pageRow().listRowSeparator(.hidden, edges: .bottom)
         .accessibilityIdentifier("split.exercises")
       if exercises.count > 1 {
-        Text(store.t("Hold and drag to reorder. Swipe to remove.")).font(.footnote).foregroundStyle(JourneyColor.tertiary)
+        Text(store.t("Hold and drag to reorder. Swipe to remove.")).font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
           .padding(.top, 6).pageRow().listRowSeparator(.hidden)
       }
     }
@@ -129,7 +129,7 @@ struct SplitExercisePicker: View {
       Button { creating = true } label: {
         HStack(spacing: 10) {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
-          Text(!query.isEmpty && !exact ? String(format: store.t("Add “%@”"), query) : store.t("New exercise")).font(.body).lineLimit(1)
+          Text(!query.isEmpty && !exact ? String(format: store.t("Add “%@”"), query) : store.t("New exercise")).font(.app(.body)).lineLimit(1)
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
       }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
         .accessibilityIdentifier("split.exercise.new")
@@ -161,7 +161,7 @@ struct SplitExercisePicker: View {
       JourneyHaptic.play(.selection, store.profile)
     } label: {
       HStack(spacing: 12) {
-        Text(store.t(exercise.name)).font(.body).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(store.t(exercise.name)).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Spacer(minLength: 8)
         if selected {
           Image(systemName: "checkmark").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal)
@@ -177,7 +177,7 @@ struct SplitExercisePicker: View {
 struct PageLabel: View {
   let text: String
   var body: some View {
-    Text(text).font(.system(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+    Text(text).font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
       .foregroundStyle(JourneyColor.secondary).frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
       .accessibilityAddTraits(.isHeader)
   }

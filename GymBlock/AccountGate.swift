@@ -40,7 +40,7 @@ private struct GateLayout<Actions: View>: View {
           VStack(spacing: 10) {
             Text(store.t(title)).font(JourneyType.headline).tracking(-0.3)
               .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
-            Text(store.t(message)).font(.body).foregroundStyle(JourneyColor.secondary)
+            Text(store.t(message)).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
           }.multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }.padding(.horizontal, 32)
         Spacer(minLength: 0)
@@ -178,7 +178,7 @@ struct PaywallView: View {
   }
   private var planCards: some View {
     VStack(spacing: 10) {
-      Text(store.t("Select a plan that fits you")).font(.system(.subheadline, weight: .semibold))
+      Text(store.t("Select a plan that fits you")).font(.app(.subheadline, weight: .semibold))
         .frame(maxWidth: .infinity)
       HStack(alignment: .top, spacing: 10) {
         if subscription.plans.isEmpty {
@@ -219,7 +219,7 @@ struct PaywallView: View {
           Button(store.t("Sign out")) { signOut() }.accessibilityIdentifier("subscription.signOut")
         }
       }
-      .font(.footnote).foregroundStyle(JourneyColor.secondary).buttonStyle(.plain)
+      .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).buttonStyle(.plain)
       .frame(minHeight: 44)
     }
     .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
@@ -255,8 +255,8 @@ private struct Benefit: View {
       Image(systemName: "crown.fill").font(.system(size: 17))
         .foregroundStyle(LinearGradient(colors: [JourneyColor.signal.opacity(0.75), JourneyColor.signal], startPoint: .top, endPoint: .bottom))
         .frame(width: 24, alignment: .leading).padding(.top, 1).accessibilityHidden(true)
-      (Text(lead + ": ").font(.system(.body, weight: .semibold)).foregroundColor(JourneyColor.text)
-       + Text(detail).font(.body).foregroundColor(JourneyColor.secondary))
+      (Text(lead + ": ").font(.app(.body, weight: .semibold)).foregroundColor(JourneyColor.text)
+       + Text(detail).font(.app(.body)).foregroundColor(JourneyColor.secondary))
         .lineSpacing(2).fixedSize(horizontal: false, vertical: true)
       Spacer(minLength: 0)
     }.accessibilityElement(children: .combine)
@@ -275,7 +275,7 @@ private struct PricingCard: View {
     Button(action: action) {
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .firstTextBaseline) {
-          Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(.system(.subheadline, weight: .semibold))
+          Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(.app(.subheadline, weight: .semibold))
             .textCase(.uppercase).tracking(0.4).lineLimit(1).minimumScaleFactor(0.6)
           Spacer(minLength: 4)
           Image(systemName: selected ? "checkmark.circle.fill" : "circle").font(.system(size: 17))
@@ -285,16 +285,16 @@ private struct PricingCard: View {
             .accessibilityHidden(true)
         }
         Spacer(minLength: 4)
-        Text(plan.price).font(.system(size: 25, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.45)
+        Text(plan.price).font(.app(size: 25, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.45)
         // Reserved when absent, so both prices sit on the same line.
-        Text(plan.anchor ?? " ").font(.footnote).foregroundStyle(JourneyColor.tertiary)
+        Text(plan.anchor ?? " ").font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
           .strikethrough(plan.anchor != nil, color: JourneyColor.tertiary).lineLimit(1).minimumScaleFactor(0.6).padding(.top, 2)
         Spacer(minLength: 4)
         if plan.trialDays > 0 {
-          Text(String(format: store.t("%@ days free"), "\(plan.trialDays)")).font(.system(.subheadline, weight: .semibold))
+          Text(String(format: store.t("%@ days free"), "\(plan.trialDays)")).font(.app(.subheadline, weight: .semibold))
             .foregroundStyle(JourneyColor.signal).padding(.bottom, 2).accessibilityIdentifier("plan.trial")
         }
-        Text(store.t(footnote)).font(.caption).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
+        Text(store.t(footnote)).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
       }
       .foregroundStyle(JourneyColor.text)
       .padding(15).frame(maxWidth: .infinity, alignment: .topLeading)
@@ -306,7 +306,7 @@ private struct PricingCard: View {
     .overlay(shape.strokeBorder(selected ? JourneyColor.signal.opacity(0.6) : JourneyColor.hairline, lineWidth: selected ? 1.8 : 1).allowsHitTesting(false))
     .overlay(alignment: .top) {
       if let savings = plan.savings {
-        Text(String(format: store.t("%@%% OFF"), "\(savings)")).font(.system(.caption2, weight: .bold)).tracking(0.3)
+        Text(String(format: store.t("%@%% OFF"), "\(savings)")).font(.app(.caption2, weight: .bold)).tracking(0.3)
           .foregroundStyle(JourneyColor.onAccent).padding(.horizontal, 9).padding(.vertical, 4)
           .background(Capsule().fill(JourneyColor.signal)).offset(y: -9)
           .accessibilityIdentifier("plan.savings")

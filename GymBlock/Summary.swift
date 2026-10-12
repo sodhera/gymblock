@@ -72,38 +72,47 @@ struct SummaryView: View {
     let minutes = max(1, Int((session.duration / 60).rounded()))
     var figures = [setCount(session.completedSets.count, store: store)]
     if session.volumeKG > 0 {
-      figures.append(formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit).rounded()) + " " + store.profile.unit)
+      figures.append(formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit).rounded()) + " " + store.profile.unit
+                     + " " + store.t("lifted"))
     }
     let date = (session.ended ?? session.started).formatted(.dateTime.month(.abbreviated).day())
     return VStack(alignment: .leading, spacing: 4) {
       Text((first ? store.t("First workout") : store.t(session.name)) + " · " + date)
-        .font(.system(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+        .font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
         .foregroundStyle(JourneyColor.secondary).accessibilityIdentifier("summary.title")
       HStack(alignment: .firstTextBaseline, spacing: 8) {
-        Text("\(minutes)").font(.system(size: 80, weight: .bold)).tracking(-2).monospacedDigit()
+        Text("\(minutes)").font(.app(size: 80, weight: .bold)).tracking(-2).monospacedDigit()
           .foregroundStyle(JourneyColor.text).lineLimit(1).minimumScaleFactor(0.5)
-        Text(store.t("min")).font(.system(.title2, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+        Text(store.t("min")).font(.app(.title2, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
       }.accessibilityElement(children: .combine).accessibilityIdentifier("summary.time")
-      Text(figures.joined(separator: "  ·  ")).font(.body).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+      Text(figures.joined(separator: "  ·  ")).font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
         .accessibilityIdentifier("summary.figures")
     }
   }
 
   private func section<Content: View>(_ label: String, id: String, @ViewBuilder content: () -> Content) -> some View {
     VStack(alignment: .leading, spacing: 4) {
-      Text(label).font(.system(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+      Text(label).font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
         .foregroundStyle(JourneyColor.secondary).accessibilityAddTraits(.isHeader).padding(.bottom, 4)
       content()
     }.accessibilityElement(children: .contain).accessibilityIdentifier(id)
   }
 
-  /// What you beat: the exercise and what was held constant, the gain in emerald on the right.
+  /// What you beat, in plain words: today's set against last time's ("11 kg × 15 · last time 10 kg"),
+  /// the gain in emerald on the right.
   private func gainRow(_ gain: Improvement) -> some View {
-    let held = gain.weightGainKG != nil ? "\(gain.reps) " + store.t("reps") : weightText(gain.weightKG)
-    let delta = gain.weightGainKG.map { "+" + formatNumber(GymStore.displayedWeight($0, unit: store.profile.unit)) + " " + store.profile.unit }
-      ?? "+\(gain.repGain ?? 0) " + store.t("reps")
-    return row(name: store.t(gain.exercise.name), detail: held) {
-      Text(delta).font(.system(.body, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.signal)
+    let detail: String
+    let delta: String
+    if let kg = gain.weightGainKG {
+      detail = weightText(gain.weightKG) + " × \(gain.reps)  ·  " + store.t("last time") + " " + weightText(gain.weightKG - kg)
+      delta = "+" + formatNumber(GymStore.displayedWeight(kg, unit: store.profile.unit)) + " " + store.profile.unit
+    } else {
+      let more = gain.repGain ?? 0
+      detail = weightText(gain.weightKG) + " × \(gain.reps)  ·  " + store.t("last time") + " \(gain.reps - more) " + store.t("reps")
+      delta = "+\(more) " + store.t(more == 1 ? "rep" : "reps")
+    }
+    return row(name: store.t(gain.exercise.name), detail: detail) {
+      Text(delta).font(.app(.body, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.signal)
     }
   }
 
@@ -112,7 +121,7 @@ struct SummaryView: View {
     let sets = session.sets.filter { $0.exercise.id == exercise.id }
     return row(name: store.t(exercise.name), detail: setsText(exercise, sets: sets)) {
       if let time = store.exerciseTime(sets) {
-        Text(time).font(.body).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+        Text(time).font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
       }
     }.accessibilityIdentifier("summary.exercise.\(exercise.id)")
   }
@@ -120,8 +129,8 @@ struct SummaryView: View {
   private func row<Trailing: View>(name: String, detail: String, @ViewBuilder trailing: () -> Trailing) -> some View {
     HStack(alignment: .center, spacing: 12) {
       VStack(alignment: .leading, spacing: 3) {
-        Text(name).font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.text).lineLimit(1)
-        Text(detail).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
+        Text(name).font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(detail).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
       }
       Spacer(minLength: 8)
       trailing()
@@ -149,10 +158,10 @@ struct SummaryView: View {
     VStack(spacing: 6) {
       if canSaveSplit {
         Button(store.t("Save as split")) { splitName = session.name == "Free workout" ? "" : session.name; naming = true }
-          .font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.secondary).frame(minHeight: 44)
+          .font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.secondary).frame(minHeight: 44)
           .accessibilityIdentifier("summary.saveSplit")
       } else if saved {
-        Text(store.t("Saved as a split.")).font(.subheadline).foregroundStyle(JourneyColor.secondary).frame(minHeight: 44)
+        Text(store.t("Saved as a split.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).frame(minHeight: 44)
       }
       JourneyButton(title: store.t("Done"), id: "summary.done") { store.summary = nil }
     }

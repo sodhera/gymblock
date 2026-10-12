@@ -6,7 +6,8 @@ import SwiftUI
   @StateObject private var subscription = GymSubscription()
   @Environment(\.scenePhase) private var scenePhase
   init() {
-    // No navigation bar appearance override: iOS 26 draws its own Liquid Glass bar and toolbar items.
+    // No navigation bar appearance override beyond the typeface: iOS 26 draws its own Liquid Glass bar.
+    AppFont.styleBars()
     #if DEBUG
       if ProcessInfo.processInfo.arguments.contains("--ui-reset") {
         UserDefaults.standard.removeObject(forKey: GymStore.storageKey)
@@ -103,6 +104,13 @@ struct RootView: View {
 
   enum Screen: Equatable { case launch, onboarding, signIn, notice(Account.Notice), paywall, app }
 
+  /// What's built under the splash: Home, when that's where this launch is going, so the splash lifts
+  /// off a page that's already drawn instead of stalling while it builds. Past the splash, the screen.
+  private var base: Screen {
+    guard shown == .launch else { return shown }
+    return store.profile.onboarded && account.notice == nil && !needsOffer ? .app : .launch
+  }
+
   private var screen: Screen {
     if !splashDone { return .launch }
     if !launched && !waitExpired && !AppConfig.offline {
@@ -130,19 +138,24 @@ struct RootView: View {
     ZStack {
       GymColor.ground.ignoresSafeArea()
       Group {
-        switch shown {
-        case .launch: LaunchView { splashDone = true }
-        case .onboarding: OnboardingView(onSignIn: openSignIn)
-        case .signIn: SignInView(back: { signingIn = false; account.message = nil }, signedIn: signedIn)
+        switch base {
+        case .launch: Color.clear
+        case .onboarding: OnboardingView(onSignIn: openSignIn).transition(.opacity)
+        case .signIn: SignInView(back: { signingIn = false; account.message = nil }, signedIn: signedIn).transition(.opacity)
         case .notice(let notice): AccountNoticeView(notice: notice, primary: { noticePrimary(notice) },
-                                                    secondary: notice == .notFound ? retrySignIn : nil)
-        case .paywall: PaywallView(subscription: subscription) { skippedOffer = true }
-        case .app: GymNavigationView()
+                                                    secondary: notice == .notFound ? retrySignIn : nil).transition(.opacity)
+        case .paywall: PaywallView(subscription: subscription) { skippedOffer = true }.transition(.opacity)
+        case .app: GymNavigationView().transition(.opacity)
         }
       }
-      .transition(.identity)
       .opacity(visible ? 1 : 0)
-      .preferredColorScheme(colorScheme)
+      // The splash lies over the page it leads to; the lock tucks away, then the paper lifts off.
+      if shown == .launch {
+        LaunchView { splashDone = true }.transition(.opacity).zIndex(1)
+      }
+    }
+    .preferredColorScheme(colorScheme)
+    .overlay {
       #if DEBUG
         if let app = StoreShots.shieldApp { ShieldPreview(app: app) }
       #endif
@@ -150,6 +163,12 @@ struct RootView: View {
     .task(id: screen) {
       if screen != .launch { launched = true }
       guard screen != shown else { return }
+      // Out of the splash: Home is already built under it (`base`), so the paper just lifts off; any
+      // other page fades in as it does. No dip to an empty screen, no stall.
+      if shown == .launch, !reduceMotion {
+        withAnimation(.easeOut(duration: 0.3)) { shown = screen }
+        return
+      }
       guard !reduceMotion, shown != .launch || screen != .onboarding else { shown = screen; return }
       withAnimation(.easeIn(duration: 0.15)) { visible = false }
       try? await Task.sleep(for: .seconds(0.15))

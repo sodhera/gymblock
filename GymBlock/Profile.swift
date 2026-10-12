@@ -43,7 +43,7 @@ struct ProfileTab: View {
 
   private var header: some View {
     HStack(alignment: .center) {
-      Text(store.t("Profile")).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+      Text(store.t("Profile")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
         .accessibilityAddTraits(.isHeader)
       Spacer(minLength: 12)
       RoundGlassButton(symbol: "gearshape", label: store.t("Settings")) { settings = true }
@@ -65,16 +65,16 @@ struct ProfileTab: View {
   private func summary(_ r: Recent) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       Text(store.t(r.count == 1 ? "Last workout" : "Average workout"))
-        .font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+        .font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary)
       HStack(alignment: .firstTextBaseline, spacing: 4) {
         ForEach(Array(durationParts(r.average).enumerated()), id: \.offset) { index, part in
-          Text("\(part.value)").font(.system(size: 40, weight: .semibold)).tracking(-1).monospacedDigit()
+          Text("\(part.value)").font(.app(size: 40, weight: .semibold)).tracking(-1).monospacedDigit()
             .foregroundStyle(JourneyColor.text).padding(.leading, index > 0 ? 8 : 0)
-          Text(store.t(part.unit)).font(.system(size: 20, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+          Text(store.t(part.unit)).font(.app(size: 20, weight: .medium)).foregroundStyle(JourneyColor.secondary)
         }
       }.accessibilityIdentifier("profile.average")
       if r.count > 1 {
-        Text(store.t("Over your last") + " \(r.count) " + store.t("workouts")).font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+        Text(store.t("Over your last") + " \(r.count) " + store.t("workouts")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
       }
     }.accessibilityElement(children: .combine)
   }
@@ -91,7 +91,7 @@ struct ProfileTab: View {
       if sessions.count > 5 {
         NavigationLink { AllWorkoutsView() } label: {
           HStack {
-            Text(store.t("All") + " \(sessions.count) " + store.t("workouts")).font(.system(.subheadline, weight: .medium))
+            Text(store.t("All") + " \(sessions.count) " + store.t("workouts")).font(.app(.subheadline, weight: .medium))
               .foregroundStyle(JourneyColor.secondary)
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
@@ -106,8 +106,8 @@ struct ProfileTab: View {
       Image(systemName: "calendar").font(.system(size: 17, weight: .medium)).foregroundStyle(JourneyColor.signal)
         .frame(width: 40, height: 40).background(Circle().fill(JourneyColor.signal.opacity(0.12))).accessibilityHidden(true)
       VStack(alignment: .leading, spacing: 3) {
-        Text(store.t("No workouts yet")).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
-        Text(store.t("Your first workout lands here.")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+        Text(store.t("No workouts yet")).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+        Text(store.t("Your first workout lands here.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
       }.padding(.top, 2)
     }
   }
@@ -144,7 +144,7 @@ private struct BlockedAppsCard: View {
     } else {
       VStack(alignment: .leading, spacing: 12) {
         BlockedIcons(size: 30, limit: 6).foregroundStyle(JourneyColor.secondary)
-        Text(store.t("Blocked while you train")).font(.body).foregroundStyle(JourneyColor.secondary)
+        Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
       }
     }
   }
@@ -152,7 +152,7 @@ private struct BlockedAppsCard: View {
     HStack(spacing: 12) {
       Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundStyle(tint)
         .frame(width: 36, height: 36).background(Circle().fill(tint.opacity(0.12))).accessibilityHidden(true)
-      Text(title).font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
+      Text(title).font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
     }
   }
 }
@@ -179,12 +179,12 @@ private struct MonthDots: View {
     return VStack(alignment: .leading, spacing: 8) {
       HStack(alignment: .firstTextBaseline) {
         PageLabel(text: today.formatted(.dateTime.month(.wide)))
-        Text(tally).font(.system(.caption, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).fixedSize()
+        Text(tally).font(.app(.caption, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).fixedSize()
       }
       HStack(spacing: 0) {
         ForEach(0..<7, id: \.self) { column in
           Text((calendar.date(byAdding: .day, value: column, to: monday) ?? monday).formatted(.dateTime.weekday(.narrow)))
-            .font(.system(size: 11, weight: .medium)).foregroundStyle(JourneyColor.tertiary).frame(maxWidth: .infinity)
+            .font(.app(size: 11, weight: .medium)).foregroundStyle(JourneyColor.tertiary).frame(maxWidth: .infinity)
         }
       }
       VStack(spacing: 0) {
@@ -227,14 +227,14 @@ private struct WorkoutEntryCard: View {
   var body: some View {
     HStack(alignment: .center, spacing: 18) {
       VStack(spacing: 0) {
-        Text(session.started.formatted(.dateTime.day())).font(.system(.title, weight: .light)).monospacedDigit()
+        Text(session.started.formatted(.dateTime.day())).font(.app(.title, weight: .light)).monospacedDigit()
           .foregroundStyle(JourneyColor.text)
-        Text(session.started.formatted(.dateTime.month(.abbreviated))).font(.system(.caption2, weight: .medium)).tracking(0.8)
+        Text(session.started.formatted(.dateTime.month(.abbreviated))).font(.app(.caption2, weight: .medium)).tracking(0.8)
           .textCase(.uppercase).foregroundStyle(JourneyColor.tertiary)
       }.frame(minWidth: 44)
       VStack(alignment: .leading, spacing: 3) {
-        Text(store.t(session.name)).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
-        Text(detail).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+        Text(store.t(session.name)).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
+        Text(detail).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
       }.frame(maxWidth: .infinity, alignment: .leading)
       Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
         .accessibilityHidden(true)
@@ -254,7 +254,7 @@ private struct AllWorkoutsView: View {
       DotGrid()
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 12) {
-          Text(store.t("All workouts")).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          Text(store.t("All workouts")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
             .accessibilityAddTraits(.isHeader).padding(.bottom, 8)
           ForEach(store.data.history.sorted { $0.started > $1.started }) { session in
             NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutEntryCard(session: session) }
@@ -291,7 +291,7 @@ struct WorkoutEntryView: View {
             header(session)
             ForEach(exercises) { exercise in section(exercise, sets: session.sets.filter { $0.exercise.id == exercise.id }) }
             if store.deletedSet != nil {
-              Button(store.t("Undo")) { store.undoDelete() }.font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+              Button(store.t("Undo")) { store.undoDelete() }.font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
             }
           }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 40)
         }.scrollIndicators(.hidden)
@@ -333,9 +333,9 @@ struct WorkoutEntryView: View {
       figures.append(formatNumber(GymStore.displayedWeight(session.volumeKG, unit: store.profile.unit).rounded()) + " " + store.profile.unit)
     }
     return VStack(alignment: .leading, spacing: 4) {
-      Text(store.t(session.name)).font(.system(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+      Text(store.t(session.name)).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
         .lineLimit(2).accessibilityAddTraits(.isHeader)
-      Text(figures.joined(separator: "  ·  ")).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+      Text(figures.joined(separator: "  ·  ")).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
     }
   }
 
@@ -343,23 +343,23 @@ struct WorkoutEntryView: View {
   private func section(_ exercise: Exercise, sets: [LoggedSet]) -> some View {
     VStack(alignment: .leading, spacing: 4) {
       HStack(alignment: .firstTextBaseline) {
-        Text(store.t(exercise.name)).font(.system(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+        Text(store.t(exercise.name)).font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
           .foregroundStyle(JourneyColor.secondary).accessibilityAddTraits(.isHeader)
         Spacer(minLength: 8)
         if let time = store.exerciseTime(sets) {
           HStack(spacing: 4) {
             Image(systemName: "clock").font(.system(size: 11, weight: .medium)).accessibilityHidden(true)
             Text(time).monospacedDigit()
-          }.font(.system(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
+          }.font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
             .accessibilityLabel(store.t("Time") + ", " + time)
         }
       }.padding(.bottom, 6)
       ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
         Button { editing = set } label: {
           HStack(alignment: .firstTextBaseline, spacing: 14) {
-            Text("\(index + 1)").font(.system(.subheadline, weight: .medium)).monospacedDigit()
+            Text("\(index + 1)").font(.app(.subheadline, weight: .medium)).monospacedDigit()
               .foregroundStyle(JourneyColor.tertiary).frame(width: 20, alignment: .leading)
-            Text(setValue(set, store: store)).font(.system(.title3)).monospacedDigit()
+            Text(setValue(set, store: store)).font(.app(.title3)).monospacedDigit()
               .foregroundStyle(set.unsuccessful == true ? JourneyColor.secondary : JourneyColor.text)
             Spacer(minLength: 0)
           }.frame(minHeight: 40).contentShape(Rectangle())

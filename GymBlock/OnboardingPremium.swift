@@ -103,13 +103,13 @@ enum JourneyColor {
 
 /// Apple text styles, so every string follows Dynamic Type. Headlines are the large title.
 enum JourneyType {
-  static let headline = Font.system(.title, design: .default, weight: .bold)
-  static let display = Font.system(size: 52, weight: .bold, design: .default)
-  static let option = Font.system(.body, design: .default, weight: .medium)
-  static let button = Font.system(.headline, design: .default, weight: .semibold)
-  static let label = Font.system(.subheadline, design: .default, weight: .medium)
-  static let caption = Font.system(.footnote, design: .default, weight: .regular)
-  static let eyebrow = Font.system(.subheadline, design: .default, weight: .medium)
+  static var headline: Font { Font.app(.title, design: .default, weight: .bold) }
+  static var display: Font { Font.app(size: 52, weight: .bold, design: .default) }
+  static var option: Font { Font.app(.body, design: .default, weight: .medium) }
+  static var button: Font { Font.app(.headline, design: .default, weight: .semibold) }
+  static var label: Font { Font.app(.subheadline, design: .default, weight: .medium) }
+  static var caption: Font { Font.app(.footnote, design: .default, weight: .regular) }
+  static var eyebrow: Font { Font.app(.subheadline, design: .default, weight: .medium) }
 }
 
 /// Motion: calm, slightly slow, never bouncy. One curve family everywhere.
@@ -401,7 +401,7 @@ struct Wordmark: View {
   var body: some View {
     HStack(spacing: 8) {
       BrandMark(size: 18)
-      Text("GymBlock").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+      Text("GymBlock").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
     }.accessibilityElement(children: .ignore).accessibilityLabel("GymBlock")
   }
 }

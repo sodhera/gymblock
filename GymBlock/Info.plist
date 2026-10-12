@@ -40,6 +40,10 @@
 	<true/>
 	<key>RevenueCatAPIKey</key>
 	<string>$(REVENUECAT_API_KEY)</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>DMSans.ttf</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

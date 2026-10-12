@@ -36,7 +36,7 @@ struct ExerciseProgressList: View {
           VStack(alignment: .leading, spacing: 8) {
             Text(store.t("Nothing to compare in this scope yet.")).font(JourneyType.option).foregroundStyle(JourneyColor.text)
               .fixedSize(horizontal: false, vertical: true)
-            Text(store.t("Finish a workout here and its exercises appear.")).font(.subheadline).foregroundStyle(JourneyColor.secondary)
+            Text(store.t("Finish a workout here and its exercises appear.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
               .fixedSize(horizontal: false, vertical: true)
           }
         } else {
@@ -45,11 +45,11 @@ struct ExerciseProgressList: View {
               if index > 0 { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
               NavigationLink { ExerciseProgressView(exercise: exercise, split: scope) } label: {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                  Text(store.t(exercise.name)).font(.body).foregroundStyle(JourneyColor.text)
+                  Text(store.t(exercise.name)).font(.app(.body)).foregroundStyle(JourneyColor.text)
                     .lineLimit(2).multilineTextAlignment(.leading).fixedSize(horizontal: false, vertical: true)
                   Spacer(minLength: 8)
                   if let set = latest(exercise) {
-                    Text(setValue(set, store: store)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
+                    Text(setValue(set, store: store)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1)
                   }
                   Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
                     .accessibilityHidden(true)
@@ -126,7 +126,7 @@ struct ExerciseProgressView: View {
           let difference = amount(last) - amount(first)
           VStack(alignment: .leading, spacing: 6) {
             Text((difference > 0 ? "+" : "") + formatNumber(difference) + " " + unit)
-              .font(.system(.largeTitle, weight: .bold)).monospacedDigit()
+              .font(.app(.largeTitle, weight: .bold)).monospacedDigit()
               .foregroundStyle(difference > 0 ? JourneyColor.signal : JourneyColor.text)
               .lineLimit(1).minimumScaleFactor(0.5)
               .accessibilityIdentifier("progress.change")
@@ -149,9 +149,9 @@ struct ExerciseProgressView: View {
               ForEach(Array(records.reversed().enumerated()), id: \.element.id) { index, set in
                 if index > 0 { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
                 HStack(alignment: .firstTextBaseline) {
-                  Text(set.date, format: .dateTime.day().month(.abbreviated)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+                  Text(set.date, format: .dateTime.day().month(.abbreviated)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
                   Spacer(minLength: 8)
-                  Text(setValue(set, store: store)).font(.system(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
+                  Text(setValue(set, store: store)).font(.app(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
                 }.padding(.vertical, 12).accessibilityElement(children: .combine)
               }
             }.padding(.horizontal, 20).padding(.bottom, 6).frame(maxWidth: .infinity, alignment: .leading).journeySurface()
@@ -186,7 +186,7 @@ struct ExerciseProgressView: View {
   private func tile(_ label: String, point: ProgressPoint, red: Bool) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       Eyebrow(text: store.t(label) + " · " + point.date.formatted(.dateTime.day().month(.abbreviated)))
-      Text(setText(point)).font(.system(.title2, weight: .bold)).monospacedDigit()
+      Text(setText(point)).font(.app(.title2, weight: .bold)).monospacedDigit()
         .foregroundStyle(red ? JourneyColor.signal : JourneyColor.text).lineLimit(1).minimumScaleFactor(0.6)
     }.padding(16).frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
       .journeySurface(cornerRadius: 22)
@@ -206,13 +206,13 @@ struct ExerciseProgressView: View {
       }
       .chartXAxis {
         AxisMarks(values: .automatic(desiredCount: 4)) { _ in
-          AxisValueLabel(format: .dateTime.day().month(.abbreviated)).font(.caption2).foregroundStyle(JourneyColor.tertiary)
+          AxisValueLabel(format: .dateTime.day().month(.abbreviated)).font(.app(.caption2)).foregroundStyle(JourneyColor.tertiary)
         }
       }
       .chartYAxis {
         AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
           AxisGridLine().foregroundStyle(JourneyColor.hairline)
-          AxisValueLabel().font(.caption2).foregroundStyle(JourneyColor.tertiary)
+          AxisValueLabel().font(.app(.caption2)).foregroundStyle(JourneyColor.tertiary)
         }
       }
       .frame(height: 160)
@@ -229,18 +229,18 @@ struct ExerciseProgressView: View {
       ForEach(Array(shown.enumerated()), id: \.element.id) { index, point in
         if index > 0 { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
         HStack(alignment: .firstTextBaseline) {
-          Text(point.date, format: .dateTime.day().month(.abbreviated)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+          Text(point.date, format: .dateTime.day().month(.abbreviated)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
           Spacer(minLength: 8)
-          Text(setText(point)).font(.system(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
+          Text(setText(point)).font(.app(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
         }.padding(.vertical, 12).accessibilityElement(children: .combine)
       }
       if points.count > shownRecords {
         Rectangle().fill(JourneyColor.hairline).frame(height: 1)
         NavigationLink { ComparisonHistory(points: points, repMode: repMode, unit: unit) } label: {
           HStack {
-            Text(store.t("All records")).font(.subheadline).foregroundStyle(JourneyColor.text)
+            Text(store.t("All records")).font(.app(.subheadline)).foregroundStyle(JourneyColor.text)
             Spacer()
-            Text("\(points.count)").font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+            Text("\(points.count)").font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
             Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
               .accessibilityHidden(true)
           }.frame(minHeight: 44).contentShape(Rectangle())
@@ -263,9 +263,9 @@ struct ComparisonHistory: View {
         ForEach(Array(points.reversed().enumerated()), id: \.element.id) { index, point in
           if index > 0 { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
           HStack(alignment: .firstTextBaseline) {
-            Text(point.date, format: .dateTime.day().month(.abbreviated).year()).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.secondary)
+            Text(point.date, format: .dateTime.day().month(.abbreviated).year()).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
             Spacer(minLength: 8)
-            Text(formatNumber(value(point)) + " " + unit).font(.system(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
+            Text(formatNumber(value(point)) + " " + unit).font(.app(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.text)
           }.padding(.vertical, 12).accessibilityElement(children: .combine)
         }
       }.padding(.horizontal, 20).padding(.vertical, 4).frame(maxWidth: .infinity, alignment: .leading).journeySurface()

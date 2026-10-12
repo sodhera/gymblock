@@ -63,12 +63,11 @@ struct HomeView: View {
   /// line), then the queued workout low on the page, just above the button.
   private var content: some View {
     VStack(alignment: .leading, spacing: 0) {
-      Text(greeting).font(JourneyType.headline).tracking(-0.3).foregroundStyle(JourneyColor.text)
-        .lineLimit(1).minimumScaleFactor(0.7).padding(.top, 40).reveal(appeared, 0)
-        .accessibilityAddTraits(.isHeader).accessibilityIdentifier("home.greeting")
-      WeekLine(stats: store.homeStats()).padding(.top, 12).reveal(appeared, 0)
+      // The week and its streak on top (12 Oct 2026, decluttered: no greeting or carousel), then one
+      // exercise's progress, or the empty chart that says how it fills in.
+      WeekLine(stats: store.homeStats()).padding(.top, 24).reveal(appeared, 0)
       Spacer(minLength: 28)
-      progressCard.reveal(appeared, 1)
+      progressSection.reveal(appeared, 1)
       Spacer(minLength: 28)
       // No split yet and nothing logged: "Your first workout", with setting up a split one tap away.
       UpNext(split: nextSplit, detail: nextDetail,
@@ -79,30 +78,24 @@ struct HomeView: View {
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
-  /// Up to three exercises in turn once there is a line; until then the honest empty chart.
-  @ViewBuilder private var progressCard: some View {
-    if progress.isEmpty {
-      ProgressCard(trend: nil, hasHistory: !firstRun)
-    } else {
-      ProgressCarousel(trends: progress)
-    }
-  }
-
 
   private var nextDetail: String { store.summary(of: nextSplit) }
-  /// "Good morning, Sirish": by the hour, the name only when there is one.
-  private var greeting: String {
-    let hour = Calendar.current.component(.hour, from: Date())
-    let part = store.t(hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening")
-    let name = store.profile.name.trimmingCharacters(in: .whitespaces)
-    return name.isEmpty ? part : part + ", " + name
+  /// One exercise's progress, which opens it; until something is comparable, the empty chart.
+  @ViewBuilder private var progressSection: some View {
+    if let trend = progress {
+      NavigationLink {
+        ExerciseProgressView(exercise: trend.exercise, split: store.data.workouts.first { $0.id == trend.splitID })
+      } label: { ProgressCard(trend: trend, hasHistory: true) }
+        .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("home.trend.\(trend.exercise.id)")
+    } else {
+      ProgressCard(trend: nil, hasHistory: !firstRun)
+    }
   }
-  /// Three at most: the split that's up next first (biggest gains first), then the biggest gains
-  /// anywhere. Nothing until some exercise has two comparable workouts.
-  private var progress: [ExerciseTrend] {
+  /// The biggest gain in the split that's up next, else anywhere; nil until some exercise has two
+  /// comparable workouts.
+  private var progress: ExerciseTrend? {
     let trends = store.exerciseTrends(limit: .max).filter { $0.points.count >= 2 }
-    let next = trends.filter { $0.splitID != nil && $0.splitID == nextSplit?.id }
-    return Array((next + trends.filter { t in !next.contains { $0.id == t.id } }).prefix(3))
+    return trends.first { $0.splitID != nil && $0.splitID == nextSplit?.id } ?? trends.first
   }
   /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to change it.
   private func startNext() {
@@ -169,7 +162,7 @@ struct WorkoutChoiceView: View {
             Spacer(minLength: 12)
             if !store.data.workouts.isEmpty {
               Button(store.t(editMode ? "Done" : "Edit")) { withAnimation(.smooth(duration: 0.25)) { editMode.toggle() } }
-                .font(.system(.body, weight: editMode ? .semibold : .regular))
+                .font(.app(.body, weight: editMode ? .semibold : .regular))
                 .foregroundStyle(editMode ? JourneyColor.text : JourneyColor.secondary).accessibilityIdentifier("split.edit")
             }
           }
@@ -186,7 +179,7 @@ struct WorkoutChoiceView: View {
             Button { creating = true } label: {
               HStack(spacing: 10) {
                 Image(systemName: "plus").font(.system(.body, weight: .semibold))
-                Text(store.t("New split")).font(.body)
+                Text(store.t("New split")).font(.app(.body))
               }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 56, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("split.add")
           }
@@ -220,9 +213,9 @@ struct WorkoutChoiceView: View {
     } label: {
       HStack(spacing: 12) {
         VStack(alignment: .leading, spacing: 3) {
-          Text(split.map { store.t($0.name) } ?? store.t("Free workout")).font(.system(.title3, weight: .semibold))
+          Text(split.map { store.t($0.name) } ?? store.t("Free workout")).font(.app(.title3, weight: .semibold))
             .foregroundStyle(JourneyColor.text).lineLimit(1)
-          Text(store.summary(of: split)).font(.subheadline).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+          Text(store.summary(of: split)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
         }
         Spacer(minLength: 8)
         if editMode, let split {

@@ -18,6 +18,8 @@ struct WorkoutView: View {
   @State private var pendingExercise: Exercise?
   @State private var weightText = ""
   @State private var repsText = ""
+  /// What the open field showed before you tapped it: its placeholder while you type, kept if you don't.
+  @State private var editingFrom = ""
   @State private var guardUntil = Date.distantPast
   @State private var screenHeight: CGFloat = 800
   /// Hold an exercise's name to lift it; drag to reorder in a compact list of names.
@@ -37,6 +39,8 @@ struct WorkoutView: View {
   private var stage: Stage { session.selected == nil ? .exercise : session.stage }
   private var active: Bool { stage == .active || stage == .log }
   private var timed: Bool { exercise?.timed == true }
+  /// "Set 2 is still going.": the set a mid-set End or switch would save or throw away.
+  private var runningSet: String { store.t("Set") + " \(done + 1) " + store.t("is still going.") }
   private var weightMissing: Bool { !timed && session.weightIsSet == false }
   private var oneTap: Bool { !store.timesSets && !timed }
   private var done: Int { store.doneSets(exercise) }
@@ -57,14 +61,9 @@ struct WorkoutView: View {
         ScrollViewReader { proxy in
           ScrollView {
             VStack(alignment: .leading, spacing: 30) {
-              VStack(alignment: .leading, spacing: 6) {
-                Text(store.t(session.name)).font(.system(.largeTitle, weight: .bold)).tracking(-0.4)
-                  .foregroundStyle(JourneyColor.text).lineLimit(2).accessibilityAddTraits(.isHeader)
-                  .accessibilityIdentifier("workout.title")
-                if store.deletedSet != nil {
-                  Button(store.t("Undo delete")) { store.undoDelete() }.font(.system(.subheadline, weight: .semibold))
-                    .foregroundStyle(JourneyColor.text).accessibilityIdentifier("set.undo")
-                }
+              if store.deletedSet != nil {
+                Button(store.t("Undo delete")) { store.undoDelete() }.font(.app(.subheadline, weight: .semibold))
+                  .foregroundStyle(JourneyColor.text).accessibilityIdentifier("set.undo")
               }
               ForEach(exercises) { item in section(item).id(item.id) }
               addExercise
@@ -83,23 +82,16 @@ struct WorkoutView: View {
       .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { screenHeight = $0 }
       .coordinateSpace(name: "screen")
       .safeAreaInset(edge: .bottom, spacing: 0) { dock }
-      // The native Liquid Glass bar: the workout clock (also the pause control) leads; End trails.
-      .navigationBarTitleDisplayMode(.inline)
+      // The native Liquid Glass bar: the workout's name leads, large; End trails (12 Oct 2026: the
+      // workout clock left the bar at the user's request; the summary still has the time).
+      .navigationTitle(store.t(session.name))
+      .toolbarTitleDisplayMode(.inlineLarge)
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) { workoutClock }
         ToolbarItem(placement: .topBarTrailing) {
           // Until the first set is logged there's nothing to keep: Cancel throws the workout away
           // (no summary, nothing in Profile) and unlocks the apps. After that it's End.
           Button(store.t(session.sets.isEmpty && !active ? "Cancel" : "End"), action: end)
             .accessibilityIdentifier("session.finish")
-        }
-        ToolbarItemGroup(placement: .keyboard) {
-          Button { stepFocused(-1) } label: { Image(systemName: "minus") }
-            .accessibilityLabel(store.t("Less")).accessibilityIdentifier("set.keyboard.minus")
-          Button { stepFocused(1) } label: { Image(systemName: "plus") }
-            .accessibilityLabel(store.t("More")).accessibilityIdentifier("set.keyboard.plus")
-          Spacer()
-          Button(store.t("Done")) { field = nil }.fontWeight(.semibold).accessibilityIdentifier("set.keyboard.done")
         }
       }
     }
@@ -115,26 +107,27 @@ struct WorkoutView: View {
       }
     }
     .sheet(item: $editing) { SetEditor(set: $0, sessionID: session.id) }
-    .confirmationDialog(store.t("Finish this set first?"), isPresented: $confirmEndSet, titleVisibility: .visible) {
+    // Asked what you tapped (End, or another exercise), then what's at stake: the set that's running.
+    .confirmationDialog(store.t("End workout?"), isPresented: $confirmEndSet, titleVisibility: .visible) {
       Button(store.t("Save set and end")) { if finishSet() { store.finish() } }
         .disabled(!setValid).accessibilityIdentifier("session.saveEnd")
       Button(store.t("Discard set and end"), role: .destructive) { store.cancelSet(); store.finish() }
         .accessibilityIdentifier("session.discardEnd")
       // Not a cancel role: iOS can hide those in action sheets, and this choice must stay visible.
       Button(store.t("Keep going")) {}.accessibilityIdentifier("session.keepGoing")
-    } message: { Text(store.t("Saved sets stay.")) }
+    } message: { Text(runningSet) }
     // An alert, not an action sheet: both choices stay visible, so there is always a way back.
     .alert(store.t("End workout?"), isPresented: $confirmEnd) {
       Button(store.t("End workout")) { store.finish() }.accessibilityIdentifier("session.endConfirm")
       Button(store.t("Keep going"), role: .cancel) {}
     } message: { Text(setCount(session.completedSets.count, store: store) + " " + store.t("will be saved.")) }
-    .confirmationDialog(store.t("Finish this set first?"), isPresented: $confirmSwitch, titleVisibility: .visible) {
+    .confirmationDialog(store.t("Switch exercise?"), isPresented: $confirmSwitch, titleVisibility: .visible) {
       Button(store.t("Save set and switch")) { resolveSwitch(saving: true) }
         .disabled(!setValid).accessibilityIdentifier("switch.save")
       Button(store.t("Discard set and switch"), role: .destructive) { resolveSwitch(saving: false) }
         .accessibilityIdentifier("switch.discard")
       Button(store.t("Keep going")) { pendingExercise = nil }.accessibilityIdentifier("switch.cancel")
-    } message: { Text(store.t("Saved sets stay.")) }
+    } message: { Text(runningSet) }
     .onChange(of: confirmSwitch) { _, shown in if !shown { pendingExercise = nil } }
     // A drag that was cancelled rather than finished never reaches onEnded: drop it without saving.
     .onChange(of: holding) { _, alive in
@@ -149,12 +142,21 @@ struct WorkoutView: View {
     .onChange(of: session.weightIsSet) { _, _ in sync() }
     .onChange(of: session.draftRepsText) { _, _ in sync() }
     .onChange(of: store.profile.unit) { _, _ in sync() }
-    .onChange(of: field) { _, _ in sync() }
+    .onChange(of: field) { _, opened in
+      sync()
+      // Tapping a number opens it empty, with the old value as its placeholder: typing replaces it,
+      // and leaving it empty keeps it (sync restores it from the store). No selection handles.
+      switch opened {
+      case .weight: editingFrom = weightText; weightText = ""
+      case .reps: editingFrom = repsText; repsText = ""
+      case nil: editingFrom = ""
+      }
+    }
     .onChange(of: weightText) { _, text in
       guard field == .weight, let value = parseNumber(text), value.isFinite, (0...500).contains(value) else { return }
       store.updateWeight(value, unit: store.profile.unit)
     }
-    .onChange(of: repsText) { _, text in if field == .reps { store.updateRepText(text) } }
+    .onChange(of: repsText) { _, text in if field == .reps && !text.isEmpty { store.updateRepText(text) } }
     .task(id: restKey) { await restAlarm() }
   }
 
@@ -165,15 +167,6 @@ struct WorkoutView: View {
   }
 
   // MARK: Top bar
-
-  /// The workout clock: it runs from Start workout to End and never pauses (11 Oct 2026).
-  private var workoutClock: some View {
-    TimelineView(.periodic(from: .now, by: 1)) { context in
-      Text(clockText(Int(session.duration(at: context.date)))).font(.system(.subheadline, weight: .semibold)).monospacedDigit()
-        .foregroundStyle(JourneyColor.text).lineLimit(1).fixedSize().padding(.horizontal, 6)
-    }.fixedSize().accessibilityElement(children: .combine).accessibilityLabel(store.t("Workout time"))
-      .accessibilityIdentifier("workout.clock")
-  }
 
   // MARK: The page
 
@@ -190,7 +183,7 @@ struct WorkoutView: View {
     let plan = plannedValue(item)
     return VStack(alignment: .leading, spacing: 2) {
       HStack(alignment: .center, spacing: 8) {
-        Text(store.t(item.name)).font(.system(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+        Text(store.t(item.name)).font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
           .foregroundStyle(current ? JourneyColor.text : JourneyColor.secondary).lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier(current ? "set.exercise" : "")
@@ -198,7 +191,7 @@ struct WorkoutView: View {
           HStack(spacing: 4) {
             Image(systemName: "clock").font(.system(size: 11, weight: .medium)).accessibilityHidden(true)
             Text(time).monospacedDigit()
-          }.font(.system(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
+          }.font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
         } else {
           setStepper(item, planned: planned)
         }
@@ -213,11 +206,12 @@ struct WorkoutView: View {
       .accessibilityHint(current ? "" : store.t("Switch to this exercise"))
       .accessibilityIdentifier("exercise.section.\(item.id)")
       ForEach(Array(logged.enumerated()), id: \.element.id) { index, set in loggedRow(set, number: index + 1) }
-      if live { liveRow(number: logged.count + 1).id("live") } else if current { Color.clear.frame(height: 0).id("live") }
-      // Under the set that's next (or, after an exercise's last set, the one just done).
+      // In the order things happen: the set just done, the rest, then the set that's next.
       if current && stage == .rest { restStrip }
-      if live && firstEver && !timed && !active {
-        Text(store.t("Tap a number to type it.")).font(.footnote).foregroundStyle(JourneyColor.tertiary)
+      if live { liveRow(number: logged.count + 1).id("live") } else if current { Color.clear.frame(height: 0).id("live") }
+      if live && !timed && !active && (weightMissing || firstEver) {
+        Text(store.t(weightMissing ? "Add the weight for this set." : "Tap a number to type it.")).font(.app(.footnote))
+          .foregroundStyle(weightMissing ? JourneyColor.signal : JourneyColor.tertiary)
           .padding(.leading, 32).padding(.bottom, 4).accessibilityIdentifier("hint.type")
       }
       ForEach(0..<remaining, id: \.self) { i in
@@ -239,7 +233,7 @@ struct WorkoutView: View {
       Button { store.changeTarget(item, by: 1); JourneyHaptic.play(.selection, store.profile) } label: {
         Image(systemName: "plus").frame(width: 34, height: 36).contentShape(Rectangle())
       }.accessibilityLabel(store.t("More sets")).accessibilityIdentifier("sets.plus.\(item.id)")
-    }.font(.system(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary).buttonStyle(.plain)
+    }.font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary).buttonStyle(.plain)
   }
 
   /// Hold (0.35 s) then drag. The page gives way to a compact list of names with the held one under
@@ -290,7 +284,7 @@ struct WorkoutView: View {
       DotGrid()
       ForEach(Array(state.order.enumerated()), id: \.element) { index, id in
         let held = id == state.id
-        Text(names[id] ?? "").font(.system(.title3, weight: held ? .semibold : .medium))
+        Text(names[id] ?? "").font(.app(.title3, weight: held ? .semibold : .medium))
           .foregroundStyle(held ? JourneyColor.text : JourneyColor.secondary).lineLimit(1)
           .frame(maxWidth: .infinity, minHeight: pitch - 8, alignment: .leading).padding(.horizontal, 18)
           .background {
@@ -317,7 +311,7 @@ struct WorkoutView: View {
     Button { field = nil; editing = set } label: {
       HStack(alignment: .firstTextBaseline, spacing: 14) {
         setNumber(number, color: JourneyColor.tertiary)
-        Text(setValue(set, store: store)).font(.system(.title3)).monospacedDigit()
+        Text(setValue(set, store: store)).font(.app(.title3)).monospacedDigit()
           .foregroundStyle(set.unsuccessful == true ? JourneyColor.secondary : JourneyColor.text).lineLimit(1)
         Spacer(minLength: 0)
       }.frame(minHeight: 40).contentShape(Rectangle())
@@ -332,65 +326,78 @@ struct WorkoutView: View {
     HStack(alignment: .center, spacing: 12) {
       setNumber(n, color: active && !paused ? JourneyColor.signal : JourneyColor.text)
       if timed {
-        Text(store.t(active ? "Tap Finish when you stop." : "The clock times this exercise.")).font(.body)
+        Text(store.t(active ? "Tap Finish when you stop." : "The clock times this exercise.")).font(.app(.body))
           .foregroundStyle(JourneyColor.secondary).lineLimit(2)
       } else {
         weightField
         // Just the unit, as on every other row; VoiceOver still says "each" for dumbbells.
-        Text(store.profile.unit).font(.body).foregroundStyle(JourneyColor.tertiary).lineLimit(1).fixedSize()
-        Text("×").font(.system(.title3)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
+        Text(store.profile.unit).font(.app(.body)).foregroundStyle(JourneyColor.tertiary).lineLimit(1).fixedSize()
+        Text("×").font(.app(.title3)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
         repsField
       }
       Spacer(minLength: 0)
       if active {
-        Button(store.t("Cancel")) { field = nil; store.cancelSet() }.font(.subheadline).foregroundStyle(JourneyColor.tertiary)
+        Button(store.t("Cancel")) { field = nil; store.cancelSet() }.font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
           .accessibilityLabel(store.t("Cancel set")).accessibilityIdentifier("set.cancel")
       }
     }.frame(minHeight: 56)
   }
 
-  /// The rest as a line across the page: it fills from left to right as the rest runs, in step with
-  /// the dock's clock, and turns emerald when the rest is up, so it reads from across the bench.
+  /// The rest, between the set just done and the next (12 Oct 2026, moved up from the dock), read as one line: "Rest", a
+  /// bar that fills as the rest runs, the time left. When it's up the word and the bar turn emerald
+  /// ("Rest's up": the one signal, meaning go) and the time turns to how far over, in grey, since
+  /// resting long is nothing to cheer. Tap the time to change the rest length (also in Settings).
   private var restStrip: some View {
-    TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 15)) { context in
-      let now = session.pausedAt ?? context.date
-      let progress = min(1, max(0, now.timeIntervalSince(session.restStarted ?? now) / Double(max(1, store.restTarget))))
-      GeometryReader { geometry in
-        ZStack(alignment: .leading) {
-          Capsule().fill(JourneyColor.ink(0.08))
-          Capsule().fill(progress >= 1 ? JourneyColor.signal : JourneyColor.ink(0.45))
-            .frame(width: max(3, geometry.size.width * progress))
-        }
-      }.frame(height: 3).animation(.easeOut(duration: 0.3), value: progress >= 1)
-    }
-    .padding(.top, 2).padding(.bottom, 10)
-    .accessibilityHidden(true).accessibilityIdentifier("rest.strip")
+    HStack(spacing: 12) {
+      TimelineView(.periodic(from: .now, by: 1)) { context in
+        let up = restElapsed(at: context.date) >= Double(store.restTarget)
+        Text(store.t(up ? "Rest’s up" : "Rest")).font(.app(.subheadline, weight: .medium))
+          .foregroundStyle(up ? JourneyColor.signal : JourneyColor.secondary).lineLimit(1).fixedSize()
+          .accessibilityHidden(true)
+      }
+      TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 15)) { context in
+        let progress = min(1, max(0, restElapsed(at: context.date) / Double(max(1, store.restTarget))))
+        GeometryReader { geometry in
+          ZStack(alignment: .leading) {
+            Capsule().fill(JourneyColor.ink(0.08))
+            Capsule().fill(progress >= 1 ? JourneyColor.signal : JourneyColor.ink(0.45))
+              .frame(width: max(3, geometry.size.width * progress))
+          }
+        }.frame(height: 3).animation(.easeOut(duration: 0.3), value: progress >= 1)
+      }.accessibilityHidden(true).accessibilityIdentifier("rest.strip")
+      restMenu
+    }.padding(.vertical, 4)
+  }
+
+  private func restElapsed(at date: Date) -> Double {
+    let now = session.pausedAt ?? date
+    return now.timeIntervalSince(session.restStarted ?? now)
   }
 
   /// A set still to come: last time's numbers, in grey.
   private func plannedRow(number n: Int, value: String) -> some View {
     HStack(alignment: .firstTextBaseline, spacing: 14) {
       setNumber(n, color: JourneyColor.tertiary)
-      Text(value).font(.system(.title3)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+      Text(value).font(.app(.title3)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
       Spacer(minLength: 0)
     }.frame(minHeight: 40).accessibilityElement(children: .combine)
   }
 
   private func setNumber(_ n: Int, color: Color) -> some View {
-    Text("\(n)").font(.system(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(color)
+    Text("\(n)").font(.app(.subheadline, weight: .medium)).monospacedDigit().foregroundStyle(color)
       .frame(width: 20, alignment: .leading)
   }
 
   private var weightField: some View {
     let bodyweight = !weightMissing && session.weightKG == 0
     let unit = store.profile.unit + (exercise?.perDumbbell == true ? " " + store.t("each") : "")
-    return TextField(weightMissing ? "—" : bodyweight ? "" : "0", text: $weightText)
-      .keyboardType(.decimalPad).focused($field, equals: .weight).modifier(SelectNumberOnFocus()).tint(JourneyColor.signal)
-      .font(.system(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
+    return TextField(field == .weight && !editingFrom.isEmpty ? editingFrom : weightMissing ? "—" : bodyweight ? "" : "0", text: $weightText)
+      .keyboardType(.decimalPad).focused($field, equals: .weight).tint(JourneyColor.signal)
+      .font(.app(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
       .foregroundStyle(JourneyColor.text).minimumScaleFactor(0.6)
       .overlay {
         if bodyweight && field != .weight {
-          Text(store.t("BW")).font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text)
+          Text(store.t("BW")).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text)
             .allowsHitTesting(false).accessibilityHidden(true)
         }
       }
@@ -400,8 +407,9 @@ struct WorkoutView: View {
   }
 
   private var repsField: some View {
-    TextField("—", text: $repsText).keyboardType(.numberPad).focused($field, equals: .reps).modifier(SelectNumberOnFocus()).tint(JourneyColor.signal)
-      .font(.system(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
+    TextField(field == .reps && !editingFrom.isEmpty ? editingFrom : "—", text: $repsText)
+      .keyboardType(.numberPad).focused($field, equals: .reps).tint(JourneyColor.signal)
+      .font(.app(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
       .foregroundStyle(JourneyColor.text).minimumScaleFactor(0.6)
       .modifier(InputBox(focused: field == .reps, signal: false, width: 58))
       .accessibilityLabel(store.t("Reps")).accessibilityIdentifier("set.reps")
@@ -411,7 +419,7 @@ struct WorkoutView: View {
     Button { field = nil; picker = true } label: {
       HStack(spacing: 10) {
         Image(systemName: "plus").font(.system(.body, weight: .semibold))
-        Text(store.t(exercises.isEmpty ? "Choose exercise" : "Add exercise")).font(.body)
+        Text(store.t(exercises.isEmpty ? "Choose exercise" : "Add exercise")).font(.app(.body))
       }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
     }.buttonStyle(.plain).accessibilityIdentifier("set.change")
   }
@@ -436,11 +444,30 @@ struct WorkoutView: View {
 
   // MARK: The dock
 
-  /// The clock and the one primary action, fixed at the bottom; the page scrolls under a paper fade.
+  /// The clock and the one primary action, fixed at the bottom (on the keyboard while you type, with
+  /// − + and Done instead); the page scrolls under a paper fade.
   private var dock: some View {
     VStack(spacing: 12) {
-      clockLine
-      JourneyButton(title: primaryTitle, id: "workout.primary", action: runPrimary)
+      if field != nil {
+        // While you type, the dock sits on the keyboard and holds its controls: − and +, wide, step the
+        // open number; Done, compact, closes the keyboard.
+        HStack(spacing: 12) {
+          HStack(spacing: 0) {
+            Button { stepFocused(-1) } label: { Image(systemName: "minus").frame(maxWidth: .infinity, minHeight: 50).contentShape(Rectangle()) }
+              .accessibilityLabel(store.t("Less")).accessibilityIdentifier("set.keyboard.minus")
+            Rectangle().fill(JourneyColor.ink(0.14)).frame(width: 1, height: 24).accessibilityHidden(true)
+            Button { stepFocused(1) } label: { Image(systemName: "plus").frame(maxWidth: .infinity, minHeight: 50).contentShape(Rectangle()) }
+              .accessibilityLabel(store.t("More")).accessibilityIdentifier("set.keyboard.plus")
+          }
+          .buttonStyle(.plain).font(.app(size: 22, weight: .semibold)).foregroundStyle(JourneyColor.text)
+          .journeyGlass(Capsule(), interactive: true)
+          doneButton
+        }
+      } else {
+        // The clock only while a set runs; the rest's time sits between the sets (restStrip).
+        if active { clockLine }
+        JourneyButton(title: primaryTitle, id: "workout.primary", action: runPrimary)
+      }
     }
     .padding(.horizontal, 24).padding(.top, 14).padding(.bottom, 8)
     .background {
@@ -451,7 +478,21 @@ struct WorkoutView: View {
     }
   }
 
-  /// The set or the rest as a large clock, and one grey line beside it: "Rest · of 1:30".
+  /// Closes the keyboard: compact, in the primary style, beside the wide − and +.
+  private var doneButton: some View {
+    let close = { Analytics.tap("set.keyboard.done"); field = nil }
+    let label = Text(store.t("Done")).font(JourneyType.button).foregroundStyle(JourneyColor.onButton).padding(.horizontal, 10)
+    return Group {
+      if #available(iOS 26.0, *) {
+        Button(action: close) { label }.buttonStyle(.glassProminent).tint(JourneyColor.button)
+      } else {
+        Button(action: close) { label.frame(minHeight: 50).padding(.horizontal, 12).background(Capsule().fill(JourneyColor.button)) }
+          .buttonStyle(JourneyPressStyle())
+      }
+    }.controlSize(.large).buttonBorderShape(.capsule).fixedSize().accessibilityIdentifier("set.keyboard.done")
+  }
+
+  /// The running set as a large clock with "Set time" beside it.
   private var clockLine: some View {
     TimelineView(.periodic(from: .now, by: 1)) { context in
       // While paused, every clock reads the moment the pause began.
@@ -462,19 +503,8 @@ struct WorkoutView: View {
           clock(Int(now.timeIntervalSince(session.setStarted ?? now)), signal: false).accessibilityIdentifier("set.elapsed")
           Spacer(minLength: 8)
           stateLine(store.t("Set time"))
-        case .rest:
-          let seconds = Int(now.timeIntervalSince(session.restStarted ?? now))
-          let up = seconds >= store.restTarget
-          clock(seconds, signal: up).accessibilityIdentifier("rest.elapsed")
-          Spacer(minLength: 8)
-          stateLine(store.t(up ? "Rest’s up" : "Rest"), signal: up, id: "rest.state")
-          if !paused { restMenu }
         default:
-          clock(0, signal: false).opacity(0.3).accessibilityHidden(true)
-          Spacer(minLength: 8)
-          stateLine(store.t(exercise == nil ? "Pick an exercise" : weightMissing ? "Add the weight for this set."
-                            : firstEver ? "Start when you begin" : "Ready"),
-                    signal: weightMissing && exercise != nil)
+          EmptyView()
         }
       }
     }.frame(height: 52)
@@ -482,7 +512,7 @@ struct WorkoutView: View {
 
   private func clock(_ seconds: Int, signal: Bool) -> some View {
     // Ticks like a watch: a rolling digit every second is restless.
-    Text(clockText(seconds)).font(.system(size: 44, weight: .semibold)).monospacedDigit().tracking(-1)
+    Text(clockText(seconds)).font(.app(size: 44, weight: .semibold)).monospacedDigit().tracking(-1)
       .foregroundStyle(paused ? JourneyColor.tertiary : signal ? JourneyColor.signal : JourneyColor.text)
       .lineLimit(1).minimumScaleFactor(0.6)
   }
@@ -490,27 +520,30 @@ struct WorkoutView: View {
   /// The line beside the clock; while paused it says so, whatever is underneath.
   @ViewBuilder private func stateLine(_ text: String, signal: Bool = false, id: String = "") -> some View {
     if paused {
-      Text(store.t("Paused")).font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+      Text(store.t("Paused")).font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.secondary)
         .accessibilityIdentifier("workout.paused")
     } else if !text.isEmpty {
-      Text(text).font(.system(.body, weight: .medium)).foregroundStyle(signal ? JourneyColor.signal : JourneyColor.secondary)
+      Text(text).font(.app(.body, weight: .medium)).foregroundStyle(signal ? JourneyColor.signal : JourneyColor.secondary)
         .lineLimit(1).minimumScaleFactor(0.7).accessibilityIdentifier(id)
     }
   }
 
-  /// Change the rest length right where it's counting.
+  /// The time left in the rest, then how far over; tap it to change the rest length.
   private var restMenu: some View {
     Menu {
-      Picker(store.t("Rest"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
+      Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
         ForEach(GymStore.restChoices, id: \.self) { Text(clockString($0)).tag($0) }
       }
     } label: {
-      HStack(spacing: 4) {
-        Text("· " + store.t("of") + " " + clockString(store.restTarget)).monospacedDigit().lineLimit(1)
-        Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.semibold))
-      }.font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
-        .frame(minHeight: 44).contentShape(Rectangle())
-    }.accessibilityLabel(store.t("Rest length") + " " + clockString(store.restTarget))
+      TimelineView(.periodic(from: .now, by: 1)) { context in
+        let left = Double(store.restTarget) - restElapsed(at: context.date)
+        Text(left > 0 ? clockString(Int(left.rounded(.up))) : "+" + clockString(Int(-left))).monospacedDigit()
+          .font(.app(.title3, weight: .semibold))
+          .foregroundStyle(left > 0 ? JourneyColor.text : JourneyColor.secondary)
+          .accessibilityIdentifier("rest.elapsed")
+          .accessibilityLabel(left > 0 ? store.t("Rest") + ", " + clockString(Int(left.rounded(.up))) : store.t("Rest’s up"))
+      }.frame(minHeight: 44).contentShape(Rectangle())
+    }.accessibilityHint(store.t("Rest length") + " " + clockString(store.restTarget))
       .accessibilityIdentifier("rest.target")
   }
 

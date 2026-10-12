@@ -39,12 +39,12 @@ enum StoreShots {
         VStack(spacing: 18) {
           BrandMark(size: 90)
           VStack(spacing: 10) {
-            Text("You’re mid-workout.").font(.title2.weight(.bold)).foregroundStyle(ink)
+            Text("You’re mid-workout.").font(.app(.title2, weight: .bold)).foregroundStyle(ink)
             Text("\(app) opens when you finish or pause your workout in GymBlock.")
-              .font(.body).foregroundStyle(secondary).multilineTextAlignment(.center)
+              .font(.app(.body)).foregroundStyle(secondary).multilineTextAlignment(.center)
               .fixedSize(horizontal: false, vertical: true)
           }.padding(.horizontal, 12)
-          Text("Back to training").font(.headline).foregroundStyle(.white)
+          Text("Back to training").font(.app(.headline)).foregroundStyle(.white)
             .frame(maxWidth: .infinity).frame(height: 54)
             .background(Capsule().fill(ink))
             .padding(.top, 18)
