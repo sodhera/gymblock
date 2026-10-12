@@ -620,7 +620,9 @@ struct WorkoutView: View {
     // Sweaty double taps never start and finish a set at once.
     guard Date() >= guardUntil else { return }
     switch primary {
-    case .resume: store.resume()
+    case .resume:
+      store.resume()
+      JourneyHaptic.play(.medium, store.profile, intensity: 0.8)  // As Start workout: the block is back on.
     case .choose, .pick: field = nil; picker = true; return
     case .next(let next):
       field = nil
@@ -629,7 +631,8 @@ struct WorkoutView: View {
     case .end: field = nil; confirmEnd = true; return
     case .finish:
       field = nil
-      guard finishSet() else { field = timed ? nil : .reps; return }
+      // Like a missing weight: open the field it needs, with the same light tap.
+      guard finishSet() else { if !timed { field = .reps; JourneyHaptic.play(.light, store.profile, intensity: 0.6) }; return }
     case .start, .log: begin()
     }
     guardUntil = Date().addingTimeInterval(0.6)
@@ -641,7 +644,7 @@ struct WorkoutView: View {
     guard exercise != nil else { picker = true; return }
     if weightMissing { field = .weight; JourneyHaptic.play(.light, store.profile, intensity: 0.6); return }
     if oneTap {
-      guard store.logQuickSet() else { field = .reps; return }
+      guard store.logQuickSet() else { field = .reps; JourneyHaptic.play(.light, store.profile, intensity: 0.6); return }
       JourneyHaptic.land(store.profile)
       Task { await OnboardingFeedback.shared.playSound(profile: store.profile, completion: true) }
     } else {
@@ -680,7 +683,8 @@ struct WorkoutView: View {
   private func choose(_ next: Exercise) {
     picker = false
     guard next.id != exercise?.id else { return }
-    if active { pendingExercise = next } else { store.chooseExercise(next) }
+    // The same tick as tapping an exercise's name.
+    if active { pendingExercise = next } else { store.chooseExercise(next); JourneyHaptic.play(.selection, store.profile) }
   }
 
   private func resolveSwitch(saving: Bool) {

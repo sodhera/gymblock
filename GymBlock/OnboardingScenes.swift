@@ -873,7 +873,8 @@ struct HoldButton: View {
       while !Task.isCancelled {
         let p = min(1, Date().timeIntervalSince(begin) / Self.duration)
         onProgress(p)
-        UIImpactFeedbackGenerator(style: .rigid).impactOccurred(intensity: 0.25 + 0.75 * p)
+        // One shared, ready generator: a fresh one each tick starts late and the build-up stutters.
+        JourneyHaptic.play(.rigid, store.profile, intensity: 0.25 + 0.75 * p)
         if p >= 1 { finish(); return }
         try? await Task.sleep(for: .milliseconds(90))
       }

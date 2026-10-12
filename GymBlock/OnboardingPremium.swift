@@ -138,16 +138,31 @@ enum JourneyMotion {
     if let g = impacts[style] { return g }
     let g = UIImpactFeedbackGenerator(style: style); g.prepare(); impacts[style] = g; return g
   }
+  private static func style(_ kind: Self) -> UIImpactFeedbackGenerator.FeedbackStyle {
+    switch kind {
+    case .light: return .light
+    case .soft: return .soft
+    case .medium: return .medium
+    case .rigid: return .rigid
+    default: return .heavy
+    }
+  }
   /// Haptics are always on (11 Oct 2026): designed feedback is part of the app, not a preference.
+  /// Each generator is readied again after it fires, so the next tap in a run lands on time.
   static func play(_ kind: Self, _ profile: Profile, intensity: CGFloat = 1) {
     switch kind {
     case .selection: selector.selectionChanged(); selector.prepare()
-    case .light: impact(.light).impactOccurred(intensity: intensity)
-    case .soft: impact(.soft).impactOccurred(intensity: intensity)
-    case .medium: impact(.medium).impactOccurred(intensity: intensity)
-    case .rigid: impact(.rigid).impactOccurred(intensity: intensity)
-    case .heavy: impact(.heavy).impactOccurred(intensity: intensity)
     case .success: notifier.notificationOccurred(.success); notifier.prepare()
+    default: let g = impact(style(kind)); g.impactOccurred(intensity: intensity); g.prepare()
+    }
+  }
+  /// Wakes the Taptic Engine ahead of a beat that must land with what's on screen; an idle one
+  /// starts late. It stays ready for a few seconds.
+  static func prepare(_ kind: Self) {
+    switch kind {
+    case .selection: selector.prepare()
+    case .success: notifier.prepare()
+    default: impact(style(kind)).prepare()
     }
   }
   /// The iOS notification feel: two quick taps.

@@ -253,11 +253,13 @@ struct SetEditor: View {
       set.gapBeforeSeconds = gap
       set.gapUnknown = gap == nil || date != set.date
       set.date = date
-      if store.editSet(set, sessionID: sessionID) { dismiss() } else { error = true }
+      // Saved: the same success tap as saving a split.
+      if store.editSet(set, sessionID: sessionID) { JourneyHaptic.play(.success, store.profile); dismiss() } else { error = true }
     } else if store.addCompletedSet(
       exercise: exercise, weight: value, reps: Int(reps) ?? 0, minutes: parseNumber(minutes) ?? 0,
       warmup: warmup)
     {
+      JourneyHaptic.play(.success, store.profile)
       dismiss()
     } else {
       error = true

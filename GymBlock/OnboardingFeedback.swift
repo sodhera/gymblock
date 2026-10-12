@@ -10,12 +10,8 @@ import UIKit
     audio.stop()
   }
   func play(profile: Profile, completion: Bool = false, selection: Bool = false) {
-    // Haptics are always on (11 Oct 2026).
-    if completion {
-      UINotificationFeedbackGenerator().notificationOccurred(.success)
-    } else {
-      UISelectionFeedbackGenerator().selectionChanged()
-    }
+    // Haptics are always on (11 Oct 2026), through the shared, ready generators.
+    JourneyHaptic.play(completion ? .success : .selection, profile)
     guard !selection else { return }
     pendingSound?.cancel()
     pendingSound = Task {
