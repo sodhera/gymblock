@@ -114,7 +114,6 @@ struct ProgressCard: View {
   /// The same card with nothing invented: a faint dashed baseline and what will fill it.
   private var empty: some View {
     VStack(alignment: .leading, spacing: 10) {
-      PageLabel(text: store.t("Your progress"))
       VStack(spacing: 6) {
         Image(systemName: "chart.line.uptrend.xyaxis").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.signal)
         Text(store.t(hasHistory ? "Repeat a workout to see your progress" : "Start a workout to see your progress"))
