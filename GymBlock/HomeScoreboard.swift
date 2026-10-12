@@ -1,55 +1,127 @@
 import Charts
 import SwiftUI
 
-/// One exercise's progress as a quiet line, in place of the week dots (11 Oct 2026): the exercise
-/// and what's held constant, the gain in emerald, the line itself (no axes; the latest workout a dot),
-/// then where it started and where it is now. Only comparable sets, from the same split with the
-/// reps or the load held constant (`exerciseTrends`). Home shows it only once there is a line to
-/// draw: a new account sees no empty chart, and the first real gain is what brings it in.
-struct ProgressLine: View {
+/// This week as one quiet line: seven small dots (emerald for a day trained, an ink ring on today)
+/// and the streak beside them. Back at the top of Home on 12 Oct 2026, above the progress card.
+struct WeekLine: View {
   @EnvironmentObject private var store: GymStore
-  let trend: ExerciseTrend
+  let stats: HomeStats
   var body: some View {
-    chart(trend).accessibilityElement(children: .ignore).accessibilityLabel(label).accessibilityIdentifier("home.progress")
+    HStack(spacing: 14) {
+      HStack(spacing: 7) {
+        ForEach(0..<7, id: \.self) { d in
+          let on = stats.grid.last?[d] ?? false
+          let today = d == stats.todayIndex
+          Circle().fill(on ? JourneyColor.signal : today ? Color.clear : JourneyColor.ink(0.12))
+            .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: today && !on ? 1.25 : 0))
+            .frame(width: 9, height: 9)
+        }
+      }
+      Text(label).font(.system(.subheadline, weight: .medium)).monospacedDigit()
+        .foregroundStyle(JourneyColor.secondary)
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("home.week")
+    .accessibilityLabel(label + ", \(stats.thisWeek) \(store.t("of")) \(stats.goal) \(store.t("this week"))")
+  }
+  /// The truth, never an example: "Week 1" before the first workout, the streak once there is one,
+  /// otherwise this week against the goal.
+  private var label: String {
+    if stats.streakWeeks > 0 { return "\(stats.streakWeeks) " + store.t("week streak") }
+    if stats.totalWorkouts == 0 { return store.t("Week 1") }
+    return "\(stats.thisWeek) " + store.t("of") + " \(stats.goal) " + store.t("this week")
+  }
+}
+
+/// One exercise's progress, almost cardless, straight on the paper (12 Oct 2026, the carousel page's
+/// chart with the quiet line's restraint; no gridlines, scale or dates: the page's dots darken behind
+/// the plot, and only the latest workout is a point, labelled with its value): the exercise and what's held constant, the gain in emerald, an emerald line over
+/// a soft fill with each workout a point and the latest filled, a three-value scale, then where it
+/// started and where it is now. The last eight comparable workouts only: same split, reps or load
+/// held constant (`exerciseTrends`). With no line yet the same card holds an empty, labelled chart,
+/// never sample numbers, so Home is never blank.
+struct ProgressCard: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  /// Nil: nothing comparable yet.
+  let trend: ExerciseTrend?
+  /// Any finished workout yet; picks the empty card's line.
+  let hasHistory: Bool
+  @State private var drawn = false
+  var body: some View {
+    Group {
+      if let trend { filled(trend) } else { empty }
+    }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .onAppear { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.9).delay(0.25)) { drawn = true } }
   }
 
-  /// The last eight comparable workouts.
   private func shown(_ trend: ExerciseTrend) -> [(date: Date, value: Double)] { Array(trend.points.suffix(8)) }
 
-  private func chart(_ trend: ExerciseTrend) -> some View {
+  private func filled(_ trend: ExerciseTrend) -> some View {
     let points = shown(trend)
     let values = points.map(\.value)
-    let low = values.min() ?? 0, high = values.max() ?? 0
-    let pad = max((high - low) * 0.25, trend.repMode ? 1 : 1.25)
-    return VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .firstTextBaseline, spacing: 6) {
-        Text(store.t(trend.exercise.name)).font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary)
-          .lineLimit(1)
-        Text(trend.constant).font(.subheadline).foregroundStyle(JourneyColor.tertiary).lineLimit(1)
+    let low = values.min() ?? 0, high = values.max() ?? 1
+    let pad = max(1, (high - low) * 0.35)
+    let domain = (low - pad)...(high + pad)
+    return VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(store.t(trend.exercise.name)).font(.system(.headline, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
+          Text(trend.constant)
+            .font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+        }
         Spacer(minLength: 8)
-        Text(gainText(points, trend)).font(.system(.subheadline, weight: .semibold)).monospacedDigit()
+        Text(gainText(points, trend)).font(.system(.headline, weight: .bold)).monospacedDigit()
           .foregroundStyle(gain(points) > 0 ? JourneyColor.signal : JourneyColor.secondary).fixedSize()
       }
       Chart {
-        ForEach(Array(points.enumerated()), id: \.offset) { index, point in
-          LineMark(x: .value("Workout", index), y: .value("Best", point.value))
+        ForEach(Array(points.enumerated()), id: \.offset) { i, p in
+          let y = drawn ? p.value : (values.first ?? 0)
+          AreaMark(x: .value("Workout", i), yStart: .value("Floor", domain.lowerBound), yEnd: .value("Best", y))
+            .foregroundStyle(LinearGradient(colors: [JourneyColor.signal.opacity(0.1), JourneyColor.signal.opacity(0)], startPoint: .top, endPoint: .bottom))
             .interpolationMethod(.monotone)
-            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            .foregroundStyle(JourneyColor.ink(0.5))
+          LineMark(x: .value("Workout", i), y: .value("Best", y))
+            .foregroundStyle(JourneyColor.signal).lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+            .interpolationMethod(.monotone)
         }
-        PointMark(x: .value("Workout", points.count - 1), y: .value("Best", values.last ?? 0))
-          .symbolSize(70).foregroundStyle(JourneyColor.signal)
+        // Only the latest workout is a point, labelled with where it is now.
+        PointMark(x: .value("Workout", points.count - 1), y: .value("Best", drawn ? (values.last ?? 0) : (values.first ?? 0)))
+          .symbol { Circle().fill(JourneyColor.signal).frame(width: 10, height: 10) }
       }
       .chartXAxis(.hidden).chartYAxis(.hidden).chartLegend(.hidden)
-      .chartXScale(domain: 0...max(1, points.count - 1), range: .plotDimension(padding: 5))
-      .chartYScale(domain: (low - pad)...(high + pad))
-      .frame(height: 52)
-      HStack {
-        Text(points.first?.date.formatted(.dateTime.month(.abbreviated).day()) ?? "")
-        Spacer()
-        Text(value(values.last ?? 0, trend))
-      }.font(.footnote).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+      .chartXScale(domain: -0.12...Double(max(1, points.count - 1)) + 0.12)
+      .chartYScale(domain: domain)
+      .chartOverlay { proxy in
+        // The latest value just above its point, its right edge on the point's.
+        GeometryReader { geometry in
+          if let plot = proxy.plotFrame, let at = proxy.position(for: (x: points.count - 1, y: values.last ?? 0)) {
+            let origin = geometry[plot].origin
+            Text(value(values.last ?? 0, trend)).font(.system(.footnote, weight: .semibold)).monospacedDigit()
+              .foregroundStyle(JourneyColor.secondary).fixedSize()
+              .frame(width: 140, alignment: .trailing)
+              .position(x: origin.x + at.x - 70 + 5, y: origin.y + at.y - 20)
+              .opacity(drawn ? 1 : 0).animation(.easeOut(duration: 0.3).delay(0.9), value: drawn)
+          }
+        }.allowsHitTesting(false)
+      }
+      .frame(height: 150)
+      .background(DotField())
     }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("home.progress")
+    .accessibilityLabel(store.t(trend.exercise.name) + " " + trend.constant + ", " + gainText(points, trend) + ", " + value(values.last ?? 0, trend))
+  }
+
+  /// The same card with nothing invented: a faint dashed baseline and what will fill it.
+  private var empty: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      PageLabel(text: store.t("Your progress"))
+      VStack(spacing: 6) {
+        Image(systemName: "chart.line.uptrend.xyaxis").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.signal)
+        Text(store.t(hasHistory ? "Repeat a workout to see your progress" : "Start a workout to see your progress"))
+          .font(.system(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+      }.frame(maxWidth: .infinity).frame(height: 132).background(DotField(hole: CGSize(width: 330, height: 96)))
+    }
+    .accessibilityElement(children: .combine).accessibilityIdentifier("home.progress.empty")
   }
 
   private func gain(_ points: [(date: Date, value: Double)]) -> Double { (points.last?.value ?? 0) - (points.first?.value ?? 0) }
@@ -63,9 +135,88 @@ struct ProgressLine: View {
   private func value(_ v: Double, _ trend: ExerciseTrend) -> String {
     trend.repMode ? "\(Int(v.rounded())) " + store.t("reps") : formatNumber(v) + " " + store.profile.unit
   }
-  private var label: String {
-    let points = shown(trend)
-    return store.t(trend.exercise.name) + " " + trend.constant + ", " + gainText(points, trend) + ", " + value(points.last?.value ?? 0, trend)
+}
+
+/// Up to three exercises' progress in turn (12 Oct 2026): a page every 4 s with a slide, a swipe takes
+/// over and holds the clock for 12 s, small dots beneath (the shown one a short emerald capsule). Reduce
+/// Motion keeps it still; one exercise shows alone with no dots. Each page opens that exercise's progress.
+struct ProgressCarousel: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  let trends: [ExerciseTrend]
+  @State private var page = 0
+  @State private var heldUntil = Date.distantPast
+  var body: some View {
+    VStack(spacing: 12) {
+      TabView(selection: $page) {
+        ForEach(Array(trends.enumerated()), id: \.element.id) { i, trend in
+          NavigationLink {
+            ExerciseProgressView(exercise: trend.exercise, split: store.data.workouts.first { $0.id == trend.splitID })
+          } label: { ProgressCard(trend: trend, hasHistory: true).padding(.horizontal, 24) }
+            .buttonStyle(JourneyPressStyle()).tag(i).accessibilityIdentifier("home.trend.\(trend.exercise.id)")
+        }
+      }
+      .tabViewStyle(.page(indexDisplayMode: .never))
+      .frame(height: 212)
+      // Full width, so a page slides off the screen's edge rather than vanishing at the margin.
+      .padding(.horizontal, -24)
+      .simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { _ in heldUntil = Date().addingTimeInterval(12) })
+      if trends.count > 1 {
+        HStack(spacing: 6) {
+          ForEach(trends.indices, id: \.self) { i in
+            Capsule().fill(i == page ? JourneyColor.signal : JourneyColor.ink(0.14))
+              .frame(width: i == page ? 18 : 6, height: 6)
+          }
+        }.animation(.spring(duration: 0.4, bounce: 0.1), value: page).accessibilityHidden(true)
+      }
+    }
+    .accessibilityIdentifier("home.trends")
+    .task(id: trends.map(\.id)) {
+      if page >= trends.count { page = 0 }
+      guard trends.count > 1, !reduceMotion else { return }
+      while !Task.isCancelled {
+        try? await Task.sleep(for: .seconds(4))
+        guard !Task.isCancelled, Date() >= heldUntil else { continue }
+        withAnimation(.spring(duration: 0.7, bounce: 0.08)) { page = (page + 1) % trends.count }
+      }
+    }
+  }
+}
+
+/// The page's own dot grid, a little darker, inside these bounds: the chart's scale without drawing lines. The
+/// dots sit exactly on `DotGrid`'s 22-pt lattice (screen-anchored, columns centred) and ease in over
+/// three dots from the edges, so the page's dots darken into the field with no border. Assumes the view is centred horizontally, as Home is.
+struct DotField: View {
+  /// A soft oval gap in the middle, so a line of text over the field stays clean.
+  var hole: CGSize? = nil
+  var body: some View {
+    GeometryReader { g in
+      let frame = g.frame(in: .global)
+      Canvas { context, size in
+        let step: CGFloat = 22, radius: CGFloat = 1.2, feather: CGFloat = 66
+        let screenWidth = frame.maxX + frame.minX
+        let originX = screenWidth.truncatingRemainder(dividingBy: step) / 2
+        var y = (((frame.minY - step / 2) / step).rounded(.up)) * step + step / 2
+        while y <= frame.maxY {
+          var x = (((frame.minX - originX) / step).rounded(.up)) * step + originX
+          while x <= frame.maxX {
+            let edge = min(x - frame.minX, frame.maxX - x, y - frame.minY, frame.maxY - y)
+            // Smoothstep from the page's own dots at the edge to the field's full tone inside.
+            let ramp = min(1, max(0, edge / feather))
+            var fade = ramp * ramp * (3 - 2 * ramp)
+            let local = CGPoint(x: x - frame.minX, y: y - frame.minY)
+            if let hole {
+              let dx = (local.x - size.width / 2) / (hole.width / 2), dy = (local.y - size.height / 2) / (hole.height / 2)
+              fade *= min(1, max(0, (hypot(dx, dy) - 1) / 0.35))
+            }
+            context.fill(Path(ellipseIn: CGRect(x: local.x - radius, y: local.y - radius, width: radius * 2, height: radius * 2)),
+                         with: .color(JourneyColor.ink(0.17 * fade)))
+            x += step
+          }
+          y += step
+        }
+      }
+    }.allowsHitTesting(false).accessibilityHidden(true)
   }
 }
 

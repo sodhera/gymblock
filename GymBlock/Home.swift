@@ -22,7 +22,7 @@ struct HomeView: View {
   var body: some View {
     NavigationStack {
       ZStack {
-        DotGrid()
+        DotGrid(strength: 1.25)
         VStack(spacing: 0) {
           if typeSize.isAccessibilitySize {
             ScrollView { content.padding(.bottom, 24) }.scrollIndicators(.hidden).frame(maxHeight: .infinity)
@@ -59,27 +59,50 @@ struct HomeView: View {
     }
   }
 
-  /// Progress at the top (once there is some), then the queued workout centred in the space above
-  /// the button.
+  /// The week, then progress in the middle of the page (an honest empty chart before there is a
+  /// line), then the queued workout low on the page, just above the button.
   private var content: some View {
     VStack(alignment: .leading, spacing: 0) {
-      if let progress { ProgressLine(trend: progress).padding(.top, 24).reveal(appeared, 0) }
-      Spacer(minLength: 32)
+      Text(greeting).font(JourneyType.headline).tracking(-0.3).foregroundStyle(JourneyColor.text)
+        .lineLimit(1).minimumScaleFactor(0.7).padding(.top, 40).reveal(appeared, 0)
+        .accessibilityAddTraits(.isHeader).accessibilityIdentifier("home.greeting")
+      WeekLine(stats: store.homeStats()).padding(.top, 12).reveal(appeared, 0)
+      Spacer(minLength: 28)
+      progressCard.reveal(appeared, 1)
+      Spacer(minLength: 28)
       // No split yet and nothing logged: "Your first workout", with setting up a split one tap away.
       UpNext(split: nextSplit, detail: nextDetail,
              title: nextSplit == nil && firstRun ? store.t("Your first workout") : nil,
              link: nextSplit == nil && firstRun ? (store.t("Set up a split"), { creatingSplit = true }) : nil) { choosing = true }
-        .reveal(appeared, 1)
-      Spacer(minLength: 32)
+        .reveal(appeared, 2)
+        .padding(.bottom, 28)
     }.frame(maxWidth: .infinity, alignment: .leading)
   }
 
+  /// Up to three exercises in turn once there is a line; until then the honest empty chart.
+  @ViewBuilder private var progressCard: some View {
+    if progress.isEmpty {
+      ProgressCard(trend: nil, hasHistory: !firstRun)
+    } else {
+      ProgressCarousel(trends: progress)
+    }
+  }
+
+
   private var nextDetail: String { store.summary(of: nextSplit) }
-  /// The split that's up next shows its best gain; otherwise the biggest gain anywhere. Nothing
-  /// until some exercise has two comparable workouts.
-  private var progress: ExerciseTrend? {
+  /// "Good morning, Sirish": by the hour, the name only when there is one.
+  private var greeting: String {
+    let hour = Calendar.current.component(.hour, from: Date())
+    let part = store.t(hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening")
+    let name = store.profile.name.trimmingCharacters(in: .whitespaces)
+    return name.isEmpty ? part : part + ", " + name
+  }
+  /// Three at most: the split that's up next first (biggest gains first), then the biggest gains
+  /// anywhere. Nothing until some exercise has two comparable workouts.
+  private var progress: [ExerciseTrend] {
     let trends = store.exerciseTrends(limit: .max).filter { $0.points.count >= 2 }
-    return trends.first { $0.splitID != nil && $0.splitID == nextSplit?.id } ?? trends.first
+    let next = trends.filter { $0.splitID != nil && $0.splitID == nextSplit?.id }
+    return Array((next + trends.filter { t in !next.contains { $0.id == t.id } }).prefix(3))
   }
   /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to change it.
   private func startNext() {

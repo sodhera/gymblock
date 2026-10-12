@@ -177,24 +177,26 @@ enum JourneyMotion {
 /// vignette at the edges: enough light for glass to refract, never a coloured background.
 struct DotGrid: View {
   @Environment(\.colorScheme) private var scheme
+  /// Multiplies the dots' opacity (Home runs it a touch darker).
+  var strength: CGFloat = 1
   var body: some View {
-    GeometryReader { g in Image(uiImage: Self.image(g.size, dark: scheme == .dark)).resizable() }
+    GeometryReader { g in Image(uiImage: Self.image(g.size, dark: scheme == .dark, strength: strength)).resizable() }
       .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
   }
   @MainActor private static var cache: [String: UIImage] = [:]
-  @MainActor static func image(_ size: CGSize, dark: Bool = false) -> UIImage {
+  @MainActor static func image(_ size: CGSize, dark: Bool = false, strength: CGFloat = 1) -> UIImage {
     let size = CGSize(width: max(1, size.width.rounded()), height: max(1, size.height.rounded()))
-    let key = JourneyTheme.current.name + (dark ? "-dark" : "") + "-\(size.width)x\(size.height)"
+    let key = JourneyTheme.current.name + (dark ? "-dark" : "") + "-\(size.width)x\(size.height)-\(strength)"
     if let cached = cache[key] { return cached }
     let image = UIGraphicsImageRenderer(size: size).image { r in
       let c = r.cgContext
-      Self.draw(in: c, size: size, dark: dark)
+      Self.draw(in: c, size: size, dark: dark, strength: strength)
     }
     cache[key] = image
     return image
   }
   /// Shared with the app icon so every surface is the same stage.
-  static func draw(in c: CGContext, size: CGSize, glowScale: CGFloat = 1, dark: Bool = false) {
+  static func draw(in c: CGContext, size: CGSize, glowScale: CGFloat = 1, dark: Bool = false, strength: CGFloat = 1) {
     let t = JourneyTheme.current
     let space = CGColorSpaceCreateDeviceRGB()
     let traits = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
@@ -223,7 +225,7 @@ struct DotGrid: View {
       var x = size.width.truncatingRemainder(dividingBy: step) / 2
       while x < size.width {
         let d = min(1, hypot(x - center.x, y - center.y) / reach)
-        c.setFillColor(ui(t.dot).withAlphaComponent((dark ? 0.07 : t.dotAlpha) * (0.25 + 0.75 * pow(1 - d, 1.6))).cgColor)
+        c.setFillColor(ui(t.dot).withAlphaComponent((dark ? 0.07 : t.dotAlpha) * strength * (0.25 + 0.75 * pow(1 - d, 1.6))).cgColor)
         c.fillEllipse(in: CGRect(x: x - radius, y: y - radius, width: 2 * radius, height: 2 * radius))
         x += step
       }

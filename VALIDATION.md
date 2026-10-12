@@ -1,5 +1,11 @@
 # Validation — 8 October 2026
 
+## Home: greeting, week dots, progress on the paper (12 October 2026)
+
+Home is the greeting ("Good morning, Sirish"), the week dots with the streak, then up to three exercises' progress in rotation (`ProgressCarousel`, a page every 4 s, a swipe holds it 12 s), then Up next low on the page above Start workout. The charts sit on the paper with no card, gridlines, scale, dates or split names: the page's dots darken behind the plot (`DotField`, on `DotGrid`'s 22-pt lattice, easing in over three dots), Home's page dots run 1.25× darker, and only the latest workout is a point, labelled with its value. With no line yet the space shows a small "Your progress" label and "Start a workout to see your progress" (or "Repeat a workout…"), never sample numbers.
+
+Checked on the iPhone 18 Pro simulator (iOS 27.0) with screenshots, in [screenshots/2026-10-12-home-progress-card](screenshots/2026-10-12-home-progress-card/): first time (no history), sample data (rotation through Dumbbell curl, Dumbbell hammer curl and Triceps extension, including mid-slide), real device data, and the minimal chart. A tap on a chart opened that exercise's progress page. No test suite was run.
+
 ## Onboarding analytics into Supabase (11 October 2026)
 
 Onboarding now sends funnel events to `gb_events` through the existing `Analytics` queue (no new SDK): `onboarding_started` (Get started, once per install), `onboarding_step` on every page change (from, to, forward/back, index, time on the page), `onboarding_answer` on each question (gender, scrolling, minutes per rest, height and weight in 5-unit bands, the phone-time estimate; never the name), `onboarding_blocking`, `onboarding_alerts`, `onboarding_committed` and `onboarding_completed` (splits, skipped, blocking, alerts, subscribed, signed in, total time). Debug builds mark every event `debug: true` and log each accepted batch. The event table is in `supabase/README.md`; `supabase/migrations/20261011000100_onboarding_funnel.sql` adds funnel, time-per-page, answers and summary views; it was run in the project's SQL editor (through Safari) the same day and returned "Success".
