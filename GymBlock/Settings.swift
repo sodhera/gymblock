@@ -1,19 +1,24 @@
 import SwiftUI
+import UserNotifications
 
 /// Settings, designed from a clean slate on 11 Oct 2026 in the app's own language: a large title with
 /// a round glass close button, small uppercase section labels and plain ruled rows on the paper page
 /// (no cards, no icon chips; toggles turn emerald when on). Ordered by how often they matter: you,
-/// the plan, the workout, blocking, the app, your data, help, then the account exits. Haptics are
+/// the plan, the workout, blocking, notifications, the app, your data, help, then the account exits. Haptics are
 /// always on, so there is no switch for them. Sub-pages (Body, Training answers, Data) share the page.
 struct PreferencesView: View {
   @EnvironmentObject private var store: GymStore
   @EnvironmentObject private var account: Account
   @Environment(\.dismiss) private var dismiss
-  @State private var denied = false
+  @Environment(\.scenePhase) private var scenePhase
+  /// iOS's notification permission, read on open and on every return to the app; nil until read.
+  @State private var notifications: UNAuthorizationStatus?
   @ObservedObject private var blocking = AppBlocking.shared
   @State private var renaming = false
   @State private var draftName = ""
   @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+  /// Strict mode lives with the blocked apps on this iPhone (the App Group), where the shield reads it.
+  @AppStorage(BlockingPass.strictKey, store: BlockingPass.defaults) private var strict = true
   var body: some View {
     NavigationStack {
       List {
@@ -42,17 +47,24 @@ struct PreferencesView: View {
             ForEach(GymStore.restChoices, id: \.self) { Text(clockString($0)).tag($0) }
           }
         }
-        SettingToggle(title: store.t("Rest alert"), id: "settings.restAlert",
-                      isOn: Binding(get: { store.profile.restAlerts == true }, set: setAlerts))
         SettingToggle(title: store.t("Time each set"), id: "settings.timeSets",
                       isOn: Binding(get: { store.timesSets }, set: { v in store.updateProfile { $0.timeSets = v } }))
-        SettingsNote(store.t(denied ? "Notifications are off for GymBlock. Turn them on in iOS Settings."
-                             : store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
+        SettingsNote(store.t(store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
 
         SettingsLabel(store.t("Blocking"))
         NavigationLink { BlockedAppsView() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
           .pageRow().accessibilityIdentifier("settings.blockedApps")
-        SettingsNote(store.t("Uses Apple’s Screen Time from Start workout to Finish."))
+        SettingToggle(title: store.t("Strict mode"), id: "settings.strict",
+                      isOn: Binding(get: { strict }, set: { on in strict = on; Analytics.tap("settings.strict", ["on": on]) }))
+        SettingsNote(store.t(strict ? "No way past the block until you finish." : "The block screen offers 1 minute, once per exercise."))
+
+        SettingsLabel(store.t("Notifications"))
+        notificationsRow
+        SettingToggle(title: store.t("Rest alert"), id: "settings.restAlert",
+                      isOn: Binding(get: { store.profile.restAlerts == true }, set: setAlerts))
+        if store.profile.restAlerts == true && notifications.map(allowed) == false {
+          SettingsNote(store.t("Notifications are off, so rest alerts can’t reach you."))
+        }
 
         SettingsLabel(store.t("App"))
         SettingMenu(title: store.t("Appearance"), value: store.t(Appearance(rawValue: appearance)?.title ?? "System"), id: "settings.appearance") {
@@ -81,11 +93,9 @@ struct PreferencesView: View {
 
         LegalSection()
         AccountSection { dismiss() }
-
-        Text("GymBlock " + Analytics.appVersion + " (" + Analytics.build + ")").font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
-          .frame(maxWidth: .infinity).padding(.top, 8).padding(.bottom, 32).pageRow().listRowSeparator(.hidden)
       }
       .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
+      .contentMargins(.bottom, 32, for: .scrollContent)
       .toolbar(.hidden, for: .navigationBar)
       .alert(store.t("Your name"), isPresented: $renaming) {
         TextField(store.t("Your name"), text: $draftName).textInputAutocapitalization(.words)
@@ -95,19 +105,62 @@ struct PreferencesView: View {
         }
       } message: { Text(store.t("This is how GymBlock greets you.")) }
       .track(screen: "settings")
+      .task { await readNotifications() }
+      .onChange(of: scenePhase) { _, phase in if phase == .active { Task { await readNotifications() } } }
     }
   }
-  /// "Off", "None" or what's blocked ("3 apps").
-  private var blockingValue: String {
-    store.profile.focusEnabled != true ? store.t("Off") : blocking.isEmpty ? store.t("None") : blocking.summary(store.t)
+  /// iOS's notification permission. GymBlock can ask for it but never take it back, so there's no
+  /// switch: a button while it isn't given (it asks; once refused, iOS won't ask again, so it opens
+  /// GymBlock's notification settings in iOS), then just "On".
+  @ViewBuilder private var notificationsRow: some View {
+    if let notifications, !allowed(notifications) {
+      Button(action: allowNotifications) {
+        HStack(spacing: 10) {
+          Text(store.t("Notifications")).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
+          Spacer(minLength: 12)
+          Text(store.t("Turn on")).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal).lineLimit(1)
+        }.frame(minHeight: 50).contentShape(Rectangle())
+      }.buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.notifications")
+    } else {
+      SettingRow(title: store.t("Notifications"), value: notifications == nil ? nil : store.t("On")).pageRow()
+        .accessibilityIdentifier("settings.notifications")
+    }
   }
-  /// Turning the alert on asks iOS once; if notifications are off, say where to fix it.
+  private func allowed(_ status: UNAuthorizationStatus) -> Bool {
+    status == .authorized || status == .provisional || status == .ephemeral
+  }
+  private func readNotifications() async {
+    notifications = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+  }
+  private func allowNotifications() {
+    Analytics.tap("settings.notifications")
+    Task { @MainActor in
+      if notifications == .notDetermined {
+        let granted = await RestAlert.requestPermission()
+        Analytics.track("notifications_access", ["granted": granted, "where": "settings"])
+      } else if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+        await UIApplication.shared.open(url)
+      }
+      await readNotifications()
+    }
+  }
+  /// "Off", "No access" (Screen Time), "None" or what's blocked ("3 apps").
+  private var blockingValue: String {
+    switch blocking.state(store.profile) {
+    case .off: store.t("Off")
+    case .noAccess: store.t("No access")
+    case .noApps: store.t("None")
+    case .on: blocking.summary(store.t)
+    }
+  }
+  /// Turning the alert on asks iOS once; if notifications are off, it stays off and the row above
+  /// has the way to turn them on.
   private func setAlerts(_ on: Bool) {
-    guard on else { store.updateProfile { $0.restAlerts = false }; denied = false; return }
+    guard on else { store.updateProfile { $0.restAlerts = false }; return }
     Task { @MainActor in
       let granted = await RestAlert.requestPermission()
-      denied = !granted
       store.updateProfile { $0.restAlerts = granted }
+      await readNotifications()
     }
   }
 }

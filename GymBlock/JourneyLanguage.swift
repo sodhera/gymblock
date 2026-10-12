@@ -243,7 +243,6 @@ extension Spanish {
     "Body": "Cuerpo",
     "Rest alert": "Aviso de descanso",
     "Alert after": "Avisar tras",
-    "Notifications are off for GymBlock. Turn them on in iOS Settings.": "Las notificaciones de GymBlock están desactivadas. Actívalas en Ajustes de iOS.",
     "Log out": "Cerrar sesión",
     "Delete account": "Eliminar cuenta",
     "Your account lives only on this iPhone.": "Tu cuenta solo existe en este iPhone.",
@@ -431,9 +430,6 @@ extension Spanish {
     "Clear this iPhone": "Vaciar este iPhone",
     "Clear this iPhone?": "¿Vaciar este iPhone?",
     "Clear": "Vaciar",
-    "Log out keeps your account. Delete removes it and everything synced to it.": "Cerrar sesión conserva tu cuenta. Eliminar la borra junto con todo lo sincronizado.",
-    "Development run: both act on this iPhone only.": "Ejecución de desarrollo: ambos actúan solo en este iPhone.",
-    "Sign in to back up your workouts and keep them on any iPhone.": "Inicia sesión para guardar tus entrenamientos y tenerlos en cualquier iPhone.",
     "Your workouts stay in your account. This iPhone is cleared.": "Tus entrenamientos siguen en tu cuenta. Este iPhone se vacía.",
     "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone.": "Elimina para siempre tu cuenta, entrenamientos, divisiones, respuestas y ajustes en todas partes. No se puede deshacer.",
     "Could not delete the account": "No se pudo eliminar la cuenta",
@@ -639,7 +635,6 @@ extension Spanish {
     "Choose apps to block in Settings": "Elige qué apps bloquear en Ajustes",
     "Paused · clocks stopped · apps unblocked": "En pausa · relojes parados · apps desbloqueadas",
     "Apps to block": "Apps que bloquear",
-    "Screen Time access is off for GymBlock. Allow it in iOS Settings.": "El acceso de GymBlock a Tiempo de uso está desactivado. Permítelo en Ajustes de iOS.",
     "Uses Apple’s Screen Time from Start workout to Finish. Pausing lifts it.": "Usa Tiempo de uso de Apple desde Empezar hasta Terminar. Pausar lo quita.",
   ]
 }

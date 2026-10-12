@@ -122,7 +122,7 @@ func durationParts(_ minutes: Int) -> [(value: Int, unit: String)] {
 }
 
 /// The apps GymBlock blocks, on glass: their real icons with "Blocked while you train", or what's
-/// missing ("Choose apps to block", "App blocking is off"). It opens Blocked apps.
+/// missing ("Choose apps to block", "App blocking is off", Screen Time access). It opens Blocked apps.
 private struct BlockedAppsCard: View {
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
@@ -148,22 +148,29 @@ private struct BlockedAppsCard: View {
         }
         Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
       }.frame(maxWidth: .infinity, alignment: .leading)
-    } else if store.profile.focusEnabled != true {
-      row(icon: "lock.open", tint: JourneyColor.secondary, title: store.t("App blocking is off"))
-    } else if blocking.isEmpty {
-      row(icon: "lock.fill", tint: JourneyColor.signal, title: store.t("Choose apps to block"))
     } else {
-      VStack(alignment: .leading, spacing: 12) {
-        BlockedIcons(size: 30, limit: 6).foregroundStyle(JourneyColor.secondary)
-        Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
-      }.frame(maxWidth: .infinity, alignment: .leading)
+      switch blocking.state(store.profile) {
+      case .off: row(icon: "lock.open", tint: JourneyColor.secondary, title: store.t("App blocking is off"))
+      case .noAccess:
+        row(icon: "lock.open", tint: JourneyColor.secondary, title: store.t("Apps won’t be blocked"),
+            detail: store.t("Screen Time access is off"))
+      case .noApps: row(icon: "lock.fill", tint: JourneyColor.signal, title: store.t("Choose apps to block"))
+      case .on:
+        VStack(alignment: .leading, spacing: 12) {
+          BlockedIcons(size: 30, limit: 6).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+      }
     }
   }
-  private func row(icon: String, tint: Color, title: String) -> some View {
+  private func row(icon: String, tint: Color, title: String, detail: String? = nil) -> some View {
     HStack(spacing: 12) {
       Image(systemName: icon).font(.system(size: 15, weight: .semibold)).foregroundStyle(tint)
         .frame(width: 36, height: 36).background(Circle().fill(tint.opacity(0.12))).accessibilityHidden(true)
-      Text(title).font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
+      VStack(alignment: .leading, spacing: 2) {
+        Text(title).font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
+        if let detail { Text(detail).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary) }
+      }
     }
   }
 }

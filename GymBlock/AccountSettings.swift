@@ -74,9 +74,6 @@ struct AccountSection: View {
         Text(store.t(cloud ? "Your workouts stay in your account. This iPhone is cleared." : "Your workouts and splits stay on this iPhone."))
       }
       .tint(GymColor.ink)
-    SettingsNote(store.t(cloud ? "Log out keeps your account. Delete removes it and everything synced to it."
-                         : AppConfig.offline ? "Development run: both act on this iPhone only."
-                         : "Sign in to back up your workouts and keep them on any iPhone."))
     if cloud || AppConfig.offline {
       Button(role: .destructive) { confirmDelete = true } label: {
         Text(store.t("Delete account")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)

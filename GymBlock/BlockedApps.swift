@@ -17,10 +17,8 @@ struct BlockedAppsView: View {
         VStack(alignment: .leading, spacing: 0) {
           BlockingHeader(title: store.t("Blocked apps"), detail: store.t("Locked from Start workout until you finish."))
           card.padding(.top, 24)
-          if denied && !blocking.authorized {
-            Text(store.t("Screen Time access is off for GymBlock. Allow it in iOS Settings."))
-              .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).padding(.top, 12)
-          }
+          // On (or just asked for), but iOS won't let it block: said, with the way back.
+          if !blocking.authorized && (store.profile.focusEnabled == true || denied) { accessNotice.padding(.top, 14) }
           if !blocking.isEmpty { icons.padding(.top, 28) }
         }.frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 32)
@@ -55,6 +53,18 @@ struct BlockedAppsView: View {
     .journeySurface(cornerRadius: 20)
   }
 
+  /// Screen Time access is off (turned off in iOS Settings, or never allowed): nothing is blocked
+  /// until it's allowed again.
+  private var accessNotice: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text(store.t("Screen Time access is off for GymBlock, so nothing is blocked."))
+        .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
+      Button(store.t("Allow Screen Time"), action: allowAccess)
+        .font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.signal)
+        .accessibilityIdentifier("blocking.allow")
+    }
+  }
+
   /// What locks, as iOS draws it: the tokens are opaque, so the icons are the only list there is.
   private var icons: some View {
     LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 14)], alignment: .leading, spacing: 14) {
@@ -68,15 +78,25 @@ struct BlockedAppsView: View {
   private func setBlocking(_ on: Bool) {
     guard on else { store.updateProfile { $0.focusEnabled = false }; return }
     Task { @MainActor in
-      let granted = await blocking.requestAccess()
+      let granted = await blocking.allow()
       denied = !granted
       store.updateProfile { $0.focusEnabled = granted }
       if granted && blocking.isEmpty { pickDraft = blocking.selection; picking = true }
     }
   }
+  private func allowAccess() {
+    Analytics.track("blocking_unavailable", ["choice": "allow", "where": "blocked_apps"])
+    Task { @MainActor in
+      let granted = await blocking.allow()
+      denied = !granted
+      guard granted else { return }
+      if store.profile.focusEnabled != true { store.updateProfile { $0.focusEnabled = true } }
+      if blocking.isEmpty { pickDraft = blocking.selection; picking = true }
+    }
+  }
   private func chooseApps() {
     Task { @MainActor in
-      guard await blocking.requestAccess() else { denied = true; return }
+      guard await blocking.allow() else { denied = true; return }
       denied = false
       pickDraft = blocking.selection
       picking = true

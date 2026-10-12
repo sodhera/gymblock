@@ -15,6 +15,8 @@ struct HomeView: View {
   /// Nothing logged yet: Home shows the truth (an empty week) and guides to the first workout.
   private var firstRun: Bool { store.data.history.allSatisfy { $0.completedSets.isEmpty } }
   @State private var creatingSplit = false
+  /// Start workout with blocking on but no Screen Time access: asked before the workout starts.
+  @State private var accessMissing = false
   /// The split the rotation has queued, else the first split; none means a free workout.
   private var nextSplit: Workout? {
     free ? nil : store.data.workouts.first { $0.id == store.profile.preferredSplitID } ?? store.data.workouts.first
@@ -39,6 +41,9 @@ struct HomeView: View {
           }.padding(.top, 8)
         }.padding(.horizontal, 24).padding(.bottom, 4)
       }
+      // As on the workout page, Home softens behind the question so the choice stands alone.
+      .blur(radius: accessMissing ? 3 : 0)
+      .animation(.easeOut(duration: 0.2), value: accessMissing)
       .toolbar(.hidden, for: .navigationBar).track(screen: "home", ["first": firstRun])
       .sheet(isPresented: $creatingSplit) {
         NavigationStack {
@@ -56,6 +61,29 @@ struct HomeView: View {
         }
       }
       .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.12)) { appeared = true } }
+      .alert(store.t("Apps won’t be blocked"), isPresented: $accessMissing) {
+        Button(store.t("Allow Screen Time")) {
+          Analytics.track("blocking_unavailable", ["choice": "allow", "where": "start"])
+          Task { @MainActor in
+            // iOS's Screen Time sheet waits until this question has fully gone, or it can strand it on screen.
+            try? await Task.sleep(for: .milliseconds(450))
+            if await blocking.allow() { start() }
+          }
+        }
+        Button(store.t("Start without blocking")) {
+          Analytics.track("blocking_unavailable", ["choice": "without", "where": "start"])
+          start()
+        }
+        Button(store.t("Cancel"), role: .cancel) {
+          Analytics.track("blocking_unavailable", ["choice": "cancel", "where": "start"])
+        }
+      } message: {
+        Text(store.t("Screen Time access is off for GymBlock."))
+      }
+      // Allowed in iOS Settings while the question was up: that answers it, so the workout starts.
+      .onChange(of: blocking.authorized) { _, now in
+        if now && accessMissing { accessMissing = false; start() }
+      }
     }
   }
 
@@ -97,8 +125,13 @@ struct HomeView: View {
     let trends = store.exerciseTrends(limit: .max).filter { $0.points.count >= 2 }
     return trends.first { $0.splitID != nil && $0.splitID == nextSplit?.id } ?? trends.first
   }
-  /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to change it.
+  /// One tap: the queued split (or a free workout) starts at once; "Up next" above opens the chooser to
+  /// change it. With blocking on but Screen Time access off, it asks first: allow it, or go without.
   private func startNext() {
+    if blocking.state(store.profile) == .noAccess && !StoreShots.on { accessMissing = true; return }
+    start()
+  }
+  private func start() {
     if let split = nextSplit { store.updateProfile { $0.preferredSplitID = split.id } }
     store.startSession(workout: nextSplit)
   }
@@ -108,10 +141,16 @@ struct HomeView: View {
       Text(store.t("Sample data")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).accessibilityIdentifier("home.sample")
     } else if store.profile.focusEnabled == true {
       HStack(spacing: 6) {
-        Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
-        BlockedIcons(size: 14, limit: 3)
-        Text(blocking.ready ? blocking.summary(store.t) + " · " + store.t("blocked while you train")
-             : store.t("Choose apps to block in Settings"))
+        if blocking.authorized {
+          Image(systemName: "lock.fill").font(.caption2).accessibilityHidden(true)
+          BlockedIcons(size: 14, limit: 3)
+          Text(blocking.ready ? blocking.summary(store.t) + " · " + store.t("blocked while you train")
+               : store.t("Choose apps to block in Settings"))
+        } else {
+          // Blocking is on, but iOS won't let it block: said plainly, never "blocked".
+          Image(systemName: "lock.open").font(.caption2).accessibilityHidden(true)
+          Text(store.t("Apps won’t be blocked") + " · " + store.t("Screen Time access is off"))
+        }
       }.font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).lineLimit(1)
         .accessibilityElement(children: .combine).accessibilityIdentifier("home.blocking")
     } else {

@@ -2,11 +2,12 @@ import Foundation
 import ManagedSettings
 import UserNotifications
 
-/// The shield's one button. A shield action can't open its app (it may only return `.none`, `.close` or
-/// `.defer`; reaching `UIApplication` would be private API), so, as JournalBlock does, it posts an
-/// immediate notification from GymBlock and closes the blocked app: the banner is waiting on the Home
-/// Screen and one tap opens GymBlock on the workout. Unblocking still only happens in GymBlock (pause
-/// or finish). Without notification permission the button just closes the blocked app.
+/// The shield's buttons. "Back to training": a shield action can't open its app (it may only return
+/// `.none`, `.close` or `.defer`; reaching `UIApplication` would be private API), so, as JournalBlock does,
+/// it posts an immediate notification from GymBlock and closes the blocked app: the banner is waiting on
+/// the Home Screen and one tap opens GymBlock on the workout. Without notification permission the button
+/// just closes the blocked app. "Give me 1 minute" (Strict mode off, once per exercise) is the only way
+/// past the block before the workout ends; see `BlockingPass`.
 final class WorkoutShieldAction: ShieldActionDelegate {
   override func handle(action: ManagedSettings.ShieldAction, for application: ApplicationToken,
                        completionHandler: @escaping (ShieldActionResponse) -> Void) {
@@ -22,6 +23,12 @@ final class WorkoutShieldAction: ShieldActionDelegate {
   }
 
   private func respond(to action: ManagedSettings.ShieldAction, _ completionHandler: @escaping (ShieldActionResponse) -> Void) {
+    // "Give me 1 minute" (the second button): the block lifts and the app opens; the monitor puts it
+    // back (BlockingPass).
+    if action == .secondaryButtonPressed {
+      completionHandler(BlockingPass.spend() ? .defer : .close)
+      return
+    }
     guard action == .primaryButtonPressed else { completionHandler(.close); return }
     let es = Locale.preferredLanguages.first?.hasPrefix("es") == true
     let content = UNMutableNotificationContent()

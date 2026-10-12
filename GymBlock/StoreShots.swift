@@ -40,7 +40,7 @@ enum StoreShots {
           BrandMark(size: 90)
           VStack(spacing: 10) {
             Text("You’re mid-workout.").font(.app(.title2, weight: .bold)).foregroundStyle(ink)
-            Text("\(app) opens when you finish or pause your workout in GymBlock.")
+            Text("\(app) opens when you finish your workout in GymBlock.")
               .font(.app(.body)).foregroundStyle(secondary).multilineTextAlignment(.center)
               .fixedSize(horizontal: false, vertical: true)
           }.padding(.horizontal, 12)
@@ -48,6 +48,12 @@ enum StoreShots {
             .frame(maxWidth: .infinity).frame(height: 54)
             .background(Capsule().fill(ink))
             .padding(.top, 18)
+          // Strict mode off: the once-per-exercise minute, as iOS draws the second button (a white pill).
+          if !BlockingPass.strict {
+            Text("Give me 1 minute").font(.app(.body)).foregroundStyle(ink)
+              .frame(maxWidth: .infinity).frame(height: 54)
+              .background(Capsule().fill(.white))
+          }
         }.padding(.horizontal, 24)
         Spacer(minLength: 0)
         Spacer(minLength: 0)

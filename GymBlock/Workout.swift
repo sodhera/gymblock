@@ -9,12 +9,15 @@ import UIKit
 /// Everything is saved as it happens, so a call, a locked phone or a relaunch never loses a set.
 struct WorkoutView: View {
   @EnvironmentObject private var store: GymStore
+  @ObservedObject private var blocking = AppBlocking.shared
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var picker = false
   @State private var editing: LoggedSet?
   @State private var confirmEnd = false
   @State private var confirmEndSet = false
   @State private var confirmSwitch = false
+  /// Screen Time access was turned off during the workout, so the apps came unblocked.
+  @State private var accessLost = false
   @State private var pendingExercise: Exercise?
   @State private var weightText = ""
   @State private var repsText = ""
@@ -129,6 +132,25 @@ struct WorkoutView: View {
       Button(store.t("Keep going")) { pendingExercise = nil }.accessibilityIdentifier("switch.cancel")
     } message: { Text(runningSet) }
     .onChange(of: confirmSwitch) { _, shown in if !shown { pendingExercise = nil } }
+    // Access turned off in iOS Settings mid-workout lifts the block; say so on the way back in.
+    .onChange(of: blocking.authorized) { had, has in
+      if had && !has && store.profile.focusEnabled == true { field = nil; accessLost = true }
+      // Allowed again in iOS Settings while the question was up: nothing left to ask.
+      if has && accessLost { accessLost = false }
+    }
+    .alert(store.t("Apps aren’t blocked"), isPresented: $accessLost) {
+      Button(store.t("Allow Screen Time")) {
+        Analytics.track("blocking_unavailable", ["choice": "allow", "where": "workout"])
+        Task { @MainActor in
+          // iOS's Screen Time sheet waits until this question has fully gone, or it can strand it on screen.
+          try? await Task.sleep(for: .milliseconds(450))
+          _ = await blocking.allow()
+        }
+      }
+      Button(store.t("Continue without blocking"), role: .cancel) {
+        Analytics.track("blocking_unavailable", ["choice": "without", "where": "workout"])
+      }
+    } message: { Text(store.t("Screen Time access is off for GymBlock.")) }
     // A drag that was cancelled rather than finished never reaches onEnded: drop it without saving.
     .onChange(of: holding) { _, alive in
       if !alive, reorder != nil || lifted != nil { withAnimation(.smooth(duration: 0.3)) { reorder = nil; lifted = nil } }
@@ -158,7 +180,12 @@ struct WorkoutView: View {
     }
     .onChange(of: repsText) { _, text in if field == .reps && !text.isEmpty { store.updateRepText(text) } }
     .task(id: restKey) { await restAlarm() }
+    // While End or a switch asks its question, the page softens behind it so the choice stands alone.
+    .blur(radius: asking ? 3 : 0)
+    .animation(.easeOut(duration: 0.2), value: asking)
   }
+
+  private var asking: Bool { confirmEnd || confirmEndSet || confirmSwitch || accessLost }
 
   /// Keeps the set you're on in view: on open, on a switch, and when a field takes the keyboard.
   private func reveal(_ proxy: ScrollViewProxy, animated: Bool = true) {
@@ -206,8 +233,10 @@ struct WorkoutView: View {
       .accessibilityHint(current ? "" : store.t("Switch to this exercise"))
       .accessibilityIdentifier("exercise.section.\(item.id)")
       ForEach(Array(logged.enumerated()), id: \.element.id) { index, set in loggedRow(set, number: index + 1) }
-      // In the order things happen: the set just done, the rest, then the set that's next.
-      if current && stage == .rest { restStrip }
+      // In the order things happen: the set just done, then its rest (then, same exercise, the next set).
+      // The rest stays with the set that started it, so moving on to the next exercise doesn't look
+      // like a second rest.
+      if stage == .rest && session.sets.last?.exercise.id == item.id { restStrip }
       if live { liveRow(number: logged.count + 1).id("live") } else if current { Color.clear.frame(height: 0).id("live") }
       if live && !timed && !active && (weightMissing || firstEver) {
         Text(store.t(weightMissing ? "Add the weight for this set." : "Tap a number to type it.")).font(.app(.footnote))

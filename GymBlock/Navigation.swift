@@ -48,10 +48,11 @@ struct MainTabs: View {
   @State private var place = Place.home
   var body: some View {
     TabView(selection: $place) {
-      HomeView()
+      // Ink inside each page, so its questions, menus and back buttons aren't emerald.
+      HomeView().tint(JourneyColor.text)
         .tabItem { Label(store.t("Home"), systemImage: "house.fill") }
         .tag(Place.home)
-      ProfileTab()
+      ProfileTab().tint(JourneyColor.text)
         .tabItem { Label(store.t("Profile"), systemImage: "person.crop.circle.fill") }
         .tag(Place.profile)
     }

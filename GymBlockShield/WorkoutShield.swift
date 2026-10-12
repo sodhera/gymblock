@@ -4,7 +4,9 @@ import UIKit
 
 /// What iOS shows over a blocked app during a workout: the brand mark on the paper stage, ink type and
 /// one ink button that sends you back (it posts a notification that opens GymBlock; see
-/// `WorkoutShieldAction`). It runs in its own process, so it follows the iPhone's language rather than
+/// `WorkoutShieldAction`). With Strict mode off, "Give me 1 minute" is offered under it once per exercise
+/// (`BlockingPass`), as iOS's own white pill: iOS lets an app colour only the top button, so the way back
+/// keeps the ink one (chosen 12 Oct 2026 over the minute on top). It runs in its own process, so it follows the iPhone's language rather than
 /// GymBlock's in-app setting.
 final class WorkoutShield: ShieldConfigurationDataSource {
   override func configuration(shielding application: Application) -> ManagedSettingsUI.ShieldConfiguration {
@@ -38,8 +40,9 @@ final class WorkoutShield: ShieldConfigurationDataSource {
       // No pausing since 11 Oct 2026: the block lifts only when the workout ends.
       subtitle: .init(text: es ? "\(subject) se abre cuando termines el entrenamiento en GymBlock."
                                : "\(subject) opens when you finish your workout in GymBlock.", color: Self.secondary),
-      // Pure white: the paper tone read as a dimmed, disabled label on the ink button.
+      // Pure white on ink: the paper tone read as a dimmed, disabled label on the ink button.
       primaryButtonLabel: .init(text: es ? "Volver al entrenamiento" : "Back to training", color: .white),
-      primaryButtonBackgroundColor: Self.ink)
+      primaryButtonBackgroundColor: Self.ink,
+      secondaryButtonLabel: BlockingPass.available ? .init(text: es ? "Dame 1 minuto" : "Give me 1 minute", color: Self.ink) : nil)
   }
 }
