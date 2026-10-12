@@ -137,7 +137,18 @@ private struct BlockedAppsCard: View {
     .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous), interactive: true)
   }
   @ViewBuilder private var content: some View {
-    if store.profile.focusEnabled != true {
+    if !StoreShots.apps.isEmpty {
+      // Development only (`-storeShots YES`): the six sample apps, as on the blocking page.
+      VStack(alignment: .leading, spacing: 12) {
+        HStack(spacing: 7.5) {
+          ForEach(StoreShots.apps, id: \.self) { app in
+            Image(app.asset).resizable().scaledToFill().frame(width: 30, height: 30)
+              .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+          }
+        }
+        Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
+      }.frame(maxWidth: .infinity, alignment: .leading)
+    } else if store.profile.focusEnabled != true {
       row(icon: "lock.open", tint: JourneyColor.secondary, title: store.t("App blocking is off"))
     } else if blocking.isEmpty {
       row(icon: "lock.fill", tint: JourneyColor.signal, title: store.t("Choose apps to block"))
@@ -145,7 +156,7 @@ private struct BlockedAppsCard: View {
       VStack(alignment: .leading, spacing: 12) {
         BlockedIcons(size: 30, limit: 6).foregroundStyle(JourneyColor.secondary)
         Text(store.t("Blocked while you train")).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
-      }
+      }.frame(maxWidth: .infinity, alignment: .leading)
     }
   }
   private func row(icon: String, tint: Color, title: String) -> some View {

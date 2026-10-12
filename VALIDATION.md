@@ -1,5 +1,19 @@
 # Validation — 8 October 2026
 
+## App Store screenshots recaptured (12 October 2026)
+
+The 11 October set showed the old ring workout, the card Home and the old summary, all in SF Pro. Recaptured on a new 6.9-inch simulator (`GymBlock Store 6.9`, iPhone 18 Pro Max, iOS 27.0, status bar 9:41, full signal, battery not charging) from seeded sample data, and reframed with the unchanged script: [screenshots/store-final](screenshots/store-final/), captures in [screenshots/store-2026-10-12](screenshots/store-2026-10-12/), sheet `screenshots/store-final-overview.png`. Slide 5 moved from the summary to Profile's month of dots, which shows a streak. The shield (slide 1) and the summary (slide 5) were tried as alternatives and rejected by the user. Steps in `docs/listing.md`.
+
+- `-storeShots YES` now also fills Profile's blocked-apps card with the six sample apps (Debug only).
+- Profile's blocked-apps card wrapped "Blocked while you train" onto two lines whenever icons were shown (the column took the icon row's width); it now spans the card.
+- Found, not fixed: `-workoutStage summary` launches to a blank screen (the app idles without drawing); the summary after ending a workout in the app is fine.
+
+## Workout keyboard: Next from weight to reps (12 October 2026)
+
+While the weight is open, the keyboard bar's compact button reads **Next** and moves to the reps; on the reps it reads **Done** and closes the keyboard, so a set is typed in one go. Both words take the same width, so the button doesn't shift. A set's weight already carried to the next set (the draft stays; the grey rows show it), and set 1 of a new exercise still starts blank.
+
+Checked on the GymBlock Review simulator (iOS 27.0), captures in [screenshots/2026-10-12-keyboard-next](screenshots/2026-10-12-keyboard-next/): Next on the weight, Done on the reps, the typed set, and set 2 starting at set 1's 12.5 kg × 10. The simulator hides the iPhone keyboard (a Mac keyboard counts as connected), so the bar sits at the bottom; on an iPhone it sits on the number pad. No test suite was run; `StoreScreenshotsUITests` now taps Next before Done.
+
 ## Home: greeting, week dots, progress on the paper (12 October 2026)
 
 Home is the greeting ("Good morning, Sirish"), the week dots with the streak, then up to three exercises' progress in rotation (`ProgressCarousel`, a page every 4 s, a swipe holds it 12 s), then Up next low on the page above Start workout. The charts sit on the paper with no card, gridlines, scale, dates or split names: the page's dots darken behind the plot (`DotField`, on `DotGrid`'s 22-pt lattice, easing in over three dots), Home's page dots run 1.25× darker, and only the latest workout is a point, labelled with its value. With no line yet the space shows only "Start a workout to see your progress" (or "Repeat a workout…"), never sample numbers.

@@ -9,13 +9,13 @@ bottom edge, cut above each screen's bottom button.
 
     python3 scripts/frame-store-screenshots.py
 
-Reads screenshots/store-2026-10-10/, writes screenshots/store-final/.
+Reads screenshots/store-2026-10-12/, writes screenshots/store-final/.
 """
 import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "screenshots", "store-2026-10-10")
+SRC = os.path.join(ROOT, "screenshots", "store-2026-10-12")
 OUT = os.path.join(ROOT, "screenshots", "store-final")
 
 W, H = 1320, 2868
@@ -31,11 +31,11 @@ BODY = (8, 8, 9)
 
 # Headline, the red word, second line, capture.
 SLIDES = [
-    ("Stop scrolling in the gym", "scrolling", "Block apps", "16b-onboarding-blocking-apps.png"),
-    ("Track your workouts", "workouts", "Time your rests", "42-workout-rest.png"),
-    ("Plan your progress", "progress", "Stay motivated", "31b-home-clean.png"),
-    ("Beat your record", "record", None, "56-progress-before-after.png"),
-    ("Keep your streak alive", "streak", None, "47-workout-summary.png"),
+    ("Stop scrolling in the gym", "scrolling", "Block apps", "1-blocking-apps.png"),
+    ("Track your workouts", "workouts", "Time your rests", "2-workout-rest.png"),
+    ("Plan your progress", "progress", "Stay motivated", "3-home.png"),
+    ("Beat your record", "record", None, "4-squat-record.png"),
+    ("Keep your streak alive", "streak", None, "5-profile-month.png"),
 ]
 
 SF = "/System/Library/Fonts/SFNS.ttf"
@@ -148,7 +148,6 @@ def main():
         name = f"{i}-{headline.lower().replace(' ', '-')}.png"
         frame(headline, accent, sub, capture).save(os.path.join(OUT, name))
         print(name)
-
 
 if __name__ == "__main__":
     main()
