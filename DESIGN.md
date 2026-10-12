@@ -48,4 +48,6 @@ History opens on a glass card with the period total and a weekly bar chart (this
 
 Preserve local history, exercise/split IDs, actual reps, load conventions, timing provenance and sample markers. Demo loading is explicit/idempotent and never replaces existing work. Blocking is Apple Screen Time and works on a real iPhone only; no live billing/account/backend service is configured. The Live Activity is local (no push).
 
+**Typing a set** — the keyboard bar holds wide − + and one compact button: Next on the weight (opens the reps), Done on the reps (closes the keyboard). A set's weight carries to the next set; a new exercise's first set starts blank.
+
 Build success does not prove visual quality. Verify actual simulator layouts, full routes, keyboard and larger text, appearance, corrections, counter continuity and before/after records. Hardware haptic feel, physical-device handling and user comprehension need separate evidence.

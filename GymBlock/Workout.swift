@@ -445,12 +445,12 @@ struct WorkoutView: View {
   // MARK: The dock
 
   /// The clock and the one primary action, fixed at the bottom (on the keyboard while you type, with
-  /// − + and Done instead); the page scrolls under a paper fade.
+  /// − + and Next or Done instead); the page scrolls under a paper fade.
   private var dock: some View {
     VStack(spacing: 12) {
       if field != nil {
         // While you type, the dock sits on the keyboard and holds its controls: − and +, wide, step the
-        // open number; Done, compact, closes the keyboard.
+        // open number; Next, compact, moves from weight to reps, where it becomes Done and closes the keyboard.
         HStack(spacing: 12) {
           HStack(spacing: 0) {
             Button { stepFocused(-1) } label: { Image(systemName: "minus").frame(maxWidth: .infinity, minHeight: 50).contentShape(Rectangle()) }
@@ -478,10 +478,21 @@ struct WorkoutView: View {
     }
   }
 
-  /// Closes the keyboard: compact, in the primary style, beside the wide − and +.
+  /// Compact, in the primary style, beside the wide − and +. On the weight it's Next and opens the
+  /// reps, so a set is typed in one go; on the reps it's Done and closes the keyboard.
   private var doneButton: some View {
-    let close = { Analytics.tap("set.keyboard.done"); field = nil }
-    let label = Text(store.t("Done")).font(JourneyType.button).foregroundStyle(JourneyColor.onButton).padding(.horizontal, 10)
+    let next = field == .weight
+    let id = next ? "set.keyboard.next" : "set.keyboard.done"
+    let close = {
+      Analytics.tap(id)
+      if next { field = .reps; JourneyHaptic.play(.selection, store.profile) } else { field = nil }
+    }
+    // Both words take the same room, so the button keeps its width when Next turns to Done.
+    let label = ZStack {
+      Text(store.t("Next")).opacity(next ? 1 : 0)
+      Text(store.t("Done")).opacity(next ? 0 : 1)
+    }.font(JourneyType.button).foregroundStyle(JourneyColor.onButton).padding(.horizontal, 10)
+      .accessibilityElement(children: .ignore).accessibilityLabel(store.t(next ? "Next" : "Done"))
     return Group {
       if #available(iOS 26.0, *) {
         Button(action: close) { label }.buttonStyle(.glassProminent).tint(JourneyColor.button)
@@ -489,7 +500,7 @@ struct WorkoutView: View {
         Button(action: close) { label.frame(minHeight: 50).padding(.horizontal, 12).background(Capsule().fill(JourneyColor.button)) }
           .buttonStyle(JourneyPressStyle())
       }
-    }.controlSize(.large).buttonBorderShape(.capsule).fixedSize().accessibilityIdentifier("set.keyboard.done")
+    }.controlSize(.large).buttonBorderShape(.capsule).fixedSize().accessibilityIdentifier(id)
   }
 
   /// The running set as a large clock with "Set time" beside it.

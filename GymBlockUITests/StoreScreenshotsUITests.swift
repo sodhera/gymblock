@@ -68,7 +68,7 @@ final class StoreScreenshotsUITests: XCTestCase {
     tap("exercise.curl")
     let weight = app.textFields["set.weight"]
     if weight.waitForExistence(timeout: 4) { weight.tap(); weight.typeText("22.5"); snap("67-workout-typing-weight") }
-    tap("workout.primary"); tap("set.keyboard.done")
+    tap("workout.primary"); tap("set.keyboard.next"); tap("set.keyboard.done")
     Thread.sleep(forTimeInterval: 4); tap("workout.primary")
     if tap("set.saved", scroll: false) { snap("68-edit-set"); tap("edit.save") }
     if tap("session.sets", scroll: false) { snap("69-workout-sets-sheet"); tap("records.done") }

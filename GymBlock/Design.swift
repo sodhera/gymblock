@@ -269,7 +269,7 @@ enum Spanish {
     "Session ended.": "Sesión finalizada.",
     "No sets logged this time.": "No has registrado series.",
     "Save as a workout": "Guardar como rutina",
-    "Use these exercises next time.": "Usa estos ejercicios la próxima vez.", "Done": "Listo",
+    "Use these exercises next time.": "Usa estos ejercicios la próxima vez.", "Done": "Listo", "Next": "Siguiente",
     "Finish this session?": "¿Terminar esta sesión?",
     "Only logged sets will be saved. The focus preview will end.":
       "Solo se guardarán las series registradas. La simulación terminará.",
