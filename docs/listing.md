@@ -69,17 +69,17 @@ Privacy Policy: https://www.orecci.com/gymblock/privacy-policy
 
 ## Screenshots
 
-Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setgraph, Opal, ScreenZen, one sec, Brick and others: a verb-led headline with a short second line, one word in red. Search results show the first three. Recaptured 12 Oct 2026 after the workout, Home, Profile and DM Sans redesign: captures are 1320×2868 (6.9-inch, iPhone 18 Pro Max, iOS 27.0) in `screenshots/store-2026-10-12/`; the framed versions (deep blue stage, white headline with one red word, a thick phone running off the bottom edge) are in `screenshots/store-final/`, made by `python3 scripts/frame-store-screenshots.py`.
+Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setgraph, Opal, ScreenZen, one sec, Brick and others: a verb-led headline with a short second line, one word in red. Search results show the first three. Recaptured 12 Oct 2026 after the workout, Home, Profile and DM Sans redesign: recaptured again 13 Oct 2026 after the tab bar and Home changes: captures are 1320×2868 (iPhone 17 Pro Max, iOS 26.5) in `screenshots/store-2026-10-13/`; the framed versions (deep blue stage, white headline with one red word, a thick phone running off the bottom edge) are in `screenshots/store-final/6.9/` (1320×2868) and `screenshots/store-final/6.3/` (1206×2622), made by `python3 scripts/frame-store-screenshots.py`.
 
 | # | Headline | Second line | Screen |
 |---|---|---|---|
 | 1 | Stop **scrolling** in the gym | Block apps | The blocking page with six locked apps (`-storeShots YES -journeyStep blocking`) |
 | 2 | Track your **workouts** | Time your rests | Arms mid-rest after set 1 (`-workoutStage rest -storeShots YES`) |
-| 3 | Plan your **progress** | Stay motivated | Home: 6 week streak, Bench press +20 kg, Up next Push (after the workout below) |
+| 3 | Plan your **progress** | Stay motivated | Home: 6 week streak, Squat +20 kg, Up next Legs (after the workout below) |
 | 4 | Beat your **record** | | Squat before/after, +20 kg (Home → Up next → Legs → tap the chart) |
 | 5 | Keep your **streak** alive | | Profile: October's training dots and blocked apps |
 
-Slides 3–5 come from one seeded run: `-workoutStage next -storeShots YES`, set 3 edited to 21.5 kg, End → Done → Home (3) → Profile (5) → squat (4). The rebuilt shield over Instagram (`-shieldPreview Instagram`) and the workout summary were tried for slides 1 and 5 on 12 Oct and rejected. The sample history's weeks start on Monday, so on a Monday only the day's own workout fills this week's dot.
+Slides 3–5 come from one seeded run on a fresh install: `-workoutStage next -storeShots YES`, End → End workout → Done → Home (3) → tap the chart (4) → Profile tab (5). The status bar is `simctl status_bar … --time 09:41 --batteryState discharging --batteryLevel 100`. The rebuilt shield over Instagram (`-shieldPreview Instagram`) and the workout summary were tried for slides 1 and 5 on 12 Oct and rejected. The sample history's weeks start on Monday, so on a Monday only the day's own workout fills this week's dot.
 
 Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screenshots. They are the user's own numbers, not a measurement.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Frames App Store screenshots for the 6.9-inch slot (1320x2868).
+"""Frames App Store screenshots for the 6.9-inch (1320x2868) and 6.3-inch (1206x2622) slots.
 
 Principles: the caption must read at search-result size (about a sixth of full size), so it is
 large, bold and at most two lines; one word per headline in red and no other colour; a deep blue
@@ -9,13 +9,14 @@ bottom edge, cut above each screen's bottom button.
 
     python3 scripts/frame-store-screenshots.py
 
-Reads screenshots/store-2026-10-12/, writes screenshots/store-final/.
+Reads screenshots/store-2026-10-13/, writes screenshots/store-final/6.9/ and store-final/6.3/.
+Both slots have the same shape, so the 6.3-inch set is the 6.9-inch frame scaled down.
 """
 import os
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "screenshots", "store-2026-10-12")
+SRC = os.path.join(ROOT, "screenshots", "store-2026-10-13")
 OUT = os.path.join(ROOT, "screenshots", "store-final")
 
 W, H = 1320, 2868
@@ -142,11 +143,16 @@ def frame(headline, accent, sub, capture):
     return canvas
 
 
+SIZES = {"6.9": (1320, 2868), "6.3": (1206, 2622)}
+
+
 def main():
-    os.makedirs(OUT, exist_ok=True)
     for i, (headline, accent, sub, capture) in enumerate(SLIDES, 1):
         name = f"{i}-{headline.lower().replace(' ', '-')}.png"
-        frame(headline, accent, sub, capture).save(os.path.join(OUT, name))
+        slide = frame(headline, accent, sub, capture)
+        for slot, size in SIZES.items():
+            os.makedirs(os.path.join(OUT, slot), exist_ok=True)
+            (slide if size == (W, H) else slide.resize(size, Image.LANCZOS)).save(os.path.join(OUT, slot, name))
         print(name)
 
 if __name__ == "__main__":
