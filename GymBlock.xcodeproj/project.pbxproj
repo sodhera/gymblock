@@ -27,6 +27,7 @@
 		2E74CBB270312313000E124C /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258A16A247D69006A1651F96 /* Progress.swift */; };
 		2FDA65F0ABCF15D08EAF14B0 /* TrainingDays.swift in Sources */ = {isa = PBXBuildFile; fileRef = E12BE4B610B5FB5A8BC6CB2A /* TrainingDays.swift */; };
 		30EE11CCA6770E2393AF2B92 /* ArmIllustration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */; };
+		31A511061552BBEBE6EA1C3C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D03A4EE233E30C2F7BB27758 /* PrivacyInfo.xcprivacy */; };
 		3A993B5429D068ACDA96B585 /* BrandMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F89F22A1A0A3FBDFE26FD2 /* BrandMark.swift */; };
 		3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */; };
 		3BE12AD83FCF3CAF6E0D8BDE /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A0E88CE0E1647679F6856C /* Analytics.swift */; };
@@ -38,7 +39,9 @@
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
 		478E737D9583B2B0A4A490FF /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7FF985920923737A724E8B /* AppRoute.swift */; };
 		4866B68D137EEC52585DF7C0 /* StoreScreenshotsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF3242CC4AB02EB7BA6AEE3 /* StoreScreenshotsUITests.swift */; };
+		48F585C19307AB726FB6127D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2C5227C408B63E9CF1B2C87 /* PrivacyInfo.xcprivacy */; };
 		4A17EBCA5D0374FF51F384C1 /* Splits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F47BAD59FB5F3B4443457 /* Splits.swift */; };
+		4AB54D87F7342E69C0DDD903 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B2ABF151E5EC6B91003FABCB /* PrivacyInfo.xcprivacy */; };
 		4BF362BED8D74090F2BD3CB6 /* BlockingPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05B2B7905EC084D2E5BDBAD /* BlockingPass.swift */; };
 		4D76DC796AE14A381625091F /* BlockedApps.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */; };
 		4E13B1EE61AE6E2E2939ABFC /* OnboardingSplits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */; };
@@ -54,6 +57,7 @@
 		68D56E6C4D6BF0A849BA9EA1 /* HomeScoreboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */; };
 		6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */; };
 		6EB48FEF58CDA08FE4A6B872 /* PaperPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D249BEACC2D4D01A2851C6 /* PaperPalette.swift */; };
+		6ED0D48C2E26181BAE08E20A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0491260DABCDC82C1A16CB7A /* PrivacyInfo.xcprivacy */; };
 		6FDB45B9797C34E84DF8BEE4 /* OpenGymBlockIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */; };
 		70B3CDF010BEF6F32265B7FD /* PaperPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D249BEACC2D4D01A2851C6 /* PaperPalette.swift */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
@@ -64,6 +68,7 @@
 		7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD5009E70EBA3A94854B117 /* JourneyArt.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
 		80FF09942F36799439D912B5 /* RestAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D3906A6BC255DCB1E84CD32 /* RestAlert.swift */; };
+		868AEDA5C689447AC1755245 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */; };
 		885666D10CAAF6A5A4F31485 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75F70F4B27F004B995455CBB /* Session.swift */; };
 		88805C575BBBDBFCD76DD2A7 /* GymBlockMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 44E0305BE29174256A4953DD /* GymBlockMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		89FE5952EA0A29BDE56C046A /* WorkoutActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0FE9C655734B74C61322E33 /* WorkoutActivity.swift */; };
@@ -189,9 +194,11 @@
 		01F36AF90BEFC089EC199AD3 /* GymBlockFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockFlowTests.swift; sourceTree = "<group>"; };
 		033805466D5F7A79FA6DAC2E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		035738BD5F0A726CE372A9EE /* GymBlock.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymBlock.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0491260DABCDC82C1A16CB7A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		04AF874D37EAE2CE9D131821 /* WidgetSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSync.swift; sourceTree = "<group>"; };
 		08DD8CF995195334FE9F09B1 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		0A1DD9FDD89A9EDFB6EEE557 /* WorkoutLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLogic.swift; sourceTree = "<group>"; };
+		1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13708927DF8625DAA082C6E0 /* AppFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFont.swift; sourceTree = "<group>"; };
 		18BD74A4F712847C40F46201 /* GymStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymStoreTests.swift; sourceTree = "<group>"; };
 		18EBE2B92B055DA4482DD70D /* TrainingStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStats.swift; sourceTree = "<group>"; };
@@ -262,6 +269,8 @@
 		AB4882431BE1CE28C0353541 /* Backend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backend.swift; sourceTree = "<group>"; };
 		AFDB647737C5A706E73A728E /* WorkoutStepIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutStepIntent.swift; sourceTree = "<group>"; };
 		B2AADA0F5079411E82C77E97 /* StoreShots.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = StoreShots.xcassets; sourceTree = "<group>"; };
+		B2ABF151E5EC6B91003FABCB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B2C5227C408B63E9CF1B2C87 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B5C32DC47F5228BD30518BAB /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		B6817695A3563DA20102935E /* Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Summary.swift; sourceTree = "<group>"; };
 		B951846726741284DB93304B /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSync.swift; sourceTree = "<group>"; };
@@ -272,6 +281,7 @@
 		C28E7CD6C2C5F8C3D6EC7128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C6299BDCE650025D0151AA37 /* HeroFit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeroFit.swift; sourceTree = "<group>"; };
 		C6C9B258DE9BB7778EE64837 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D03A4EE233E30C2F7BB27758 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D0FE9C655734B74C61322E33 /* WorkoutActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivity.swift; sourceTree = "<group>"; };
 		D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourneyTests.swift; sourceTree = "<group>"; };
 		D412D86E746B7AEB2DCFDCED /* AppControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppControls.swift; sourceTree = "<group>"; };
@@ -311,6 +321,7 @@
 			children = (
 				C28E7CD6C2C5F8C3D6EC7128 /* Assets.xcassets */,
 				7576AF5B4BE365CAF8006511 /* Info.plist */,
+				0491260DABCDC82C1A16CB7A /* PrivacyInfo.xcprivacy */,
 				7F18599E2CD2FD02DB528BE8 /* WorkoutShield.swift */,
 			);
 			path = GymBlockShield;
@@ -350,6 +361,7 @@
 				AA5869602EE8AF452D4A2F4F /* GymBlockLive.swift */,
 				E284951026C66EE16AB43906 /* GymBlockWidgets.swift */,
 				C6C9B258DE9BB7778EE64837 /* Info.plist */,
+				B2C5227C408B63E9CF1B2C87 /* PrivacyInfo.xcprivacy */,
 				5463E74AB6FCEB2EB5587EDD /* StartControl.swift */,
 				FF7BCF129AACBD72EDC2DFA9 /* Localizable.strings */,
 			);
@@ -361,6 +373,7 @@
 			children = (
 				BDACCA69189677C443FD39BD /* Info.plist */,
 				76FC5D30A2F43C1253BB9C4A /* PassMonitor.swift */,
+				B2ABF151E5EC6B91003FABCB /* PrivacyInfo.xcprivacy */,
 			);
 			path = GymBlockMonitor;
 			sourceTree = "<group>";
@@ -421,6 +434,7 @@
 				008F01AA301B4482E1045797 /* OnboardingPremium.swift */,
 				3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */,
 				7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */,
+				1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */,
 				61737D64AB2427868DBA6FAC /* Profile.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
 				371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */,
@@ -467,6 +481,7 @@
 			isa = PBXGroup;
 			children = (
 				033805466D5F7A79FA6DAC2E /* Info.plist */,
+				D03A4EE233E30C2F7BB27758 /* PrivacyInfo.xcprivacy */,
 				2AB514BE747F607CA6E12C00 /* WorkoutShieldAction.swift */,
 			);
 			path = GymBlockShieldAction;
@@ -556,6 +571,7 @@
 			buildConfigurationList = 198C6D3BDF5287BF452224B1 /* Build configuration list for PBXNativeTarget "GymBlockMonitor" */;
 			buildPhases = (
 				A8FEE13D4BEB2971B2098452 /* Sources */,
+				BDF1CB5627A26CC9B37C2427 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -627,6 +643,7 @@
 			buildConfigurationList = A6779E4F808E2205114713DA /* Build configuration list for PBXNativeTarget "GymBlockShieldAction" */;
 			buildPhases = (
 				6C9E84BDD167F38998E23DA5 /* Sources */,
+				03D1CC5C1A76850DEC041405 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -736,6 +753,14 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		03D1CC5C1A76850DEC041405 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31A511061552BBEBE6EA1C3C /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31FB4B6E62C529036446B4FD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -743,6 +768,7 @@
 				F47983419F84D898BAF0C3DB /* Assets.xcassets in Resources */,
 				B8FC89B0BBD374F1B1581CA2 /* DMSans.ttf in Resources */,
 				0FA16E6655F652995870CA4B /* OFL.txt in Resources */,
+				868AEDA5C689447AC1755245 /* PrivacyInfo.xcprivacy in Resources */,
 				B87E74B7C17DE2913C32D114 /* StoreShots.xcassets in Resources */,
 				5344BF389B159F48B1698803 /* advance.wav in Resources */,
 				8B1A2887B864CD5D8FE3AEEF /* complete.wav in Resources */,
@@ -755,6 +781,7 @@
 			files = (
 				AB6D8F3651DC07300932BE50 /* DMSans.ttf in Resources */,
 				5FE2F7B3A55F57D6F9324C66 /* Localizable.strings in Resources */,
+				48F585C19307AB726FB6127D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -763,6 +790,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				5E2928709668F8C4CE67BBAC /* Assets.xcassets in Resources */,
+				6ED0D48C2E26181BAE08E20A /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BDF1CB5627A26CC9B37C2427 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4AB54D87F7342E69C0DDD903 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
