@@ -201,6 +201,7 @@ struct LocalData: Codable {
     } catch { storageError = true }
     syncRestAlert()
     LiveWorkout.sync(self)
+    WidgetSync.sync(self)
     AppBlocking.shared.sync(self)
     onPersist?()
   }

@@ -8,7 +8,8 @@ struct WorkoutActivityAttributes: ActivityAttributes {
   struct ContentState: Codable, Hashable {
     var exercise: String
     var phase: Phase
-    /// When the set or the rest began; the views count from it on their own.
+    /// When the set or the rest began, or while ready the workout's start less its paused time; the
+    /// views count from it on their own.
     var since: Date
     var restSeconds: Int
     var setNumber: Int

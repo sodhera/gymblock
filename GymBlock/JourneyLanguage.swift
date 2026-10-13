@@ -636,5 +636,16 @@ extension Spanish {
     "Paused · clocks stopped · apps unblocked": "En pausa · relojes parados · apps desbloqueadas",
     "Apps to block": "Apps que bloquear",
     "Uses Apple’s Screen Time from Start workout to Finish. Pausing lifts it.": "Usa Tiempo de uso de Apple desde Empezar hasta Terminar. Pausar lo quita.",
+    // Widgets (13 Oct 2026). "First time" is above. The singular streak is Home's too ("1 semanas").
+    "1 week streak": "1 semana de racha",
+    "Open GymBlock": "Abre GymBlock",
+  ]
+
+  /// Shorter Spanish for the widgets, used only where the full form can't fit ("Entrenamiento" is
+  /// 180 pt wide even at 26 bold). "Entreno" is already the app's word ("Avg workout": "Entreno medio").
+  static let widgetShort: [String: String] = [
+    "Free workout": "Entreno libre",
+    "Your first workout": "Tu primer entreno",
+    "My workout": "Mi entreno",
   ]
 }

@@ -22,12 +22,15 @@ struct GymButton: View {
 }
 extension GymStore {
   func t(_ key: String) -> String {
-    profile.language == "es"
-      ? Spanish.v6[key] ?? Spanish.v5[key] ?? Spanish.benefits[key] ?? Spanish.reset[key] ?? Spanish.journey[key] ?? Spanish.onboarding[key] ?? Spanish.redesign[key] ?? Spanish.additions[key] ?? Spanish.words[
-        key] ?? key : key
+    profile.language == "es" ? Spanish.translate(key) : key
   }
 }
 enum Spanish {
+  /// The whole lookup, newest dictionary first; the key itself when there's no Spanish. Static, so the
+  /// widget preview can translate without a store.
+  static func translate(_ key: String) -> String {
+    v6[key] ?? v5[key] ?? benefits[key] ?? reset[key] ?? journey[key] ?? onboarding[key] ?? redesign[key] ?? additions[key] ?? words[key] ?? key
+  }
   static let onboarding: [String: String] = [
     "Replay": "Repetir",
     "Stay with your workout.": "Quédate con tu entrenamiento.",
@@ -444,6 +447,7 @@ extension Spanish {
     "The block screen offers 1 minute, once per exercise.": "La pantalla de bloqueo ofrece 1 minuto, una vez por ejercicio.",
     "Notifications": "Notificaciones",
     "Turn on": "Activar",
+    "Let’s go": "Vamos",
     "On": "Sí",
     "Notifications are off, so rest alerts can’t reach you.": "Las notificaciones están desactivadas, así que los avisos de descanso no te llegarán.",
     "Set": "Serie",

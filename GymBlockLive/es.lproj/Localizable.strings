@@ -1,0 +1,31 @@
+/* The widget gallery, the placeholder, and setup before the app has written a snapshot. Everything
+   else the widgets show arrives already translated by the app, in its own language. */
+
+/* Gallery */
+"Up next" = "Siguiente";
+"What's next, or the workout you're in." = "Lo siguiente, o el entrenamiento en curso.";
+"This month" = "Este mes";
+"The days you trained this month." = "Los días que entrenaste este mes.";
+"This week" = "Esta semana";
+"The days you trained this week." = "Los días que entrenaste esta semana.";
+"Start workout" = "Iniciar entrenamiento";
+"Opens GymBlock and starts what's up next." = "Abre GymBlock en lo siguiente.";
+
+/* Placeholder and setup (a new user's widget) */
+"Open GymBlock" = "Abre GymBlock";
+"Your first workout" = "Tu primer entrenamiento";
+/* Used only where the full form can't fit (Spanish.widgetShort in the app). */
+"Your first workout (short)" = "Tu primer entreno";
+"Pick exercises as you go." = "Elige ejercicios sobre la marcha.";
+"Week 1" = "Semana 1";
+"week streak" = "semanas de racha";
+"1 week streak" = "1 semana de racha";
+"of" = "de";
+"this week" = "esta semana";
+"workout" = "entrenamiento";
+"workouts" = "entrenamientos";
+"Paused" = "En pausa";
+"Still working out?" = "¿Sigues entrenando?";
+"Choose an exercise" = "Elige un ejercicio";
+"Training" = "Entrenando";
+"Sample data" = "Datos de ejemplo";

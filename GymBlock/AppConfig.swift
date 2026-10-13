@@ -27,7 +27,7 @@ enum AppConfig {
       let args = ProcessInfo.processInfo.arguments
       // `--online` keeps the account, purchases and analytics live even on a page jump, for checking them by hand.
       if args.contains("--online") { return false }
-      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") }
+      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") }
     #else
       return false
     #endif

@@ -50,12 +50,9 @@ extension GymStore {
     let thisWeek = grid.last?.filter { $0 }.count ?? 0
 
     // Streak: consecutive weeks with at least one workout, counting back; this week joins once it has one.
-    var streak = 0
-    for (index, week) in grid.enumerated().reversed() {
-      let days = week.filter { $0 }.count
-      let isCurrent = index == grid.count - 1
-      if days >= 1 { streak += 1 } else if isCurrent { continue } else { break }
-    }
+    // The widgets' function, uncapped: the grid stays `weeks` long, a 20-week run reads 20.
+    let weeksTrained = Set(finished.map { TrainingDays.key(TrainingDays.monday(of: $0.started)) })
+    let streak = TrainingDays.streak(at: now, weeks: weeksTrained)
 
     // Rests on time, last 28 days.
     let since = calendar.date(byAdding: .day, value: -28, to: now) ?? now

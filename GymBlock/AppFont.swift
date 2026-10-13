@@ -54,13 +54,15 @@ enum AppFont {
     return font.familyName.contains("DM Sans") ? font : nil
   }
 
-  /// Navigation bar titles in the same face (UIKit draws those).
+  #if !LIVE_EXTENSION
+  /// Navigation bar titles in the same face (UIKit draws those). The app only: widgets have no bars.
   static func styleBars() {
     guard dmSans else { return }
     let bar = UINavigationBar.appearance()
     if let large = uiFont(size: 34, weight: .bold) { bar.largeTitleTextAttributes = [.font: UIFontMetrics(forTextStyle: .largeTitle).scaledFont(for: large)] }
     if let inline = uiFont(size: 17, weight: .semibold) { bar.titleTextAttributes = [.font: UIFontMetrics(forTextStyle: .headline).scaledFont(for: inline)] }
   }
+  #endif
 }
 
 extension Font {

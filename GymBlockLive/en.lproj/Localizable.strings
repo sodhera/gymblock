@@ -1,0 +1,31 @@
+/* The widget gallery, the placeholder, and setup before the app has written a snapshot. Everything
+   else the widgets show arrives already translated by the app, in its own language. */
+
+/* Gallery */
+"Up next" = "Up next";
+"What's next, or the workout you're in." = "What's next, or the workout you're in.";
+"This month" = "This month";
+"The days you trained this month." = "The days you trained this month.";
+"This week" = "This week";
+"The days you trained this week." = "The days you trained this week.";
+"Start workout" = "Start workout";
+"Opens GymBlock and starts what's up next." = "Opens GymBlock on what's up next.";
+
+/* Placeholder and setup (a new user's widget) */
+"Open GymBlock" = "Open GymBlock";
+"Your first workout" = "Your first workout";
+/* Used only where the full form can't fit. */
+"Your first workout (short)" = "Your first workout";
+"Pick exercises as you go." = "Pick exercises as you go.";
+"Week 1" = "Week 1";
+"week streak" = "week streak";
+"1 week streak" = "1 week streak";
+"of" = "of";
+"this week" = "this week";
+"workout" = "workout";
+"workouts" = "workouts";
+"Paused" = "Paused";
+"Still working out?" = "Still working out?";
+"Choose an exercise" = "Choose an exercise";
+"Training" = "Training";
+"Sample data" = "Sample data";

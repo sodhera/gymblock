@@ -32,24 +32,25 @@ struct JourneyTheme {
 
   /// Warm off-white paper, ink type, emerald signal; at night (dark mode, 11 Oct 2026) the same page
   /// in warm charcoal with off-white type, a slightly brighter emerald and an inverted primary button.
-  /// Every colour is dynamic, so the whole app follows the appearance.
+  /// Every colour is dynamic, so the whole app follows the appearance. Stage, ink, secondary and signal
+  /// are the `Paper` constants (Widgets/PaperPalette.swift) the widgets read, so the two can't drift.
   static let paper = JourneyTheme(
     name: "paper", scheme: .light,
-    stage: .dynamic(UIColor(red: 0.961, green: 0.953, blue: 0.937, alpha: 1), UIColor(red: 0.082, green: 0.078, blue: 0.071, alpha: 1)),
+    stage: .paper(Paper.stage),
     backdrop: .solid,
-    text: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
-    secondary: .dynamic(UIColor(red: 0.40, green: 0.40, blue: 0.42, alpha: 1), UIColor(red: 0.69, green: 0.68, blue: 0.66, alpha: 1)),
+    text: .paper(Paper.ink),
+    secondary: .paper(Paper.secondary),
     tertiary: .dynamic(UIColor(red: 0.58, green: 0.58, blue: 0.60, alpha: 1), UIColor(red: 0.50, green: 0.49, blue: 0.47, alpha: 1)),
-    ink: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    ink: .paper(Paper.ink),
     raised: .dynamic(.white, UIColor(red: 0.145, green: 0.138, blue: 0.128, alpha: 1)),
     glow: .dynamic(UIColor(red: 1, green: 0.93, blue: 0.80, alpha: 1), UIColor(red: 1, green: 0.74, blue: 0.45, alpha: 1)), glowAlpha: 0.9,
-    dot: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
+    dot: .paper(Paper.ink),
     dotAlpha: 0.10, vignette: 0,
-    signal: .dynamic(UIColor(red: 0.06, green: 0.60, blue: 0.42, alpha: 1), UIColor(red: 0.20, green: 0.76, blue: 0.54, alpha: 1)),
+    signal: .paper(Paper.signal),
     danger: .dynamic(UIColor(red: 0.86, green: 0.25, blue: 0.21, alpha: 1), UIColor(red: 0.95, green: 0.38, blue: 0.33, alpha: 1)),
     onAccent: .white,
-    button: .dynamic(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1), UIColor(red: 0.953, green: 0.941, blue: 0.918, alpha: 1)),
-    onButton: .dynamic(.white, UIColor(red: 0.082, green: 0.078, blue: 0.071, alpha: 1)))
+    button: .paper(Paper.ink),
+    onButton: .dynamic(.white, Paper.stage.dark.ui))
   /// The app's theme. Chosen on 8 Oct 2026 from three rendered directions (paper, an indigo dusk, a slate).
   static let current: JourneyTheme = .paper
 }
@@ -59,6 +60,8 @@ extension Color {
   static func dynamic(_ light: UIColor, _ dark: UIColor) -> Color {
     Color(UIColor { $0.userInterfaceStyle == .dark ? dark : light })
   }
+  /// A paper token, following the appearance.
+  static func paper(_ c: PaperColor) -> Color { .dynamic(c.light.ui, c.dark.ui) }
 }
 
 enum JourneyColor {

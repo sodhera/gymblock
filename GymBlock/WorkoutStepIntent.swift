@@ -19,6 +19,8 @@ struct WorkoutStepIntent: LiveActivityIntent {
         return LiveWorkout.pending
       }
       await update?.value
+      // The app is suspended right after a Lock Screen tap: the widgets' debounced write would never land.
+      await MainActor.run { WidgetSync.flush() }
     #endif
     return .result()
   }

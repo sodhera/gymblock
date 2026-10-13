@@ -13,13 +13,15 @@ import Foundation
     guard let session = store.session, let exercise = session.selected else { end(); return }
     let phase: WorkoutActivityAttributes.Phase =
       session.stage == .active || session.stage == .log ? .set : session.stage == .rest ? .rest : .ready
-    let since = phase == .set ? session.setStarted : phase == .rest ? session.restStarted : session.started
+    // Ready counts the whole workout, which leaves out paused time as the app's clock does.
+    let workoutClock = session.started.addingTimeInterval(session.pausedSeconds ?? 0)
+    let since = phase == .set ? session.setStarted : phase == .rest ? session.restStarted : workoutClock
     let done = store.doneSets(exercise), target = store.targetSets(exercise)
     let weight = session.weightIsSet == false ? "" : session.weightKG == 0 ? store.t("Bodyweight")
       : formatNumber(GymStore.displayedWeight(session.weightKG, unit: store.profile.unit)) + " " + store.profile.unit
     let next = exercise.timed ? store.t("Timed") : weight + (store.draftRepCount.map { " × \($0)" } ?? "")
     let state = WorkoutActivityAttributes.ContentState(
-      exercise: store.t(exercise.name), phase: phase, since: since ?? session.started,
+      exercise: store.t(exercise.name), phase: phase, since: since ?? workoutClock,
       restSeconds: store.restTarget, setNumber: done + 1, setTarget: target, next: next,
       restUp: store.t("Rest’s up"), restLabel: store.t("Rest"), setLabel: store.t("Set time"),
       readyLabel: store.t("Ready"),

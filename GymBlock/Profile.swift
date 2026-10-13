@@ -15,13 +15,14 @@ struct ProfileTab: View {
         ScrollView {
           VStack(alignment: .leading, spacing: 0) {
             header
-            if let recent { summary(recent).padding(.top, 26) }
+            // The month first (13 Oct 2026, at the user's request), then the average, blocking and the list.
+            if !sessions.isEmpty { MonthDots(sessions: sessions).padding(.top, 26) }
+            if let recent { summary(recent).padding(.top, 40) }
             NavigationLink { BlockedAppsView() } label: { BlockedAppsCard() }
               .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("profile.blocking").padding(.top, 26)
             if sessions.isEmpty {
               empty.padding(.top, 40)
             } else {
-              MonthDots(sessions: sessions).padding(.top, 40)
               recentList.padding(.top, 40)
             }
           }.frame(maxWidth: .infinity, alignment: .leading)

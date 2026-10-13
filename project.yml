@@ -67,24 +67,32 @@ targets:
         product: Supabase
       - package: RevenueCat
         product: RevenueCat
+  # The Live Activity, the Up next / This month / This week widgets and the Start workout control.
+  # It reads the app's widget snapshot from the App Group; never the store, Supabase or RevenueCat.
   GymBlockLive:
     type: app-extension
     platform: iOS
     sources:
-      - GymBlockLive
+      - path: GymBlockLive
+        excludes: ["*.entitlements"]
+      - GymBlock/Widgets
       - GymBlock/WorkoutActivity.swift
       - GymBlock/WorkoutStepIntent.swift
+      - GymBlock/AppFont.swift
+      - GymBlock/Fonts/DMSans.ttf
     info:
       path: GymBlockLive/Info.plist
       properties:
         CFBundleDisplayName: GymBlock
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIAppFonts: [DMSans.ttf]
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sodhera.gymblock.live
+        CODE_SIGN_ENTITLEMENTS: GymBlockLive/GymBlockLive.entitlements
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) LIVE_EXTENSION
         TARGETED_DEVICE_FAMILY: '1'
         MARKETING_VERSION: '1.0.0'

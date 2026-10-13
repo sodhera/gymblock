@@ -38,6 +38,9 @@ import SwiftUI
       if let stage = UserDefaults.standard.string(forKey: "workoutStage") { store.debugWorkout(stage) }
     #endif
     GymStore.live = store
+    // The widgets, now: the development launches above saved before `live` was set.
+    WidgetSync.sync(store)
+    WidgetSync.flush()
     // Lifts a shield the last run left up if no workout is running any more.
     AppBlocking.shared.sync(store)
     _store = StateObject(wrappedValue: store)
@@ -48,18 +51,33 @@ import SwiftUI
   }
   var body: some Scene {
     WindowGroup {
-      RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
-        .tint(GymColor.ink).foregroundStyle(GymColor.ink)
-        .onOpenURL { account.handle($0) }
-        .task { wire() }
+      #if DEBUG
+        // Development only: every widget state at its true size instead of the app (`-widgetPreview lock`).
+        if WidgetPreviewScreen.requested { WidgetPreviewScreen() } else { root }
+      #else
+        root
+      #endif
     }
     .onChange(of: scenePhase) { _, phase in
       Analytics.scene(phase)
       if phase == .active {
         AppBlocking.shared.refresh()
         Task { await CloudSync.shared.push() }
+        // The snapshot's week and six weeks of days move with the date, with nothing saved.
+        WidgetSync.sync(store)
       }
+      // Suspended next: a write still waiting out its second would never land.
+      if phase == .background { WidgetSync.flush() }
     }
+  }
+  private var root: some View {
+    RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
+      .tint(GymColor.ink).foregroundStyle(GymColor.ink)
+      // Widget and control routes by host; the sign-in callback (gymblock://auth/callback) isn't one.
+      .onOpenURL { url in
+        if AppRoute(url: url) != nil { AppRouter.shared.openURL(url) } else { account.handle(url) }
+      }
+      .task { wire() }
   }
   /// The account drives everything that is per user: sync, purchases and analytics identity.
   private func wire() {
@@ -113,11 +131,7 @@ struct RootView: View {
 
   private var screen: Screen {
     if !splashDone { return .launch }
-    if !launched && !waitExpired && !AppConfig.offline {
-      if account.state == .loading { return .launch }
-      // A subscriber's entitlement is cached, so this is normally instant; it keeps the offer from flashing.
-      if store.profile.onboarded && account.state == .signedIn && subscription.configured && !subscription.resolved { return .launch }
-    }
+    if !launched && !waitExpired && unanswered { return .launch }
     // A sign-in that went somewhere unexpected is said before anything else moves on.
     if let notice = account.notice { return .notice(notice) }
     if store.profile.onboarded { return needsOffer ? .paywall : .app }
@@ -125,6 +139,16 @@ struct RootView: View {
     if signingIn { return .signIn }
     return .onboarding
   }
+  /// What the launch hold waits on: the account, then a signed-in account's entitlement.
+  private var unanswered: Bool {
+    if AppConfig.offline { return false }
+    if account.state == .loading { return true }
+    // A subscriber's entitlement is cached, so this is normally instant; it keeps the offer from flashing.
+    return store.profile.onboarded && account.state == .signedIn && subscription.configured && !subscription.resolved
+  }
+  /// The app, with nothing left that could put the offer wall over it (AppRouter.settled). The hold
+  /// gives up after 4 seconds, so the app can show while this is still false.
+  private var settled: Bool { screen == .app && !unanswered }
   /// Onboarding has reached the offer (after the account step, before splits).
   private var atOffer: Bool { !store.profile.onboarded && OnboardingStep.restored(store.profile) == .subscription }
   private var passedOffer: Bool { subscription.hasAccess || skippedOffer }
@@ -182,6 +206,11 @@ struct RootView: View {
     // Past the offer: onboarding carries on with splits.
     .onChange(of: passedOffer) { _, _ in advancePastOffer() }
     .onChange(of: atOffer) { _, _ in advancePastOffer() }
+    // Widget and control routes act only on the app, once the splash has lifted; onboarding, sign-in,
+    // notices and the offer wall drop them.
+    .onChange(of: shown, initial: true) { _, s in AppRouter.shared.screen = routerScreen(s) }
+    // The control's start also waits until the offer wall can't follow.
+    .onChange(of: settled, initial: true) { _, s in AppRouter.shared.settled = s }
     .onAppear {
       advancePastOffer()
       #if DEBUG
@@ -198,6 +227,14 @@ struct RootView: View {
     }
   }
 
+  /// `shown` is `.app` once the splash has lifted.
+  private func routerScreen(_ s: Screen) -> AppRouter.Screen {
+    switch s {
+    case .launch: return .launch
+    case .app: return .app
+    default: return .other
+    }
+  }
   private func advancePastOffer() {
     guard atOffer, passedOffer else { return }
     store.updateProfile { $0.onboardingStepID = OnboardingStep.splits.rawValue }

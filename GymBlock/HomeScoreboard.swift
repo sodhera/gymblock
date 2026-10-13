@@ -26,7 +26,9 @@ struct WeekLine: View {
   /// The truth, never an example: "Week 1" before the first workout, the streak once there is one,
   /// otherwise this week against the goal.
   private var label: String {
-    if stats.streakWeeks > 0 { return "\(stats.streakWeeks) " + store.t("week streak") }
+    // Singular on its own key: Spanish read "1 semanas de racha".
+    if stats.streakWeeks == 1 { return store.t("1 week streak") }
+    if stats.streakWeeks > 1 { return "\(stats.streakWeeks) " + store.t("week streak") }
     if stats.totalWorkouts == 0 { return store.t("Week 1") }
     return "\(stats.thisWeek) " + store.t("of") + " \(stats.goal) " + store.t("this week")
   }
@@ -224,15 +226,15 @@ struct DotField: View {
   }
 }
 
-/// The queued workout as the page's headline: a small "Up next" with a chevron (tap to change),
-/// the split's name large, and one quiet line of what's ahead.
+/// The queued workout as the page's headline: a small "Up next" with a chevron (tap to change) and
+/// the split's name large. What's ahead is on the plan Start workout slides up to (13 Oct 2026).
 struct UpNext: View {
   @EnvironmentObject private var store: GymStore
-  @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 56
   let split: Workout?
-  let detail: String
   /// A first-run title in place of the split's name ("Your first workout").
   var title: String? = nil
+  /// Where the name sits: Home draws it once, floating, so this copy only holds the place.
+  var heroSlot: String? = nil
   /// One quiet emerald link under the hero ("+ Set up a split").
   var link: (label: String, action: () -> Void)? = nil
   let change: () -> Void
@@ -256,12 +258,37 @@ struct UpNext: View {
           Text(store.t("Up next"))
           Image(systemName: "chevron.down").font(.system(size: 11, weight: .bold))
         }.font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.signal)
-        Text(title ?? split.map { store.t($0.name) } ?? store.t("Free workout")).font(.app(size: heroSize, weight: .bold)).tracking(-1.2)
-          .foregroundStyle(JourneyColor.text).lineLimit(2).minimumScaleFactor(0.6).multilineTextAlignment(.leading)
-        Text(detail).font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(2)
+        HeroTitle(text: name).heroSlot(heroSlot)
       }.frame(maxWidth: .infinity, alignment: .leading).contentShape(Rectangle())
     }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("home.next")
+      .accessibilityLabel(store.t("Up next") + ", " + name)
       .accessibilityHint(store.t("Choose another workout"))
+  }
+  private var name: String { title ?? split.map { store.t($0.name) } ?? store.t("Free workout") }
+}
+
+/// The workout's name as Home's headline and the plan's. Home draws one copy that glides between the
+/// two places (13 Oct 2026: the name showed twice as the page slid up); each place keeps an
+/// invisible copy that holds its room.
+struct HeroTitle: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var size: CGFloat = 56
+  let text: String
+  var body: some View {
+    Text(text).font(.app(size: size, weight: .bold)).tracking(-1.2).foregroundStyle(JourneyColor.text)
+      .lineLimit(2).minimumScaleFactor(0.6).multilineTextAlignment(.leading)
+  }
+}
+
+extension View {
+  /// A place the floating name can sit: invisible, reporting where it is in the pages (`HeroSlots`).
+  @ViewBuilder func heroSlot(_ id: String?) -> some View {
+    if let id {
+      opacity(0).accessibilityHidden(true).background {
+        GeometryReader { g in Color.clear.preference(key: HeroSlots.self, value: [id: g.frame(in: .named("pageContent"))]) }
+      }
+    } else {
+      self
+    }
   }
 }
 

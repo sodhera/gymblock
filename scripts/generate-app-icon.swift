@@ -1,5 +1,5 @@
 // Renders the app icon: the brand mark, a cast-iron kettlebell with an emerald keyhole, in ink on the
-// paper stage. The outline is `KettlebellOutline` at the bottom, the same block as in GymBlock/BrandMark.swift.
+// paper stage. The outline is `KettlebellOutline` at the bottom, the same block as in GymBlock/Widgets/KettlebellShape.swift.
 // Run from the repository root:
 //   swift scripts/generate-app-icon.swift                       # 1024 px → the asset catalogue
 //   swift scripts/generate-app-icon.swift 180 out.png --mask    # a preview with the iOS corner mask
@@ -47,7 +47,7 @@ print("wrote \(output) (\(Int(side))×\(Int(side)))")
 // BEGIN KETTLEBELL OUTLINE
 /// The kettlebell's outlines in the unit square, y down. Traced from a photo of a cast-iron
 /// kettlebell the user chose on 12 Oct 2026. The numbers are in bell radii from the bell's centre.
-/// Keep this block identical in GymBlock/BrandMark.swift and scripts/generate-app-icon.swift.
+/// Keep this block identical in GymBlock/Widgets/KettlebellShape.swift and scripts/generate-app-icon.swift.
 enum KettlebellOutline {
   /// Where the bell sits in the unit square, and its radius.
   static let bell = (x: 0.5, y: 0.685, r: 0.292)
