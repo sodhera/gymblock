@@ -2,7 +2,7 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** October 8, 2026
+**Last Updated:** October 14, 2026
 
 Please read these Terms of Service ("**Terms**") carefully before using the GymBlock application for iPhone (the "**App**") operated by Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**"), Satdobato, Lalitpur, Bagmati Province 44700, Nepal.
 
@@ -29,7 +29,7 @@ GymBlock is a strength-training companion that provides:
 - **Set logging:** exercise, weight, reps or minutes, timing, and warm-up or unsuccessful flags for every set.
 - **Splits:** optional, named lists of exercises that rotate from workout to workout, or a free workout without a split.
 - **Like-for-like progress:** comparisons of the same exercise within the same split, with reps or load held constant, calculated from what you log.
-- **Phone-away block (simulated):** a representation of your chosen apps being blocked while a workout runs. See Section 4.
+- **App blocking:** the apps, categories, and websites you choose are blocked through Apple's Screen Time while a workout runs. See Section 4.
 - **Lock Screen Live Activity** showing the current rest or set during a workout.
 - **Account sync** between your iPhone and your account, and the optional **GymBlock Pro** subscription (Section 6).
 
@@ -66,17 +66,16 @@ We make no representations or warranties regarding the accuracy, completeness, o
 
 ---
 
-## 4. App Blocking Is Simulated
+## 4. App Blocking
 
-GymBlock describes keeping your phone away between sets and lets you choose apps to "block." In the current version of the App, **this feature is a simulation and a representation only.** You understand and agree that:
+GymBlock can block the apps, app categories, and websites you choose while a workout runs, using Apple's Screen Time. You understand and agree that:
 
-- GymBlock does **not** control, restrict, shield, monitor, or read other apps on your iPhone;
-- GymBlock does **not** use Apple's Screen Time, Family Controls, or Managed Settings frameworks and does not request those permissions;
-- Nothing prevents you from opening any app during a workout, and no app, call, or system function is ever disabled by GymBlock;
-- The block screen, pledge, and the list of apps you chose are prompts to help you keep a commitment you make to yourself, not enforcement; and
-- You must not rely on GymBlock to restrict your own or anyone else's device use.
+- Blocking works only after you allow Screen Time access on your iPhone and choose what to block in Apple's picker, and only while a workout is running and not paused;
+- Blocking is provided by iOS, and GymBlock cannot guarantee it: iOS may not apply it, and you can lift it by pausing or finishing the workout, taking a one-minute pass when Strict mode is off, turning off Screen Time access, or deleting the App;
+- Blocking is a tool to help you keep a commitment you make to yourself. It is for your own device only and must not be used to restrict anyone else's device use; and
+- You remain responsible for being reachable in an emergency. Phone calls and emergency features are provided by iOS and are not blocked by GymBlock.
 
-If a future version adds real enforcement, we will say so in the App and update these Terms and the Privacy Policy before it is enabled.
+How blocking handles your data is described in Section 3 of the [Privacy Policy](privacy-policy.md).
 
 ---
 
@@ -215,7 +214,7 @@ THE APP AND ALL CONTENT, FEATURES, TIMERS, ALERTS, CALCULATIONS, ESTIMATES, AND 
 
 ### 14.1 Exclusion of Damages
 
-IN NO EVENT SHALL SODHERA, ITS DIRECTORS, EMPLOYEES, AGENTS, SUPPLIERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION PERSONAL INJURY, LOSS OF DATA, LOSS OF PROFITS OR GOODWILL, OR DAMAGES ARISING FROM YOUR TRAINING DECISIONS, FROM RELIANCE ON ANY TIMER, ALERT, CALCULATION, OR ESTIMATE, FROM THE SIMULATED NATURE OF APP BLOCKING, FROM UNAUTHORIZED ACCESS TO YOUR DATA, OR FROM ANY THIRD-PARTY SERVICE FAILURE, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR ANY OTHER LEGAL THEORY, AND WHETHER OR NOT WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+IN NO EVENT SHALL SODHERA, ITS DIRECTORS, EMPLOYEES, AGENTS, SUPPLIERS, OR AFFILIATES BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, INCLUDING WITHOUT LIMITATION PERSONAL INJURY, LOSS OF DATA, LOSS OF PROFITS OR GOODWILL, OR DAMAGES ARISING FROM YOUR TRAINING DECISIONS, FROM RELIANCE ON ANY TIMER, ALERT, CALCULATION, OR ESTIMATE, FROM APP BLOCKING OR ITS FAILURE TO BLOCK, FROM UNAUTHORIZED ACCESS TO YOUR DATA, OR FROM ANY THIRD-PARTY SERVICE FAILURE, WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY, OR ANY OTHER LEGAL THEORY, AND WHETHER OR NOT WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
 ### 14.2 Cap on Liability
 

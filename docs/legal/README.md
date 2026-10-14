@@ -1,6 +1,6 @@
 # GymBlock legal documents
 
-Markdown sources for the GymBlock legal documents. The published copies live in the company website repository (`orecci`, folder `gymblock/`) and are served from www.orecci.com. Effective and last updated: October 8, 2026.
+Markdown sources for the GymBlock legal documents. The published copies live in the company website repository (`orecci`, folder `gymblock/`) and are served from www.orecci.com. Effective October 8, 2026; Privacy Policy and Terms last updated October 14, 2026.
 
 | Document | Source in this repo | Public URL |
 |---|---|---|

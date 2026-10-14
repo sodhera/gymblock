@@ -1,5 +1,9 @@
 # Validation — 8 October 2026
 
+## App Store build 2 with Family Controls (14 October 2026)
+
+App Review's automated check stopped build 1: it linked Screen Time but the App Store export had dropped `com.apple.developer.family-controls`, because Family Controls (Distribution) was not yet approved. Apple approved it on 14 October and it is enabled on `com.sodhera.gymblock`, `.shield`, `.shield-action` and `.monitor`. Build 2 (1.0.0) was archived in Release and exported for App Store Connect; the exported IPA (not only the archive) was checked: Apple Distribution signature, `get-task-allow` false, and the entitlement in the app and all three Screen Time extensions, each granted by its App Store profile. The widget extension has none and needs none. The Privacy Policy and Terms, which still called blocking simulated, were rewritten for real Screen Time blocking and published to www.orecci.com/gymblock (orecci `2fcdb33`).
+
 ## App Store screenshots recaptured (12 October 2026)
 
 The 11 October set showed the old ring workout, the card Home and the old summary, all in SF Pro. Recaptured on a new 6.9-inch simulator (`GymBlock Store 6.9`, iPhone 18 Pro Max, iOS 27.0, status bar 9:41, full signal, battery not charging) from seeded sample data, and reframed with the unchanged script: [screenshots/store-final](screenshots/store-final/), captures in [screenshots/store-2026-10-12](screenshots/store-2026-10-12/), sheet `screenshots/store-final-overview.png`. Slide 5 moved from the summary to Profile's month of dots, which shows a streak. The shield (slide 1) and the summary (slide 5) were tried as alternatives and rejected by the user. Steps in `docs/listing.md`.

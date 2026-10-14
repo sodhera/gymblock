@@ -2,13 +2,13 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** October 8, 2026
+**Last Updated:** October 14, 2026
 
 Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**") operates the GymBlock application for iPhone (the "**App**"). GymBlock helps you keep your phone away between sets, time your rests, log your sets, and see like-for-like strength progress. This Privacy Policy explains what information we collect when you use the App, why we collect it, where it is stored, who processes it on our behalf, and the choices you have. By using GymBlock, you agree to the practices described in this Privacy Policy.
 
 We are committed to transparency and to safeguarding your personal data. Please read this Privacy Policy carefully. If you do not agree with any part of it, please do not use the App.
 
-> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database, and only there. No advertising SDKs, no cross-app tracking, and your data is never sold. "Blocking" other apps is simulated: GymBlock does not control, monitor, or read other apps.
+> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database, and only there. No advertising SDKs, no cross-app tracking, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
 
 ---
 
@@ -30,7 +30,7 @@ GymBlock uses Sign in with Apple or Sign in with Google to create your account. 
 | Data Category | Specific Data | Purpose |
 |---|---|---|
 | **Profile** | Name, gender, height, weight, preferred units (metric or imperial), language | Personalize the App and show weights and heights in your units |
-| **Onboarding answers** | How you use your phone between sets, estimated minutes per rest, the apps you chose to "block," your preferred rest length, alert preferences, and the pledge you make at the end of onboarding | Set up your rest timer and alerts, and show you the estimate of time spent on your phone |
+| **Onboarding answers** | How you use your phone between sets, estimated minutes per rest, whether blocking is on, your preferred rest length, alert preferences, and the pledge you make at the end of onboarding | Set up your rest timer and alerts, and show you the estimate of time spent on your phone |
 | **Splits** | Named lists of exercises you create or edit (for example "Push," "Pull," "Legs") | Rotate your training days and compare progress within the same split |
 | **Workouts and sets** | For every set you log: the exercise, weight, reps, minutes (for timed exercises), start and end timestamps, set duration, rest and gap durations, and warm-up or unsuccessful flags; plus the workout's start, finish, and pause times | Keep your training log, time your rests, and calculate like-for-like progress |
 
@@ -50,6 +50,7 @@ GymBlock records how the App is used. This is **first-party** analytics: the eve
 
 - **Screens:** every screen you view and how long you stay on it.
 - **Interactions:** every button tap, toggle, and choice you make, including the option you selected.
+- **Blocking:** whether Screen Time access was allowed, how many apps, categories, and websites you chose (counts only, never which ones), and how many one-minute passes were used.
 - **Workouts:** when a workout starts, pauses, resumes, and finishes; each set logged, edited, or deleted; each rest started, skipped, or completed, with durations.
 - **Onboarding:** each onboarding step you reach, the answer you give, and where you stop if you do not finish.
 - **Purchases:** paywall views, purchase attempts, completions, failures, and restores.
@@ -65,7 +66,7 @@ We use these events to understand which parts of the App are used, where people 
 We want to be explicit about what GymBlock **does not** collect or access:
 
 - ❌ **Passwords** — sign-in goes through Apple or Google; we never receive or store a password
-- ❌ **Information about other apps** — GymBlock does not read which apps are installed, which apps you open, or how long you use them (see Section 3)
+- ❌ **Information about other apps** — GymBlock never learns which apps or websites you choose to block, which apps are installed, which apps you open, or how long you use them (see Section 3)
 - ❌ **Apple Health / HealthKit data** — the App does not read from or write to Apple Health
 - ❌ **Camera or photos** — the App does not access your camera or photo library
 - ❌ **Microphone** — the App does not record audio
@@ -93,16 +94,18 @@ We do **not** use your data for advertising, do not sell it, do not rent it, and
 
 ---
 
-## 3. App Blocking: What GymBlock Actually Does
+## 3. App Blocking and Apple Screen Time
 
-GymBlock's purpose is to keep your phone away between sets, and the App talks about "blocking" apps. In the current version of the App, **blocking is simulated and representational.** When a workout is running, the App shows a block screen and treats the apps you chose during onboarding as blocked, but:
+GymBlock blocks the apps you choose while a workout runs, using Apple's Screen Time frameworks (Family Controls, Managed Settings, and Device Activity). Here is exactly what that involves:
 
-- GymBlock does **not** control, restrict, monitor, or read other apps on your iPhone.
-- GymBlock does **not** use Apple's Screen Time, Family Controls, or Managed Settings frameworks, and never asks for those permissions.
-- GymBlock receives **no** information about which apps are installed on your iPhone or how you use them.
-- The list of "apps to block" you pick during onboarding is stored only as your answer to that question.
+- **Permission.** GymBlock asks for Screen Time access for your own iPhone. iOS shows its own prompt, and you approve it with Face ID, Touch ID, or your passcode. You can turn it off at any time in iOS Settings → Screen Time, and deleting GymBlock removes it.
+- **Choosing apps.** You choose apps, app categories, and websites in Apple's own picker. Apple gives GymBlock only opaque tokens for your choice. GymBlock cannot turn those tokens into app names, icons, or websites, and never learns what you picked.
+- **Where the choice is kept.** The tokens are stored only on your iPhone, in GymBlock and its Screen Time extensions. They are never synced to your account, sent to us, or included in analytics. Deleting your account in the App clears them.
+- **When apps are blocked.** From Start workout to Finish, iOS shows a GymBlock screen over the apps you chose. Pausing a workout lifts the block, and resuming puts it back. iOS keeps the block if GymBlock is closed, and removes it if GymBlock is deleted.
+- **The one-minute pass.** With Strict mode off, the block screen offers one minute per exercise. During that minute, iOS tells GymBlock's extension when a minute's use of the blocked apps has been reached so the block can return; iOS does not tell GymBlock which app was used or what you did in it.
+- **What we record.** Only the counts listed in Section 1.4: whether access was allowed, how many apps, categories, and websites were chosen, and how many passes were used.
 
-If a future version adds real enforcement, we will update this Privacy Policy, describe exactly what the feature can and cannot see, and ask for any required system permission at that time.
+GymBlock does **not** read which apps are installed on your iPhone, which apps you open, your Screen Time reports, or anything you do inside other apps. GymBlock uses Screen Time only to block apps you chose for yourself; it is not a parental control app and cannot manage anyone else's device.
 
 ---
 
