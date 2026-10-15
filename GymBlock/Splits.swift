@@ -17,11 +17,13 @@ struct SplitEditorContent: View {
   var onSaved: ((Workout) -> Void)?
   @State private var name: String
   @State private var exercises: [Exercise]
+  @State private var color: SplitColor
   @State private var adding = false
   @FocusState private var naming: Bool
   init(workout: Workout, onSaved: ((Workout) -> Void)? = nil) {
     self.workout = workout; self.onSaved = onSaved
     _name = State(initialValue: workout.name); _exercises = State(initialValue: workout.exercises)
+    _color = State(initialValue: workout.splitColor)
   }
   private var duplicate: Bool {
     store.data.workouts.contains { $0.id != workout.id && $0.name.localizedCaseInsensitiveCompare(name.trimmingCharacters(in: .whitespacesAndNewlines)) == .orderedSame }
@@ -43,6 +45,8 @@ struct SplitEditorContent: View {
         Text(line).font(.app(.subheadline)).foregroundStyle(duplicate ? JourneyColor.signal : JourneyColor.tertiary)
           .accessibilityIdentifier("split.line")
       }.padding(.top, 4).padding(.bottom, 22).pageRow().listRowSeparator(.hidden)
+      PageLabel(text: store.t("Colour")).pageRow().listRowSeparator(.hidden)
+      swatches.padding(.top, 2).padding(.bottom, 26).pageRow().listRowSeparator(.hidden)
       PageLabel(text: store.t("Exercises")).pageRow().listRowSeparator(.hidden, edges: .top)
       ForEach(Array(exercises.enumerated()), id: \.element.id) { index, exercise in
         HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -83,7 +87,7 @@ struct SplitEditorContent: View {
       ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
       ToolbarItem(placement: .confirmationAction) {
         Button(store.t("Save")) {
-          if store.saveSplit(id: workout.id, name: name, exercises: exercises) {
+          if store.saveSplit(id: workout.id, name: name, exercises: exercises, color: color) {
             JourneyHaptic.play(.success, store.profile)
             if let saved = store.data.workouts.first(where: { $0.id == workout.id }), let onSaved { onSaved(saved) }
             else { dismiss() }
@@ -91,6 +95,29 @@ struct SplitEditorContent: View {
         }.fontWeight(.semibold).disabled(!canSave).accessibilityIdentifier("split.save")
       }
     }
+  }
+
+  /// The split's colour, as its days will look on Home, Profile and the widgets: ten dots in one row,
+  /// a ring round the chosen one.
+  private var swatches: some View {
+    HStack(spacing: 0) {
+      ForEach(SplitColor.allCases) { option in
+        Button {
+          guard option != color else { return }
+          color = option
+          JourneyHaptic.play(.selection, store.profile)
+        } label: {
+          Circle().fill(Color.paper(option.paper)).frame(width: 24, height: 24)
+            .padding(4)
+            .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: option == color ? 2 : 0))
+            .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(store.t(option.label)).accessibilityAddTraits(option == color ? .isSelected : [])
+        .accessibilityIdentifier("split.color." + option.rawValue)
+      }
+    }
+    .animation(JourneyMotion.gentle, value: color)
   }
 }
 

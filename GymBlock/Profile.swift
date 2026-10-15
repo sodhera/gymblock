@@ -193,6 +193,7 @@ private struct MonthDots: View {
     let monday = calendar.date(byAdding: .day, value: -lead, to: first) ?? first
     let rows = (lead + length + 6) / 7
     let trained = Set(sessions.map { calendar.startOfDay(for: $0.started) })
+    let colors = store.dayColors
     let count = sessions.filter { calendar.isDate($0.started, equalTo: today, toGranularity: .month) }.count
     let tally = "\(count) " + store.t(count == 1 ? "workout" : "workouts")
     return VStack(alignment: .leading, spacing: 8) {
@@ -215,7 +216,7 @@ private struct MonthDots: View {
               Group {
                 if index >= 0 && index < length {
                   let on = trained.contains(day)
-                  Circle().fill(on ? JourneyColor.signal : day == today ? Color.clear : JourneyColor.ink(day > today ? 0.05 : 0.12))
+                  Circle().fill(on ? Color.paper((colors[TrainingDays.key(day)] ?? .emerald).paper) : day == today ? Color.clear : JourneyColor.ink(day > today ? 0.05 : 0.12))
                     .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: day == today && !on ? 1.5 : 0))
                 } else {
                   Color.clear
@@ -237,6 +238,8 @@ private struct MonthDots: View {
 private struct WorkoutEntryCard: View {
   @EnvironmentObject private var store: GymStore
   let session: Session
+  /// Selecting: whether this one is chosen. Nil shows the chevron.
+  var selected: Bool? = nil
   private var detail: String {
     var seen = Set<String>()
     let count = session.sets.map(\.exercise).filter { seen.insert($0.id).inserted }.count
@@ -255,19 +258,32 @@ private struct WorkoutEntryCard: View {
         Text(store.t(session.name)).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Text(detail).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
       }.frame(maxWidth: .infinity, alignment: .leading)
-      Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
-        .accessibilityHidden(true)
+      if let selected {
+        Image(systemName: selected ? "checkmark.circle.fill" : "circle").font(.system(size: 22))
+          .symbolRenderingMode(.palette)
+          .foregroundStyle(selected ? JourneyColor.onAccent : JourneyColor.ink(0.25), selected ? JourneyColor.signal : JourneyColor.ink(0.25))
+          .accessibilityHidden(true)
+      } else {
+        Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
+          .accessibilityHidden(true)
+      }
     }
     .padding(.horizontal, 20).padding(.vertical, 16)
     .journeySurface(cornerRadius: 20)
     .contentShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     .accessibilityElement(children: .combine).accessibilityAddTraits(.isButton)
+    .accessibilityAddTraits(selected == true ? .isSelected : [])
   }
 }
 
-/// Every workout, newest first, as the same cards.
+/// Every workout, newest first, as the same cards. Select (15 Oct 2026) turns each card into a
+/// checkbox and puts Delete where the tab bar was, for clearing several at once.
 private struct AllWorkoutsView: View {
   @EnvironmentObject private var store: GymStore
+  @State private var selecting = false
+  @State private var chosen: Set<UUID> = []
+  @State private var confirming = false
+  private var sessions: [Session] { store.data.history.sorted { $0.started > $1.started } }
   var body: some View {
     ZStack {
       DotGrid()
@@ -275,15 +291,60 @@ private struct AllWorkoutsView: View {
         LazyVStack(alignment: .leading, spacing: 12) {
           Text(store.t("All workouts")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
             .accessibilityAddTraits(.isHeader).padding(.bottom, 8)
-          ForEach(store.data.history.sorted { $0.started > $1.started }) { session in
-            NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutEntryCard(session: session) }
-              .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("history." + session.id.uuidString)
+          ForEach(sessions) { session in
+            if selecting {
+              Button { toggle(session.id) } label: { WorkoutEntryCard(session: session, selected: chosen.contains(session.id)) }
+                .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("history." + session.id.uuidString)
+            } else {
+              NavigationLink { WorkoutEntryView(sessionID: session.id) } label: { WorkoutEntryCard(session: session) }
+                .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("history." + session.id.uuidString)
+            }
           }
         }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 32)
       }.scrollIndicators(.hidden)
     }
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button(store.t(selecting ? "Done" : "Select")) {
+          withAnimation(JourneyMotion.gentle) { selecting.toggle(); chosen = [] }
+        }.accessibilityIdentifier("history.select")
+      }
+      if selecting {
+        ToolbarItem(placement: .topBarLeading) {
+          Button(store.t(chosen.count == sessions.count ? "Deselect all" : "Select all")) {
+            chosen = chosen.count == sessions.count ? [] : Set(sessions.map(\.id))
+          }.accessibilityIdentifier("history.selectAll")
+        }
+      }
+    }
+    .navigationBarBackButtonHidden(selecting)
+    .toolbar(selecting ? .hidden : .visible, for: .tabBar)
+    .safeAreaInset(edge: .bottom, spacing: 0) {
+      if selecting {
+        JourneyButton(title: deleteTitle, symbol: nil, id: "history.delete", enabled: !chosen.isEmpty) { confirming = true }
+          .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 8)
+          .transition(.move(edge: .bottom).combined(with: .opacity))
+      }
+    }
+    .alert(store.t(chosen.count == 1 ? "Delete this workout?" : "Delete these workouts?"), isPresented: $confirming) {
+      Button(store.t("Delete"), role: .destructive) {
+        store.deleteWorkouts(chosen)
+        JourneyHaptic.play(.success, store.profile)
+        withAnimation(JourneyMotion.gentle) { chosen = []; selecting = false }
+      }
+      Button(store.t("Cancel"), role: .cancel) {}
+    } message: {
+      Text(store.t("Their sets go too. This can't be undone."))
+    }
     .track(screen: "profile.all")
+  }
+  private var deleteTitle: String {
+    chosen.isEmpty ? store.t("Delete") : chosen.count == 1 ? store.t("Delete 1 workout") : String(format: store.t("Delete %@ workouts"), "\(chosen.count)")
+  }
+  private func toggle(_ id: UUID) {
+    if chosen.remove(id) == nil { chosen.insert(id) }
+    JourneyHaptic.play(.selection, store.profile)
   }
 }
 

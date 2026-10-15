@@ -43,6 +43,8 @@ struct WidgetSnapshot: Codable, Equatable {
   var lastFinished: Date?       // max `ended` of finished sessions (Smart Stack only)
   var running: Running?
   var labels: Labels
+  /// SplitColor names of trained days in `days` that aren't emerald (15 Oct 2026); older snapshots have none.
+  var colors: [Int: String]? = nil
 
   /// The snapshot the app last wrote; nil before the first write (or before the first unlock), or if
   /// it's from a version this build doesn't read.

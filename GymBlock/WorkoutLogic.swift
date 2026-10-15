@@ -230,6 +230,13 @@ extension GymStore {
     data.history.removeAll { $0.id == id }
     persist()
   }
+  /// Several at once, from All workouts' Select. One save, so sync tombstones them together.
+  func deleteWorkouts(_ ids: Set<UUID>) {
+    guard !ids.isEmpty else { return }
+    data.history.removeAll { ids.contains($0.id) }
+    Analytics.track("workouts_deleted", ["count": ids.count])
+    persist()
+  }
 
   /// A set clock under 3 s means Start and Finish were tapped back to back (the set happened
   /// before Start); a rep set over 15 min means Finish was forgotten. Neither duration is kept as fact.

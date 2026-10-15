@@ -21,6 +21,8 @@ extension GymStore {
     // Six weeks of days covers this month, this week and the week the streak formula reads.
     let since = TrainingDays.key(c.date(byAdding: .day, value: -41, to: now) ?? now, c)
     s.days = Set(finished.map { TrainingDays.key($0.started, c) }).filter { $0 >= since }.sorted()
+    let colors = dayColors.filter { $0.key >= since && $0.value != .emerald }.mapValues(\.rawValue)
+    s.colors = colors.isEmpty ? nil : colors
     s.priorRun = c.date(byAdding: .day, value: -7, to: monday).map { TrainingDays.run(endingAt: $0, weeks: weeks, c) } ?? 0
     s.goal = min(7, max(1, profile.baseline?.trainingDays ?? 5))
     s.hasHistory = !finished.isEmpty

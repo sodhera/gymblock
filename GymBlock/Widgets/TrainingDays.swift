@@ -88,6 +88,18 @@ enum TrainingDays {
     return (lead, length, (1...length).map { mark(monthKey + $0, today: today, days: days) })
   }
 
+  /// The day keys of the week of `d`, Monday first, matching `week(at:)`.
+  static func weekKeys(at d: Date, _ c: Calendar = TrainingDays.calendar) -> [Int] {
+    let start = monday(of: d, c)
+    return (0..<7).map { c.date(byAdding: .day, value: $0, to: start).map { key($0, c) } ?? 0 }
+  }
+
+  /// The day key of day `n` (1-based) of the month of `d`, matching `month(at:)`.
+  static func monthKey(_ n: Int, at d: Date, _ c: Calendar = TrainingDays.calendar) -> Int {
+    let first = c.date(from: c.dateComponents([.year, .month], from: d)) ?? c.startOfDay(for: d)
+    return key(first, c) / 100 * 100 + n
+  }
+
   private static func mark(_ day: Int, today: Int, days: Set<Int>) -> DayMark {
     days.contains(day) ? .trained : day == today ? .today : day < today ? .past : .future
   }

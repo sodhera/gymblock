@@ -85,11 +85,17 @@ struct WorkoutView: View {
       .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { screenHeight = $0 }
       .coordinateSpace(name: "screen")
       .safeAreaInset(edge: .bottom, spacing: 0) { dock }
-      // The native Liquid Glass bar: the workout's name leads, large; End trails (12 Oct 2026: the
-      // workout clock left the bar at the user's request; the summary still has the time).
+      // The native Liquid Glass bar: the workout's name, large, on the left; the whole workout's time
+      // then End on the right (the clock back on 15 Oct 2026 at the user's request, after leaving on
+      // 12 Oct). A leading item would fold into the bar's ••• menu beside the large title.
       .navigationTitle(store.t(session.name))
       .toolbarTitleDisplayMode(.inlineLarge)
       .toolbar {
+        if #available(iOS 26, *) {
+          ToolbarItem(placement: .topBarTrailing) { workoutClock }.sharedBackgroundVisibility(.hidden)
+        } else {
+          ToolbarItem(placement: .topBarTrailing) { workoutClock }
+        }
         ToolbarItem(placement: .topBarTrailing) {
           // Until the first set is logged there's nothing to keep: Cancel throws the workout away
           // (no summary, nothing in Profile) and unlocks the apps. After that it's End.
@@ -530,6 +536,15 @@ struct WorkoutView: View {
           .buttonStyle(JourneyPressStyle())
       }
     }.controlSize(.large).buttonBorderShape(.capsule).fixedSize().accessibilityIdentifier(id)
+  }
+
+  /// The whole workout so far. Pauses don't count, and it stands still while paused, as the Live Activity's does.
+  private var workoutClock: some View {
+    Text(timerInterval: session.started.addingTimeInterval(session.pausedSeconds ?? 0)...Date.distantFuture,
+         pauseTime: session.pausedAt, countsDown: false)
+      .font(.app(.body, weight: .semibold)).monospacedDigit()
+      .foregroundStyle(JourneyColor.secondary)
+      .accessibilityLabel(store.t("Workout time")).accessibilityIdentifier("session.clock")
   }
 
   /// The running set as a large clock with "Set time" beside it.

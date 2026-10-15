@@ -33,6 +33,9 @@ struct WidgetGlance {
   var sample: Bool { phase != .setup && snapshot?.sample == true }
   var days: Set<Int> { Set(snapshot?.days ?? []) }
   var week: [DayMark] { TrainingDays.week(at: date, days: days) }
+  /// The split colour of a trained day; nil is emerald.
+  func color(_ day: Int) -> SplitColor? { snapshot?.colors?[day].map { SplitColor(name: $0) } }
+  var weekColors: [SplitColor?] { TrainingDays.weekKeys(at: date).map(color) }
   var thisWeek: Int { TrainingDays.thisWeek(at: date, days: days) }
   var streak: Int {
     guard let s = snapshot else { return 0 }
@@ -153,11 +156,14 @@ private struct GlanceSetup: View {
 /// This week as seven dots, Monday first: Home's week line, with the days to come faded.
 struct WeekDots: View {
   let marks: [DayMark]
+  var colors: [SplitColor?] = []
   var size: CGFloat = 9
   var gap: CGFloat = 7
   var body: some View {
     HStack(spacing: gap) {
-      ForEach(Array(marks.enumerated()), id: \.offset) { _, mark in DayDot(mark: mark, size: size) }
+      ForEach(Array(marks.enumerated()), id: \.offset) { i, mark in
+        DayDot(mark: mark, size: size, color: i < colors.count ? colors[i] : nil)
+      }
     }
   }
 }
@@ -217,7 +223,7 @@ struct UpNextMediumView: View {
                                caption: false, captionRequired: false, status: statusGlyph(g, dimmed: dimmed))
         VStack(alignment: .leading, spacing: 0) {
           HStack(spacing: 14) {
-            WeekDots(marks: g.week, size: 9, gap: 7)
+            WeekDots(marks: g.week, colors: g.weekColors, size: 9, gap: 7)
             Text(g.weekLabel).font(WidgetType.words(15, .medium)).foregroundStyle(tone.secondary)
               .lineLimit(1).minimumScaleFactor(0.85)
           }
@@ -345,7 +351,7 @@ struct MonthSmallView: View {
           ZStack(alignment: .topLeading) {
             ForEach(0..<month.length, id: \.self) { i in
               let cell = month.lead + i
-              DayDot(mark: month.marks[i], size: dot)
+              DayDot(mark: month.marks[i], size: dot, color: g.color(TrainingDays.monthKey(i + 1, at: date)))
                 .position(x: dot / 2 + CGFloat(cell % 7) * (w - dot) / 6, y: dot / 2 + CGFloat(cell / 7) * pitch)
             }
           }
@@ -379,10 +385,10 @@ struct WeekCircularView: View {
       let mark = side * (g.phase == .setup ? 0.47 : 0.40)
       ZStack {
         if g.phase != .setup && !g.sample {
-          let marks = g.week
+          let marks = g.week, colors = g.weekColors
           ForEach(0..<7, id: \.self) { i in
             let a = -Double.pi / 2 + Double(i) * 2 * .pi / 7
-            DayDot(mark: marks[i], size: d).position(x: c.x + r * CGFloat(cos(a)), y: c.y + r * CGFloat(sin(a)))
+            DayDot(mark: marks[i], size: d, color: colors[i]).position(x: c.x + r * CGFloat(cos(a)), y: c.y + r * CGFloat(sin(a)))
           }
         }
         KettlebellShape(part: .ironCut).fill(tone.ink, style: FillStyle(eoFill: true))

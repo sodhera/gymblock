@@ -7,12 +7,14 @@ struct WeekLine: View {
   @EnvironmentObject private var store: GymStore
   let stats: HomeStats
   var body: some View {
-    HStack(spacing: 14) {
+    let keys = TrainingDays.weekKeys(at: Date())
+    let colors = store.dayColors
+    return HStack(spacing: 14) {
       HStack(spacing: 7) {
         ForEach(0..<7, id: \.self) { d in
           let on = stats.grid.last?[d] ?? false
           let today = d == stats.todayIndex
-          Circle().fill(on ? JourneyColor.signal : today ? Color.clear : JourneyColor.ink(0.12))
+          Circle().fill(on ? Color.paper((colors[keys[d]] ?? .emerald).paper) : today ? Color.clear : JourneyColor.ink(0.12))
             .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: today && !on ? 1.25 : 0))
             .frame(width: 9, height: 9)
         }

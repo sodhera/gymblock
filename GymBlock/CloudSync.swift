@@ -113,6 +113,8 @@ import Supabase
     var name: String
     var exercises: [Exercise]
     var position: Int
+    /// A `SplitColor` name; nil is emerald (supabase/migrations/20261015000100_split_colors.sql).
+    var color: String?
   }
   struct WorkoutRow: Codable {
     var id: UUID
@@ -200,7 +202,7 @@ import Supabase
     guard let store, let uid = userID else { return .failed }
     do {
       let profiles: [ProfileRow] = try await client.from("gb_profiles").select().eq("id", value: uid).execute().value
-      let splits: [SplitRow] = try await client.from("gb_splits").select("id, user_id, name, exercises, position")
+      let splits: [SplitRow] = try await client.from("gb_splits").select("id, user_id, name, exercises, position, color")
         .eq("user_id", value: uid).filter("deleted_at", operator: "is", value: "null").order("position").execute().value
       let workouts: [WorkoutRow] = try await client.from("gb_workouts").select()
         .eq("user_id", value: uid).filter("deleted_at", operator: "is", value: "null").order("started_at", ascending: false).execute().value
@@ -222,10 +224,10 @@ import Supabase
     // Splits: the account's splits join the local ones; a fresh install takes the account's order.
     let localSplits = Set(data.workouts.map(\.id))
     for row in splits where !localSplits.contains(row.id) {
-      data.workouts.append(Workout(id: row.id, name: row.name, exercises: row.exercises))
+      data.workouts.append(Workout(id: row.id, name: row.name, exercises: row.exercises, color: row.color))
       next["split:" + row.id.uuidString] = fingerprint(row)
     }
-    if fresh { data.workouts = splits.map { Workout(id: $0.id, name: $0.name, exercises: $0.exercises) } }
+    if fresh { data.workouts = splits.map { Workout(id: $0.id, name: $0.name, exercises: $0.exercises, color: $0.color) } }
     // Workouts and their sets.
     let bySession = Dictionary(grouping: sets, by: \.workout_id)
     var localWorkouts = Set(data.history.map(\.id))
@@ -283,7 +285,7 @@ import Supabase
 
       let splitIDs = Set(data.workouts.map(\.id))
       for (index, workout) in data.workouts.enumerated() {
-        let row = SplitRow(id: workout.id, user_id: uid, name: workout.name, exercises: workout.exercises, position: index)
+        let row = SplitRow(id: workout.id, user_id: uid, name: workout.name, exercises: workout.exercises, position: index, color: workout.color)
         if try await upsert("gb_splits", row, key: "split:" + workout.id.uuidString, known: &next) { sent += 1 }
       }
       for key in next.keys where key.hasPrefix("split:") {

@@ -109,6 +109,9 @@ struct Workout: Codable, Identifiable, Hashable {
   var id = UUID()
   var name: String
   var exercises: [Exercise]
+  /// A `SplitColor` name; nil is the default emerald.
+  var color: String? = nil
+  var splitColor: SplitColor { SplitColor(name: color) }
 }
 struct Session: Codable, Identifiable {
   var id = UUID()
@@ -419,7 +422,7 @@ struct LocalData: Codable {
       + data.history.flatMap(\.sets).map(\.exercise))
       .filter { seen.insert($0.id).inserted }
   }
-  func saveSplit(id: UUID, name: String, exercises: [Exercise]) -> Bool {
+  func saveSplit(id: UUID, name: String, exercises: [Exercise], color: SplitColor? = nil) -> Bool {
     let clean = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(50))
     guard !clean.isEmpty, !exercises.isEmpty,
       !data.workouts.contains(where: {
@@ -427,15 +430,18 @@ struct LocalData: Codable {
       })
     else { return false }
     var seen = Set<String>()
-    let workout = Workout(
-      id: id, name: clean, exercises: exercises.filter { seen.insert($0.id).inserted })
     let existing = data.workouts.firstIndex(where: { $0.id == id })
+    // Stored by name, emerald included, so changing back to it reaches the account too (an upsert
+    // leaves out a nil field rather than clearing it).
+    let chosen = color?.rawValue ?? existing.flatMap { data.workouts[$0].color }
+    let workout = Workout(
+      id: id, name: clean, exercises: exercises.filter { seen.insert($0.id).inserted }, color: chosen)
     if let i = existing {
       data.workouts[i] = workout
     } else {
       data.workouts.append(workout)
     }
-    Analytics.track(existing == nil ? "split_created" : "split_edited", ["split": id, "exercises": workout.exercises.count, "splits": data.workouts.count])
+    Analytics.track(existing == nil ? "split_created" : "split_edited", ["split": id, "exercises": workout.exercises.count, "splits": data.workouts.count, "color": workout.splitColor.rawValue])
     persist()
     return true
   }
@@ -647,6 +653,7 @@ struct LocalData: Codable {
       $0.name.localizedCaseInsensitiveCompare(workout.name) == .orderedSame
     }) {
       workout.id = data.workouts[index].id
+      workout.color = data.workouts[index].color
       data.workouts[index] = workout
     } else {
       data.workouts.append(workout)

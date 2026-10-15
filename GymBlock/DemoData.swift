@@ -7,11 +7,11 @@ extension GymStore {
     else { return false }
     let lookup = Dictionary(uniqueKeysWithValues: Exercise.catalog.map { ($0.id, $0) })
     let arms = Workout(
-      name: "Arms", exercises: ["curl", "hammer", "triceps"].compactMap { lookup[$0] })
+      name: "Arms", exercises: ["curl", "hammer", "triceps"].compactMap { lookup[$0] }, color: "purple")
     let push = Workout(
-      name: "Push", exercises: ["bench", "dumbbell-press", "lateral"].compactMap { lookup[$0] })
+      name: "Push", exercises: ["bench", "dumbbell-press", "lateral"].compactMap { lookup[$0] }, color: "blue")
     let legs = Workout(
-      name: "Legs", exercises: ["squat", "deadlift", "lunge"].compactMap { lookup[$0] })
+      name: "Legs", exercises: ["squat", "deadlift", "lunge"].compactMap { lookup[$0] }, color: "orange")
     data.workouts = [arms, push, legs]
     if !profile.onboarded {
       if data.profile.language.isEmpty { data.profile.language = "en" }

@@ -28,6 +28,32 @@ enum Paper {
   static let signal = PaperColor(light: .init(r: 0.06, g: 0.60, b: 0.42), dark: .init(r: 0.20, g: 0.76, b: 0.54))
 }
 
+/// A split's colour (15 Oct 2026, at the user's request): its trained days on Home, Profile's calendar
+/// and the widgets take it, so a month reads as push, pull and legs at a glance. Emerald, the signal,
+/// is the default, so nothing changes until a colour is picked. Stored by name, so a name this build
+/// doesn't know falls back to emerald instead of failing to decode.
+enum SplitColor: String, CaseIterable, Identifiable {
+  case emerald, teal, blue, indigo, purple, pink, red, orange, amber, graphite
+  var id: String { rawValue }
+  init(name: String?) { self = name.flatMap(SplitColor.init(rawValue:)) ?? .emerald }
+  var paper: PaperColor {
+    switch self {
+    case .emerald: Paper.signal
+    case .teal: .init(light: .init(r: 0.05, g: 0.55, b: 0.66), dark: .init(r: 0.24, g: 0.72, b: 0.82))
+    case .blue: .init(light: .init(r: 0.17, g: 0.42, b: 0.90), dark: .init(r: 0.38, g: 0.60, b: 0.97))
+    case .indigo: .init(light: .init(r: 0.36, g: 0.34, b: 0.82), dark: .init(r: 0.52, g: 0.50, b: 0.98))
+    case .purple: .init(light: .init(r: 0.58, g: 0.30, b: 0.84), dark: .init(r: 0.72, g: 0.50, b: 0.94))
+    case .pink: .init(light: .init(r: 0.86, g: 0.25, b: 0.50), dark: .init(r: 0.94, g: 0.45, b: 0.63))
+    case .red: .init(light: .init(r: 0.86, g: 0.22, b: 0.24), dark: .init(r: 0.95, g: 0.42, b: 0.42))
+    case .orange: .init(light: .init(r: 0.93, g: 0.45, b: 0.09), dark: .init(r: 0.97, g: 0.60, b: 0.30))
+    case .amber: .init(light: .init(r: 0.82, g: 0.60, b: 0.02), dark: .init(r: 0.94, g: 0.75, b: 0.24))
+    case .graphite: .init(light: .init(r: 0.36, g: 0.36, b: 0.39), dark: .init(r: 0.66, g: 0.65, b: 0.63))
+    }
+  }
+  /// Its name in the colour picker, for VoiceOver.
+  var label: String { rawValue.capitalized }
+}
+
 /// How a widget is being drawn, and the colours that follow. Resolved once per entry view from the
 /// rendering mode, whether the background shows, and the scheme; the preview injects it instead.
 struct WidgetTone: Equatable {
@@ -100,11 +126,14 @@ extension EnvironmentValues {
 struct DayDot: View {
   let mark: DayMark
   let size: CGFloat
+  /// The split trained that day; nil is the signal emerald.
+  var color: SplitColor? = nil
   @Environment(\.widgetTone) private var tone
   var body: some View {
     Group {
       switch mark {
-      case .trained: Circle().fill(tone.signal).widgetAccentable()
+      case .trained:
+        Circle().fill(tone.fullColor ? (color ?? .emerald).paper.color(dark: tone.dark) : tone.signal).widgetAccentable()
       case .today: Circle().strokeBorder(tone.ink, lineWidth: size >= 11 ? 1.5 : 1.25)
       case .past: Circle().fill(tone.ink.opacity(tone.past))
       case .future: Circle().fill(tone.ink.opacity(tone.future))

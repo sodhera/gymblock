@@ -27,6 +27,21 @@ struct HomeStats {
 }
 
 extension GymStore {
+  /// The colour of the split a workout followed; nil for a free workout or a split since deleted.
+  func splitColor(of session: Session) -> SplitColor? {
+    guard let id = session.splitID else { return nil }
+    return data.workouts.first { $0.id == id }?.splitColor
+  }
+  /// Each trained day's colour (yyyymmdd keys): the split of that day's latest workout with a completed
+  /// set; emerald for a free workout or a deleted split.
+  var dayColors: [Int: SplitColor] {
+    var out: [Int: SplitColor] = [:]
+    for session in data.history.sorted(by: { $0.started < $1.started }) where !session.completedSets.isEmpty {
+      out[TrainingDays.key(session.started)] = splitColor(of: session) ?? .emerald
+    }
+    return out
+  }
+
   func homeStats(weeks: Int = 12, now: Date = Date()) -> HomeStats {
     let calendar = Calendar.current
     let goal = min(7, max(1, profile.baseline?.trainingDays ?? 5))
