@@ -111,7 +111,9 @@ import SwiftUI
           return formatter.string(from: price)
         } : nil
         // The period is a count of units (1 week, 3 days…), so it's turned into days here.
-        let trial = product.introductoryDiscount.flatMap { $0.paymentMode == .freeTrial ? Self.days($0.subscriptionPeriod) : nil } ?? 0
+        var trial = product.introductoryDiscount.flatMap { $0.paymentMode == .freeTrial ? Self.days($0.subscriptionPeriod) : nil } ?? 0
+        // Someone who has already had the trial is charged at once: never promise them free days.
+        if trial > 0, await Purchases.shared.checkTrialOrIntroDiscountEligibility(product: product) == .ineligible { trial = 0 }
         // One formatter for the price and the struck-through anchor, so both read alike ("US$59.99", not "USD 59.99" beside "US$71.88").
         let price = product.priceFormatter?.string(from: product.price as NSDecimalNumber) ?? product.localizedPriceString
         let plan = Plan(id: product.productIdentifier, yearly: yearly, price: price, perMonth: perMonth, trialDays: trial)

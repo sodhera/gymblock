@@ -194,8 +194,7 @@ struct PaywallView: View {
           }
         }
       }.padding(.top, 9)  // Room for the badge overhanging the yearly card.
-      // The same line for both plans; a trial's length and price are on its card and the button.
-      Text(store.t("Change plans or cancel anytime.")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
+      Text(terms).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
         .multilineTextAlignment(.center).frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier("subscription.terms")
     }
@@ -227,6 +226,15 @@ struct PaywallView: View {
       LinearGradient(colors: [JourneyColor.stage.opacity(0), JourneyColor.stage], startPoint: .top, endPoint: .bottom)
         .frame(height: 28).offset(y: -28).allowsHitTesting(false)
     }
+  }
+
+  /// The selected plan's terms on one line: the trial's length, what is charged after it, and that
+  /// it renews by itself (App Review 3.1.2(c), 15 Oct 2026).
+  private var terms: String {
+    guard let plan = subscription.plan else { return store.t("Charged automatically. Cancel anytime.") }
+    let price = plan.price + "/" + store.t(plan.yearly ? "year" : "month")
+    if plan.trialDays > 0 { return String(format: store.t("%@ days free, then %@, charged automatically."), "\(plan.trialDays)", price) }
+    return String(format: store.t("%@, charged automatically. Cancel anytime."), price)
   }
 
   /// Naming the trial's length beats "Start free trial": nobody has to hunt for what they agree to.
@@ -290,11 +298,7 @@ private struct PricingCard: View {
         Text(plan.anchor ?? " ").font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
           .strikethrough(plan.anchor != nil, color: JourneyColor.tertiary).lineLimit(1).minimumScaleFactor(0.6).padding(.top, 2)
         Spacer(minLength: 4)
-        if plan.trialDays > 0 {
-          Text(String(format: store.t("%@ days free"), "\(plan.trialDays)")).font(.app(.subheadline, weight: .semibold))
-            .foregroundStyle(JourneyColor.signal).padding(.bottom, 2).accessibilityIdentifier("plan.trial")
-        }
-        Text(store.t(footnote)).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
+        Text(footnote).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
       }
       .foregroundStyle(JourneyColor.text)
       .padding(15).frame(maxWidth: .infinity, alignment: .topLeading)
@@ -316,8 +320,8 @@ private struct PricingCard: View {
     .accessibilityIdentifier("plan." + (plan.yearly ? "yearly" : "monthly")).accessibilityAddTraits(selected ? .isSelected : [])
   }
   private var footnote: String {
-    plan.trialDays > 0 ? (plan.yearly ? "Then billed yearly." : "Then billed monthly.")
-      : (plan.yearly ? "Billed yearly." : "Billed monthly.")
+    store.t(plan.trialDays > 0 ? (plan.yearly ? "Billed yearly after free trial." : "Billed monthly after free trial.")
+      : (plan.yearly ? "Billed yearly." : "Billed monthly."))
   }
 }
 
