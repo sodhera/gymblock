@@ -85,12 +85,17 @@ struct WorkoutView: View {
       .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { screenHeight = $0 }
       .coordinateSpace(name: "screen")
       .safeAreaInset(edge: .bottom, spacing: 0) { dock }
-      // The native Liquid Glass bar: the workout's name, large, on the left; the whole workout's time
-      // then End on the right (the clock back on 15 Oct 2026 at the user's request, after leaving on
-      // 12 Oct). A leading item would fold into the bar's ••• menu beside the large title.
-      .navigationTitle(store.t(session.name))
-      .toolbarTitleDisplayMode(.inlineLarge)
+      // The native Liquid Glass bar: the workout's name on the left, the whole workout's time then End
+      // on the right (the clock back on 15 Oct 2026 at the user's request). The name is the bar's own
+      // leading item rather than a navigation title, so it stays on the left when the page scrolls
+      // (an inline-large title collapses to the centre).
+      .toolbarTitleDisplayMode(.inline)
       .toolbar {
+        if #available(iOS 26, *) {
+          ToolbarItem(placement: .topBarLeading) { workoutTitle }.sharedBackgroundVisibility(.hidden)
+        } else {
+          ToolbarItem(placement: .topBarLeading) { workoutTitle }
+        }
         if #available(iOS 26, *) {
           ToolbarItem(placement: .topBarTrailing) { workoutClock }.sharedBackgroundVisibility(.hidden)
         } else {
@@ -536,6 +541,11 @@ struct WorkoutView: View {
           .buttonStyle(JourneyPressStyle())
       }
     }.controlSize(.large).buttonBorderShape(.capsule).fixedSize().accessibilityIdentifier(id)
+  }
+
+  private var workoutTitle: some View {
+    Text(store.t(session.name)).font(.app(size: 28, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+      .lineLimit(1).fixedSize().accessibilityAddTraits(.isHeader).accessibilityIdentifier("session.title")
   }
 
   /// The whole workout so far. Pauses don't count, and it stands still while paused, as the Live Activity's does.
