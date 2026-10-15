@@ -455,6 +455,9 @@ struct WorkoutChoiceView: View {
       if editMode, let split { editing = split } else { pick(split) }
     } label: {
       HStack(spacing: 12) {
+        // The colour its days take on the calendar (15 Oct 2026); Free workout's days are emerald.
+        Circle().fill(Color.paper((split?.splitColor ?? .emerald).paper)).frame(width: 10, height: 10)
+          .accessibilityHidden(true)
         // Just the name (13 Oct 2026): what's in it is on the plan Start workout opens.
         Text(split.map { store.t($0.name) } ?? store.t("Free workout")).font(.app(.title3, weight: .semibold))
           .foregroundStyle(JourneyColor.text).lineLimit(1)
