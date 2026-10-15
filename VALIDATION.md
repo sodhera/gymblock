@@ -1,5 +1,9 @@
 # Validation — 8 October 2026
 
+## App Store build 3 (15 October 2026)
+
+App Review rejected build 2 under 3.1.2(c): the offer didn't say a payment starts automatically after the free trial. Build 3 (1.0.0) carries the paywall fix ("7 days free, then $49.99/year, charged automatically.", no trial offered to an Apple Account that has used it) plus split colours, Select on All workouts, the workout clock and the left-hand workout title. `gb_splits.color` was added on the live project (migration `20261015000100_split_colors.sql`) before the build. The exported IPA was checked as for build 2: Apple Distribution, `get-task-allow` false, Family Controls in the app and its three Screen Time extensions. Uploaded to App Store Connect on 15 Oct. On the user's iPhone the sandbox offer showed US$59.99/US$5.99 and no trial: that storefront's prices, and most likely an Apple Account that had already used the trial (unconfirmed).
+
 ## App Store build 2 with Family Controls (14 October 2026)
 
 App Review's automated check stopped build 1: it linked Screen Time but the App Store export had dropped `com.apple.developer.family-controls`, because Family Controls (Distribution) was not yet approved. Apple approved it on 14 October and it is enabled on `com.sodhera.gymblock`, `.shield`, `.shield-action` and `.monitor`. Build 2 (1.0.0) was archived in Release and exported for App Store Connect; the exported IPA (not only the archive) was checked: Apple Distribution signature, `get-task-allow` false, and the entitlement in the app and all three Screen Time extensions, each granted by its App Store profile. The widget extension has none and needs none. The Privacy Policy and Terms, which still called blocking simulated, were rewritten for real Screen Time blocking and published to www.orecci.com/gymblock (orecci `2fcdb33`).
