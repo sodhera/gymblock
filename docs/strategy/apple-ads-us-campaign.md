@@ -52,7 +52,7 @@ Don't bid on the same keyword in two campaigns. Add every Exact keyword from the
 
 ### Workout tracker campaign
 
-**Ad group: Workout tracker.** Custom product page: Workout log.
+**Ad group: Workout tracker.** Custom product page: Workout tracker.
 
 | Keyword | Demand | Top 10 | Phase |
 | --- | --- | ---: | --- |
@@ -62,10 +62,9 @@ Don't bid on the same keyword in two campaigns. Add every Exact keyword from the
 | gym app | 6 | n/c | 1.0.1 (`app` is new) |
 | lifting tracker | 5 | 17,570 | 1.0 |
 | set tracker | 5 | 4,366 | 1.0 |
-| pr tracker | 4 | 3,094 | 1.0 |
 | weightlifting tracker | 7 | 46,914 | 1.0.1 |
 
-**Ad group: Gym log.** Custom product page: Workout log.
+**Ad group: Gym log.** Custom product page: Gym log.
 
 | Keyword | Demand | Top 10 | Phase |
 | --- | --- | ---: | --- |
@@ -76,11 +75,43 @@ Don't bid on the same keyword in two campaigns. Add every Exact keyword from the
 | gym notebook | 5 | 2,579 | 1.0.1 |
 | gym log book | 6 | 2,435 | 1.0.1 |
 | workout journal | 9 | 11,949 | 1.0.1 |
-| workout split | 9 | 17,570 | 1.0 |
+
+**Ad group: PR tracker.** Custom product page: PR tracker.
+
+| Keyword | Demand | Top 10 | Phase |
+| --- | --- | ---: | --- |
+| pr tracker | 4 | 3,094 | 1.0 |
+| one rep max | 6 | n/c | 1.0.1 (Portuguese field) |
+
+**Ad group: Splits.** Custom product page: Splits.
+
+| Keyword | Demand | Top 10 | Phase |
+| --- | --- | ---: | --- |
+| push pull legs | 6 | n/c | 1.0.1 (Korean field) |
+| workout split | 9 | 17,570 | 1.0 (`split` is in the 10 Oct field; from 1.0.1 the Korean field) |
+| ppl | 2 | n/c | 1.0.1 (Korean field) |
+| gym planner | 5 | n/c | 1.0.1 (Korean field) |
+| gym routine | 5 | n/c | 1.0.1 (Korean field) |
+
+**Ad group: Progress.** Custom product page: Progress.
+
+| Keyword | Demand | Top 10 | Phase |
+| --- | --- | ---: | --- |
+| progress tracker | 4 | n/c | 1.0.1 (Portuguese field); many searchers want body or habit progress, so watch the search terms |
+| gym progress | 6 | n/c | 1.0.1 (Portuguese field) |
+| progressive overload | 13 | n/c | 1.0.1 (Portuguese field) |
+
+**Ad group: Streak & motivation.** Custom product page: Streak.
+
+| Keyword | Demand | Top 10 | Phase |
+| --- | --- | ---: | --- |
+| gym streak | 5 | n/c | 1.0.1 (Vietnamese field) |
+| gym motivation | 5 | n/c | 1.0.1 (Vietnamese field) |
+| discipline | 5 | n/c | 1.0.1 (Vietnamese field); broad, so start at a low bid |
 
 ### Stop scrolling campaign
 
-**Ad group: Stop scrolling.** Default product page.
+**Ad group: Stop scrolling.** Custom product page: Doomscrolling.
 
 | Keyword | Demand | Top 10 | Phase |
 | --- | --- | ---: | --- |
@@ -99,13 +130,22 @@ Don't bid on the same keyword in two campaigns. Add every Exact keyword from the
 | scroll blocker | 8 | 37 | 1.0 |
 | app blocker | 5 | 11,642 | 1.0 |
 | block apps | 7 | 9,236 | 1.0 |
-| social media blocker | 8 | 23,715 | 1.0 |
 | phone blocker | 7 | 51,806 | 1.0 |
 | phone addiction | 7 | 16,314 | 1.0 |
 
 These searchers want an all-day blocker, and Gym Block only blocks during a workout. Expect a lower install rate than the gym searches; keep the bid at the start level until the numbers say otherwise.
 
-**Ad group: Gym + phone.** Default product page. The exact idea, with little search volume yet, so these are cheap insurance that Gym Block is first when someone does search it.
+**Ad group: Social media.** Custom product page: Social media.
+
+| Keyword | Demand | Top 10 | Phase |
+| --- | --- | ---: | --- |
+| social media blocker | 8 | 23,715 | 1.0 |
+| block social media | n/c | n/c | 1.0 |
+| quit social media | 7 | n/c | 1.0.1 (Arabic field) |
+
+Like the Reels & app blockers searchers, these people mostly want an all-day blocker; the page says up front that the apps come back at Finish.
+
+**Ad group: Gym + phone.** Custom product page: Phone & focus. The exact idea, with little search volume yet, so these are cheap insurance that Gym Block is first when someone does search it.
 
 | Keyword | Demand | Top 10 | Phase |
 | --- | --- | ---: | --- |
@@ -126,7 +166,7 @@ These searchers want an all-day blocker, and Gym Block only blocks during a work
 
 Broad match on `rest timer`, `workout tracker`, `stop scrolling` and `app blocker`, plus a separate ad group with only Search Match on. Check the Search Terms report every 3–4 days. Move searches that bring trials into the matching Exact ad group, and add them to Discovery's negatives. Add searches that bring taps but no installs as negatives.
 
-Phase 2 candidates to try here first, from the extra-language fields: screen time, dopamine detox, discipline, lock in, hypertrophy, push pull legs, one rep max, gym motivation.
+Phase 2 candidates to try here first, from the extra-language fields: screen time, dopamine detox, lock in, hypertrophy. (Push pull legs, one rep max, gym motivation and discipline now have their own ad groups; add them to Discovery's negatives.)
 
 ### Competitor names (later)
 
@@ -151,7 +191,24 @@ Don't add broad negatives like `free`, `app` or `workout`, because they cut out 
 
 ## Ads
 
-Use custom product pages as ad variations so each ad group's first screenshot matches the search: Rest timer uses the Rest timer page, Workout tracker and Gym log use the Workout log page, Reels & app blockers uses the Reels blocker page, and Stop scrolling, Gym + phone and Brand use the default page. Apple shows the first three screenshots in an ad. The Workout log page can be set up as soon as 1.0 is live (it only reorders existing slides); the other two need their new first cards (see [docs/listing.md#custom-product-pages](../listing.md#custom-product-pages)). Until then those ad groups use the default page.
+Use custom product pages as ad variations so each ad group's first screenshot matches the search. Apple shows the first three screenshots in an ad.
+
+| Ad group | Custom product page |
+| --- | --- |
+| Workout tracker | Workout tracker |
+| Gym log | Gym log |
+| PR tracker | PR tracker |
+| Splits | Splits |
+| Progress | Progress |
+| Streak & motivation | Streak |
+| Rest timer | Rest timer |
+| Stop scrolling | Doomscrolling |
+| Reels & app blockers | Reels blocker |
+| Social media | Social media |
+| Gym + phone | Phone & focus |
+| Brand, Discovery | Default page |
+
+All eleven pages' screenshots are made (`screenshots/store-cpp/`, see [docs/listing.md#custom-product-pages](../listing.md#custom-product-pages)). The Workout tracker page can be set up as soon as 1.0 is live, since it only reorders the default slides; the rest go up with the 1.0.1 keyword field. Until a page is approved, its ad group uses the default page.
 
 ## Measuring and decisions
 

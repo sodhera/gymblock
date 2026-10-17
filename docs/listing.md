@@ -102,43 +102,67 @@ Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screens
 
 A custom product page is another version of the App Store page with its own screenshots and promotional text; the name, subtitle and icon stay the same. Apple shows a page in search results for the keywords assigned to it (each keyword from the keyword field, each on one page only), and Apple Ads ad groups can use a page as their ad. Searches made only of name and subtitle words, such as "stop scrolling", "workout tracker" and "rest timer", can't be assigned and always get the default page. That's why the default page leads with blocking and keeps the workout in slide 2.
 
-Four pages (the default plus three) is enough for a new app: more would split a small amount of traffic too thinly to learn which pages work. Set them up once the 17 Oct keyword field is live. Pages are reviewed separately from builds. Compare each page's conversion with the default page in App Analytics after 2–3 weeks.
+**How many pages.** As many as are genuinely useful, and Apple allows up to 70. The rule for adding one: it opens with its own first card, whose headline uses the words people search, and its first three slides don't match another page's (search results and ads show only the first three). Each page has 5 slides; slides 2–5 reuse framed slides chosen for that page, and no page shows the same capture twice. Set the pages up once the 17 Oct keyword field is live (Workout tracker can go up as soon as 1.0 is live: it only reorders slides). Pages are reviewed separately from builds. Compare each page's conversion with the default page in App Analytics after 2–3 weeks, and drop a page that doesn't beat the default.
 
-| Page | Assign these keywords | Apple Ads ad groups | Promotional text |
+**Assigning words from the extra-language fields** ([below](#us-keywords-from-other-languages)) to a page is untested: App Store Connect may offer only the localization's own keywords, or only the primary language's. Check it in App Store Connect when the localizations are added. Until then the pages fed only by those words (Splits, Progress, Streak) are for Apple Ads, and organic searches for them get the default page.
+
+| Page | Assign these keywords | Apple Ads ad group | Promotional text |
 | --- | --- | --- | --- |
-| Default | none: gets every search not assigned elsewhere | Stop scrolling, Gym + phone, Brand | The listing's promotional text |
-| Workout log | `log`, `lifting`, `pr`, `set` | Workout tracker, Gym log | `Every set is one tap, with last time's weight and reps already filled in. Rest counts down on the Lock Screen, and your feed stays locked until Finish.` (151) |
-| Reels blocker | `reels`, `shorts`, `scroll`, `doomscrolling`, `doom`, `no`, `social`, `media`, `phone`, `blocker` | Reels & app blockers | `Reels and shorts stay locked from Start workout to Finish, even with Gym Block closed. Pause for a call and they unlock; resume and they lock again.` (148) |
+| Default | none: `app` stays unassigned (for "gym app"), and it gets every search not assigned elsewhere | Brand | The listing's promotional text |
+| Workout tracker | none (its words are in the subtitle) | Workout tracker | `Every set is one tap, with last time's weight and reps already filled in. Rest counts down on the Lock Screen, and your feed stays locked until Finish.` (151) |
+| Gym log | `log`, `lifting`, `set` | Gym log | `Log a set in one tap: last time's weight and reps are already filled in. Step one plate at a time, and every set saves as it happens, even offline.` (147) |
+| PR tracker | `pr` | PR tracker | `Every exercise has its own progress page: before and after, with reps or weight held the same, so a gain is a real one. History shows time since your last PR.` (158) |
 | Rest timer | none (its words are in the subtitle) | Rest timer | `Rest counts down on your Lock Screen and in the Dynamic Island, so there's nothing to unlock between sets. An alert tells you when rest is up.` (142) |
+| Reels blocker | `reels`, `shorts`, `blocker` | Reels & app blockers | `Reels and shorts stay locked from Start workout to Finish, even with Gym Block closed. Pause for a call and they unlock; resume and they lock again.` (148) |
+| Doomscrolling | `doomscrolling`, `doom`, `scroll`, `no` | Stop scrolling | `Pick the apps you doomscroll in. From Start workout to Finish they stay locked, even with Gym Block closed. Open one and it just says “You’re mid-workout.”` (155) |
+| Social media | `social`, `media` | Social media | `Choose social apps, whole categories or websites in Apple's Screen Time picker. They lock while you train and open again the moment you tap Finish.` (147) |
+| Phone & focus | `phone`, `focus` | Gym + phone | `Put the phone down between sets. Rest counts down on the Lock Screen, an alert tells you when it's up, and the apps you choose stay locked until Finish.` (152) |
+| Splits | none | Splits | `Set up push, pull, legs or any split you like, each in its own colour. Home shows the one that's up next, and progress is compared within the same split.` (153) |
+| Progress | none | Progress | `After every workout, see what changed: weight moved, time, sets and rest. Gains are compared like for like, against your last workout of the same split.` (152) |
+| Streak | none | Streak & motivation | `Home counts your week streak, and Profile fills each training day in its split's colour, so a missed gym day shows. Every set is one tap.` (137) |
 
-`app` and `focus` stay on the default page, because they also make "gym app" and "gym focus".
+Every word of the 17 Oct keyword field is on exactly one page. "Stop scrolling" searches can't be assigned (name words), so they get the default page organically; the Stop scrolling ad group uses the Doomscrolling page.
 
-Each page reuses the five framed slides from [Screenshots](#screenshots) (made by `scripts/frame-store-screenshots.py`) in a new order, plus two new cards. Only the first three slides show in search results and ads, so they must tell the story on their own.
+**First cards.** Each new card is framed like the default set (white headline with one red word, a pale-blue second line, the phone running off the bottom):
 
-| Page | Upload order |
-| --- | --- |
-| Workout log | Track your **workouts** · Beat your **record** · Plan your **progress** · Stop **scrolling** in the gym · Keep your **streak** alive |
-| Reels blocker | *(new)* Block **reels** between sets / Shorts and feeds too (the blocking capture, `1-blocking-apps.png`) · Track your **workouts** · Beat your **record** · Plan your **progress** · Keep your **streak** alive |
-| Rest timer | *(new)* **Rest** on your Lock Screen / No unlocking, no scrolling (a new capture: the rest Live Activity on the simulator's Lock Screen) · Track your **workouts** · Stop **scrolling** in the gym · Beat your **record** · Keep your **streak** alive |
+| Page | Headline (red word) | Second line | Capture |
+| --- | --- | --- | --- |
+| Gym log | Log every **set** in one tap | Last time already filled in | `2-workout-rest.png` |
+| PR tracker | Track every **PR** | Same reps, more weight | `4-squat-record.png` |
+| Rest timer | **Rest** on your Lock Screen | No unlocking, no scrolling | `store-2026-10-17/rest-lock-screen.png` |
+| Reels blocker | Block **reels** between sets | Shorts and feeds too | `1-blocking-apps.png` |
+| Doomscrolling | Quit **doomscrolling** | Apps locked until Finish | `1-blocking-apps.png` |
+| Social media | **Social** media off at the gym | Back on when you finish | `5-profile-month.png`, the "Blocked while you train" card lifted out |
+| Phone & focus | Phone down. **Focus** up. | Rest on the Lock Screen | `store-2026-10-17/rest-lock-screen.png` |
+| Splits | Rotate push, pull, **legs** | Home shows what’s next | `store-2026-10-17/splits-up-next.png` |
+| Progress | See if you got **stronger** | Like for like, every split | `3-home.png` |
+| Streak | Never miss **gym** day | Your streak, week by week | `5-profile-month.png`, October's calendar lifted out |
 
-The three sets were made on 17 Oct 2026, framed like the default set, at both sizes (1320×2868 in `6.9/`, 1206×2622 in `6.3/`), numbered in upload order, each with an overview strip:
+Wordings changed from the plan to fit two lines: "Quit doomscrolling at the gym" (the word "doomscrolling" alone is wider than the slide at the usual size; the card is drawn at 178 pt), "Social media off while you lift" and "Push, pull, legs, on rotation" (both needed three lines), and the second lines "Before and after, same reps" and "Your rest stays on the Lock Screen" (too wide even at 100 pt). Second lines wider than the slide at 120 pt step down to between 100 and 118 pt.
 
-| Page | Folder | Overview |
+**Upload order.** Folders are `screenshots/store-cpp/<page>/6.9/` (1320×2868) and `6.3/` (1206×2622), numbered in upload order, with a strip per page at `screenshots/store-cpp/<page>-overview.png`.
+
+| Page | Folder | Upload order |
 | --- | --- | --- |
-| Workout log | `screenshots/store-cpp/workout-log/` | `screenshots/store-cpp/workout-log-overview.png` |
-| Reels blocker | `screenshots/store-cpp/reels-blocker/` | `screenshots/store-cpp/reels-blocker-overview.png` |
-| Rest timer | `screenshots/store-cpp/rest-timer/` | `screenshots/store-cpp/rest-timer-overview.png` |
+| Workout tracker | `workout-tracker` | Track your **workouts** · Beat your **record** · Plan your **progress** · Stop **scrolling** in the gym · Keep your **streak** alive |
+| Gym log | `gym-log` | Log every **set** in one tap · Beat your **record** · Plan your **progress** · Stop **scrolling** in the gym · Keep your **streak** alive |
+| PR tracker | `pr-tracker` | Track every **PR** · Plan your **progress** · Track your **workouts** · Stop **scrolling** in the gym · Keep your **streak** alive |
+| Rest timer | `rest-timer` | **Rest** on your Lock Screen · Track your **workouts** · Stop **scrolling** in the gym · Beat your **record** · Keep your **streak** alive |
+| Reels blocker | `reels-blocker` | Block **reels** between sets · Track your **workouts** · Beat your **record** · Plan your **progress** · Keep your **streak** alive |
+| Doomscrolling | `doomscrolling` | Quit **doomscrolling** · **Rest** on your Lock Screen · Track your **workouts** · Beat your **record** · Keep your **streak** alive |
+| Social media | `social-media` | **Social** media off at the gym · Stop **scrolling** in the gym · **Rest** on your Lock Screen · Track your **workouts** · Beat your **record** |
+| Phone & focus | `phone-focus` | Phone down. **Focus** up. · Stop **scrolling** in the gym · Track your **workouts** · Beat your **record** · Keep your **streak** alive |
+| Splits | `splits` | Rotate push, pull, **legs** · Plan your **progress** · Track your **workouts** · Beat your **record** · Keep your **streak** alive |
+| Progress | `progress` | See if you got **stronger** · Beat your **record** · Track your **workouts** · Keep your **streak** alive · Stop **scrolling** in the gym |
+| Streak | `streak` | Never miss **gym** day · Plan your **progress** · Track your **workouts** · Beat your **record** · Stop **scrolling** in the gym |
 
-Regenerate them with `python3 scripts/frame-store-screenshots.py --custom-pages` (the page orders and the two new cards are `PAGES` and `NEW_SLIDES` in the script; it stops if a headline would need a third line or run past the edge). The reused slides are framed again from the same captures as the default set, so they match `store-final/` (only sub-pixel text differences from the current system font).
+Regenerate them with `python3 scripts/frame-store-screenshots.py --custom-pages` (the cards and orders are `NEW_SLIDES` and `PAGES` in the script; it stops if a headline needs a third line or a line won't fit). The reused slides are framed again from the same captures as the default set, so they match `store-final/` (only sub-pixel text differences from the current system font).
 
-Two differences from the default set's rules:
-- "No unlocking, no scrolling" is wider than the other second lines (1,344 px at 120 pt), so it's drawn at 102 pt. The script only shrinks a second line that wouldn't otherwise fit.
-- With no notifications, iOS puts the Live Activity at the foot of the Lock Screen, below where the phone is usually cut. On the rest card the phone sits 110 px higher and 7% smaller, so the whole activity, down to its Start set button, shows above the bottom edge.
+The Lock Screen puts the Live Activity at its foot, below where the phone is usually cut, so on the Rest timer and Phone & focus cards the phone sits 110 px higher and 7% smaller, and the whole activity shows above the bottom edge.
 
-The rest card is a real capture, `screenshots/store-2026-10-17/rest-lock-screen.png` (iPhone 18 Pro Max, iOS 27.0): Arms, Dumbbell curl, 0:39 of rest left after set 1. To retake it:
-1. Set the status bar. The time must be an ISO instant, or the Lock Screen's date reads "Sat 1 Jan": `xcrun simctl status_bar <device> override --time 2026-10-14T03:56:00.000Z --batteryState discharging --batteryLevel 100 --operatorName ""` (03:56Z is 09:41 on this Mac's +5:45 clock; the Lock Screen then shows "Sat 14 Oct").
-2. Launch with `--ui-reset -workoutStage rest -storeShots YES`.
-3. Press the side button within the 40 seconds of rest left. The first time, iOS asks to allow Live Activities; allow, then relaunch and lock again for a clean screen.
+**The two new captures** are from the simulator `GymBlock Store CPP` (iPhone 18 Pro Max, iOS 27.0):
+- `screenshots/store-2026-10-17/rest-lock-screen.png`: the rest Live Activity on the Lock Screen, Sat 17 Oct at 17:18, Arms, Dumbbell curl, 0:40 of rest left. It uses the real clock, because simctl's `--time` override draws the Lock Screen's weekday from a fixed calendar (2026-10-14 showed "Sat 14 Oct", today showed "Tue 17 Oct"), so 09:41 and a correct date can't both be had. To retake: clear the override (`xcrun simctl status_bar <device> clear`), override only the bars (`… override --batteryState discharging --batteryLevel 100 --dataNetwork wifi --wifiBars 3 --cellularMode active --cellularBars 4 --operatorName ""`), launch with `--ui-reset -workoutStage rest -storeShots YES`, and press the side button within the 40 seconds of rest left (the first press after a launch is sometimes ignored). The first time, iOS asks to allow Live Activities; allow, relaunch and lock again.
+- `screenshots/store-2026-10-17/splits-up-next.png`: Home → Up next with the sheet pulled to full height: Pull (purple, checked as next), Push (blue), Legs (orange), Free workout. The sample data's Arms split was renamed Pull in the split editor, with Triceps extension swapped for Pull-up and Barbell row. Launch with `--ui-reset --demo --skip-onboarding -storeShots YES` and the status bar at 09:41.
 
 ## US keywords from other languages
 
