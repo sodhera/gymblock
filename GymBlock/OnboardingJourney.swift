@@ -66,6 +66,9 @@ struct OnboardingView: View {
   @ObservedObject private var blocking = AppBlocking.shared
   /// The system app picker, its working copy, and a note when Screen Time access is refused.
   @State private var picking = false
+  /// iOS has been asked for Screen Time access on this page (App Review 5.1.1(iv), 17 Oct 2026: the
+  /// page may only be left once the system request has shown).
+  @State private var askedScreenTime = false
   @State private var pickDraft = FamilyActivitySelection()
   @State private var blockMessage: String?
   @State private var locking = false
@@ -296,19 +299,17 @@ struct OnboardingView: View {
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: gender != nil, action: advance)
         Color.clear.frame(height: 44)
       case .alerts:
-        gated(JourneyButton(title: store.t("Turn on rest alerts"), id: "alerts.on", enabled: ready) {
+        // App Review 5.1.1(iv) (17 Oct 2026): a page that explains a permission always goes on to the
+        // system request, so Continue is the only way on and iOS's own prompt is where to say no.
+        gated(JourneyButton(title: store.t("Continue"), id: "alerts.on", enabled: ready) {
           Task { @MainActor in
             let granted = await RestAlert.requestPermission()
-            Analytics.track("onboarding_alerts", ["choice": "on", "granted": granted])
+            Analytics.track("onboarding_alerts", ["choice": "asked", "granted": granted])
             store.updateProfile { $0.restAlerts = granted }
             if step == .alerts { next() }
           }
         })
-        JourneyTextButton(title: store.t("Not now"), id: "alerts.later") {
-          Analytics.track("onboarding_alerts", ["choice": "later"])
-          store.updateProfile { $0.restAlerts = false }
-          next()
-        }
+        Color.clear.frame(height: 44)
       case .name:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
@@ -331,16 +332,27 @@ struct OnboardingView: View {
                    onComplete: commit)
         Color.clear.frame(height: 44)
       case .blocking:
+        // App Review 5.1.1(iv) (17 Oct 2026): until iOS has asked for Screen Time access, Choose apps
+        // (which asks first) is the only way on. Once it has asked, choosing apps can wait; a refusal
+        // carries on, with iOS Settings one tap away.
+        let asked = askedScreenTime || blocking.status != .notDetermined || StoreShots.on
+        let refused = asked && !blocking.authorized && !StoreShots.on
         if blocking.ready || StoreShots.on {
           JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking)
+        } else if refused {
+          JourneyButton(title: store.t("Continue"), id: "blocking.continue") { skipBlocking() }
         } else {
           JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps)
         }
-        JourneyTextButton(title: store.t("Not now"), id: "blocking.later") {
-          guard !locking else { return }
-          Analytics.track("onboarding_blocking", ["choice": "later", "chosen": blocking.ready])
-          store.updateProfile { $0.focusEnabled = false }
-          next()
+        if refused {
+          JourneyTextButton(title: store.t("Open Settings"), id: "blocking.settings") {
+            Analytics.track("blocking_settings_opened")
+            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
+          }
+        } else if asked {
+          JourneyTextButton(title: store.t("Not now"), id: "blocking.later") { skipBlocking() }
+        } else {
+          Color.clear.frame(height: 44)
         }
       case .subscription:
         // RootView shows the offer in place of this page.
@@ -472,14 +484,23 @@ struct OnboardingView: View {
   private func chooseApps() {
     guard !locking, !picking else { return }
     Task { @MainActor in
-      guard await blocking.requestAccess() else {
-        blockMessage = "Screen Time access is off. Allow it in iOS Settings, or choose Not now."
+      let granted = await blocking.requestAccess()
+      askedScreenTime = true
+      guard granted else {
+        blockMessage = "Screen Time access is off. You can allow it in Settings anytime."
         return
       }
       blockMessage = nil
       pickDraft = blocking.selection
       picking = true
     }
+  }
+  /// On without blocking: after iOS has asked, whatever the answer.
+  private func skipBlocking() {
+    guard !locking else { return }
+    Analytics.track("onboarding_blocking", ["choice": "later", "chosen": blocking.ready, "authorized": blocking.authorized])
+    store.updateProfile { $0.focusEnabled = false }
+    next()
   }
   private func turnOnBlocking() {
     guard !locking, blocking.ready else { return }
