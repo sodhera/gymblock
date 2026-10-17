@@ -48,7 +48,7 @@ The listing (name, subtitle, keyword fields for the US and the nine other langua
 
 ## Current design and proof
 
-The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); the app after it follows [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
+A proposed next onboarding (mockups only, not built: Sulav's note, live welcome and mind-muscle scenes, haptic and sound scores, a new paywall) sits beside captures of today's flow in [docs/onboarding-mockups/index.html](docs/onboarding-mockups/index.html). The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); the app after it follows [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
 
 `project.yml` is the XcodeGen source of truth. It builds the app and three extensions: **GymBlockLive** (the Live Activity), **GymBlockShield** (the screen over a blocked app) and **GymBlockShieldAction** (its Back to training button). Product → Test runs model checks and simulator journeys; the scheme runs the UI journeys on simulator clones in parallel (`xcodebuild test -parallel-testing-worker-count 4`), which brings the suite from about 24 minutes to about 7.
 

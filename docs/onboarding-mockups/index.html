@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>GymBlock Onboarding Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,500&display=swap">
+<style>
+/* Layout: a review board. Phases run down the page; in each, the current flow (real captures) sits beside the proposed flow (playable mockups with a haptic track). */
+:root {
+  --bg: #ECE9E3;
+  --surface: #F7F5F1;
+  --ink: #141417;
+  --muted: #5F5D58;
+  --line: rgba(20,20,23,.12);
+  --emerald: #0F9A6B;
+  --danger: #B9372E;
+  --chip: rgba(20,20,23,.06);
+  --shadow: 0 1px 0 rgba(20,20,23,.05), 0 14px 34px rgba(20,20,23,.12);
+  --sans: "DM Sans", ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --script: "Caveat", "Bradley Hand", "Segoe Script", cursive;
+  --pw: 250px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141518; --surface: #1C1D21; --ink: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.12);
+  --emerald: #3CC28E; --danger: #F06A5F; --chip: rgba(255,255,255,.08);
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px rgba(0,0,0,.45); color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141518; --surface: #1C1D21; --ink: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.12);
+  --emerald: #3CC28E; --danger: #F06A5F; --chip: rgba(255,255,255,.08);
+  --shadow: 0 1px 0 rgba(0,0,0,.3), 0 14px 34px rgba(0,0,0,.45); color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased }
+.wrap { max-width: 1480px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 3px }
+a:hover { text-decoration-color: currentColor }
+h1, h2, h3 { text-wrap: balance; margin: 0 }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--muted) }
+
+header { padding-block: 48px 28px; display: grid; gap: 20px }
+header h1 { font-size: clamp(34px, 5.2vw, 64px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 800; max-width: 17ch }
+header h1 span { color: var(--muted); font-weight: 700 }
+.lede { max-width: 70ch; font-size: 17px; margin: 0 }
+.lede b { font-weight: 700 }
+.deltas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: 8px }
+.delta { padding: 18px 20px 18px 0; display: grid; gap: 4px; min-width: 0; align-content: start }
+.delta + .delta { padding-left: 20px; border-left: 1px solid var(--line) }
+.delta .num { font-size: clamp(24px, 2.8vw, 36px); font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1.1 }
+.delta .num s { color: var(--muted); font-weight: 600; text-decoration-thickness: 2px }
+.delta .num em { font-style: normal; color: var(--emerald) }
+.delta .lbl { color: var(--muted); font-size: 13.5px }
+@media (max-width: 760px) { .deltas { grid-template-columns: 1fr 1fr } .delta:nth-child(3) { padding-left: 0; border-left: 0 } .delta:nth-child(n+3) { border-top: 1px solid var(--line) } }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line) }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding-block: 10px }
+.seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px }
+.seg button { font: 600 13.5px var(--sans); color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12) }
+button:focus-visible { outline: 2px solid var(--emerald); outline-offset: 2px }
+.bar .hint { color: var(--muted); font-size: 13px; margin-left: auto }
+@media (max-width: 760px) { .bar .hint { display: none } }
+
+.phase { padding-block: 34px 10px; border-bottom: 1px solid var(--line) }
+.phase-head { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 6px 28px; align-items: baseline; margin-bottom: 18px }
+.phase-head h2 { font-size: 24px; letter-spacing: -0.02em; font-weight: 750 }
+.phase-head p { margin: 0; color: var(--muted); max-width: 72ch }
+@media (max-width: 700px) { .phase-head { grid-template-columns: 1fr } }
+.lanes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) }
+.lane { min-width: 0; padding-right: 22px }
+.lane + .lane { padding-left: 22px; padding-right: 0; border-left: 1px dashed var(--line) }
+.lane-label { display: flex; gap: 8px; align-items: baseline; margin-bottom: 10px }
+.lane-label b { font-size: 13px; font-weight: 700 }
+.lane-label span { font-family: var(--mono); font-size: 12px; color: var(--muted) }
+.lane.prop .lane-label b { color: var(--emerald) }
+.strip { display: flex; gap: 18px; overflow-x: auto; padding: 4px 4px 18px; scroll-snap-type: x proximity; scrollbar-width: thin }
+.card { flex: 0 0 var(--pw); width: var(--pw); scroll-snap-align: start; display: grid; gap: 8px; align-content: start }
+.card-top { display: flex; align-items: center; gap: 8px; min-height: 22px }
+.card-top .id { font-family: var(--mono); font-size: 12px; color: var(--muted) }
+.card-top .name { font-weight: 650; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 }
+.tag { font: 500 11px var(--mono); letter-spacing: .03em; padding: 2px 7px; border-radius: 6px; background: var(--chip); color: var(--ink); white-space: nowrap }
+.tag.cut { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent) }
+.tag.new { color: var(--emerald); background: color-mix(in srgb, var(--emerald) 14%, transparent) }
+.tag.kept { color: var(--muted) }
+.note { font-size: 13px; color: var(--muted); line-height: 1.45 }
+.note b { color: var(--ink); font-weight: 600 }
+.empty { flex: 0 0 var(--pw); width: var(--pw); aspect-ratio: 1320 / 2868; border: 1.5px dashed var(--line); border-radius: calc(var(--pw) * .135); display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); font-size: 13.5px; margin-top: 30px }
+body[data-view="current"] .lane.prop, body[data-view="proposed"] .lane.cur { display: none }
+body[data-view="current"] .lanes, body[data-view="proposed"] .lanes { grid-template-columns: minmax(0, 1fr) }
+body[data-view="proposed"] .lane.prop { padding-left: 0; border-left: 0 }
+@media (max-width: 900px) {
+  .lanes { grid-template-columns: minmax(0, 1fr) }
+  .lane { padding-right: 0 }
+  .lane + .lane { padding-left: 0; border-left: 0; border-top: 1px dashed var(--line); padding-top: 14px }
+}
+
+/* Haptic + sound track under each animated mockup */
+.cue { display: grid; gap: 6px; padding: 10px 10px 9px; border-radius: 12px; background: var(--surface); box-shadow: 0 0 0 1px var(--line) }
+.cue-head { display: flex; align-items: center; gap: 8px }
+.pbtn { font: 600 12.5px var(--sans); color: var(--bg); background: var(--ink); border: 0; border-radius: 999px; padding: 5px 11px 5px 9px; cursor: pointer; display: inline-flex; gap: 5px; align-items: center }
+.pbtn svg { width: 9px; height: 9px }
+.cue-head .len { font: 500 11px var(--mono); color: var(--muted); margin-left: auto }
+.cue svg.trk { width: 100%; height: auto; display: block; overflow: visible }
+.trk .grid { stroke: var(--line); stroke-width: .6 }
+.trk .tr { fill: var(--ink) }
+.trk .ct { fill: color-mix(in srgb, var(--emerald) 28%, transparent); stroke: var(--emerald); stroke-width: .8 }
+.trk .sd { fill: var(--muted) }
+.trk .lbl { fill: var(--muted); font: 500 6.5px var(--mono) }
+.trk .ph { stroke: var(--emerald); stroke-width: 1.4; opacity: 0 }
+.trk.go .ph { opacity: 1; animation: ph var(--dur) linear forwards }
+@keyframes ph { from { transform: translateX(0) } to { transform: translateX(300px) } }
+.cue-txt { font-size: 12.5px; color: var(--muted); line-height: 1.45 }
+.cue-txt b { color: var(--ink); font-weight: 600 }
+.cue.static { padding: 8px 10px }
+.alts { display: flex; flex-wrap: wrap; gap: 6px }
+.alts button { font: 500 12px var(--sans); text-align: left; color: var(--ink); background: var(--chip); border: 0; border-radius: 8px; padding: 6px 9px; cursor: pointer; line-height: 1.3 }
+.alts button[aria-pressed="true"] { background: color-mix(in srgb, var(--emerald) 18%, transparent); box-shadow: 0 0 0 1px var(--emerald) inset }
+.alts-lbl { font: 500 11px var(--mono); color: var(--muted) }
+
+/* Phone frame */
+.phone { display: block; position: relative; width: 100%; aspect-ratio: 1320 / 2868; max-width: 100%; border-radius: calc(var(--pw) * .135); overflow: hidden; box-shadow: var(--shadow), 0 0 0 1px rgba(20,20,23,.08); background: #F5F3EF; padding: 0; border: 0; cursor: zoom-in; container-type: inline-size; font: inherit; color: inherit; text-align: left }
+.phone > img { width: 100%; height: 100%; display: block; object-fit: cover }
+
+/* Mock screens, sized in iPhone points (440 pt wide) so they scale with the frame. */
+.scr { --pt: calc(100cqw / 440); --paper: #F5F3EF; --i: #141417; --sec: #6B6964; --em: #0F9A6B; --red: #DB4036;
+  position: absolute; inset: 0; display: flex; flex-direction: column; color: var(--i); font-family: var(--sans); letter-spacing: -0.01em;
+  background-color: var(--paper);
+  background-image: radial-gradient(ellipse 62% 30% at 50% 44%, rgba(251,228,198,.6), rgba(251,228,198,0) 70%),
+    radial-gradient(circle, rgba(20,20,23,.075) calc(1.2 * var(--pt)), transparent calc(1.5 * var(--pt)));
+  background-size: 100% 100%, calc(22 * var(--pt)) calc(22 * var(--pt)); line-height: 1.25 }
+.sb { height: calc(58 * var(--pt)); flex: none; display: flex; align-items: center; justify-content: space-between; padding: calc(8 * var(--pt)) calc(34 * var(--pt)) 0 calc(56 * var(--pt)); font-size: calc(17 * var(--pt)); font-weight: 600 }
+.sb svg { height: calc(13 * var(--pt)); width: auto }
+.tb { height: calc(44 * var(--pt)); flex: none; display: flex; align-items: center; gap: calc(16 * var(--pt)); padding: 0 calc(12 * var(--pt)) }
+.bk { width: calc(36 * var(--pt)); height: calc(36 * var(--pt)); border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.75); box-shadow: 0 0 0 calc(1 * var(--pt)) rgba(20,20,23,.06), 0 calc(3 * var(--pt)) calc(10 * var(--pt)) rgba(20,20,23,.08); flex: none }
+.bk svg { width: calc(9 * var(--pt)) }
+.bk.ghost { visibility: hidden }
+.pg { flex: 1; height: calc(3 * var(--pt)); border-radius: 9px; background: rgba(20,20,23,.1); position: relative; margin-right: calc(52 * var(--pt)) }
+.pg i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--i) }
+.hl { flex: none; padding: calc(14 * var(--pt)) calc(28 * var(--pt)) 0; min-height: calc(2 * 1.18 * 27 * var(--pt) + 14 * var(--pt)); display: flex; align-items: center; justify-content: center; text-align: center; font-size: calc(27 * var(--pt)); line-height: 1.18; font-weight: 700; letter-spacing: -0.025em; text-wrap: balance }
+.hl.left { justify-content: flex-start; text-align: left; font-size: calc(33 * var(--pt)); line-height: 1.1; padding-top: calc(30 * var(--pt)); min-height: calc(2 * 1.1 * 33 * var(--pt) + 30 * var(--pt)); align-items: flex-end }
+.sec { color: var(--sec) }
+.stage { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(14 * var(--pt)); padding: calc(12 * var(--pt)) calc(24 * var(--pt)) }
+.cap { flex: none; font-size: calc(13 * var(--pt)); color: var(--sec); text-align: center; min-height: calc(20 * var(--pt)); padding: 0 calc(32 * var(--pt)) }
+.acts { flex: none; padding: calc(12 * var(--pt)) calc(24 * var(--pt)) calc(6 * var(--pt)); display: flex; flex-direction: column; gap: calc(6 * var(--pt)) }
+.btn { height: calc(50 * var(--pt)); border-radius: calc(25 * var(--pt)); background: var(--i); color: #fff; font-size: calc(17 * var(--pt)); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: calc(8 * var(--pt)); position: relative; overflow: hidden }
+.btn.glass { background: rgba(255,255,255,.8); color: var(--i); box-shadow: 0 0 0 calc(1 * var(--pt)) rgba(20,20,23,.08) }
+.btn svg { height: calc(17 * var(--pt)); width: auto }
+.lk { height: calc(44 * var(--pt)); display: flex; align-items: center; justify-content: center; gap: calc(22 * var(--pt)); font-size: calc(15 * var(--pt)); color: var(--sec) }
+.home { height: calc(34 * var(--pt)); flex: none }
+.glass { background: rgba(255,255,255,.7); border-radius: calc(18 * var(--pt)); box-shadow: 0 0 0 calc(1 * var(--pt)) rgba(255,255,255,.9) inset, 0 0 0 calc(1 * var(--pt)) rgba(20,20,23,.05), 0 calc(8 * var(--pt)) calc(24 * var(--pt)) rgba(20,20,23,.07) }
+.opts { display: flex; flex-direction: column; gap: calc(10 * var(--pt)); padding-bottom: calc(14 * var(--pt)) }
+.opt { height: calc(52 * var(--pt)); border-radius: calc(16 * var(--pt)); display: flex; align-items: center; justify-content: space-between; padding: 0 calc(16 * var(--pt)); font-size: calc(17 * var(--pt)); font-weight: 500 }
+.opt.on { background: rgba(20,20,23,.07); box-shadow: 0 0 0 calc(1.2 * var(--pt)) rgba(20,20,23,.14) }
+.ck { width: calc(20 * var(--pt)); height: calc(20 * var(--pt)); border-radius: 50%; background: var(--em); display: grid; place-items: center; flex: none }
+.ck svg { width: 55% }
+.ey { font-size: calc(14 * var(--pt)); color: var(--sec); font-weight: 500 }
+.row { display: flex; align-items: center; gap: calc(12 * var(--pt)); padding: calc(13 * var(--pt)) calc(16 * var(--pt)); font-size: calc(16 * var(--pt)) }
+.row + .row { border-top: calc(1 * var(--pt)) solid rgba(20,20,23,.07) }
+.row .v { margin-left: auto; color: var(--sec); font-size: calc(15 * var(--pt)); text-align: right }
+.tabs { display: inline-flex; background: rgba(20,20,23,.07); border-radius: 99px; padding: calc(2 * var(--pt)); font-size: calc(13 * var(--pt)) }
+.tabs span { padding: calc(4 * var(--pt)) calc(12 * var(--pt)); border-radius: 99px; color: var(--sec) }
+.tabs span.on { background: #fff; color: var(--i); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08) }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0 }
+.w100 { width: 100% }
+.abs { position: absolute }
+.art.nm { -webkit-mask-image: none; mask-image: none }
+.art { mix-blend-mode: multiply; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 70%, transparent 100%) }
+.nt { display: flex; gap: calc(9 * var(--pt)); align-items: center; padding: calc(9 * var(--pt)) calc(11 * var(--pt)); border-radius: calc(14 * var(--pt)); font-size: calc(12 * var(--pt)); line-height: 1.25 }
+.nt-i { width: calc(26 * var(--pt)); height: calc(26 * var(--pt)); border-radius: calc(7 * var(--pt)); background: rgba(20,20,23,.12); display: grid; place-items: center; flex: none }
+.nt-i svg { width: 58% }
+.nt b { display: block; font-weight: 650 }
+.nt span { color: var(--sec) }
+
+/* Welcome: driven frame by frame (see scenes.welcome) */
+.wl { justify-content: space-between; gap: calc(10 * var(--pt)); padding: calc(6 * var(--pt)) calc(26 * var(--pt)) calc(4 * var(--pt)) }
+.wl-row { width: 100%; display: grid; grid-template-columns: 1fr calc(64 * var(--pt)) 1fr; align-items: center; font-size: calc(31 * var(--pt)); font-weight: 750; letter-spacing: -0.035em; line-height: 1.02 }
+.wl-a { color: var(--sec); font-weight: 650; will-change: transform, opacity }
+.wl-b { text-align: right; will-change: transform, opacity }
+.wl-ar { width: 100%; height: auto; overflow: visible; display: block }
+.wl-ar path { fill: none; stroke: var(--i); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0 }
+.wl-art { width: 100%; height: calc(360 * var(--pt)); display: flex; align-items: center; justify-content: space-between; position: relative }
+.ip { width: calc(168 * var(--pt)); height: calc(344 * var(--pt)); border-radius: calc(34 * var(--pt)); position: relative; background: #17171A; padding: calc(6 * var(--pt)); box-shadow: 0 calc(18 * var(--pt)) calc(36 * var(--pt)) rgba(20,20,23,.22), 0 0 0 calc(1 * var(--pt)) rgba(255,255,255,.08) inset; will-change: transform; transform-origin: 50% 90% }
+.ip-scr { position: absolute; inset: calc(6 * var(--pt)); border-radius: calc(28 * var(--pt)); overflow: hidden; background: radial-gradient(120% 70% at 30% 0%, #D9CFC3 0%, #B9AFA6 45%, #8F8C8E 100%) }
+.ip-island { position: absolute; top: calc(13 * var(--pt)); left: 50%; width: calc(46 * var(--pt)); height: calc(13 * var(--pt)); margin-left: calc(-23 * var(--pt)); border-radius: 99px; background: #0B0B0C }
+.ip-time { position: absolute; top: calc(40 * var(--pt)); width: 100%; text-align: center; color: rgba(255,255,255,.95); font-size: calc(46 * var(--pt)); font-weight: 650; letter-spacing: -0.03em; line-height: 1 }
+.ip-date { position: absolute; top: calc(30 * var(--pt)); width: 100%; text-align: center; color: rgba(255,255,255,.85); font-size: calc(10 * var(--pt)); font-weight: 600 }
+.ip-n { position: absolute; left: calc(7 * var(--pt)); right: calc(7 * var(--pt)); top: calc(102 * var(--pt)); height: calc(42 * var(--pt)); border-radius: calc(12 * var(--pt)); background: rgba(250,248,245,.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; gap: calc(6 * var(--pt)); padding: 0 calc(7 * var(--pt)); font-size: calc(8.4 * var(--pt)); line-height: 1.2; color: #1B1B1E; box-shadow: 0 calc(2 * var(--pt)) calc(6 * var(--pt)) rgba(0,0,0,.08); will-change: transform, opacity; opacity: 0 }
+.ip-n b { display: flex; justify-content: space-between; font-weight: 650 }
+.ip-n b i { font-style: normal; font-weight: 400; color: #77736E }
+.ip-n span { color: #3E3C39 }
+.ip-ic { width: calc(22 * var(--pt)); height: calc(22 * var(--pt)); border-radius: calc(6 * var(--pt)); flex: none; display: grid; place-items: center }
+.ip-ic svg { width: 62% }
+.ip-dim { position: absolute; inset: 0; background: #F3F0EB; opacity: 0 }
+.ip-lock { position: absolute; left: 0; right: 0; bottom: calc(18 * var(--pt)); text-align: center; color: #5F5D58; font-size: calc(9 * var(--pt)); font-weight: 600; opacity: 0 }
+.ip-kb { position: absolute; left: 50%; top: calc(120 * var(--pt)); width: calc(84 * var(--pt)); margin-left: calc(-42 * var(--pt)); will-change: transform; transform-origin: 50% 100%; filter: drop-shadow(0 calc(6 * var(--pt)) calc(8 * var(--pt)) rgba(0,0,0,.35)) }
+.ip-kb.lit { filter: drop-shadow(0 calc(6 * var(--pt)) calc(8 * var(--pt)) rgba(0,0,0,.35)) drop-shadow(0 0 calc(10 * var(--pt)) rgba(47,191,133,.55)) }
+.wl-arm { width: calc(214 * var(--pt)); height: 100%; position: relative }
+.wl-arm canvas { position: absolute; left: 50%; top: 50%; width: calc(214 * var(--pt)); height: calc(214 * var(--pt)); transform: translate(-50%, -50%) }
+.wl-glow { position: absolute; left: 50%; top: 50%; width: calc(250 * var(--pt)); height: calc(250 * var(--pt)); margin: calc(-125 * var(--pt)) 0 0 calc(-125 * var(--pt)); border-radius: 50%; background: radial-gradient(circle, rgba(15,154,107,.24), rgba(15,154,107,0) 66%); opacity: 0; will-change: transform, opacity }
+canvas.scene { position: absolute; inset: 0; width: 100%; height: 100% }
+.wm { display: flex; align-items: center; gap: calc(6 * var(--pt)); font-size: calc(15 * var(--pt)); font-weight: 650 }
+.wm img { width: calc(16 * var(--pt)) }
+
+/* Founder note */
+.fn-q { font-size: calc(25 * var(--pt)); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; font-style: italic; text-align: center; padding: 0 calc(10 * var(--pt)); text-wrap: balance }
+.fn-card { padding: calc(16 * var(--pt)) calc(18 * var(--pt)) calc(12 * var(--pt)); font-size: calc(16.4 * var(--pt)); line-height: 1.36; color: #222225; background: rgba(255,255,255,.8) }
+.fn-card p { margin: 0 0 calc(8 * var(--pt)) }
+.fn-card ol { margin: 0 0 calc(8 * var(--pt)); padding-left: calc(20 * var(--pt)) }
+.fn-card li { margin-bottom: calc(4 * var(--pt)) }
+.fn-sig { font-family: var(--script); font-size: calc(40 * var(--pt)); line-height: 1; color: var(--i); display: inline-block }
+.fn-role { font-size: calc(12 * var(--pt)); color: var(--sec) }
+
+/* Charts */
+.chart { width: 100%; height: auto; flex: none; overflow: visible }
+.chart .ax { stroke: rgba(20,20,23,.28); stroke-width: 1.2 }
+.chart .gl { stroke: rgba(20,20,23,.35); stroke-width: 1; stroke-dasharray: 4 4 }
+.chart .t { font: 600 9px var(--sans); fill: #6B6964 }
+.chart .tb { font: 700 9px var(--sans); fill: #141417 }
+.seg-l { fill: none; stroke: #6B6964; stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0 }
+.seg-l.em { stroke: #0F9A6B; stroke-width: 3 }
+.seg-l.ink { stroke: #141417 }
+
+/* Plan (minimal) */
+.pl { width: 100%; display: grid }
+.pl-r { display: grid; gap: calc(2 * var(--pt)); padding: calc(15 * var(--pt)) calc(4 * var(--pt)); border-top: calc(1 * var(--pt)) solid rgba(20,20,23,.1) }
+.pl-r:last-child { border-bottom: calc(1 * var(--pt)) solid rgba(20,20,23,.1) }
+.pl-r small { font-size: calc(13 * var(--pt)); color: var(--sec) }
+.pl-r b { font-size: calc(22 * var(--pt)); font-weight: 650; letter-spacing: -0.02em }
+.hold-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: #0F9A6B }
+.hold-l { position: relative }
+.hold-done { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: calc(8 * var(--pt)); opacity: 0 }
+
+/* Animations: everything rests on its final frame; Play runs it from the start. */
+.phone.play .a-fade { animation: aFade var(--du, .45s) ease var(--d, 0s) both }
+.phone.play .a-rise { animation: aRise var(--du, .5s) cubic-bezier(.2,.8,.2,1) var(--d, 0s) both }
+.phone.play .a-drop { animation: aDrop var(--du, .5s) cubic-bezier(.2,.9,.25,1.15) var(--d, 0s) both }
+.phone.play .a-pop { animation: aPop var(--du, .4s) cubic-bezier(.2,.9,.3,1.3) var(--d, 0s) both }
+.phone.play .a-out { animation: aOut var(--du, .45s) ease var(--d, 0s) both }
+.phone.play .a-show { animation: aShow var(--du, .3s) ease var(--d, 0s) both }
+.phone.play .a-wipe { animation: aWipe var(--du, .5s) cubic-bezier(.6,0,.2,1) var(--d, 0s) both }
+.phone.play .a-kb { animation: aKb var(--du, .5s) cubic-bezier(.5,0,.6,1) var(--d, 0s) both }
+.phone.play .a-flex { animation: aFlex var(--du, .8s) cubic-bezier(.3,.7,.3,1) var(--d, 0s) both }
+.phone.play .a-draw { animation: aDraw var(--du, .4s) linear var(--d, 0s) both }
+.phone.play .a-arc { animation: aArc var(--du, 1s) cubic-bezier(.4,0,.3,1) var(--d, 0s) both }
+.phone.play .a-sig { animation: aSig var(--du, 1.4s) steps(28) var(--d, 0s) both }
+.phone.play .a-shield { animation: aShield var(--du, .6s) cubic-bezier(.2,.9,.2,1) var(--d, 0s) both }
+.phone.play .a-click { animation: aClick .35s ease-out var(--d, 0s) both }
+.phone.play .a-bar { animation: aBar var(--du, 2.4s) linear var(--d, 0s) both }
+.phone.play .hold-fill { animation: aHold 1.45s cubic-bezier(.4,0,1,1) 1.4s forwards }
+.phone.play .hold-l { animation: aOut .2s ease 2.85s forwards }
+.phone.play .hold-done { animation: aShow .3s ease 2.87s forwards }
+@keyframes aFade { from { opacity: 0 } }
+@keyframes aRise { from { opacity: 0; transform: translateY(calc(14 * var(--pt))) } }
+@keyframes aDrop { from { opacity: 0; transform: translateY(calc(-26 * var(--pt))) scale(.96) } }
+@keyframes aPop { from { opacity: 0; transform: scale(.4) } }
+@keyframes aOut { from { opacity: 1 } to { opacity: 0 } }
+@keyframes aShow { from { opacity: 0 } to { opacity: 1 } }
+@keyframes aWipe { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+@keyframes aKb { 0% { opacity: 0; transform: translateY(calc(-230 * var(--pt))) } 30% { opacity: 1 } 78% { transform: translateY(calc(6 * var(--pt))) scale(1.04, .94) } 100% { transform: none } }
+@keyframes aFlex { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.88) } 60% { opacity: 1; transform: translate(-50%, -50%) scale(1.07) } 100% { transform: translate(-50%, -50%) } }
+@keyframes aDraw { from { stroke-dashoffset: 1 } }
+@keyframes aArc { from { stroke-dasharray: 0 1 } }
+@keyframes aSig { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+@keyframes aShield { from { opacity: 0; transform: translateY(calc(70 * var(--pt))) } }
+@keyframes aClick { 0% { transform: scale(1) } 40% { transform: scale(.86) } 75% { transform: scale(1.08) } 100% { transform: none } }
+@keyframes aBar { from { width: 62% } }
+@keyframes aHold { from { width: 0 } to { width: 100% } }
+
+/* Content sections */
+section.txt { padding-block: 44px 8px; display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 12px 36px }
+section.txt > h2 { font-size: 26px; letter-spacing: -0.02em; font-weight: 750 }
+@media (max-width: 800px) { section.txt { grid-template-columns: minmax(0, 1fr) } }
+.findings { list-style: none; margin: 0; padding: 0; display: grid; counter-reset: f }
+.findings li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; padding: 14px 0; border-top: 1px solid var(--line); counter-increment: f; max-width: 84ch }
+.findings li::before { content: counter(f); font: 500 13px var(--mono); color: var(--muted); padding-top: 3px }
+.findings b { display: block; font-size: 16px }
+.findings span { grid-column: 2; color: var(--muted) }
+.score { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 28px }
+.score div { padding: 14px 0; border-top: 1px solid var(--line); min-width: 0 }
+.score b { display: block; margin-bottom: 2px }
+.score p { margin: 0; color: var(--muted); font-size: 14px }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 13px; margin-top: 14px; align-items: center }
+.legend i { display: inline-block; vertical-align: -1px; margin-right: 6px }
+.tbl-wrap { overflow-x: auto; border-top: 1px solid var(--line) }
+table { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13.5px }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--line) }
+th { font: 500 11.5px var(--mono); letter-spacing: .04em; color: var(--muted); text-transform: uppercase }
+td:first-child { font-weight: 650; white-space: nowrap }
+td.us { color: var(--emerald); font-weight: 650 }
+.decisions { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; counter-reset: d; max-width: 86ch }
+.decisions li { background: var(--surface); border-radius: 14px; padding: 16px 18px 16px 54px; position: relative; counter-increment: d; box-shadow: 0 0 0 1px var(--line) }
+.decisions li::before { content: counter(d); position: absolute; left: 18px; top: 15px; width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--bg); font: 600 13px/24px var(--sans); text-align: center }
+.decisions b { display: block; font-size: 16px }
+.decisions span { color: var(--muted); font-size: 14px }
+.method { color: var(--muted); font-size: 13.5px; max-width: 90ch }
+.method p { margin: 0 0 8px }
+footer { padding-block: 28px 64px }
+
+/* Lightbox */
+.lb[hidden] { display: none }
+.lb { position: fixed; inset: 0; z-index: 50; background: rgba(10,10,12,.76); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; overflow-y: auto; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) }
+.lb-in { display: grid; gap: 12px; justify-items: center; width: min(420px, 100%, calc((100vh - 220px) * .46)); --pw: 420px }
+.lb-in .phone { cursor: default; width: 100% }
+.lb-in .cue { width: 100% }
+.lb-cap { color: #EDEBE6; text-align: center; font-size: 14px; max-width: 44ch }
+.lb-cap b { display: block }
+.lb > button { position: fixed; background: rgba(255,255,255,.14); color: #fff; border: 0; width: 44px; height: 44px; border-radius: 50%; font-size: 20px; cursor: pointer }
+.lb .x { top: calc(16px + env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)) }
+.lb .pv { left: max(16px, env(safe-area-inset-left, 0px)); top: 50% }
+.lb .nx { right: max(16px, env(safe-area-inset-right, 0px)); top: 50% }
+@media (prefers-reduced-motion: no-preference) { .strip .phone { transition: transform .2s ease } .strip .phone:hover { transform: translateY(-3px) } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">GymBlock · onboarding review · version 3 · 17 Oct 2026</div>
+    <h1>Onboarding, today <span>and in Sulav's voice</span></h1>
+    <p class="lede"><b>Bottom line:</b> the proposed flow keeps the story pages, the two-page reveal and sign-up before the paywall, and changes how it feels. It opens on the change GymBlock makes, drawn live at 60 fps, then a note from Sulav. Every page after speaks as "we", plainly. The reveal uses your real training days, splits wait until after payment, every animation has its own haptic pattern and sound you can play, and the paywall sells the change in your own numbers.</p>
+    <div class="deltas">
+      <div class="delta"><div class="num"><em>13</em></div><div class="lbl">animated scenes, each with a haptic pattern and sound you can play here</div></div>
+      <div class="delta"><div class="num"><s>5</s> → <em>yours</em></div><div class="lbl">workouts a week in the yearly number: your answer, not a guess</div></div>
+      <div class="delta"><div class="num"><s>3</s> → <em>0</em></div><div class="lbl">questions whose answer nothing uses</div></div>
+      <div class="delta"><div class="num"><em>60</em> fps</div><div class="lbl">the welcome and mind-muscle scenes, drawn live from the app's own art</div></div>
+    </div>
+  </header>
+</div>
+
+<div class="bar"><div class="wrap">
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" id="v-side" data-view="side" aria-pressed="true">Side by side</button>
+    <button type="button" id="v-cur" data-view="current" aria-pressed="false">Current (21)</button>
+    <button type="button" id="v-prop" data-view="proposed" aria-pressed="false">Proposed (21)</button>
+  </div>
+  <div class="seg" role="group" aria-label="Screen size">
+    <button type="button" id="s-s" data-size="200px" aria-pressed="false">S</button>
+    <button type="button" id="s-m" data-size="250px" aria-pressed="true">M</button>
+    <button type="button" id="s-l" data-size="320px" aria-pressed="false">L</button>
+  </div>
+  <div class="seg" role="group" aria-label="Sound">
+    <button type="button" id="snd-on" data-sound="on" aria-pressed="true">Sound on</button>
+    <button type="button" id="snd-off" data-sound="off" aria-pressed="false">Off</button>
+  </div>
+  <span class="hint">Press Play under any animated screen · tap a screen to enlarge</span>
+</div></div>
+
+<main class="wrap" id="phases"></main>
+
+<div class="wrap">
+  <section class="txt" id="score">
+    <h2>How the haptics and sounds are scored</h2>
+    <div>
+      <div class="score">
+        <div><b>Strength follows the story</b><p>How strong a haptic is tracks what the scene is about. Focus fading means each pulse gets weaker. Steady focus means pulses stay level. A pump that builds gets stronger with every set.</p></div>
+        <div><b>Sharpness matches the material</b><p>A lock clicks: short and crisp. A kettlebell lands: heavy and dull. Notifications use the iOS double tap. The signature is a light, grainy scratch.</p></div>
+        <div><b>Silence carries meaning</b><p>In the scrolling pump scene, the long rests get no haptic at all, only faint scroll ticks. The gap is the point.</p></div>
+        <div><b>Sound sits under the haptic</b><p>Each haptic has a quiet matching sound: rising notes for building, falling notes for forgetting, one chime when you arrive. The sound stays quiet, follows the silent switch and can be turned off.</p></div>
+      </div>
+      <div class="legend">
+        <span><i><svg width="10" height="12"><rect x="4" y="1" width="2.4" height="11" fill="currentColor"/></svg></i>Tap: height is strength, darker is sharper</span>
+        <span><i><svg width="18" height="12"><polygon points="0,12 0,8 18,2 18,12" fill="rgba(15,154,107,.3)" stroke="#0F9A6B" stroke-width=".8"/></svg></i>Continuous: rising or falling strength</span>
+        <span><i><svg width="8" height="8"><circle cx="4" cy="4" r="2.6" fill="currentColor"/></svg></i>Sound</span>
+      </div>
+      <p class="method" style="margin-top:12px">To build this in the app: Core Haptics patterns and short sounds, one per scene. Today the app plays one-off taps through UIKit and has two sound files, which are off by default. A web page can't make your iPhone vibrate, so here the haptic is drawn as a track and the sound plays. The real feel has to be checked on a device, not the simulator.</p>
+    </div>
+  </section>
+
+  <section class="txt" id="problems">
+    <h2>What changes, and why</h2>
+    <ol class="findings">
+      <li><b>The first screen shows the change, not the mechanism.</b><span>Today it shows notifications folding under a lock. The new opening pairs what you do (stop scrolling, record everything) with what you get (stay focused, get jacked) and shows the arm going from grey to green.</span></li>
+      <li><b>Someone is talking.</b><span>Pages read like a form today. Sulav's note sets the tone; after it the app speaks as "we", plainly, with no pretending.</span></li>
+      <li><b>Three questions go nowhere.</b><span>Gender and height are saved and only shown in Profile. Weight only picks kg or lb, which moves to the plan page.</span></li>
+      <li><b>The yearly number uses your real week.</b><span>Today it assumes 5 workouts a week for everyone. The new days-a-week question feeds the hours-a-year page, the weekly goal on Home and the split suggestion.</span></li>
+      <li><b>Haptics tell the story.</b><span>Today: one-off taps. Proposed: patterns that fade with your focus, build with the pump and land with the kettlebell.</span></li>
+      <li><b>The paywall sells the change.</b><span>Today it lists three features. Now it shows your two paths, Now vs With GymBlock, in your own numbers, plus a Today / Day 5 / Day 7 trial timeline. Unrot uses a two-paths screen, Opal shows bad news then good news, and ClearSpace has a before/after graphic.</span></li>
+      <li><b>Splits after paying, as one tap.</b><span>Nobody is asked about splits before they've decided to buy. After paying, one question picks a template, and the flow ends one tap from your first locked set.</span></li>
+    </ol>
+  </section>
+
+  <section class="txt" id="market">
+    <h2>What comparable apps do</h2>
+    <div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>App</th><th>Screens</th><th>Questions</th><th>Permissions</th><th>Account</th><th>Paywall</th><th>How it sells</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://screensdesign.com/apps/opal-screen-time-control/" target="_blank" rel="noopener">Opal</a></td><td>~27</td><td>Screen time, habits; age and job unused</td><td>Screen Time after the report</td><td>After payment</td><td>Soft, end of quiz</td><td>Report: bad news, then good news; "Try for $0.00"</td></tr>
+          <tr><td><a href="https://screensdesign.com/showcase/unrot-earn-your-screentime" target="_blank" rel="noopener">Unrot</a></td><td>31</td><td>Habit quiz, time lost per year</td><td>Explainer before each</td><td>—</td><td>Hard</td><td>Hold to commit, then "Two Paths"</td></tr>
+          <tr><td><a href="https://screensdesign.com/showcase/clearspace-reduce-screen-time" target="_blank" rel="noopener">ClearSpace</a></td><td>7</td><td>Goals, age</td><td>Own explainer, then system</td><td>—</td><td>Soft</td><td>Before/after graphic, benefits timeline</td></tr>
+          <tr><td><a href="https://screensdesign.com/showcase/liftoff-ranked-gym-workouts" target="_blank" rel="noopener">Liftoff</a></td><td>61</td><td>Long quiz</td><td>—</td><td>—</td><td>Soft</td><td>Hold to commit; trial timeline with reminder day</td></tr>
+          <tr><td><a href="https://screensdesign.com/showcase/fitbod-gym-fitness-planner" target="_blank" rel="noopener">Fitbod</a></td><td>14</td><td>Goals, experience, equipment</td><td>—</td><td>After projection</td><td>Soft</td><td>Strength projection, then a free first workout</td></tr>
+          <tr><td><a href="https://superwall.com/case-studies/cal-ai" target="_blank" rel="noopener">Cal AI</a></td><td>25+</td><td>Many, then "your plan"</td><td>—</td><td>—</td><td>Trial</td><td>Goal gap, then your plan</td></tr>
+          <tr><td><a href="https://screensdesign.com/apps/hevy-workout-tracker-gym-log/" target="_blank" rel="noopener">Hevy</a></td><td>~10</td><td>Units only</td><td>Explainer, then prompt</td><td>First</td><td>Soft; logging free</td><td>Free vs Pro table</td></tr>
+          <tr><td>GymBlock today</td><td>21</td><td>Name, body, phone habit</td><td>Explainer, then prompt</td><td>Before payment</td><td>Hard</td><td>Three features</td></tr>
+          <tr><td class="us">GymBlock proposed</td><td>21</td><td>Name, days, split, phone habit</td><td>Shows the real iOS screen</td><td>Before payment</td><td>Hard</td><td>Two paths in your numbers; Today · Day 5 · Day 7</td></tr>
+        </tbody>
+      </table></div>
+      <p class="method" style="margin-top:12px">Benchmarks behind the paywall: hard paywalls convert at a median 10.7% by day 35 against 2.1% for freemium (<a href="https://www.revenuecat.com/blog/growth/subscription-app-trends-benchmarks-2026" target="_blank" rel="noopener">RevenueCat 2026</a>). Blinkist reported +23% conversion from a Today / Day 5 / Day 7 timeline (<a href="https://uxplanet.org/how-solving-our-biggest-customer-complaint-at-blinkist-led-to-a-23-increase-in-conversion-b60ad514134b" target="_blank" rel="noopener">UX Planet</a>).</p>
+    </div>
+  </section>
+
+  <section class="txt" id="decisions">
+    <h2>Decisions for you</h2>
+    <ol class="decisions">
+      <li><b>Paywall headline.</b><span>Three options under P20; tap one to see it on the screen. All three sell the change without predicting a body result. The bars say "34 min of timed rest", not "46 min training", because rests stay rests.</span></li>
+      <li><b>Blocking page title.</b><span>Three options under P16. My pick is "Which apps should we lock while you train?"</span></li>
+      <li><b>Notification sounds.</b><span>Instagram's and TikTok's own tones belong to Meta and ByteDance, so we can't put them in the app, and these mockups can't either. Most apps use the iPhone's default alert anyway. In the app, these moments can play iOS's real system alert through Apple's sound API. Here each app gets an original glass ding of its own.</span></li>
+      <li><b>"Get jacked" on the welcome screen.</b><span>Your line, and it lands. Note that it promises a body outcome, which the project rules otherwise avoid. Say if you'd rather soften it, for example to "Train harder".</span></li>
+      <li><b>Sound on by default in onboarding?</b><span>Today sound is off by default. I'd play it in onboarding and keep it under the silent switch, so a phone on silent stays quiet.</span></li>
+      <li><b>Sulav's real signature and photo.</b><span>The mockup uses a handwriting font. A scan of his real signature, and maybe a small photo, would make the note feel real.</span></li>
+    </ol>
+  </section>
+
+  <footer class="method">
+    <p><b>How this was made.</b> Current screens are real captures from the Debug build on the iPhone 18 Pro Max simulator (iOS 27). The current paywall is the 15 Oct capture with test-store prices, and the current splits page shows three splits already added. Proposed screens are HTML mockups in the app's type, palette and sizes, using the approved brain and arm art cut from the app. The app itself is unchanged.</p>
+    <p>The welcome and mind-muscle scenes are drawn frame by frame: the arm is the app's own artwork (OnboardingArm) bent at the elbow with the same mesh formula as ArmIllustration.swift, and the brain uses the paths from BenefitScenes.swift. Sounds are synthesized in the page.</p>
+    <p>Numbers on the proposed screens use the sample answers: 2-minute rests and 4 workouts a week. 34 phone minutes × 4 × 52 ÷ 60 = 118 hours a year, which is 157 workouts of 45 minutes. The founder's note is Sulav's text, with the list items capitalized.</p>
+  </footer>
+</div>
+
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Enlarged screen">
+  <button type="button" class="x" id="lb-x" aria-label="Close">✕</button>
+  <button type="button" class="pv" id="lb-p" aria-label="Previous screen">‹</button>
+  <button type="button" class="nx" id="lb-n" aria-label="Next screen">›</button>
+  <div class="lb-in" id="lb-in"></div>
+</div>
+
+<script>
+(() => {
+const P = n => `calc(${n} * var(--pt))`;
+const SB = `<div class="sb"><span>9:41</span><svg viewBox="0 0 78 13" fill="#141417"><rect x="0" y="8" width="3.2" height="5" rx="1"/><rect x="5" y="5.5" width="3.2" height="7.5" rx="1"/><rect x="10" y="3" width="3.2" height="10" rx="1"/><rect x="15" y="0" width="3.2" height="13" rx="1"/><path d="M33 12.6l-2.3-2.4a3.3 3.3 0 0 1 4.6 0zM28.6 8.1a6.4 6.4 0 0 1 8.8 0l1.6-1.6a8.7 8.7 0 0 0-12 0zM25.4 4.9a11 11 0 0 1 15.2 0l1.6-1.6a13.3 13.3 0 0 0-18.4 0z"/><rect x="49" y="0.5" width="25" height="12" rx="3.6" fill="none" stroke="#141417" stroke-opacity=".4"/><rect x="51" y="2.5" width="21" height="8" rx="2"/><rect x="75.3" y="4.3" width="1.6" height="4.4" rx=".8" fill-opacity=".4"/></svg></div>`;
+const BACK = `<svg viewBox="0 0 9 15" fill="none" stroke="#141417" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 1.5 1.5 7.5l6 6"/></svg>`;
+const TB = (p, back = true) => `<div class="tb"><div class="bk${back ? '' : ' ghost'}">${BACK}</div><div class="pg"><i style="width:${p}%"></i></div></div>`;
+const CKS = `<svg viewBox="0 0 12 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 5.2 4.6 8.2 10.5 1.8"/></svg>`;
+const CK = `<span class="ck">${CKS}</span>`;
+const ACT = (label, link = '&nbsp;', gate) => `<div class="acts${gate != null ? ' a-fade' : ''}"${gate != null ? ` style="--d:${gate}s"` : ''}><div class="btn">${label}</div><div class="lk">${link}</div></div><div class="home"></div>`;
+const scr = (inner, scene) => `<div class="scr"${scene ? ` data-scene="${scene}"` : ''}>${SB}${inner}</div>`;
+const ARROW = k => `<svg class="wl-ar" viewBox="0 0 64 24" data-k="${k}"><path pathLength="1" d="M10 12H52"/><path pathLength="1" d="M44 4.5 52.5 12 44 19.5"/></svg>`;
+const glyph = (g, c) => ({
+  cam: `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.2"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="${c}" stroke="none"/></svg>`,
+  note: `<svg viewBox="0 0 24 24" fill="${c}"><path d="M9 18a3 3 0 1 1-2-2.8V5l10-2v11a3 3 0 1 1-2-2.8V6.4L9 7.6z"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="${c}"><path d="M8 5.5v13l10.5-6.5z"/></svg>`,
+  msg: `<svg viewBox="0 0 24 24" fill="${c}"><path d="M12 4c5 0 9 3.2 9 7.3s-4 7.2-9 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.6C4.1 15.1 3 13.3 3 11.3 3 7.2 7 4 12 4z"/></svg>`
+})[g];
+const KB = s => `<img src="img/kb.png" alt="" style="width:${P(s)};height:auto">`;
+const ico = {
+  cam: `<svg viewBox="0 0 24 24" fill="none" stroke="#141417" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.5"/></svg>`,
+  note: `<svg viewBox="0 0 24 24" fill="#141417"><path d="M9 18a3 3 0 1 1-2-2.8V5l10-2v11a3 3 0 1 1-2-2.8V6.4L9 7.6z"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="#141417"><path d="M8 5.5v13l10.5-6.5z"/></svg>`,
+  msg: `<svg viewBox="0 0 24 24" fill="#141417"><path d="M12 4c5 0 9 3.2 9 7.3s-4 7.2-9 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.6C4.1 15.1 3 13.3 3 11.3 3 7.2 7 4 12 4z"/></svg>`,
+  apple: `<svg viewBox="0 0 17 20" fill="currentColor"><path d="M14.1 10.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9-.8 0-2-.9-3.4-.9C3.6 4.8 2 5.8 1 7.4c-1.9 3.3-.5 8.2 1.4 10.9.9 1.3 2 2.8 3.4 2.7 1.4-.1 1.9-.9 3.5-.9s2.1.9 3.5.9c1.5 0 2.4-1.3 3.3-2.7 1-1.5 1.5-3 1.5-3-.1 0-2.9-1.1-2.9-4.3zM11.4 3c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.2.1 2.3-.6 3-1.5z"/></svg>`,
+  g: `<svg viewBox="0 0 20 20"><path fill="#4285F4" d="M19.6 10.2c0-.7-.1-1.4-.2-2H10v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z"/><path fill="#34A853" d="M10 20c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H1.1v2.6A10 10 0 0 0 10 20z"/><path fill="#FBBC05" d="M4.4 12a6 6 0 0 1 0-3.9V5.5H1.1a10 10 0 0 0 0 9z"/><path fill="#EA4335" d="M10 4c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 1.1 5.5l3.3 2.6C5.2 5.8 7.4 4 10 4z"/></svg>`,
+  bell: `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>`
+};
+const NT = (icon, app, text, cls = '', st = '') => `<div class="nt glass ${cls}" style="${st}"><span class="nt-i">${ico[icon]}</span><div style="min-width:0;flex:1"><b>${app}</b><span>${text}</span></div></div>`;
+
+// ---------- Pump charts (P12/P13) ----------
+function pump(segs, building) {
+  const lines = segs.map(([x0,y0,x1,y1,t0,t1,cls]) => `<line class="seg-l ${cls || ''} a-draw" pathLength="1" x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" style="--d:${t0}s;--du:${(t1 - t0).toFixed(2)}s"/>`).join('');
+  const last = segs[segs.length - 1];
+  const rests = building
+    ? [[70,'1:30',.4],[135,'1:30',1],[200,'1:30',1.6],[265,'1:30',2.2]]
+    : [[105,'Rest 3:40',.5],[235,'Rest 3:40',1.85]];
+  return `<svg class="chart" viewBox="0 0 360 236">
+    <line class="ax" x1="20" y1="10" x2="20" y2="200"/><line class="ax" x1="20" y1="200" x2="352" y2="200"/>
+    <text class="t" x="10" y="110" transform="rotate(-90 10 110)" text-anchor="middle">Pump</text>
+    <text class="t" x="352" y="222" text-anchor="end">Time →</text>
+    <line class="gl" x1="20" y1="30" x2="352" y2="30" ${building ? 'style="stroke:#0F9A6B"' : ''}/>
+    <text class="tb a-fade" x="352" y="22" text-anchor="end" style="--d:${building ? 2.8 : 3.5}s${building ? ';fill:#0F9A6B' : ''}">FULL PUMP <tspan class="t" style="${building ? 'fill:#0F9A6B' : ''}">${building ? 'reached' : 'never reached'}</tspan></text>
+    ${rests.map(([x,l,d]) => `<text class="t a-fade" x="${x}" y="216" text-anchor="middle" style="--d:${d}s">${l}</text>`).join('')}
+    ${lines}
+    <circle class="a-pop" cx="${last[2]}" cy="${last[3]}" r="5" fill="${building ? '#0F9A6B' : '#6B6964'}" style="--d:${last[5]}s"/>
+  </svg>`;
+}
+const PUMP_A = [[20,190,60,120,0,.45],[60,120,150,185,.45,1.35],[150,185,190,118,1.35,1.8],[190,118,280,184,1.8,2.7],[280,184,320,116,2.7,3.15],[320,116,350,150,3.15,3.5]];
+const PUMP_B = [[20,190,55,160,0,.35,'ink'],[55,160,85,166,.35,.6],[85,166,120,128,.6,.95,'ink'],[120,128,150,134,.95,1.2],[150,134,185,96,1.2,1.55,'ink'],[185,96,215,102,1.55,1.8],[215,102,250,64,1.8,2.15,'ink'],[250,64,280,70,2.15,2.4],[280,70,315,30,2.4,2.75,'ink'],[315,30,350,30,2.75,3,'em']];
+
+// ---------- Log (P14/P15) ----------
+const LOG = [['W1','20×8'],['W2','20×10'],['W3','20×9'],['W4','22.5×10'],['Today','25×10']];
+
+// ---------- Mock screens ----------
+const mocks = {
+  welcome: scr(`<div class="tb" style="justify-content:center"><div class="wm">${KB(16)}GymBlock</div></div>
+    <div class="stage wl">
+      <div class="wl-row"><span class="wl-a" data-k="a1">Stop<br>scrolling</span>${ARROW('r1')}<span class="wl-b" data-k="b1">Stay<br>focused</span></div>
+      <div class="wl-art">
+        <div class="ip" data-k="phone">
+          <div class="ip-scr">
+            <div class="ip-date">Friday 17 October</div>
+            <div class="ip-time">9:41</div>
+            ${[['#E56A8A','cam','Instagram','maya.lifts liked your photo'],['#1B1B1E','note','TikTok','Videos you might like'],['#E5483B','play','YouTube','New: 10 min ab burner'],['#34C759','msg','Messages','You coming to the gym?']].map(([c,g,app,txt],i)=>`<div class="ip-n" data-k="n${i}"><span class="ip-ic" style="background:${c}">${glyph(g,'#fff')}</span><div style="flex:1;min-width:0"><b>${app}<i>now</i></b><span>${txt}</span></div></div>`).join('')}
+            <div class="ip-dim" data-k="dim"></div>
+            <div class="ip-lock" data-k="lock">Locked until you finish</div>
+          </div>
+          <div class="ip-island"></div>
+          <img class="ip-kb" data-k="kb" src="img/kb.png" alt="">
+        </div>
+        <div class="wl-arm"><div class="wl-glow" data-k="glow"></div><canvas data-k="arm"></canvas></div>
+      </div>
+      <div class="wl-row"><span class="wl-a" data-k="a2">Record<br>everything</span>${ARROW('r2')}<span class="wl-b" data-k="b2">Get<br>jacked</span></div>
+    </div>
+    <div class="acts" data-k="acts"><div class="btn">Get started</div><div class="lk">I already have an account</div></div><div class="home"></div>`, 'welcome'),
+
+  founder: scr(`${TB(5)}
+    <div class="stage" style="justify-content:flex-start;align-items:stretch;gap:${P(16)};padding-top:${P(6)}">
+      <div class="fn-q">“Perfection is lots of little things done right.”</div>
+      <div class="fn-card glass">
+        <p>Hey friend,</p>
+        <p>I built GymBlock for people who resonate with the quote above.</p>
+        <p>In the gym, we grow by being honest &amp; consistent. That means the sets, and it also means the minutes in between. Mine kept slipping into my phone. One quick scroll turned into ten, and by the time I picked the weight back up, my focus and my pump were gone.</p>
+        <p>GymBlock does two things:</p>
+        <ol><li>Locks the apps that pull you away while you train.</li><li>Keeps an honest record of every set. You’ll always know what you actually did last time, and what to beat today.</li></ol>
+        <p>Little things, done right, every session.</p>
+        <div><span class="fn-sig">– Sulav</span></div>
+        <div class="fn-role">Founder, GymBlock</div>
+      </div>
+    </div>
+    ${ACT('Continue')}`),
+
+  name: scr(`${TB(10)}
+    <div class="hl">First, what should we call you?</div>
+    <div class="stage">
+      <div class="glass w100" style="height:${P(58)};display:grid;place-items:center;font-size:${P(22)};font-weight:600">Sirish<span style="display:inline-block;width:${P(2)};height:${P(24)};background:#0F9A6B;margin-left:${P(1)};vertical-align:middle"></span></div>
+    </div>
+    <div class="cap">It's how we'll greet you in the app.</div>
+    ${ACT('Continue')}`),
+
+  days: scr(`${TB(14)}
+    <div class="hl">Nice to meet you, Sirish. How many days a week do you lift?</div>
+    <div class="stage">
+      <div style="display:flex;gap:${P(10)}">
+        ${[2,3,4,5,'6+'].map(n => `<div class="glass" style="width:${P(66)};height:${P(66)};border-radius:50%;display:grid;place-items:center;font-size:${P(24)};font-weight:700;position:relative;${n===4?`background:#fff;box-shadow:0 0 0 ${P(1.6)} #141417,0 ${P(8)} ${P(22)} rgba(20,20,23,.12)`:''}">${n}${n===4?`<span style="position:absolute;top:${P(-4)};right:${P(-4)}">${CK}</span>`:''}</div>`).join('')}
+      </div>
+      <div style="display:flex;gap:${P(14)};margin-top:${P(22)}">
+        ${['M','T','W','T','F','S','S'].map((d,i)=>`<div style="display:grid;gap:${P(6)};justify-items:center;font-size:${P(12)};color:#6B6964"><span style="width:${P(12)};height:${P(12)};border-radius:50%;background:${[0,1,3,4].includes(i)?'#141417':'rgba(20,20,23,.12)'}"></span>${d}</div>`).join('')}
+      </div>
+    </div>
+    <div class="cap">We'll set your weekly goal from this.</div>
+    ${ACT('Continue')}`),
+
+  split: scr(`${TB(97, false)}
+    <div class="hl">You're in. How do you usually split your training?</div>
+    <div class="stage" style="justify-content:flex-end">
+      <div class="glass w100" style="padding:${P(4)} 0">
+        <div class="row" style="font-size:${P(13)};color:#6B6964;padding-bottom:${P(6)}">We'll set up</div>
+        ${[['Push','Bench press, Incline bench press, Dumbbell shoulder press'],['Pull','Pull-up, Barbell row, Lat pulldown'],['Legs','Squat, Romanian deadlift, Leg press']].map(([n,e])=>`<div class="row" style="padding-block:${P(9)}"><b style="font-weight:650;width:${P(52)};flex:none">${n}</b><span style="color:#6B6964;font-size:${P(13)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e}</span><span class="v mono" style="font-size:${P(13)}">6</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="acts" style="padding-bottom:0">
+      <div class="opts">
+        <div class="opt on">Push · Pull · Legs ${CK}</div>
+        <div class="opt glass">Upper · Lower</div>
+        <div class="opt glass">Full body</div>
+        <div class="opt glass">One muscle a day</div>
+        <div class="opt glass">No fixed plan</div>
+      </div>
+    </div>
+    <div class="cap">Change them anytime.</div>
+    ${ACT('Continue')}`),
+
+  habit: scr(`${TB(24)}
+    <div class="hl">Be honest. Do you check your phone between sets?</div>
+    <div class="stage" style="gap:${P(8)}">
+      ${NT('play','YouTube','New: 10 min ab burner','a-drop w100','--d:.3s')}
+      ${NT('note','TikTok','Videos you might like','a-drop w100','--d:.95s')}
+      ${NT('msg','Messages','You coming to the gym?','a-drop w100','--d:1.6s')}
+    </div>
+    <div class="acts" style="padding-bottom:0">
+      <div class="opts">
+        <div class="opt on">Every rest ${CK}</div>
+        <div class="opt glass">Sometimes</div>
+        <div class="opt glass">Rarely</div>
+      </div>
+    </div>
+    <div class="cap">No judgement. Mine was every rest.</div>
+    ${ACT('Continue')}`),
+
+  minutes: scr(`${TB(29)}
+    <div class="hl">Roughly how long, each rest?</div>
+    <div class="stage">
+      <div style="width:100%;position:relative;display:grid;gap:${P(6)};text-align:center">
+        <div style="position:absolute;left:${P(40)};right:${P(40)};top:50%;height:${P(44)};margin-top:${P(-22)};border-radius:${P(12)};background:rgba(20,20,23,.06)"></div>
+        ${[['1 min',.18,14],['1.5 min',.45,19],['2 min',1,23],['2.5 min',.45,19],['3 min',.18,14]].map(([t,o,s])=>`<div style="position:relative;font-size:${P(s)};font-weight:${o===1?650:500};opacity:${o};height:${P(36)};line-height:${P(36)}">${t}</div>`).join('')}
+      </div>
+    </div>
+    <div class="cap">Your best guess is fine.</div>
+    ${ACT('Continue')}`),
+
+  ring: scr(`${TB(34)}
+    <div class="hl">Sirish, here's where your workout time goes.</div>
+    <div class="stage">
+      <div style="position:relative;width:${P(220)};height:${P(220)}">
+        <svg viewBox="0 0 100 100" style="width:100%;height:100%;transform:rotate(-90deg)">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(20,20,23,.06)" stroke-width="8"/>
+          <circle class="a-arc" pathLength="1" cx="50" cy="50" r="42" fill="none" stroke="#DB4036" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:.725 1;--d:.3s;--du:1.8s"/>
+          <circle class="a-arc" pathLength="1" cx="50" cy="50" r="42" fill="none" stroke="#0F9A6B" stroke-width="8" stroke-linecap="round" style="stroke-dasharray:.235 1;stroke-dashoffset:-.752;--d:2.15s;--du:.5s"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:grid;place-content:center;text-align:center"><span data-count="0,34,.3,1.8" style="font-size:${P(48)};font-weight:700;letter-spacing:-.03em">34</span><span style="font-size:${P(13)};color:#6B6964;margin-top:${P(-2)}">min on your phone</span></div>
+      </div>
+      <div class="glass a-rise" style="display:flex;padding:${P(10)} ${P(6)};--d:2.5s">
+        <div style="padding:0 ${P(18)};display:grid;gap:${P(2)}"><span style="font-size:${P(12)};color:#6B6964"><span style="color:#DB4036">●</span> On your phone</span><b class="mono" style="font-size:${P(17)}">34 min</b></div>
+        <div style="padding:0 ${P(18)};display:grid;gap:${P(2)};border-left:${P(1)} solid rgba(20,20,23,.08)"><span style="font-size:${P(12)};color:#6B6964"><span style="color:#0F9A6B">●</span> Training</span><b class="mono" style="font-size:${P(17)}">12 min</b></div>
+      </div>
+    </div>
+    <div class="cap">A typical workout: 6 exercises × 3 sets, with your 2-minute rests.</div>
+    ${ACT('Continue', '&nbsp;', 3)}`),
+
+  year: scr(`${TB(39)}
+    <div class="hl">At your 4 workouts a week, that's 118 hours a year.</div>
+    <div class="stage" style="gap:${P(18)}">
+      <div style="display:grid;grid-template-columns:repeat(13, ${P(14)});gap:${P(9)}">
+        ${Array.from({length:157}, (_, i) => `<span class="a-pop" style="width:${P(14)};height:${P(14)};border-radius:50%;background:#DB4036;--d:${(.3 + i * .0145).toFixed(3)}s;--du:.18s"></span>`).join('')}
+      </div>
+      <div style="text-align:center" class="a-rise" data-x="" ><div style="font-size:${P(23)};font-weight:700">= 157 workouts</div><div style="font-size:${P(13)};color:#6B6964">Each dot is one 45-minute workout.</div></div>
+    </div>
+    <div class="cap">Your own numbers, multiplied out.</div>
+    ${ACT('Continue', '&nbsp;', 3.1)}`),
+
+  mindA: scr(`${TB(44)}
+    <div class="hl">Scrolling weakens your mind-muscle connection.</div>
+    <div class="stage" style="position:relative"><canvas class="scene" data-k="cv"></canvas></div>
+    <div class="cap">Illustrative, not a measurement.</div>
+    <div class="acts" data-k="acts"><div class="btn">Continue</div><div class="lk">&nbsp;</div></div><div class="home"></div>`, 'mindA'),
+
+  mindB: scr(`${TB(49)}
+    <div class="hl">Put it away. Feel every rep.</div>
+    <div class="stage" style="position:relative"><canvas class="scene" data-k="cv"></canvas></div>
+    <div class="cap">Illustrative, not a measurement.</div>
+    <div class="acts" data-k="acts"><div class="btn">Continue</div><div class="lk">&nbsp;</div></div><div class="home"></div>`, 'mindB'),
+
+  pumpA: scr(`${TB(54)}
+    <div class="hl">Long scrolls between sets? The pump never builds.</div>
+    <div class="stage">${pump(PUMP_A, false)}<img class="art nm" src="img/arm-grey.jpg" alt="" style="width:${P(130)}"></div>
+    <div class="cap">Illustrative, not a measurement.</div>
+    ${ACT('Continue', '&nbsp;', 3.8)}`),
+
+  pumpB: scr(`${TB(59)}
+    <div class="hl">Rest on time, and it keeps building.</div>
+    <div class="stage">${pump(PUMP_B, true)}<div style="position:relative;width:${P(150)};height:${P(126)}"><img class="art nm a-flex" src="img/arm-green.jpg" alt="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:${P(150)};--d:2.75s;--du:.6s"></div></div>
+    <div class="cap">Illustrative, not a measurement.</div>
+    ${ACT('Continue', '&nbsp;', 3.6)}`),
+
+  logA: scr(`${TB(64)}
+    <div class="hl">Quick: what did you bench last week?</div>
+    <div class="stage">
+      <div style="display:grid;grid-template-columns:repeat(5, 1fr);width:100%;text-align:center;row-gap:${P(18)}">
+        ${LOG.map(([w, v], i) => i < 4
+          ? `<div style="position:relative;height:${P(30)};font-size:${P(19)};font-weight:650"><span class="abs" style="inset:0;opacity:0" data-anim="a-out" data-d="${(.5 + i * .45).toFixed(2)}" data-du=".45">${v}</span><span class="abs a-fade" style="inset:0;color:#6B6964;--d:${(.5 + i * .45).toFixed(2)}s;--du:.45s">?</span></div>`
+          : `<div style="height:${P(30)};font-size:${P(19)};font-weight:700">${v}</div>`).join('')}
+        ${LOG.map(([w]) => `<div style="font-size:${P(12)};color:#6B6964">${w}</div>`).join('')}
+      </div>
+    </div>
+    <div class="cap">An example log, not your data.</div>
+    ${ACT('Continue', '&nbsp;', 2.9)}`),
+
+  logB: scr(`${TB(69)}
+    <div class="hl">Your log remembers. Every set.</div>
+    <div class="stage">
+      <svg class="chart" viewBox="0 0 360 240">
+        <line class="ax" x1="20" y1="20" x2="20" y2="200"/><line class="ax" x1="20" y1="200" x2="352" y2="200"/>
+        <text class="t" x="10" y="110" transform="rotate(-90 10 110)" text-anchor="middle">Weight × reps</text>
+        ${[[45,170],[115,120],[185,140],[255,85],[325,45]].map(([x,y],i,a) => {
+          const seg = i ? `<line class="seg-l ink a-draw" pathLength="1" x1="${a[i-1][0]}" y1="${a[i-1][1]}" x2="${x}" y2="${y}" style="--d:${(.3 + (i-1) * .5).toFixed(2)}s;--du:.5s"/>` : '';
+          const d = (.3 + i * .5 - (i ? 0 : 0)).toFixed(2);
+          const last = i === 4;
+          return `${seg}<circle class="a-pop" cx="${x}" cy="${y}" r="${last ? 6 : 4.5}" fill="${last ? '#0F9A6B' : '#fff'}" stroke="${last ? '#0F9A6B' : '#141417'}" stroke-width="2" style="--d:${d}s"/>
+            <text class="tb a-fade" x="${x}" y="${y - 12}" text-anchor="middle" style="--d:${d}s">${LOG[i][1]}</text>
+            <text class="t" x="${x}" y="218" text-anchor="middle">${LOG[i][0]}</text>`;
+        }).join('')}
+        <text class="tb a-pop" x="325" y="18" text-anchor="middle" style="fill:#0F9A6B;font-size:12px;--d:2.6s">+5 kg</text>
+      </svg>
+    </div>
+    <div class="cap">An example log, not your data.</div>
+    ${ACT('Continue', '&nbsp;', 3.2)}`),
+
+  block: scr(`${TB(76)}
+    <div class="hl" data-alt="block">Which apps should we lock while you train?</div>
+    <div class="stage">
+      <div class="ey a-fade" style="--d:.1s">Here's what you'll see mid-workout</div>
+      <div class="glass a-shield" style="width:${P(300)};padding:${P(30)} ${P(24)} ${P(20)};display:grid;justify-items:center;gap:${P(10)};text-align:center;border-radius:${P(30)};background:rgba(255,255,255,.84);--d:.3s;--du:.6s">
+        <span class="a-click" style="display:inline-block;--d:.95s">${KB(54)}</span>
+        <div style="font-size:${P(21)};font-weight:700;margin-top:${P(6)}">You’re mid-workout.</div>
+        <div style="font-size:${P(14.5)};color:#6B6964;line-height:1.35">Instagram opens when you finish your workout in GymBlock.</div>
+        <div class="btn" style="width:100%;height:${P(44)};font-size:${P(15)};margin-top:${P(10)}">Back to training</div>
+      </div>
+      <div class="a-rise" style="display:flex;gap:${P(10)};--d:1.4s">
+        ${['+','','',''].map(t=>`<div class="glass" style="width:${P(46)};height:${P(46)};border-radius:${P(12)};display:grid;place-items:center;font-size:${P(22)}">${t}</div>`).join('')}
+      </div>
+    </div>
+    <div class="cap">Uses Apple's Screen Time. Ending your workout lifts it.</div>
+    ${ACT('Choose apps')}`),
+
+  alerts: scr(`${TB(82)}
+    <div class="hl">We'll buzz you when rest is up.</div>
+    <div class="stage">
+      <div class="ey">On your Lock Screen</div>
+      <div style="width:${P(340)};background:#1B1C1F;color:#fff;border-radius:${P(24)};padding:${P(16)} ${P(18)};display:grid;gap:${P(10)};box-shadow:0 ${P(10)} ${P(26)} rgba(20,20,23,.22)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span data-swap="Rest · Push|Rest's up · Push|2.7" style="font-size:${P(14)};color:rgba(255,255,255,.6)">Rest's up · Push</span><span class="mono" data-countdown="5,1.0,2.6" style="font-size:${P(30)};font-weight:500">0:00</span></div>
+        <div style="height:${P(6)};border-radius:9px;background:rgba(255,255,255,.14)"><div class="a-bar" style="width:100%;height:100%;border-radius:9px;background:#2FBF85;--d:.2s;--du:2.5s"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:${P(14)}">Next: Bench press · set 3 of 3</span><span style="font-size:${P(13)};font-weight:600;background:rgba(255,255,255,.14);padding:${P(5)} ${P(12)};border-radius:99px">Start set</span></div>
+      </div>
+      <div class="glass a-drop" style="width:${P(340)};display:flex;gap:${P(12)};align-items:center;padding:${P(12)} ${P(14)};border-radius:${P(20)};--d:2.75s">
+        <span style="width:${P(36)};height:${P(36)};border-radius:${P(9)};background:#0F9A6B;display:grid;place-items:center;flex:none"><span style="width:60%;display:grid">${ico.bell}</span></span>
+        <div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;font-size:${P(14)}"><b>GymBlock</b><span style="color:#6B6964;font-size:${P(12)}">now</span></div><div style="font-size:${P(14)};color:#3a3a3d">Rest's up. Time for your next set.</div></div>
+      </div>
+    </div>
+    <div class="cap">One buzz, right when it's time. Change it anytime.</div>
+    ${ACT('Continue', '&nbsp;', 3.2)}`),
+
+  plan: scr(`${TB(88)}
+    <div class="hl">Sirish, here's your plan.</div>
+    <div class="stage" style="justify-content:center">
+      <div class="pl">
+        ${[['Training','4 days a week'],['While you train','3 apps locked'],['Between sets','2-minute rests, then a buzz']].map(([k,v],i)=>`<div class="pl-r a-rise" style="--d:${(.15 + i * .2).toFixed(2)}s"><small>${k}</small><b>${v}</b></div>`).join('')}
+      </div>
+      <div class="a-fade" style="align-self:flex-end;display:flex;align-items:center;gap:${P(8)};font-size:${P(13)};color:#6B6964;--d:.95s">Weights in <span class="tabs"><span class="on">kg</span><span>lb</span></span></div>
+    </div>
+    <div class="cap">Hold the button until it fills.</div>
+    <div class="acts"><div class="btn"><span class="hold-fill"></span><span class="hold-l">Hold to commit</span><span class="hold-done"><span style="width:${P(18)};display:grid">${CKS}</span>Committed</span></div><div class="lk">&nbsp;</div></div><div class="home"></div>`),
+
+  account: scr(`${TB(94)}
+    <div class="hl">Let's save your plan to your account.</div>
+    <div class="stage" style="gap:${P(22)}">
+      ${KB(64)}
+      <div style="display:grid;gap:${P(10)};text-align:center;font-size:${P(16)};color:#3a3a3d"><span>Every set backed up as you train.</span><span>The same log on any iPhone.</span><span>Private. Only you can read it.</span></div>
+    </div>
+    <div class="cap">Already have an account? Sign in instead.</div>
+    <div class="acts"><div class="btn">${ico.apple} Sign up with Apple</div><div class="btn glass" style="height:${P(44)};font-size:${P(15)}"><span style="width:${P(16)};display:inline-grid">${ico.g}</span> Sign up with Google</div></div><div class="home"></div>`),
+
+  pay: scr(`
+    <div style="display:flex;align-items:center;gap:${P(8)};padding:${P(16)} ${P(28)} 0;font-size:${P(14)};font-weight:650">${KB(17)}GymBlock Pro</div>
+    <div class="hl left" data-alt="pay" style="padding-top:${P(10)};min-height:${P(2 * 1.1 * 33 + 10)}">Become the lifter who's all in, every set.</div>
+    <div class="stage" style="align-items:stretch;justify-content:flex-start;gap:${P(22)};padding:${P(22)} ${P(28)} ${P(8)}">
+      <div style="display:grid;gap:${P(10)}">
+        <div style="font-size:${P(13)};color:#6B6964">Your 46-minute workout</div>
+        ${[['Today', [[34,'#DB4036','34 min on your phone'],[12,'#0F9A6B','']], '#6B6964'], ['With GymBlock', [[34,'rgba(20,20,23,.12)','34 min of timed rest'],[12,'#0F9A6B','']], '#141417']].map(([l, segs, c]) => `
+          <div style="display:grid;grid-template-columns:${P(118)} 1fr;align-items:center;gap:${P(10)}">
+            <span style="font-size:${P(14)};font-weight:650;color:${c}">${l}</span>
+            <div style="display:flex;height:${P(28)};border-radius:${P(9)};overflow:hidden;gap:${P(2)}">${segs.map(([m, col, t]) => `<div style="flex:${m};background:${col};display:flex;align-items:center;padding-left:${P(9)};font-size:${P(11.5)};font-weight:650;color:${col.startsWith('rgba') ? '#3E3C39' : '#fff'};white-space:nowrap;overflow:hidden">${t}</div>`).join('')}</div>
+          </div>`).join('')}
+        <div style="display:flex;gap:${P(14)};font-size:${P(11.5)};color:#6B6964;padding-left:${P(128)}"><span><span style="color:#0F9A6B">●</span> Lifting, 12 min</span><span>Phone: 0 min</span></div>
+      </div>
+      <div style="display:grid;gap:${P(11)}">
+        ${['Apps locked from your first set to your last', 'A buzz the moment rest is up', 'Every set saved, and what to beat next time'].map(t => `<div style="display:flex;gap:${P(10)};align-items:center;font-size:${P(15.5)}">${CK}${t}</div>`).join('')}
+      </div>
+      <div style="position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:${P(4)}">
+        <i style="position:absolute;top:${P(5)};left:${P(5)};right:${P(5)};height:${P(2)};background:linear-gradient(90deg,#0F9A6B 0 50%,rgba(20,20,23,.14) 50%)"></i>
+        ${[['Today','Full access, $0','start'],['Day 5','We remind you','center'],['Day 7','Plan starts','end']].map(([d,t,al],i)=>`<div style="display:grid;justify-items:${al};gap:${P(3)};position:relative;text-align:${al === 'start' ? 'left' : al === 'end' ? 'right' : 'center'}"><span style="width:${P(12)};height:${P(12)};border-radius:50%;background:${i < 2 ? '#0F9A6B' : '#F5F3EF'};box-shadow:0 0 0 ${P(2)} ${i < 2 ? '#0F9A6B' : 'rgba(20,20,23,.25)'}"></span><b style="font-size:${P(13.5)};margin-top:${P(3)}">${d}</b><span style="font-size:${P(12)};color:#6B6964">${t}</span></div>`).join('')}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:${P(12)};margin-top:auto">
+        <div style="position:relative;border-radius:${P(18)};padding:${P(16)} ${P(16)} ${P(14)};background:#fff;box-shadow:0 0 0 ${P(2)} #141417, 0 ${P(10)} ${P(24)} rgba(20,20,23,.1)">
+          <span style="position:absolute;top:${P(-10)};right:${P(12)};background:#0F9A6B;color:#fff;font-size:${P(11)};font-weight:700;padding:${P(3)} ${P(9)};border-radius:99px">7 days free</span>
+          <div style="font-size:${P(14)};font-weight:650">Yearly</div>
+          <div style="font-size:${P(26)};font-weight:750;letter-spacing:-.03em;margin-top:${P(6)}">$4.17<span style="font-size:${P(14)};font-weight:500;color:#6B6964">/mo</span></div>
+          <div style="font-size:${P(12.5)};color:#6B6964">$49.99 billed yearly</div>
+        </div>
+        <div class="glass" style="border-radius:${P(18)};padding:${P(16)} ${P(16)} ${P(14)}">
+          <div style="font-size:${P(14)};font-weight:650;color:#3E3C39">Monthly</div>
+          <div style="font-size:${P(26)};font-weight:750;letter-spacing:-.03em;margin-top:${P(6)};color:#3E3C39">$4.99<span style="font-size:${P(14)};font-weight:500;color:#6B6964">/mo</span></div>
+          <div style="font-size:${P(12.5)};color:#6B6964">Billed monthly</div>
+        </div>
+      </div>
+    </div>
+    <div class="cap">No payment due today. Cancel anytime.</div>
+    <div class="acts"><div class="btn">Start 7-day free trial</div><div class="lk"><span>Restore</span><span>Terms</span><span>Privacy</span></div></div><div class="home"></div>`),
+
+  first: scr(`${TB(100, false)}
+    <div class="hl">Ready? Your first workout is Push.</div>
+    <div class="stage">
+      <div class="glass w100" style="padding:${P(2)} 0">
+        <div class="row" style="font-size:${P(13)};color:#6B6964">Push · 6 exercises<span class="v" style="color:#141417;font-weight:600;font-size:${P(14)}">Edit</span></div>
+        ${['Bench press','Incline bench press','Dumbbell shoulder press','Dumbbell lateral raise','Cable triceps pushdown','Dip'].map(e=>`<div class="row" style="padding-block:${P(11)}">${e}<span class="v mono" style="font-size:${P(13)}">3 sets</span></div>`).join('')}
+      </div>
+      <div class="ey" style="font-size:${P(13)}">Then Pull, then Legs. Home always shows what's next.</div>
+    </div>
+    <div class="cap">Starting it locks your 3 apps until you finish.</div>
+    ${ACT('Start workout', "I'm not at the gym yet")}`)
+};
+
+// ---------- Haptic + sound scores ----------
+// h: ['T', t, intensity, sharpness] taps · ['C', t, dur, i0, i1, sharpness] continuous
+// s: [t, sound, options]
+const range = (n, f) => Array.from({ length: n }, (_, k) => f(k));
+const scores = {
+  welcome: { dur: 4.3,
+    h: [['T',.35,.6,.55],['T',.44,.4,.5],['T',.75,.6,.55],['T',.84,.4,.5],['T',1.1,.62,.55],['T',1.19,.42,.5],['T',1.4,.64,.55],['T',1.49,.44,.5],['C',1.75,.38,.05,.35,.2],['T',2.13,1,.12],['T',2.3,.35,.2],['T',2.4,.3,.85],['C',2.55,.5,.2,.95,.35],['T',3.05,1,.5],['T',3.22,.6,.65]],
+    s: [[.35,'ding',{app:'ig'}],[.75,'ding',{app:'tt'}],[1.1,'ding',{app:'yt'}],[1.4,'ding',{app:'msg'}],[1.75,'whoosh',{d:.38,f0:2400,f1:350,v:.07}],[2.13,'thud',{v:.6}],[2.15,'clack',{v:.2}],[2.55,'swell',{d:.5}],[3.05,'chime',{notes:[523.3,784,1046.5],gap:.05,v:.07}],[3.22,'tick',{f:1568,v:.06}]],
+    hap: 'a notification double tap for each app, a rumble that grows as the kettlebell falls, one heavy dull impact when it lands, a crisp click as the phone locks, then a swell through the flex that peaks in a firm hit.',
+    snd: 'a ding per app, a falling whoosh, a low clunk with a metal click, a low swell under the flex, a bright three-note chime.' },
+  habit: { dur: 2.4,
+    h: [['T',.3,.5,.55],['T',.39,.33,.5],['T',.95,.6,.55],['T',1.04,.4,.5],['T',1.6,.72,.55],['T',1.69,.48,.5]],
+    s: [[.3,'ding',{app:'yt',v:.08}],[.95,'ding',{app:'tt',v:.1}],[1.6,'ding',{app:'msg',v:.12}]],
+    hap: 'the iOS double tap for each notification, a little stronger each time, like they are creeping closer.',
+    snd: 'a notification ding per app, each a little louder.' },
+  ring: { dur: 3,
+    h: [...range(12, k => ['T', +(.3 + k * .15).toFixed(2), +(.2 + k * .05).toFixed(2), .45]), ['C',2.15,.5,.15,.45,.8],['T',2.66,.45,.7]],
+    s: [...range(12, k => [+(.3 + k * .15).toFixed(2), 'tick', { f: 900 + k * 70, v: .05 }]), [2.15,'sparkle',{v:.05}]],
+    hap: 'ticks that climb in strength as the red phone time fills (counting up). The green training time gets a light, fine shimmer that rises and ends on one clean tap. No heavy landing.',
+    snd: 'rising ticks for the red, then a soft high shimmer for the green. No bass.' },
+  year: { dur: 3.2,
+    h: [['C',.3,2.3,.18,.55,.85],['T',2.8,1,.3]],
+    s: [...range(38, k => [+(.3 + k * .06).toFixed(2), 'tick', { f: 1400 + k * 22, v: .028, d: .02 }]), [2.8,'thud',{v:.5}]],
+    hap: 'a fine rattle that builds as the dots fill in, like coins pouring, then one heavy hit on "157 workouts".',
+    snd: 'rapid rising ticks, then a thud.' },
+  mindA: { dur: 3.8,
+    h: [['C',.25,.62,.15,.5,.55],['T',.87,.85,.6],['C',1.05,.55,.12,.32,.45],['T',1.6,.5,.45],['C',1.85,.38,.1,.2,.35],['T',2.23,.28,.3],['C',2.65,.22,.06,.1,.25],['T',2.87,.12,.2],['T',.4,.6,.55],['T',.49,.4,.5],['T',1.2,.6,.55],['T',1.29,.4,.5]],
+    s: [[0,'pad',{d:3.6,f:110,c0:1600,c1:220,v0:.035,v1:.008,drop:.94}],[.25,'zap',{d:.65,v:.07,cut:3200}],[.87,'pluck',{f:330,v:.09}],[1.05,'zap',{d:.55,v:.05,cut:1500,f1:520}],[1.85,'zap',{d:.38,v:.035,cut:800,f1:420}],[2.65,'zap',{d:.22,v:.022,cut:450,f1:330}],[.4,'ding',{app:'ig',v:.1}],[1.2,'ding',{app:'tt',v:.1}]],
+    hap: 'each focus signal is a rising buzz down the nerve that lands as a tap in the arm. Every signal is shorter, softer and duller than the last (85%, 50%, 28%, 12%), so you feel the connection draining. Notifications cut in with their own double tap.',
+    snd: 'a warm chord that slowly loses its brightness and sags in pitch; each signal is a rising swoop, cut shorter and duller each time. Only the first reaches the arm with a plucked note. App dings interrupt.' },
+  mindB: { dur: 3.8,
+    h: [['C',.35,.6,.2,.6,.5],['T',.98,.78,.55],['C',1.2,.6,.2,.6,.5],['T',1.83,.78,.55],['C',2.05,.6,.2,.6,.5],['T',2.68,.78,.55],['C',2.8,.7,.15,.35,.8],['T',3.3,.9,.5],['T',3.42,.6,.5]],
+    s: [[0,'pad',{d:3.6,f:110,c0:300,c1:1800,v0:.02,v1:.035}],...[.35,1.2,2.05].map(t => [t,'zap',{d:.65,v:.06,cut:3400}]),...[.98,1.83,2.68].map(t => [t,'pluck',{f:330,v:.1}]),[2.8,'sparkle',{v:.04}],[3.3,'chime',{notes:[659.3,830.6,987.8],gap:.06,v:.06}]],
+    hap: 'three identical signals: the same rising buzz and the same firm landing (78%), evenly spaced like a heartbeat. Steady means steady. A fine shimmer as the nerve lights, then a double tap.',
+    snd: 'the chord opens up and gets brighter; the same swoop and the same plucked note each rep; a shimmer and a major chord to finish.' },
+  pumpA: { dur: 3.8,
+    h: [['T',0,.5,.5],['C',0,.45,.5,.5,.4],['T',1.35,.5,.5],['C',1.35,.45,.5,.5,.4],['T',2.7,.5,.5],['C',2.7,.45,.5,.5,.4],['T',3.55,.25,.2]],
+    s: [[0,'note',{f:220,v:.09,d:.45}],[1.35,'note',{f:220,v:.08,d:.45}],[2.7,'note',{f:220,v:.07,d:.45}], ...[.6,.8,1,1.2,1.95,2.15,2.35,2.55].map(t => [t,'tick',{f:2600,v:.015,d:.02}]), [3.55,'thud',{v:.14}]],
+    hap: 'each set swells to the same middle strength and never higher. The long rests get nothing at all, then a dull tap at the end: never reached.',
+    snd: 'the same note three times, faint scroll flicks in the gaps.' },
+  pumpB: { dur: 3.6,
+    h: [['C',0,.35,.2,.35,.4],['T',.05,.35,.4],['C',.6,.35,.35,.5,.5],['T',.65,.5,.5],['C',1.2,.35,.5,.65,.55],['T',1.25,.65,.55],['C',1.8,.35,.65,.8,.6],['T',1.85,.8,.6],['C',2.4,.35,.8,1,.7],['T',2.45,1,.7],['T',2.8,1,.6],['T',2.92,.7,.6]],
+    s: [[.05,'note',{f:261.6}],[.65,'note',{f:329.6}],[1.25,'note',{f:392}],[1.85,'note',{f:523.3}],[2.45,'note',{f:659.3}],[2.8,'chime',{notes:[784,1175]}]],
+    hap: 'every set lands stronger than the last, and each rest starts where the last set left off. A double hit when the pump is full.',
+    snd: 'a rising scale, one note per set, then a chime.' },
+  logA: { dur: 3,
+    h: range(4, k => ['T', +(.5 + k * .45).toFixed(2), [.5,.38,.26,.15][k], .3]),
+    s: range(4, k => [+(.5 + k * .45).toFixed(2), 'blur', { f: [659,587,523,440][k], v: [.07,.055,.04,.03][k] }]),
+    hap: 'one soft tap as each number fades, each fainter than the last.',
+    snd: 'falling notes, slightly out of tune, as if forgotten.' },
+  logB: { dur: 3.2,
+    h: [...range(5, k => ['T', +(.3 + k * .5).toFixed(2), [.35,.55,.45,.7,.9][k], .5]), ['T',2.6,1,.55],['T',2.72,.7,.55]],
+    s: [...range(5, k => [+(.3 + k * .5).toFixed(2), 'note', { f: [392,494,440,587,784][k], v: .07 }]), [2.6,'chime',{notes:[988,1319]}]],
+    hap: 'a tap on every logged session that follows the line up and down, then a double hit on "+5 kg".',
+    snd: 'notes that track the chart\'s height, a chime on the gain.' },
+  block: { dur: 2,
+    h: [['C',.3,.55,.1,.3,.2],['T',.98,.9,.95],['T',1.1,.35,.8]],
+    s: [[.3,'whoosh',{d:.55,f0:200,f1:1200,v:.06}],[.98,'clack',{v:.3}],[1.1,'tick',{f:900,v:.05}]],
+    hap: 'a soft rise as the lock screen slides up, then one crisp, sharp click as it locks.',
+    snd: 'a short air whoosh and a metal lock click.' },
+  alerts: { dur: 3.4,
+    h: [['T',1.62,.3,.5],['T',1.94,.42,.5],['T',2.26,.55,.5],['T',2.7,1,.6],['T',2.83,.8,.6]],
+    s: [[1.62,'tick',{f:1000,v:.05}],[1.94,'tick',{f:1000,v:.06}],[2.26,'tick',{f:1000,v:.07}],[2.7,'buzz'],[2.75,'chime',{notes:[880,1319],v:.08}]],
+    hap: 'three light ticks for the last seconds, each a little firmer, then the real double buzz when rest is up.',
+    snd: 'countdown ticks, then a buzz and a two-note chime.' },
+  plan: { dur: 3.4,
+    h: [...range(4, k => ['T', +(.15 + k * .2).toFixed(2), .2 + k * .05, .5]), ['C',1.4,1.45,.1,1,.45],['T',2.87,1,.4],['T',3,.6,.5]],
+    s: [...range(4, k => [+(.15 + k * .2).toFixed(2), 'tick', { f: 1100 + k * 120, v: .04 }]), [1.4,'riser',{d:1.45}],[2.87,'thud',{v:.25}],[2.87,'chime',{notes:[523,659,784],gap:.06,v:.07}]],
+    hap: 'a light tick as each line settles, then, while you hold, a hum that climbs from barely there to full. It lands in one heavy hit when it fills.',
+    snd: 'ticks, a rising tone during the hold, a resolved chord.' }
+};
+const statics = {
+  founder: 'No animation and no sound. Just the letter.',
+  name: 'Haptics: a soft tap on Continue. Sound: none while typing.',
+  days: 'Haptics: a selection tick on each number. Sound: a soft click.',
+  split: 'Haptics: a selection tick on each choice. Sound: a soft click.',
+  minutes: 'Haptics: a detent tick every half minute, like the iOS picker. Sound: a soft click per detent.',
+  account: 'Haptics: a success tap when the account is ready. Sound: the chime.',
+  pay: 'Haptics: a selection tick on a plan, a success tap on purchase. Sound: the chime on purchase.',
+  first: 'Haptics: a heavy tap on Start workout as the apps lock. Sound: the lock click.'
+};
+const alts = {
+  pay: ["Become the lifter who's all in, every set.", 'Train focused. Lift heavier. See the proof.', 'Sirish, your best sessions start today.'],
+  block: ['Which apps should we lock while you train?', 'Which apps steal your rest time?', 'What pulls you away mid-set?']
+};
+
+// ---------- Phases ----------
+const C = (id, file, name, tag, note) => ({ id, img: `img/${file}.jpg`, name, tag, note });
+const M = (id, mock, name, tag, note) => ({ id, mock, name, tag, note });
+const phases = [
+  { name: 'Hook', sum: 'The first screen now shows the change GymBlock makes. On the left is what you do, on the right is what you get, and the arm goes from grey to green as the phone locks.',
+    cur: [C('C01','01-welcome','Welcome','Change','Shows the mechanism: notifications folding under a lock.')],
+    prop: [M('P01','welcome','Welcome','Changed','<b>Drawn live at 60 fps.</b> Notifications stack on a real lock screen, the kettlebell falls and locks it, and the actual arm art bends and turns green.')] },
+  { name: 'Founder', sum: 'A note from Sulav sets the voice for everything after it.',
+    cur: [], cempty: 'No founder note today',
+    prop: [M('P02','founder','Note from Sulav','New','His words, bigger type. No animation, no sound.')] },
+  { name: 'About you', sum: 'Three body questions nothing uses are replaced by one training question that feeds the yearly number. Splits wait until after the paywall.',
+    cur: [C('C02','02-name','Name','Keep','Used in headlines.'),
+          C('C03','03-gender','Gender','Cut','<b>Never used.</b> Profile only.'),
+          C('C04','04-height','Height','Cut','<b>Never used.</b> Profile only.'),
+          C('C05','05-weight','Weight','Cut','<b>Only picks kg or lb.</b> That moves to the plan.')],
+    prop: [M('P03','name','Name','Changed','"What should we call you?"'),
+           M('P04','days','Days a week','New','<b>Feeds the hours-a-year page</b> and the weekly goal on Home.')] },
+  { name: 'Phone habit', sum: 'Same two questions, asked like a friend would.',
+    cur: [C('C06','06-scrolling','Phone between sets','Keep','Notifications creeping in.'),
+          C('C07','07-phoneMinutes','Minutes per rest','Keep','Skipped for "Rarely".')],
+    prop: [M('P06','habit','Phone between sets','Changed','Each notification plays a ding of its own. "No judgement. Mine was every rest."'),
+           M('P07','minutes','Minutes per rest','Changed','"Your best guess is fine."')] },
+  { name: 'Reveal', sum: 'Still two pages. The yearly number now uses your real training days.',
+    cur: [C('C08','08-reveal','Phone time ring','Change','A three-line headline.'),
+          C('C09','09-days','Hours a year','Change','<b>Assumes 5 workouts a week</b> for everyone.')],
+    prop: [M('P08','ring','Phone time ring','Changed','The count climbs with the red arc; the green lands with a light shimmer, no bass.'),
+           M('P09','year','Hours a year','Changed','<b>At your 4 workouts a week:</b> 118 hours, 157 dots, one per workout.')] },
+  { name: 'Why it matters', sum: 'All six story pages stay, with the approved art and headlines. Each one now has a haptic pattern that acts out its point.',
+    cur: [C('C10','10-mindA','Mind-muscle A','Keep','Approved art and headline.'),
+          C('C11','11-mindB','Mind-muscle B','Keep','Same stage, second line.'),
+          C('C12','12-restA','Pump A','Change','Same story, flat haptics.'),
+          C('C13','13-restB','Pump B','Change','Same story, flat haptics.'),
+          C('C14','14-logA','Memory A','Change','Same story, flat haptics.'),
+          C('C15','15-logB','Memory B','Change','Same story, flat haptics.')],
+    prop: [M('P10','mindA','Mind-muscle A','Kept','<b>Live, 60 fps.</b> Signals run down the nerve, each shorter and duller; the brain\'s face drops as the arm drains to grey.'),
+           M('P11','mindB','Mind-muscle B','Kept','<b>Steady.</b> Three identical signals; the arm flexes on each and warms to green.'),
+           M('P12','pumpA','Pump A','Changed','<b>A middle-strength swell that never climbs</b>, with silence through the long rests.'),
+           M('P13','pumpB','Pump B','Changed','<b>Each set lands stronger</b> until the pump is full.'),
+           M('P14','logA','Memory A','Changed','"Quick: what did you bench last week?" Each number fades with a fainter tap.'),
+           M('P15','logB','Memory B','Changed','Taps follow the line up and down, with a double hit on +5 kg.')] },
+  { name: 'Permissions', sum: 'Same order, same App Review rules. Each page shows the exact thing iOS is about to turn on.',
+    cur: [C('C16','16-blocking','Block apps','Change','"Block what distracts you." Empty tiles.'),
+          C('C17','17-alerts','Rest alerts','Change','No Live Activity shown.')],
+    prop: [M('P16','block','Block apps','Changed','<b>The real lock screen</b>, in the shield\'s actual words. Pick a title below.'),
+           M('P17','alerts','Rest alerts','Changed','The Lock Screen Live Activity counts down, then the buzz.')] },
+  { name: 'Commit', sum: 'Your plan, built from your answers. Pared back to type and hairlines; holding commits to it.',
+    cur: [C('C18','18-commit','Hold to commit','Change','Three generic pledges.')],
+    prop: [M('P18','plan','Your plan','Changed','<b>No icons, no card</b>: three lines and the hold. kg or lb sits underneath.')] },
+  { name: 'Account', sum: 'Stays before the paywall, as today, worded as saving your plan.',
+    cur: [C('C19','19-account','Sign up','Keep','Shown here with the Debug skip.')],
+    prop: [M('P19','account','Save your plan','Changed','Same Apple and Google sign-up. Fewer words, no card.')] },
+  { name: 'Pay', sum: 'Still a hard paywall with a 7-day trial on yearly. It now sells the change in your own numbers: today 34 minutes of each workout go to your phone, with GymBlock none do.',
+    cur: [C('C20','20-subscription','Paywall','Change','Three features; the trial is one line of small text. Captured 15 Oct with test-store prices.')],
+    prop: [M('P20','pay','Paywall','Changed','<b>Your workout, two ways</b>, three promises, the trial timeline and a monthly price for each plan. Pick a headline below.')] },
+  { name: 'After paying', sum: 'Splits are asked here, after the paywall, and the flow ends one tap from your first workout.',
+    cur: [C('C21','21-splits','Set up splits','Replace','<b>Homework after paying.</b> Shown with three splits added.')],
+    prop: [M('P05','split','How you split','Moved','<b>Moved after the paywall.</b> One tap picks a template; no blank editor.'),
+           M('P21','first','First workout','New','Built from the split answer.')] }
+];
+
+// ---------- Rendering ----------
+const tagClass = t => /^(Cut|Replace)$/.test(t) ? 'cut' : /^(New)$/.test(t) ? 'new' : /^(Keep|Kept)$/.test(t) ? 'kept' : '';
+const esc = s => s.replace(/</g, '&lt;');
+const all = [];
+function track(sc) {
+  const W = 300, x = t => (t / sc.dur * W).toFixed(1), Y = 40, H = 34;
+  const grid = range(Math.floor(sc.dur) + 1, k => `<line class="grid" x1="${x(k)}" x2="${x(k)}" y1="2" y2="58"/><text class="lbl" x="${x(k)}" y="66" text-anchor="${k ? 'middle' : 'start'}">${k}s</text>`).join('');
+  const hs = sc.h.map(e => e[0] === 'T'
+    ? `<rect class="tr" x="${x(e[1])}" y="${(Y - e[2] * H).toFixed(1)}" width="2.2" height="${(e[2] * H).toFixed(1)}" opacity="${(.35 + .65 * e[3]).toFixed(2)}"/>`
+    : `<polygon class="ct" points="${x(e[1])},${Y} ${x(e[1])},${(Y - e[3] * H).toFixed(1)} ${x(e[1] + e[2])},${(Y - e[4] * H).toFixed(1)} ${x(e[1] + e[2])},${Y}"/>`).join('');
+  const ss = sc.s.map(e => `<circle class="sd" cx="${x(e[0])}" cy="51" r="1.7"/>`).join('');
+  return `<svg class="trk" viewBox="0 0 300 68" style="--dur:${sc.dur}s" aria-hidden="true">${grid}<line class="grid" x1="0" x2="300" y1="${Y}" y2="${Y}"/>${hs}${ss}<line class="ph" x1="0" x2="0" y1="0" y2="58"/></svg>`;
+}
+function cue(s) {
+  const sc = scores[s.mock];
+  let out = '';
+  if (sc) out = `<div class="cue"><div class="cue-head"><button type="button" class="pbtn" data-play="${s.mock}"><svg viewBox="0 0 10 10"><path d="M2 1v8l7-4z" fill="currentColor"/></svg>Play</button><span class="len">${sc.dur.toFixed(1)} s</span></div>${track(sc)}<div class="cue-txt"><b>Haptics</b> ${sc.hap} <b>Sound</b> ${sc.snd}</div></div>`;
+  else if (statics[s.mock]) out = `<div class="cue static"><div class="cue-txt">${statics[s.mock].replace('Haptics:', '<b>Haptics</b>').replace('Sound:', '<b>Sound</b>')}</div></div>`;
+  if (alts[s.mock]) out += `<div class="alts-lbl">${s.mock === 'pay' ? 'Headline' : 'Title'} options</div><div class="alts">${alts[s.mock].map((t, k) => `<button type="button" data-alt-set="${s.mock}" data-k="${k}" aria-pressed="${k === 0}">${esc(t)}</button>`).join('')}</div>`;
+  return out;
+}
+function screen(s) { return s.img ? `<img src="${s.img}" alt="${esc(s.name)} screen" loading="lazy" decoding="async">` : mocks[s.mock] }
+function card(s) {
+  const i = all.push(s) - 1;
+  return `<div class="card"><div class="card-top"><span class="id">${s.id}</span><span class="name">${s.name}</span><span class="tag ${tagClass(s.tag)}">${s.tag}</span></div>
+    <button type="button" class="phone" data-i="${i}" aria-label="Enlarge ${s.id} ${esc(s.name)}">${screen(s)}</button>
+    <div class="note">${s.note}</div>${s.mock ? cue(s) : ''}</div>`;
+}
+const lane = (cls, label, list, empty) => `<div class="lane ${cls}"><div class="lane-label"><b>${label}</b><span>${list.length} screen${list.length === 1 ? '' : 's'}</span></div><div class="strip">${list.length ? list.map(card).join('') : `<div class="empty">${empty}</div>`}</div></div>`;
+document.getElementById('phases').innerHTML = phases.map((p, k) => `
+  <section class="phase" id="phase-${k}">
+    <div class="phase-head"><h2>${p.name}</h2><p>${p.sum}</p></div>
+    <div class="lanes">${lane('cur', 'Current', p.cur, p.cempty)}${lane('prop', 'Proposed', p.prop, p.pempty)}</div>
+  </section>`).join('');
+
+// ---------- Sound ----------
+let ctx, master, noiseBuf, soundOn = true;
+function audio() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!ctx) {
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = .7; master.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // A small room, so every cue has air around it.
+    const len = ctx.sampleRate * 1.6, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const b = ir.getChannelData(ch); for (let i = 0; i < len; i++) b[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2) }
+    const conv = ctx.createConvolver(); conv.buffer = ir; const wet = ctx.createGain(); wet.gain.value = .2;
+    master.connect(conv); conv.connect(wet); wet.connect(ctx.destination);
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+function env(g, t, a, p, d) { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(p, .0002), t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d) }
+function osc(type, f, t, dur, f2) { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur); o.start(t); o.stop(t + dur + .05); return o }
+function noise(t, dur) { const s = ctx.createBufferSource(); s.buffer = noiseBuf; s.start(t); s.stop(t + dur + .05); return s }
+function filt(type, f, q) { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; if (q) b.Q.value = q; return b }
+function gain() { return ctx.createGain() }
+const S = {
+  tick(t, o = {}) { const f = o.f || 1500, g = gain(); env(g, t, .002, o.v || .1, o.d || .035); osc('sine', f, t, .06, f * .85).connect(g).connect(master) },
+  tap(t, o = {}) { S.tick(t, { f: 1250, v: o.v || .1 }); S.tick(t + .09, { f: 1050, v: (o.v || .1) * .7 }) },
+  thud(t, o = {}) { const v = o.v || .5, g = gain(); env(g, t, .004, v, .42); osc('sine', 120, t, .45, 40).connect(g).connect(master); const g2 = gain(); env(g2, t, .002, v * .35, .07); noise(t, .08).connect(filt('lowpass', 500)).connect(g2).connect(master) },
+  clack(t, o = {}) { const v = o.v || .3, g = gain(); env(g, t, .001, v, .05); noise(t, .06).connect(filt('highpass', 2500)).connect(g).connect(master); [2100, 3150].forEach((f, i) => { const g2 = gain(); env(g2, t, .001, v * .2 / (i + 1), .12); osc('triangle', f, t, .15).connect(g2).connect(master) }) },
+  whoosh(t, o = {}) { const d = o.d || .8, v = o.v || .14, bp = filt('bandpass', o.f0 || 300, 1.1); bp.frequency.setValueAtTime(o.f0 || 300, t); bp.frequency.exponentialRampToValueAtTime(o.f1 || 2600, t + d); const g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + d * .75); g.gain.exponentialRampToValueAtTime(.0001, t + d); noise(t, d).connect(bp).connect(g).connect(master) },
+  note(t, o = {}) { const f = o.f || 440, v = o.v || .09, d = o.d || .55, g = gain(); env(g, t, .008, v, d); osc('sine', f, t, d).connect(g).connect(master); const g2 = gain(); env(g2, t, .008, v * .25, d * .6); osc('sine', f * 2, t, d).connect(g2).connect(master) },
+  blur(t, o = {}) { S.note(t, { f: o.f, v: o.v, d: .6 }); S.note(t + .01, { f: o.f * 1.018, v: (o.v || .06) * .7, d: .55 }) },
+  chime(t, o = {}) { (o.notes || [784, 1175]).forEach((f, i) => S.note(t + i * (o.gap || .09), { f, v: o.v || .08, d: .9 })) },
+  hum(t, o = {}) { const d = o.d || 2, g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(o.v0 || .04, t + .25); g.gain.linearRampToValueAtTime(o.v1 == null ? .04 : o.v1, t + d - .1); g.gain.linearRampToValueAtTime(.0001, t + d); osc('triangle', o.f0 || 110, t, d, o.f1 && o.f1 !== o.f0 ? o.f1 : undefined).connect(filt('lowpass', 700)).connect(g).connect(master) },
+  pulse(t, o = {}) { const v = o.v || .4, f = o.f || 85, g = gain(); env(g, t, .006, v, .18); osc('sine', f, t, .22, f * .7).connect(g).connect(master) },
+  scratch(t, o = {}) { const d = o.d || 1.2, g = gain(); g.gain.setValueAtTime(.0001, t); for (let x = .02; x < d; x += .045) g.gain.linearRampToValueAtTime(.012 + Math.random() * .045, t + x); g.gain.linearRampToValueAtTime(.0001, t + d); noise(t, d).connect(filt('bandpass', 3200, .8)).connect(g).connect(master) },
+  buzz(t, o = {}) { [0, .13].forEach(dx => { const g = gain(); env(g, t + dx, .004, o.v || .07, .07); osc('square', 165, t + dx, .1).connect(filt('lowpass', 900)).connect(g).connect(master) }) },
+  // A glassy notification ding: a struck bell, its partials decaying at different rates. Each app gets its own interval.
+  bell(t, f, v, d = .55) { [[1, 1, 1], [2.01, .32, .6], [2.76, .2, .45], [5.4, .07, .25]].forEach(([m, a, dk]) => { const g = gain(); env(g, t, .0015, v * a, d * dk); osc('sine', f * m, t, d * dk + .05).connect(g).connect(master) }) },
+  ding(t, o = {}) { const v = o.v || .11, app = o.app || 'ig'; const seq = { ig: [[0, 1568]], tt: [[0, 1175], [.075, 1568]], yt: [[0, 1760]], msg: [[0, 1319], [.11, 1760]], bl: [[0, 1397]] }[app]; seq.forEach(([dt, f]) => S.bell(t + dt, f, v)) },
+  // Green, good: a soft rising shimmer, no low end.
+  sparkle(t, o = {}) { [1318.5, 1975.5, 2637].forEach((f, i) => { const g = gain(); g.gain.setValueAtTime(.0001, t + i * .075); g.gain.exponentialRampToValueAtTime(o.v || .05, t + i * .075 + .02); g.gain.exponentialRampToValueAtTime(.0001, t + i * .075 + 1.1); osc('sine', f, t + i * .075, 1.15).connect(g).connect(master) }); const g2 = gain(); g2.gain.setValueAtTime(.0001, t); g2.gain.exponentialRampToValueAtTime(.018, t + .25); g2.gain.exponentialRampToValueAtTime(.0001, t + .6); noise(t, .6).connect(filt('bandpass', 7000, 1.5)).connect(g2).connect(master) },
+  // A warm pad whose filter opens with focus and closes as it drains.
+  pad(t, o = {}) { const d = o.d || 3, f = o.f || 110, lp = filt('lowpass', o.c0 || 600, .7); lp.frequency.setValueAtTime(o.c0 || 600, t); lp.frequency.exponentialRampToValueAtTime(o.c1 || 600, t + d); const g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(o.v0 || .03, t + .4); g.gain.linearRampToValueAtTime(o.v1 == null ? .03 : o.v1, t + d - .2); g.gain.linearRampToValueAtTime(.0001, t + d + .3); [f, f * 1.006, f * 1.498].forEach((x, i) => osc(i === 2 ? 'triangle' : 'sawtooth', x, t, d + .3, o.drop ? x * o.drop : undefined).connect(lp)); lp.connect(g).connect(master) },
+  // A signal travelling down the nerve: a rising swoop; duller and shorter when it fades.
+  zap(t, o = {}) { const d = o.d || .7, v = o.v || .06, lp = filt('lowpass', o.cut || 3000, 1); const g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + d * .3); g.gain.exponentialRampToValueAtTime(.0001, t + d); osc('triangle', o.f0 || 220, t, d, o.f1 || 660).connect(lp).connect(g).connect(master) },
+  // The signal arriving at the muscle: a round, plucked note.
+  pluck(t, o = {}) { const f = o.f || 330, v = o.v || .1, g = gain(); env(g, t, .003, v, .45); osc('triangle', f, t, .5).connect(filt('lowpass', 2200)).connect(g).connect(master); const g2 = gain(); env(g2, t, .002, v * .5, .2); osc('sine', f * 2, t, .25).connect(g2).connect(master) },
+  // The arm filling with blood: a low swell, felt more than heard.
+  swell(t, o = {}) { const d = o.d || .5, g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.v || .08, t + d); g.gain.exponentialRampToValueAtTime(.0001, t + d + .35); [98, 147].forEach(f => osc('sine', f, t, d + .4, f * 1.12).connect(g)); g.connect(master) },
+  riser(t, o = {}) { const d = o.d || 1.5, lp = filt('lowpass', 300); lp.frequency.setValueAtTime(300, t); lp.frequency.exponentialRampToValueAtTime(2400, t + d); const g = gain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(o.v || .05, t + d); g.gain.exponentialRampToValueAtTime(.0001, t + d + .05); osc('sawtooth', 110, t, d, 330).connect(lp).connect(g).connect(master) }
+};
+
+// ---------- Live scenes: drawn every frame (60 fps), never a crossfade of pictures ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - x, 3);
+const eio = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const ei = x => x * x;
+const lerp = (a, b, k) => a + (b - a) * k;
+const bump = (t, c, w) => t < c || t > c + w ? 0 : Math.sin(Math.PI * (t - c) / w);
+function spring(t, w = 12, z = .5) { if (t <= 0) return 0; const wd = w * Math.sqrt(1 - z * z); return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + z * w / wd * Math.sin(wd * t)) }
+const DPR = () => Math.min(2, window.devicePixelRatio || 1);
+function fitCanvas(cv) { const r = cv.getBoundingClientRect(); if (!r.width) return null; const d = DPR(), w = Math.round(r.width * d), h = Math.round(r.height * d); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h } return { w: r.width, h: r.height, d } }
+
+// The approved arm (GymBlock/Assets.xcassets/OnboardingArm), bent at the elbow with the app's own mesh formula (ArmIllustration.swift), on the GPU.
+const Arm = (() => {
+  const S = 420; let gl, cv, ready = false, img, loc = {}, count = 0, fallback = null;
+  const heat = w => { const v = clamp(w), st = [[0, [.5, .52, .56]], [.5, [.55, .58, .6]], [1, [15 / 255, 154 / 255, 107 / 255]]]; const i = v < .5 ? 0 : 1, a = st[i], b = st[i + 1], p = (v - a[0]) / (b[0] - a[0]); return a[1].map((c, k) => c + (b[1][k] - c) * p) };
+  const deform = (x, y, curl) => { const v = clamp((x + y - 420) / 140), th = -(1 - curl) * .72 * (1 - v * v * (3 - 2 * v)), dx = x - 95, dy = y - 398; return [95 + dx * Math.cos(th) - dy * Math.sin(th), 398 + dx * Math.sin(th) + dy * Math.cos(th)] };
+  function setup() {
+    const c2 = document.createElement('canvas'); c2.width = c2.height = 512; const x2 = c2.getContext('2d'); x2.drawImage(img, 0, 0);
+    let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    try {
+      const d = x2.getImageData(0, 0, 512, 512).data;
+      for (let y = 0; y < 512; y += 4) for (let x = 0; x < 512; x += 4) if (d[(y * 512 + x) * 4 + 3] > 32) for (const q of [[x, y], deform(x, y, 0)]) { minX = Math.min(minX, q[0]); maxX = Math.max(maxX, q[0]); minY = Math.min(minY, q[1]); maxY = Math.max(maxY, q[1]) }
+    } catch (e) { minX = 0; maxX = 512; minY = 0; maxY = 512 }
+    const scale = Math.min((S - 8) / (maxX - minX), (S - 8) / (maxY - minY));
+    cv = document.createElement('canvas'); cv.width = cv.height = S;
+    gl = cv.getContext('webgl', { premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: true });
+    if (!gl) { fallback = c2; ready = true; return }
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, `attribute vec2 p; uniform float curl; uniform vec3 box; varying vec2 uv;
+      void main(){ uv = p / 512.0; float v = clamp((p.x + p.y - 420.0) / 140.0, 0.0, 1.0); float th = -(1.0 - curl) * 0.72 * (1.0 - v * v * (3.0 - 2.0 * v));
+        vec2 d = p - vec2(95.0, 398.0); vec2 q = vec2(95.0, 398.0) + vec2(d.x * cos(th) - d.y * sin(th), d.x * sin(th) + d.y * cos(th));
+        vec2 s = (q - box.xy) * box.z + vec2(${S / 2}.0); gl_Position = vec4(s.x / ${S / 2}.0 - 1.0, 1.0 - s.y / ${S / 2}.0, 0.0, 1.0); }`));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, `precision mediump float; varying vec2 uv; uniform sampler2D tex; uniform vec3 tint;
+      void main(){ vec4 c = texture2D(tex, uv); gl_FragColor = vec4(c.rgb * tint, c.a); }`));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    const N = 64, pts = [], idx = [];
+    for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) pts.push(i * 512 / N, j * 512 / N);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i, b = a + 1, c = a + N + 1, d = c + 1; idx.push(a, b, d, a, d, c) }
+    count = idx.length;
+    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pts), gl.STATIC_DRAW);
+    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idx), gl.STATIC_DRAW);
+    const ap = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(ap); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
+    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    loc = { curl: gl.getUniformLocation(prog, 'curl'), box: gl.getUniformLocation(prog, 'box'), tint: gl.getUniformLocation(prog, 'tint') };
+    gl.uniform3f(loc.box, (minX + maxX) / 2, (minY + maxY) / 2, scale);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    ready = true;
+  }
+  const load = new Promise(res => { img = new Image(); img.onload = () => { try { setup() } catch (e) { fallback = img; ready = true } res() }; img.onerror = () => res(); img.src = 'img/arm.png' });
+  function render(curl, warmth) {
+    if (!ready) return null;
+    if (fallback) return fallback;
+    gl.viewport(0, 0, S, S); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(loc.curl, clamp(curl)); const c = heat(warmth); gl.uniform3f(loc.tint, c[0], c[1], c[2]);
+    gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, 0);
+    return cv;
+  }
+  return { load, render };
+})();
+
+// The brain, from the app's own paths (BenefitScenes.swift), 240 × 220 design space.
+const Brain = (() => {
+  const curves = [[109,13,86,15,76,34],[55,27,36,43,39,63],[19,76,23,96,32,107],[20,125,30,145,44,153],[45,176,66,192,85,184],[91,199,112,197,119,182],[127,198,148,199,158,184],[180,190,198,175,198,153],[216,142,217,120,206,107],[219,91,217,73,202,63],[205,43,185,27,164,34],[153,14,130,13,119,34]];
+  const folds = [[119,35,116,60,121,79,119,94],[119,160,120,168,120,176,119,183],[76,35,62,49,68,67,88,70,101,72,103,84,95,92],[39,64,54,60,63,71,60,86,56,97,64,103,71,103],[32,108,43,110,49,118,47,130,45,143,57,148,68,140],[45,153,57,152,70,164,66,180],[86,183,96,170,90,155,96,150],[164,35,178,49,171,67,153,71,140,74,139,87,146,92],[202,64,185,61,176,72,181,85,186,99,176,105,166,104],[206,108,193,111,189,120,192,132,195,144,181,149,169,142],[198,153,185,153,173,165,178,180],[156,182,146,169,151,155,145,150]];
+  const outline = new Path2D('M119 34 ' + curves.map(a => 'C' + a.join(' ')).join(' ') + ' Z');
+  const fold = new Path2D(folds.map(a => { let d = `M${a[0]} ${a[1]}`; for (let i = 2; i < a.length; i += 6) d += ` C${a.slice(i, i + 6).join(' ')}`; return d }).join(' '));
+  return function draw(c, cx, cy, w, h, mood, tone) {
+    const s = Math.min(w / 240, h / 220);
+    c.save(); c.translate(cx - 120 * s, cy - 110 * s); c.scale(s, s);
+    c.fillStyle = '#F7F5F1'; c.fill(outline);
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    c.strokeStyle = tone(.45); c.lineWidth = 2.55; c.stroke(fold);
+    c.strokeStyle = tone(1); c.lineWidth = 3.3; c.stroke(outline);
+    const eye = 10 - Math.max(0, -mood) * 5; c.fillStyle = tone(1);
+    for (const x of [92, 148]) { c.beginPath(); if (c.roundRect) c.roundRect(x - 4.5, 117 - eye / 2, 9, eye, Math.min(4.5, eye / 2)); else c.rect(x - 4.5, 117 - eye / 2, 9, eye); c.fill() }
+    c.beginPath(); c.moveTo(104, 141); c.quadraticCurveTo(120, 141 + mood * 20, 136, 141); c.lineWidth = 4.7; c.stroke();
+    c.restore();
+  };
+})();
+
+// The mind-muscle stage, laid out on the app's 300 × 360 reference (OnboardingScenes.swift, MindStage).
+const NV = [[150,136],[144,190],[200,220],[182,280]];
+const bez = (p, t) => { const u = 1 - t; return [0, 1].map(k => u*u*u*p[0][k] + 3*u*u*t*p[1][k] + 3*u*t*t*p[2][k] + t*t*t*p[3][k]) };
+const ink = a => `rgba(20,20,23,${a})`, em = a => `rgba(15,154,107,${a})`;
+function mixRGBA(a, b, k, al) { return `rgba(${a.map((v, i) => Math.round(v + (b[i] - v) * k)).join(',')},${al})` }
+function drawMind(cv, st) {
+  const f = fitCanvas(cv); if (!f) return;
+  const c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);
+  const k = Math.min(f.w / 300, f.h / 360), ox = (f.w - 300 * k) / 2, oy = (f.h - 360 * k) / 2;
+  c.setTransform(f.d * k, 0, 0, f.d * k, f.d * ox, f.d * oy);
+  if (st.glow > 0) { const g = c.createRadialGradient(150, 80, 0, 150, 80, 120); g.addColorStop(0, em(.22 * st.glow)); g.addColorStop(1, em(0)); c.fillStyle = g; c.fillRect(30, -40, 240, 240) }
+  c.lineCap = 'round';
+  const nerve = () => { c.beginPath(); c.moveTo(...NV[0]); c.bezierCurveTo(...NV[1], ...NV[2], ...NV[3]) };
+  nerve(); c.strokeStyle = st.lit > 0 ? mixRGBA([20,20,23], [15,154,107], st.lit, .1 + .65 * st.lit) : ink(.12); c.lineWidth = 2; c.stroke();
+  for (const p of st.pulses) {
+    if (p.a <= .001 || p.head <= 0) continue;
+    const from = clamp(p.head - .22), to = clamp(p.head); if (to <= from) continue;
+    c.beginPath(); for (let i = 0; i <= 24; i++) { const q = bez(NV, from + (to - from) * i / 24); i ? c.lineTo(...q) : c.moveTo(...q) }
+    c.globalAlpha = p.a; c.strokeStyle = mixRGBA([20,20,23], [15,154,107], st.focus, .1 + .2 * st.focus); c.lineWidth = 9; c.stroke();
+    c.strokeStyle = mixRGBA([110,108,104], [15,154,107], st.focus, 1); c.lineWidth = 3; c.stroke(); c.globalAlpha = 1;
+  }
+  if (st.att > 0) { c.save(); c.setLineDash([2, 7]); c.lineDashOffset = -st.flow; c.beginPath(); c.moveTo(90, 100); c.quadraticCurveTo(70, 102, 70, 128); c.strokeStyle = ink(.35 * st.att); c.lineWidth = 1.6; c.stroke(); c.restore() }
+  st.pings.forEach((p, i) => {
+    if (p.a <= 0) return;
+    c.save(); c.globalAlpha = p.a; c.translate(14 + p.x + i * 8, 111 + i * 42 + p.y);
+    const s = p.s || 1; c.translate(37, 18); c.scale(s, s); c.translate(-37, -18);
+    c.beginPath(); c.roundRect ? c.roundRect(0, 0, 74, 36, 10) : c.rect(0, 0, 74, 36); c.fillStyle = 'rgba(232,229,224,.96)'; c.fill(); c.strokeStyle = ink(.18); c.lineWidth = 1; c.stroke();
+    c.beginPath(); c.roundRect ? c.roundRect(7, 7, 22, 22, 6) : c.rect(7, 7, 22, 22); c.fillStyle = ink(.22); c.fill();
+    c.fillStyle = '#141417'; c.strokeStyle = '#141417'; c.lineWidth = 1.8;
+    if (i === 0) { c.beginPath(); c.roundRect ? c.roundRect(11.5, 12.5, 13, 11, 3) : c.rect(11.5, 12.5, 13, 11); c.stroke(); c.beginPath(); c.arc(18, 18, 2.6, 0, 7); c.stroke() }
+    else { c.beginPath(); c.arc(15.5, 22, 2.6, 0, 7); c.fill(); c.fillRect(17, 12, 1.8, 10); c.fillRect(17, 12, 6, 1.8) }
+    c.fillStyle = ink(.75); c.beginPath(); c.roundRect ? c.roundRect(35, 12, 30, 4, 2) : c.rect(35, 12, 30, 4); c.fill();
+    c.fillStyle = ink(.4); c.beginPath(); c.roundRect ? c.roundRect(35, 20, 34, 4, 2) : c.rect(35, 20, 34, 4); c.fill();
+    c.restore();
+  });
+  const tk = clamp((st.mood + .8) / 1.8);
+  Brain(c, 150, 78, 132, 121, st.mood, a => mixRGBA([107,105,100], [20,20,23], tk, a));
+  const arm = Arm.render(st.curl, st.warmth); if (arm) c.drawImage(arm, 150 - 84, 276 - 84, 168, 168);
+}
+
+const scenes = {
+  welcome: { dur: 4.3, frame(root, t) {
+    const e = els(root), pt = root.clientWidth / 440; if (!pt) return;
+    const T = [.35, .75, 1.1, 1.4], F = 1.75, L = 2.13;
+    const set = (el, o, tr) => { el.style.opacity = o; el.style.transform = tr || '' };
+    set(e.a1, eo(seg(t, .1, .5)), `translateY(${(1 - eo(seg(t, .1, .5))) * 12 * pt}px)`);
+    set(e.a2, eo(seg(t, .3, .7)), `translateY(${(1 - eo(seg(t, .3, .7))) * 12 * pt}px)`);
+    T.forEach((ti, i) => {
+      const el = e['n' + i]; if (t < ti) { el.style.opacity = 0; return }
+      const k = spring(t - ti, 15, .62);
+      let y = (1 - k) * -22;
+      T.forEach((tj, j) => { if (j > i && t > tj) y += 48 * spring(t - tj, 15, .72) });
+      const d = eio(seg(t, L + .03 * (3 - i), L + .4 + .03 * (3 - i)));
+      y += d * 70;
+      el.style.opacity = clamp(k * 1.6) * (1 - d);
+      el.style.transform = `translateY(${y * pt}px) scale(${.9 + .1 * Math.min(1, k)})`;
+    });
+    let rot = 0, dy = 0;
+    T.forEach(ti => { if (t > ti) rot += 1.4 * Math.exp(-(t - ti) * 13) * Math.sin((t - ti) * 62) });
+    if (t > L) { const q = t - L; dy = 5 * Math.exp(-q * 9) * Math.cos(q * 30); rot += .8 * Math.exp(-q * 9) * Math.sin(q * 34) }
+    e.phone.style.transform = `translateY(${dy * pt}px) rotate(${rot}deg)`;
+    if (t < F) { e.kb.style.opacity = 0; e.kb.style.transform = `translateY(${-320 * pt}px)` }
+    else if (t < L) { const x = seg(t, F, L); e.kb.style.opacity = 1; e.kb.style.transform = `translateY(${-320 * (1 - x * x) * pt}px) scale(.96, 1.05)` }
+    else { const q = t - L, sq = Math.exp(-q * 10) * Math.cos(q * 26); e.kb.style.opacity = 1; e.kb.style.transform = `scale(${1 + .12 * sq}, ${1 - .16 * sq})` }
+    e.kb.classList.toggle('lit', t > L + .15);
+    e.dim.style.opacity = .93 * eo(seg(t, L, L + .4));
+    e.lock.style.opacity = eo(seg(t, L + .35, L + .7));
+    const arrow = (svg, a) => { const [ln, hd] = svg.querySelectorAll('path'); ln.style.strokeDashoffset = 1 - eo(seg(t, a, a + .28)); hd.style.strokeDashoffset = 1 - eo(seg(t, a + .2, a + .38)) };
+    arrow(e.r1, 2.35); arrow(e.r2, 3.0);
+    const b1 = eo(seg(t, 2.5, 2.9)); set(e.b1, b1, `translateX(${(1 - b1) * -16 * pt}px)`);
+    const b2 = spring(t - 3.2, 14, .45); set(e.b2, seg(t, 3.2, 3.36), `scale(${t < 3.2 ? .85 : .85 + .15 * b2})`);
+    const fl = t < 2.55 ? 0 : spring(t - 2.55, 11, .42);
+    const curl = .12 + .02 * Math.sin(t * 3.1) * (1 - seg(t, 2.4, 2.6)) + .86 * fl;
+    const g = t < 2.7 ? 0 : spring(t - 2.7, 8, .5);
+    set(e.glow, eo(seg(t, 2.7, 3.2)), `scale(${.75 + .25 * g})`);
+    const f = fitCanvas(e.arm);
+    if (f) { const c = e.arm.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, e.arm.width, e.arm.height); const a = Arm.render(curl, eio(seg(t, 2.55, 3.15))); if (a) c.drawImage(a, 0, 0, e.arm.width, e.arm.height) }
+    e.acts.style.opacity = seg(t, 3.7, 4.1);
+  } },
+  mindA: { dur: 3.8, frame(root, t) {
+    const e = els(root), focus = 1 - eio(seg(t, .3, 3.0));
+    const S = [.25, 1.05, 1.85, 2.65], R = [1, .72, .48, .28], A = [1, .8, .6, .42];
+    let curl = .15 + .45 * bump(t, S[0] + .62, .5) + .16 * bump(t, S[1] + .66, .45) + .05 * bump(t, S[2] + .7, .4);
+    drawMind(e.cv, {
+      focus, mood: lerp(-.8, .6, focus), warmth: .55 * focus, curl, lit: 0, glow: .5 * focus * (1 - seg(t, 0, 1.2)),
+      pulses: S.map((s, i) => ({ head: R[i] * eo(seg(t, s, s + .8)), a: A[i] * (1 - seg(t, s + .62, s + .95)) })),
+      att: seg(t, .5, .9), flow: t * 11,
+      pings: [.4, 1.2].map(p => ({ x: lerp(-70, 0, spring(t - p, 14, .6)), y: 0, a: seg(t, p, p + .18), s: t < p ? .8 : .8 + .2 * spring(t - p, 16, .5) }))
+    });
+    e.acts.style.opacity = seg(t, 3.4, 3.8);
+  } },
+  mindB: { dur: 3.8, frame(root, t) {
+    const e = els(root), S = [.35, 1.2, 2.05], arr = S.map(s => s + .63);
+    let curl = .15;
+    arr.forEach((a, k) => { if (t >= a) curl = lerp(curl, 1, spring(t - a, 16, .55)); if (k < 2 && t >= a + .3) curl = lerp(curl, .35, eio(seg(t, a + .3, a + .75))) });
+    const warmth = [.4, .3, .3].reduce((w, d, k) => w + d * eo(seg(t, arr[k], arr[k] + .35)), 0);
+    const lit = eio(seg(t, 2.8, 3.5));
+    drawMind(e.cv, {
+      focus: 1, mood: lerp(-.8, 1, eio(seg(t, .3, 1.5))), warmth, curl, lit, glow: lit,
+      pulses: S.map(s => ({ head: 1.22 * ei(seg(t, s, s + .7)), a: 1 - seg(t, s + .65, s + .8) })),
+      att: 1 - seg(t, 0, .3), flow: t * 11,
+      pings: [0, 1].map(i => ({ x: lerp(0, -80, eio(seg(t, .02 * i, .5 + .02 * i))), y: 0, a: 1 - seg(t, .05, .45), s: 1 }))
+    });
+    e.acts.style.opacity = seg(t, 3.4, 3.8);
+  } }
+};
+const elCache = new WeakMap();
+function els(root) { let m = elCache.get(root); if (!m) { m = {}; root.querySelectorAll('[data-k]').forEach(el => { m[el.dataset.k] = el }); elCache.set(root, m) } return m }
+const loops = new WeakMap();
+function runScene(root, id) {
+  const sc = scenes[id]; cancelAnimationFrame(loops.get(root));
+  const start = performance.now();
+  const tick = now => { const t = (now - start) / 1000; sc.frame(root, Math.min(t, sc.dur)); if (t < sc.dur) loops.set(root, requestAnimationFrame(tick)); else loops.set(root, null) };
+  loops.set(root, requestAnimationFrame(tick));
+}
+function restScenes(scope = document) { scope.querySelectorAll('.scr[data-scene]').forEach(r => { if (!loops.get(r)) scenes[r.dataset.scene].frame(r, scenes[r.dataset.scene].dur) }) }
+
+// ---------- Play ----------
+const timers = new WeakMap();
+function play(id, phone, sheet) {
+  const sc = scores[id];
+  (timers.get(phone) || []).forEach(clearTimeout);
+  const tm = []; timers.set(phone, tm);
+  phone.classList.remove('play');
+  phone.querySelectorAll('[data-anim]').forEach(el => { el.classList.remove(el.dataset.anim); el.style.removeProperty('--d') });
+  void phone.offsetWidth;
+  phone.querySelectorAll('[data-anim]').forEach(el => { el.style.setProperty('--d', el.dataset.d + 's'); el.style.setProperty('--du', el.dataset.du + 's'); el.classList.add(el.dataset.anim) });
+  phone.classList.add('play');
+  const root = phone.querySelector('.scr[data-scene]'); if (root) runScene(root, id);
+  phone.querySelectorAll('[data-smil]').forEach(c => { const d = +c.dataset.smil; c.querySelectorAll('animate, animateMotion').forEach(a => { try { a.beginElementAt(d) } catch (e) {} }) });
+  phone.querySelectorAll('[data-count]').forEach(el => { const [a, b, d, du] = el.dataset.count.split(',').map(Number); el.textContent = a; const t0 = performance.now() + d * 1000; const step = now => { const k = Math.min(1, Math.max(0, (now - t0) / (du * 1000))); el.textContent = Math.round(a + (b - a) * (1 - Math.pow(1 - k, 2))); if (k < 1) requestAnimationFrame(step) }; requestAnimationFrame(step) });
+  phone.querySelectorAll('[data-countdown]').forEach(el => { const [from, d, end] = el.dataset.countdown.split(',').map(Number); el.textContent = '0:0' + from; for (let k = 1; k <= from; k++) tm.push(setTimeout(() => { el.textContent = '0:0' + (from - k) }, (d + (end - d) * k / from - (end - d) / from) * 1000 + 300)) });
+  phone.querySelectorAll('[data-swap]').forEach(el => { const [a, b, t] = el.dataset.swap.split('|'); el.textContent = a; tm.push(setTimeout(() => { el.textContent = b }, +t * 1000)) });
+  if (sheet) { const trk = sheet.querySelector('.trk'); if (trk) { trk.classList.remove('go'); void trk.getBoundingClientRect(); trk.classList.add('go') } }
+  if (soundOn) { const a = audio(); if (a) { const t0 = a.currentTime + .05; sc.s.forEach(([t, n, o]) => { try { S[n](t0 + t, o || {}) } catch (e) {} }) } }
+  if (navigator.vibrate && matchMedia('(pointer: coarse)').matches && navigator.userActivation?.hasBeenActive) sc.h.forEach(e => { if (e[0] === 'T' && e[2] >= .3) tm.push(setTimeout(() => { try { navigator.vibrate(Math.round(8 + e[2] * 28)) } catch (x) {} }, e[1] * 1000)) });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-play]');
+  if (b) {
+    const host = b.closest('.card, .lb-in');
+    play(b.dataset.play, host.querySelector('.phone'), host.querySelector('.cue'));
+    return;
+  }
+  const a = e.target.closest('[data-alt-set]');
+  if (a) {
+    const key = a.dataset.altSet, k = +a.dataset.k;
+    document.querySelectorAll(`[data-alt="${key}"]`).forEach(el => { el.textContent = alts[key][k] });
+    document.querySelectorAll(`[data-alt-set="${key}"]`).forEach(x => x.setAttribute('aria-pressed', +x.dataset.k === k));
+    mocks[key] = mocks[key].replace(/(data-alt="[a-z]+">)[^<]*/, `$1${alts[key][k].replace(/\$/g, '$$$$')}`);
+  }
+});
+
+// ---------- View, size and sound controls ----------
+const store = { get(k) { try { return localStorage.getItem(k) } catch (e) { return null } }, set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} } };
+function setView(v) { document.body.dataset.view = v; document.querySelectorAll('button[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === v)); store.set('gb-view', v) }
+function setSize(s) { document.documentElement.style.setProperty('--pw', s); requestAnimationFrame(() => restScenes()); document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', b.dataset.size === s)); store.set('gb-size', s) }
+function setSound(on) { soundOn = on; document.querySelectorAll('[data-sound]').forEach(b => b.setAttribute('aria-pressed', (b.dataset.sound === 'on') === on)); store.set('gb-sound', on ? 'on' : 'off') }
+document.querySelectorAll('button[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+document.querySelectorAll('button[data-size]').forEach(b => b.addEventListener('click', () => setSize(b.dataset.size)));
+document.querySelectorAll('button[data-sound]').forEach(b => b.addEventListener('click', () => setSound(b.dataset.sound === 'on')));
+const sv = store.get('gb-view'); if (sv) setView(sv);
+const ss = store.get('gb-size'); if (ss) setSize(ss); else if (window.innerWidth < 500) setSize('200px');
+if (store.get('gb-sound') === 'off') setSound(false);
+
+// ---------- Lightbox ----------
+const lb = document.getElementById('lb'), lbIn = document.getElementById('lb-in');
+let cur = -1, opener = null;
+const visible = () => [...document.querySelectorAll('.strip .phone[data-i]')].filter(el => el.offsetParent !== null).map(el => +el.dataset.i);
+function show(i) {
+  cur = i; const s = all[i];
+  lbIn.innerHTML = `<div class="phone">${screen(s)}</div><div class="lb-cap"><b>${s.id} · ${s.name} · ${s.tag}</b>${s.note}</div>${s.mock ? cue(s) : ''}`;
+  lb.hidden = false;
+  restScenes(lbIn);
+  if (s.mock && scores[s.mock]) setTimeout(() => play(s.mock, lbIn.querySelector('.phone'), lbIn.querySelector('.cue')), 250);
+}
+function step(d) { const v = visible(); const k = v.indexOf(cur); if (k < 0) return; show(v[(k + d + v.length) % v.length]) }
+function close() { lb.hidden = true; lbIn.innerHTML = ''; if (opener) opener.focus() }
+document.getElementById('phases').addEventListener('click', e => { const b = e.target.closest('.phone[data-i]'); if (!b) return; opener = b; show(+b.dataset.i); document.getElementById('lb-x').focus() });
+document.getElementById('lb-x').addEventListener('click', close);
+document.getElementById('lb-p').addEventListener('click', () => step(-1));
+document.getElementById('lb-n').addEventListener('click', () => step(1));
+lb.addEventListener('click', e => { if (e.target === lb) close() });
+document.addEventListener('keydown', e => { if (lb.hidden) return; if (e.key === 'Escape') close(); if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1) });
+restScenes(); Arm.load.then(() => restScenes()); if (document.fonts) document.fonts.ready.then(() => restScenes());
+window.addEventListener('resize', () => restScenes());
+})();
+</script>
+
+</html>
