@@ -101,7 +101,7 @@ enum ArmRenderer {
 /// Pre-rendered relaxed → flexed poses.
 @MainActor final class ArmFrames: ObservableObject {
   static let shared = ArmFrames()
-  static let count = 24
+  static let count = 40
   static let side: CGFloat = 420
   @Published private(set) var frames: [UIImage] = []
   private var loading = false
@@ -142,17 +142,11 @@ struct ArmView: View, Animatable {
       if store.frames.isEmpty {
         Color.clear
       } else {
-        // Between two poses, the next fades in over the last: the bend moves continuously rather
-        // than stepping through the flipbook.
-        let position = min(1, max(0, curl)) * Double(store.frames.count - 1)
-        let index = min(store.frames.count - 1, Int(position.rounded(.down)))
-        let blend = position - Double(index)
-        ZStack {
-          Image(uiImage: store.frames[index]).resizable().interpolation(.high).scaledToFit()
-          if blend > 0.02, index + 1 < store.frames.count {
-            Image(uiImage: store.frames[index + 1]).resizable().interpolation(.high).scaledToFit().opacity(blend)
-          }
-        }.colorMultiply(JourneyColor.heat(warmth))
+        // 40 poses, the nearest one each frame: fine enough that the bend moves continuously, and a
+        // resting arm is always one clean pose (blending two left a doubled outline).
+        let index = Int((min(1, max(0, curl)) * Double(store.frames.count - 1)).rounded())
+        Image(uiImage: store.frames[index]).resizable().interpolation(.high).scaledToFit()
+          .colorMultiply(JourneyColor.heat(warmth))
       }
     }.onAppear { store.prepare() }.accessibilityHidden(true)
   }

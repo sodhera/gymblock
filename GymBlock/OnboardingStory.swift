@@ -112,7 +112,8 @@ struct WelcomeScene: View {
   }
   private func arm(_ t: Double) -> some View {
     let flex = t < 2.55 ? 0 : Ease.spring(t - 2.55, 11, 0.42)
-    let curl = 0.12 + 0.02 * sin(t * 3.1) * (1 - Ease.seg(t, 2.4, 2.6)) + 0.86 * flex
+    // Settles exactly on the last pose, so the resting arm is one clean frame, not two blended.
+    let curl = min(1, 0.12 + 0.88 * flex)
     let glow = t < 2.7 ? 0 : Ease.spring(t - 2.7, 8, 0.5)
     return ZStack {
       Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.24), .clear], center: .center, startRadius: 0, endRadius: 125))
