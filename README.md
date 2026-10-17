@@ -42,6 +42,10 @@ Screens follow the same shape as SleepBlock: one switch in `RootView` picks the 
 
 The schema is `supabase/migrations/20261008000100_gymblock.sql`; the dashboard steps still to do (run the SQL, enable the Apple and Google providers, create the RevenueCat app and products, the App Store subscriptions) are in `supabase/README.md`. Until they are done the app says so on its pages rather than pretending.
 
+## App Store and Apple Ads
+
+The listing (name, subtitle, keyword fields for the US and the nine other languages the US store searches, custom product pages, search demand) is [docs/listing.md](docs/listing.md); the US Apple Ads plan is [docs/strategy/apple-ads-us-campaign.md](docs/strategy/apple-ads-us-campaign.md). Search demand comes from Apple's own autocomplete (`scripts/aso_autocomplete.py`) and the apps ranking for each search (`scripts/aso_competition.py`).
+
 ## Current design and proof
 
 The native onboarding follows [docs/ONBOARDING-V5-PLAN.md](docs/ONBOARDING-V5-PLAN.md); the app after it follows [docs/WORKOUT-V6-PLAN.md](docs/WORKOUT-V6-PLAN.md). [DESIGN.md](DESIGN.md) records the implemented decisions. Runtime evidence and remaining limits are in [VALIDATION.md](VALIDATION.md). The browser motion preview is a reference, distinct from native simulator evidence.
