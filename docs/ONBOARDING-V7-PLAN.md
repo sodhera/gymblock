@@ -21,8 +21,8 @@ The person should leave thinking: *"I lose a lot of my gym time to my phone. Gym
 | 1 | (the stage carries the words) | Stop scrolling → Stay focused / Record everything → Get jacked; lock screen, notifications, falling kettlebell, flexing arm (`WelcomeScene`) | Get started · I already have an account |
 | 2 | "Perfection is lots of little things done right." | Sulav's note on one card; no animation, no sound (`FounderStage`) | Continue |
 | 3 | First, what should we call you? | Name field | Continue |
-| 4 | Nice to meet you, {Name}. How many days a week do you lift? | 2 · 3 · 4 · 5 · 6+ and the week's dots (`TrainingDaysStage`) | Continue (after choosing) |
-| 5 | Be honest. Do you check your phone between sets? | Notifications creep in, each with its own ding | Every rest · Sometimes · Rarely |
+| 4 | Nice to meet you, {Name}. How many days a week do you work out? | 2 · 3 · 4 · 5 · 6+ (`TrainingDaysStage`) | Continue (after choosing) |
+| 5 | Be honest. Do you check your phone between sets? | Notifications creep in, each with a double tap (haptics only, no sound) | Every rest · Sometimes · Rarely |
 | 6 | Roughly how long, each rest? | Wheel | Continue |
 | 7 | {Name}, here's where your workout time goes. | The ring (34 of 46 min) | Continue |
 | 8 | At your {days} workouts a week, that's {h} hours a year. | A dot per 45-minute workout | Continue |
@@ -31,7 +31,7 @@ The person should leave thinking: *"I lose a lot of my gym time to my phone. Gym
 | 13–14 | Quick: what did you bench last week? / Your log remembers. Every set. | Values fade to "?", then the log | Continue |
 | 15 | Which apps should we lock while you train? | The shield's real words slide up and lock (`OnboardingShield`), then the tiles | Choose apps (iOS asks first) |
 | 16 | We'll buzz you when rest is up. | The Live Activity counts the last seconds, the notification lands (`LockScreenRest`) | Continue → iOS prompt |
-| 17 | {Name}, here's your plan. | Three lines on the paper: days a week, what's locked, rests; kg or lb (`PlanStage`) | Hold to commit |
+| 17 | {Name}, here's your plan. | Three lines on the paper: days a week, what's locked, rests (`PlanStage`) | Hold to commit |
 | 18 | Let's save your plan to your account. | Account card | Sign up with Apple / Google |
 | 19 | (offer) {Name}, your best sessions start today. | Your workout two ways, three promises, trial timeline, plans | Start 7-day free trial |
 | 20 | You're in. How do you usually split your training? | Push · Pull · Legs, Upper · Lower, Full body, One muscle a day, No fixed plan (or Keep my splits) with a preview (`SplitTemplateStage`) | Continue |
@@ -52,7 +52,7 @@ Old saved progress on gender, height or weight resumes at the days question; not
 Each scene's score is in `JourneyScores.swift`; `JourneyScorePlayer` (`JourneyScore.swift`) plays the Core Haptics pattern and schedules the sounds on an audio engine at the same start time. Strength follows the story; sharpness follows the material; silence carries meaning.
 
 - **Welcome:** a notification double tap and ding per app, a rumble that grows as the kettlebell falls, one heavy dull impact and a crisp lock click, a swell through the flex that peaks in a firm hit.
-- **Notifications:** each app has its own ding. They are GymBlock's own sounds, not Instagram's or TikTok's, which belong to those companies.
+- **Notifications (welcome only; the phone-habit page is haptics only):** each app has its own ding. They are GymBlock's own sounds, not Instagram's or TikTok's, which belong to those companies.
 - **Ring:** ticks climb with the red count; the green lands with a light shimmer, no bass.
 - **Hours a year:** a fine rattle that builds as the dots fill, then one heavy hit.
 - **Mind A:** each signal down the nerve is shorter, softer and duller (85%, 50%, 28%, 12%); only the first reaches the arm. A warm chord loses its brightness underneath.
@@ -68,4 +68,4 @@ Sounds are synthesized by `scripts/generate-onboarding-sounds.py` into `GymBlock
 
 ## Motion
 
-The welcome and both mind-muscle pages are drawn from one clock (`SceneClock`, a `TimelineView` at the display's refresh rate). Springs and easing are computed per frame, and the arm blends between neighbouring pre-rendered poses, so it bends continuously. Reduce Motion shows each scene's last frame and skips its score. Continue still fades in when a scene ends.
+The welcome and both mind-muscle pages are drawn from one clock (`SceneClock`, a `TimelineView` at the display's refresh rate). Springs and easing are computed per frame, and the arm blends between neighbouring pre-rendered poses, so it bends continuously. Reduce Motion shows each scene's last frame and skips its score. Continue fades in the moment a scene ends: no hold and no minimum time on the page, and each scene's clock ends with its last movement. kg or lb is no longer asked; it follows the phone's region the first time and can be changed in Profile.

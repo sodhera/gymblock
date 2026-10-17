@@ -145,7 +145,9 @@ struct OnboardingView: View {
       prepare()
       store.updateProfile {
         $0.onboardingStepID = step.rawValue
-        $0.onboardingVersion = 9
+        // V7 no longer asks body weight, so kg or lb comes from the phone's region the first time.
+        if ($0.onboardingVersion ?? 0) < 10 && $0.onboardingStepID == nil { $0.unit = BodyUnits.defaultMetric ? "kg" : "lb" }
+        $0.onboardingVersion = 10
         if $0.focusEnabled == nil { $0.focusEnabled = false }
         if $0.language.isEmpty {
           $0.language = Locale.current.language.languageCode?.identifier == "es" ? "es" : "en"
@@ -216,7 +218,7 @@ struct OnboardingView: View {
     case .blocking: return "Which apps should we lock while you train?"
     case .account: return "Let’s save your plan to your account."
     case .splits: return "You’re in. How do you usually split your training?"
-    case .trainingDays: return "How many days a week do you lift?"
+    case .trainingDays: return "How many days a week do you work out?"
     case .firstWorkout: return firstWorkoutHeadline
     default: return "Stay focused with GymBlock."
     }
@@ -227,7 +229,7 @@ struct OnboardingView: View {
     guard !name.isEmpty else { return nil }
     switch step {
     case .reveal: return name + ", " + store.t("here’s where your workout time goes.")
-    case .trainingDays: return String(format: store.t("Nice to meet you, %@. How many days a week do you lift?"), name)
+    case .trainingDays: return String(format: store.t("Nice to meet you, %@. How many days a week do you work out?"), name)
     case .commit: return name + ", " + store.t("here’s your plan.")
     default: return nil
     }
@@ -398,22 +400,17 @@ struct OnboardingView: View {
   private func gated(_ button: JourneyButton) -> some View {
     // Hidden means hidden for VoiceOver too, so nothing can be activated before the scene ends.
     button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 8).allowsHitTesting(ready).accessibilityHidden(!ready)
-      .animation(.smooth(duration: 0.5), value: ready)
+      .animation(.smooth(duration: 0.3), value: ready)
   }
   /// A scene has finished. Continue still waits a beat after it, and until the page has been up a
   /// minimum time, so nobody taps through before the point lands.
   private func markReady() {
     guard !ready else { return }
     let page = step
-    let wait = reduceMotion ? 0 : max(Self.readyHold, Self.minimumDwell - Date().timeIntervalSince(pageShownAt))
-    Task { @MainActor in
-      if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
-      guard step == page, !ready else { return }
-      withAnimation(.smooth(duration: 0.5)) { ready = true }
-    }
+    // The moment the scene ends (17 Oct 2026: no hold, no minimum time on the page).
+    guard step == page else { return }
+    withAnimation(.smooth(duration: 0.3)) { ready = true }
   }
-  private static let readyHold = 1.0
-  private static let minimumDwell = 4.5
 
   private func commit() {
     guard !committed else { return }

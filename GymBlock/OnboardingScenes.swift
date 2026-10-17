@@ -116,8 +116,9 @@ struct NotificationStage: View {
       for i in 0..<3 {
         guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
         withAnimation(JourneyMotion.gentle) { shown = i + 1 }
-        // Each app with its own ding, a little stronger each time, like they're creeping closer.
-        JourneyScorePlayer.shared.play(JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)), profile: store.profile)
+        // A double tap per app, a little stronger each time, like they're creeping closer. No sound here.
+        var buzz = JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)); buzz.sounds = []
+        JourneyScorePlayer.shared.play(buzz, profile: store.profile)
       }
       return
     }
@@ -225,7 +226,7 @@ struct RevealStage: View {
     withAnimation(.easeOut(duration: 0.7)) { training = t }
     guard await pause(0.5) else { return }
     withAnimation(JourneyMotion.gentle) { legend = true }
-    guard await pause(0.4) else { return }
+    guard await pause(0.25) else { return }
     done()
   }
 }
@@ -288,7 +289,7 @@ struct DaysStage: View {
     withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
     guard await pause(duration) else { return }
     withAnimation(JourneyMotion.gentle) { meaning = true }
-    guard await pause(0.5) else { return }
+    guard await pause(0.25) else { return }
     done()
   }
 }
@@ -327,113 +328,22 @@ struct AttentionPath: Shape {
   }
 }
 
+/// Both mind-muscle pages, drawn from one clock (`MindState`, `MindFrame`) with their scores: the
+/// fading page's signals weaken one after another, the steady page's land the same every time.
 struct MindStage: View {
   let focused: Bool
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-  @State private var pulse = 0.0
-  @State private var pulseAlpha = 0.0
-  @State private var lit = false
-  @State private var curl = 0.15
-  @State private var warmth = 0.0
-  @State private var flow: CGFloat = 0
   var body: some View {
-    GeometryReader { g in
-      let b = StageBox(size: g.size, ref: mindRef)
-      ZStack {
-        Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: b.len(120)))
-          .frame(width: b.len(240), height: b.len(240)).position(b.p(150, 80)).opacity(focused ? 1 : 0)
-        NervePath().stroke(lit ? JourneyColor.accent.opacity(0.75) : JourneyColor.ink(focused ? 0.16 : 0.1),
-                           style: StrokeStyle(lineWidth: b.len(2), lineCap: .round))
-        NervePulse(head: pulse).stroke(focused ? JourneyColor.accent.opacity(0.3) : JourneyColor.ink(0.1), style: StrokeStyle(lineWidth: b.len(9), lineCap: .round))
-          .opacity(pulseAlpha)
-        NervePulse(head: pulse).stroke(focused ? JourneyColor.accent : JourneyColor.ink(0.5), style: StrokeStyle(lineWidth: b.len(3), lineCap: .round))
-          .opacity(pulseAlpha)
-        AttentionPath().stroke(JourneyColor.ink(0.35), style: StrokeStyle(lineWidth: b.len(1.6), lineCap: .round, dash: [2, 7], dashPhase: flow))
-          .opacity(focused ? 0 : 1)
-        pings(b).opacity(focused ? 0 : 1).offset(x: focused ? -b.len(30) : 0)
-        brain(b)
-        ArmView(curl: curl, warmth: warmth).frame(width: b.len(168), height: b.len(168)).position(b.p(150, 276))
-      }
+    SceneClock(duration: 3.55, score: focused ? JourneyScores.mindSteady : JourneyScores.mindFading, done: done) { t in
+      MindFrame(state: focused ? .steady(t) : .fading(t))
     }
-    .animation(.smooth(duration: 0.8), value: focused)
+    // A new clock for the second page; it starts exactly where the first one ended.
+    .id(focused)
     .accessibilityElement().accessibilityIdentifier("journey.mindMuscle")
     .accessibilityLabel(store.t(focused
       ? "With the phone away, each signal reaches the arm and it flexes."
       : "While scrolling, attention drifts to the phone and signals fade before reaching the arm."))
-    .task(id: focused) { await play() }
-  }
-  private func brain(_ b: StageBox) -> some View {
-    let tone = focused ? JourneyColor.text : JourneyColor.secondary
-    return ZStack {
-      BrainOutline().fill(JourneyColor.stage)
-      BrainFolds().stroke(tone.opacity(0.45), style: StrokeStyle(lineWidth: b.len(1.4), lineCap: .round))
-      BrainOutline().stroke(tone, style: StrokeStyle(lineWidth: b.len(1.8), lineCap: .round))
-      BrainEyes(mood: focused ? 1 : -0.8).fill(tone)
-      BrainMouth(mood: focused ? 1 : -0.8).stroke(tone, style: StrokeStyle(lineWidth: b.len(2.6), lineCap: .round))
-    }.frame(width: b.len(132), height: b.len(121)).position(b.p(150, 78))
-  }
-  /// Two miniature notifications pulling attention away.
-  private func pings(_ b: StageBox) -> some View {
-    VStack(alignment: .leading, spacing: b.len(6)) {
-      ForEach(0..<2, id: \.self) { i in
-        HStack(spacing: b.len(5)) {
-          Image(systemName: ["camera", "music.note"][i]).font(.system(size: b.len(11), weight: .bold)).foregroundStyle(JourneyColor.text)
-            .frame(width: b.len(22), height: b.len(22))
-            .background(RoundedRectangle(cornerRadius: b.len(6), style: .continuous).fill(JourneyColor.ink(0.22)))
-          VStack(alignment: .leading, spacing: b.len(4)) {
-            Capsule().fill(JourneyColor.ink(0.75)).frame(width: b.len(30), height: b.len(4))
-            Capsule().fill(JourneyColor.ink(0.4)).frame(width: b.len(44), height: b.len(4))
-          }
-        }.padding(b.len(7))
-          .background(RoundedRectangle(cornerRadius: b.len(10), style: .continuous).fill(JourneyColor.ink(0.14)))
-          .overlay(RoundedRectangle(cornerRadius: b.len(10), style: .continuous).strokeBorder(JourneyColor.ink(0.18)))
-          .offset(x: b.len(CGFloat(i) * 8))
-      }
-    }.position(b.p(50, 150))
-  }
-  private func play() async {
-    let reduced = JourneyMotion.reduced(systemReduceMotion)
-    if !focused {
-      lit = false
-      withAnimation(.smooth(duration: 0.35)) { curl = 0.15; warmth = 0 }
-      flow = 0
-      if reduced { done(); return }
-      withAnimation(.linear(duration: 0.8).repeatForever(autoreverses: false)) { flow = -9 }
-      for k in 0..<2 {
-        guard await pause(k == 0 ? JourneyMotion.settle + 0.2 : 0.8) else { return }
-        pulse = 0; pulseAlpha = 1
-        withAnimation(.easeOut(duration: 0.8)) { pulse = 0.42 }
-        withAnimation(.easeIn(duration: 0.35).delay(0.5)) { pulseAlpha = 0 }
-        guard await pause(0.75) else { return }
-        JourneyHaptic.play(.soft, store.profile, intensity: 0.35)
-        withAnimation(.easeInOut(duration: 0.3)) { curl = 0.26 }
-        withAnimation(.easeInOut(duration: 0.45).delay(0.3)) { curl = 0.15 }
-      }
-      guard await pause(0.5) else { return }
-      done()
-    } else {
-      var t = Transaction(); t.disablesAnimations = true
-      withTransaction(t) { flow = 0 }
-      if reduced { curl = 1; warmth = 1; lit = true; done(); return }
-      lit = false
-      for k in 0..<3 {
-        guard await pause(k == 0 ? JourneyMotion.settle + 0.25 : 0.45) else { return }
-        withTransaction(t) { pulse = 0 }
-        pulseAlpha = 1
-        withAnimation(.easeIn(duration: 0.5)) { pulse = 1.22 }
-        guard await pause(0.42) else { return }
-        JourneyHaptic.play(.medium, store.profile, intensity: 0.5 + 0.2 * CGFloat(k))
-        withAnimation(.spring(duration: 0.45, bounce: 0.1)) { curl = 1; warmth = min(1, 0.4 + 0.3 * Double(k)) }
-        if k < 2 { withAnimation(.easeInOut(duration: 0.45).delay(0.3)) { curl = 0.35 } }
-      }
-      guard await pause(0.3) else { return }
-      withAnimation(.smooth(duration: 0.9)) { lit = true; warmth = 1 }
-      JourneyHaptic.play(.success, store.profile)
-      guard await pause(0.5) else { return }
-      done()
-    }
   }
 }
 
@@ -588,7 +498,7 @@ struct RestStage: View {
       }
     }
     withAnimation(.smooth(duration: 0.5)) { finished = true }
-    guard await pause(0.4) else { return }
+    guard await pause(0.15) else { return }
     done()
   }
 }
@@ -690,7 +600,7 @@ struct LogStage: View {
         withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
         guard await pause(0.16) else { return }
       }
-      guard await pause(0.5) else { return }
+      guard await pause(0.2) else { return }
       done()
     } else {
       if reduced { line = 1; best = true; done(); return }
@@ -700,7 +610,7 @@ struct LogStage: View {
       withAnimation(.easeInOut(duration: 1.2)) { line = 1 }
       guard await pause(1.25) else { return }
       withAnimation(.spring(duration: 0.6, bounce: 0.15)) { best = true }
-      guard await pause(0.45) else { return }
+      guard await pause(0.3) else { return }
       done()
     }
   }

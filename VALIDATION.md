@@ -10,6 +10,10 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
 - **Haptics.** Not felt: the simulator has no Taptic Engine. Core Haptics patterns need a real iPhone.
 - **Tests.** The app and the test targets build (`build-for-testing`), and the unit and UI tests were updated to the new route. Neither suite was run.
 - **Screen Time.** The prompt and the real shield still need a real iPhone.
+- **Follow-up (same day).** The mind-muscle pages hadn't been switched to the clock-driven scene and their scores. They were still running the V5 animation; they now run on the clock, checked as a burst of frames.
+- **Continue.** It now appears the moment a scene ends (the 1 s hold and 4.5 s minimum are gone).
+- **Copy and layout.** The days question says "work out" and its week dots are gone. The phone-habit page has haptics but no sound. The plan page no longer asks kg or lb.
+- **Arm.** It uses 40 poses, the nearest one each frame; blending two poses had left a doubled outline.
 
 ## Custom product page screenshots (17 October 2026)
 

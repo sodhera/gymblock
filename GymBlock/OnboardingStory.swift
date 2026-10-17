@@ -72,7 +72,7 @@ struct DesignFit<Content: View>: View {
 struct WelcomeScene: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  static let duration = 4.3
+  static let duration = 3.55
   var body: some View {
     SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
       DesignFit(size: CGSize(width: 388, height: 560)) { frame(t) }
@@ -284,23 +284,8 @@ struct TrainingDaysStage: View {
             .accessibilityLabel(String(format: store.t("%@ days a week"), n == 6 ? "6+" : "\(n)"))
         }
       }
-      HStack(spacing: 14) {
-        ForEach(0..<7, id: \.self) { d in
-          VStack(spacing: 6) {
-            Circle().fill(lit(d) ? JourneyColor.text : JourneyColor.ink(0.12)).frame(width: 11, height: 11)
-            Text(Calendar.current.veryShortStandaloneWeekdaySymbols[(d + 1) % 7])
-              .font(.app(.caption2)).foregroundStyle(JourneyColor.secondary)
-          }
-        }
-      }.animation(.spring(duration: 0.35, bounce: 0.2), value: days).accessibilityHidden(true)
       Spacer(minLength: 0)
     }
-  }
-  /// Spreads the chosen days across the week, the way most people train.
-  private func lit(_ d: Int) -> Bool {
-    guard let days else { return false }
-    let patterns: [Int: Set<Int>] = [2: [1, 4], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4], 6: [0, 1, 2, 3, 4, 5]]
-    return patterns[days]?.contains(d) ?? false
   }
 }
 
@@ -439,7 +424,7 @@ struct LockScreenRest: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    SceneClock(duration: 3.4, score: JourneyScores.restUp, done: done) { t in
+    SceneClock(duration: 3.1, score: JourneyScores.restUp, done: done) { t in
       let left = max(0, 5 - Int(((t - 1.0) / 0.32).rounded(.down)) - 1)
       let remaining = t < 1.0 ? 5 : left
       let over = t >= 2.7
@@ -495,7 +480,7 @@ struct PlanStage: View {
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
   var body: some View {
-    SceneClock(duration: 1.2, score: JourneyScores.plan) { t in
+    SceneClock(duration: 0.9, score: JourneyScores.plan) { t in
       VStack(spacing: 18) {
         Spacer(minLength: 0)
         VStack(spacing: 0) {
@@ -510,15 +495,6 @@ struct PlanStage: View {
           }
           Rectangle().fill(JourneyColor.hairline).frame(height: 1)
         }
-        HStack(spacing: 10) {
-          Spacer()
-          Text(store.t("Weights in")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-          Picker(store.t("Weights in"), selection: Binding(get: { store.profile.unit }, set: { u in
-            JourneyHaptic.play(.selection, store.profile); store.updateProfile { $0.unit = u }
-          })) {
-            Text("kg").tag("kg"); Text("lb").tag("lb")
-          }.pickerStyle(.segmented).frame(width: 110).accessibilityIdentifier("plan.unit")
-        }.opacity(Ease.seg(t, 0.8, 1.1))
         Spacer(minLength: 0)
       }
     }.accessibilityIdentifier("journey.plan")

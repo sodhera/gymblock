@@ -37,11 +37,11 @@ final class JourneyV5UITests: XCTestCase {
     XCTAssertTrue(field.waitForExistence(timeout: 6))
     XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)  // A name is required.
     field.typeText(name + "\n")
-    page("Nice to meet you, \(name). How many days a week do you lift?")
+    page("Nice to meet you, \(name). How many days a week do you work out?")
     XCTAssertFalse(app.buttons["onboarding.continue"].isEnabled)
     tap("days.\(days)")
     XCTAssertTrue(app.buttons["days.\(days)"].isSelected)
-    page("Nice to meet you, \(name). How many days a week do you lift?")  // Still here: selecting only selects.
+    page("Nice to meet you, \(name). How many days a week do you work out?")  // Still here: selecting only selects.
     next(); page("Be honest. Do you check your phone between sets?")
   }
   /// The body questions left onboarding on 17 Oct 2026; kept so the journeys read the same.
