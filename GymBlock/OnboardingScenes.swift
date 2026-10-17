@@ -116,7 +116,8 @@ struct NotificationStage: View {
       for i in 0..<3 {
         guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
         withAnimation(JourneyMotion.gentle) { shown = i + 1 }
-        JourneyHaptic.notification(store.profile)
+        // Each app with its own ding, a little stronger each time, like they're creeping closer.
+        JourneyScorePlayer.shared.play(JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)), profile: store.profile)
       }
       return
     }
@@ -217,12 +218,11 @@ struct RevealStage: View {
     }
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let fill = 1.6 * max(0.3, p)
+    // Ticks climb with the red count; the green lands with a light shimmer, no bass (JourneyScores.reveal).
+    JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill), profile: store.profile)
     withAnimation(.easeInOut(duration: fill)) { phone = p; counted = estimate.phoneMinutes }
-    await JourneyHaptic.crescendo(store.profile, count: 14, duration: fill)
-    JourneyHaptic.land(store.profile)
-    guard await pause(0.25) else { return }
+    guard await pause(fill + 0.25) else { return }
     withAnimation(.easeOut(duration: 0.7)) { training = t }
-    JourneyHaptic.play(.soft, store.profile, intensity: 0.6)
     guard await pause(0.5) else { return }
     withAnimation(JourneyMotion.gentle) { legend = true }
     guard await pause(0.4) else { return }
@@ -284,10 +284,9 @@ struct DaysStage: View {
     if JourneyMotion.reduced(systemReduceMotion) { lit = Double(dots); meaning = true; done(); return }
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let duration = 1.8
+    JourneyScorePlayer.shared.play(JourneyScores.year(fill: duration), profile: store.profile)
     withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
-    await JourneyHaptic.crescendo(store.profile, count: 16, duration: duration)
-    if Task.isCancelled { return }
-    JourneyHaptic.land(store.profile)
+    guard await pause(duration) else { return }
     withAnimation(JourneyMotion.gentle) { meaning = true }
     guard await pause(0.5) else { return }
     done()
@@ -565,25 +564,30 @@ struct RestStage: View {
       curl = timed ? 1 : 0.2; warmth = timed ? 1 : 0.02; done(); return
     }
     guard await pause(JourneyMotion.settle + 0.15) else { return }
+    let durations = (1..<pts.count).map { i -> Double in
+      let rising = pts[i].y > pts[i - 1].y + 0.001
+      let holding = pts[i].y >= 0.999 && pts[i - 1].y >= 0.999
+      return rising ? 0.34 : holding ? 0.5 : (timed ? 0.45 : 0.85)
+    }
+    // Scrolling: every set swells to the same middle strength, the rests get nothing. Timed: each
+    // set lands stronger (JourneyScores.pump).
+    JourneyScorePlayer.shared.play(JourneyScores.pump(pts, timed: timed, durations: durations), profile: store.profile)
     for i in 1..<pts.count {
       let rising = pts[i].y > pts[i - 1].y + 0.001
       let holding = pts[i].y >= 0.999 && pts[i - 1].y >= 0.999
-      let duration = rising ? 0.34 : holding ? 0.5 : (timed ? 0.45 : 0.85)
+      let duration = durations[i - 1]
       withAnimation(.easeInOut(duration: duration)) { progress = Double(i) }
       if rising {
         withAnimation(.spring(duration: 0.4, bounce: 0.1)) { curl = 1; warmth = pts[i].y }
-        JourneyHaptic.play(.medium, store.profile, intensity: 0.35 + 0.6 * pts[i].y)
       } else if !holding {
         withAnimation(.easeInOut(duration: duration)) { curl = 0.3; warmth = pts[i].y }
       }
       guard await pause(duration) else { return }
       if pts[i].y >= 0.999 && !reached {
         withAnimation(.spring(duration: 0.6, bounce: 0.15)) { reached = true }
-        JourneyHaptic.land(store.profile)
       }
     }
     withAnimation(.smooth(duration: 0.5)) { finished = true }
-    JourneyHaptic.play(timed ? .success : .soft, store.profile, intensity: 0.5)
     guard await pause(0.4) else { return }
     done()
   }
@@ -678,12 +682,12 @@ struct LogStage: View {
       // next appear. Today's stays.
       for i in 0..<5 {
         guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.08) else { return }
+        // Each number fades with a fainter tap and a falling, out-of-tune note (JourneyScores.forgetting).
+        if i == 0 { JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile) }
         withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
-        JourneyHaptic.play(.light, store.profile, intensity: 0.5)
         guard i < 4 else { break }
         guard await pause(0.25 + 0.2) else { return }
         withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
-        JourneyHaptic.play(.soft, store.profile, intensity: 0.25)
         guard await pause(0.16) else { return }
       }
       guard await pause(0.5) else { return }
@@ -691,14 +695,11 @@ struct LogStage: View {
     } else {
       if reduced { line = 1; best = true; done(); return }
       guard await pause(JourneyMotion.settle + 0.15) else { return }
+      // A tap on every logged week that follows the line, then a double hit on the gain.
+      JourneyScorePlayer.shared.play(JourneyScores.remembering(step: 0.3, best: 1.25), profile: store.profile)
       withAnimation(.easeInOut(duration: 1.2)) { line = 1 }
-      for k in 0..<4 {
-        guard await pause(0.3) else { return }
-        JourneyHaptic.play(.light, store.profile, intensity: 0.4 + 0.15 * CGFloat(k))
-      }
-      guard await pause(0.05) else { return }
+      guard await pause(1.25) else { return }
       withAnimation(.spring(duration: 0.6, bounce: 0.15)) { best = true }
-      JourneyHaptic.land(store.profile)
       guard await pause(0.45) else { return }
       done()
     }
@@ -725,18 +726,22 @@ struct BlockStage: View {
   private let samples = StoreShots.apps
   var body: some View {
     let all = items
-    let shown = Array(all.prefix(all.count > 6 ? 5 : 6))
-    VStack(spacing: 22) {
+    let shown = Array(all.prefix(all.count > 4 ? 3 : 4))
+    VStack(spacing: 18) {
       Spacer(minLength: 0)
-      LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 3), spacing: 22) {
+      // What they'll meet mid-set: the shield's own words, sliding up and locking.
+      Text(store.t("Here’s what you’ll see mid-workout")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
+      OnboardingShield()
+      LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 16) {
         if !samples.isEmpty {
-          ForEach(samples, id: \.self) { sample($0) }
+          ForEach(samples.prefix(3), id: \.self) { sample($0) }
+          if samples.count > 3 { more(samples.count - 3) }
         } else {
           ForEach(Array(shown.enumerated()), id: \.element) { i, item in tile(item, locked: i < stamped) }
-          if all.count > 6 { more(all.count - 5) }
-          ForEach(0..<max(0, 6 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
+          if all.count > 4 { more(all.count - 3) }
+          ForEach(0..<max(0, 4 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
         }
-      }.frame(maxWidth: 300)
+      }.frame(maxWidth: 320)
       Text(!samples.isEmpty ? String(format: store.t("%@ blocked from Start to Finish."), "\(samples.count) " + store.t("apps"))
            : all.isEmpty ? store.t("Choose the apps that pull you in.")
            : String(format: store.t("%@ blocked from Start to Finish."), blocking.summary(store.t)))
@@ -747,7 +752,7 @@ struct BlockStage: View {
     }
     .task(id: locking) {
       guard locking else { stamped = 0; return }
-      for i in 0..<min(6, all.count) {
+      for i in 0..<min(4, all.count) {
         guard await pause(i == 0 ? 0.05 : 0.14) else { return }
         withAnimation(.spring(duration: 0.5, bounce: 0.25)) { stamped = i + 1 }
         JourneyHaptic.play(.rigid, store.profile)
@@ -869,12 +874,12 @@ struct HoldButton: View {
     holding = true
     let begin = Date()
     withAnimation(.linear(duration: Self.duration)) { fill = 1 }
+    // One continuous buzz that climbs from barely there to full while the finger stays down.
+    JourneyScorePlayer.shared.swell(Self.duration, from: 0.1, to: 1, sharpness: 0.45)
     ticker = Task { @MainActor in
       while !Task.isCancelled {
         let p = min(1, Date().timeIntervalSince(begin) / Self.duration)
         onProgress(p)
-        // One shared, ready generator: a fresh one each tick starts late and the build-up stutters.
-        JourneyHaptic.play(.rigid, store.profile, intensity: 0.25 + 0.75 * p)
         if p >= 1 { finish(); return }
         try? await Task.sleep(for: .milliseconds(90))
       }
@@ -884,6 +889,7 @@ struct HoldButton: View {
     holding = false
     guard !committed else { return }
     ticker?.cancel()
+    JourneyScorePlayer.shared.stop()
     onProgress(0)
     withAnimation(.easeOut(duration: 0.3)) { fill = 0 }
   }
@@ -891,7 +897,6 @@ struct HoldButton: View {
     ticker?.cancel()
     holding = false
     onProgress(1)
-    JourneyHaptic.play(.success, store.profile)
     onComplete()
   }
 }

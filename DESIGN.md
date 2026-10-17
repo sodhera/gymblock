@@ -1,6 +1,6 @@
 # GymBlock design
 
-Onboarding follows **docs/ONBOARDING-V5-PLAN.md**. The app after onboarding follows **docs/WORKOUT-V6-PLAN.md** (V6 replaces the training and navigation parts of docs/UX-RESET-V3.md).
+Onboarding follows **docs/ONBOARDING-V7-PLAN.md** (17 Oct 2026; V5 for what it leaves unchanged). The app after onboarding follows **docs/WORKOUT-V6-PLAN.md** (V6 replaces the training and navigation parts of docs/UX-RESET-V3.md).
 
 ## Visual system
 
@@ -12,7 +12,7 @@ Keep 24-point margins and a fixed grid. The primary action sits in exactly the s
 
 ## Onboarding
 
-Full spec: docs/ONBOARDING-V5-PLAN.md. Twenty pages (eighteen for Rarely), one question or idea each: welcome; name; gender; height; weight; phone between sets; minutes per rest; phone time against training time; hours a year as 45-minute workouts; paired story stages (mind-muscle, pump, progress); app blocking; rest alerts; hold to commit; offer; set up your splits (add, name, pick exercises; optional).
+Full spec: docs/ONBOARDING-V7-PLAN.md. Twenty-one pages (nineteen for Rarely), one question or idea each: the welcome (what you do → what you get, around a lock screen the kettlebell locks and an arm that flexes green); Sulav's note; name; days a week; phone between sets; minutes per rest; phone time against training time; hours a year at their own days; paired story stages (mind-muscle, pump, progress); app blocking with the shield's real words; rest alerts on the Lock Screen; their plan and hold to commit; account; offer; split template; first workout. Every animation has a haptic and sound score (`JourneyScores.swift`); the welcome and mind-muscle scenes are drawn from a clock (`SceneClock`).
 
 **Colour.** One *paper* stage on every page: warm off-white with a wide peach wash and a tighter core behind the stage area, ink dots that strengthen towards it (drawn once per screen size, `DotGrid`; every token lives in `JourneyTheme.paper`). No page uses a coloured background. Three surface tones: the stage, raised white glass (a faint top-lit rim on every card and control, `JourneyRim`), and the one ink action. Emerald (#0F9A6B) is the signal — ≤2% of a screen, always the one thing to look at: the phone arc, a finished rest, today, a gain, the check on a chosen answer. A chosen answer rises (brighter glass, ink edge) and is never a coloured block. Tracks, hairlines and quiet fills are ink at low opacity (`JourneyColor.ink(_:)`). Captions meet WCAG AA (≥ 4.5:1).
 

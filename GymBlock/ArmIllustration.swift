@@ -142,9 +142,17 @@ struct ArmView: View, Animatable {
       if store.frames.isEmpty {
         Color.clear
       } else {
-        let index = Int((min(1, max(0, curl)) * Double(ArmFrames.count - 1)).rounded())
-        Image(uiImage: store.frames[index]).resizable().interpolation(.high).scaledToFit()
-          .colorMultiply(JourneyColor.heat(warmth))
+        // Between two poses, the next fades in over the last: the bend moves continuously rather
+        // than stepping through the flipbook.
+        let position = min(1, max(0, curl)) * Double(store.frames.count - 1)
+        let index = min(store.frames.count - 1, Int(position.rounded(.down)))
+        let blend = position - Double(index)
+        ZStack {
+          Image(uiImage: store.frames[index]).resizable().interpolation(.high).scaledToFit()
+          if blend > 0.02, index + 1 < store.frames.count {
+            Image(uiImage: store.frames[index + 1]).resizable().interpolation(.high).scaledToFit().opacity(blend)
+          }
+        }.colorMultiply(JourneyColor.heat(warmth))
       }
     }.onAppear { store.prepare() }.accessibilityHidden(true)
   }

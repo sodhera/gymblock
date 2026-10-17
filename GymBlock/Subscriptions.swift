@@ -161,6 +161,11 @@ import SwiftUI
       apply(result.customerInfo)
       if result.userCancelled { Analytics.track("purchase_cancelled", ["product": plan.id]); return }
       Analytics.track(hasAccess ? "purchase_completed" : "purchase_unverified", ["product": plan.id])
+      if hasAccess, plan.trialDays > 0 {
+        let spanish = GymStore.live?.profile.language == "es"
+        RestAlert.scheduleTrialReminder(trialDays: plan.trialDays, price: plan.price + (plan.yearly ? (spanish ? "/año" : "/year") : (spanish ? "/mes" : "/month")),
+                                        spanish: spanish)
+      }
       if !hasAccess { message = "Your subscription could not be verified. Restore purchases to try again." }
     } catch {
       if let code = ErrorCode(rawValue: (error as NSError).code), code == .purchaseCancelledError {

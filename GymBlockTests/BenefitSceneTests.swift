@@ -6,12 +6,12 @@ import XCTest
     for answer in HabitAnswer.allCases {
       var b = RoutineBaseline(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(12)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits])
+      XCTAssertEqual(Array(route.suffix(13)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
       XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
       XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
-      XCTAssertEqual(Array(route.prefix(5)), [.name, .gender, .height, .weight, .scrolling])  // Profile first, one question a page.
+      XCTAssertEqual(Array(route.prefix(4)), [.founder, .name, .trainingDays, .scrolling])  // Sulav's note, then one question a page.
     }
-    XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .splits)
+    XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .firstWorkout)
   }
   func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
     let domain = "Account.\(UUID())"
@@ -35,9 +35,23 @@ import XCTest
     let store = GymStore(defaults: UserDefaults(suiteName: "Plural.\(UUID())")!)
     XCTAssertEqual(setCount(1, store: store), "1 set"); XCTAssertEqual(setCount(2, store: store), "2 sets")
   }
-  func testLegacyCombinedProfilePageResumesOnGender() {
-    var p = Profile(); p.onboardingStepID = "body"
-    XCTAssertEqual(OnboardingStep.restored(p), .gender)
+  func testRemovedBodyPagesResumeOnTheDaysQuestion() {
+    for id in ["body", "gender", "height", "weight"] {
+      var p = Profile(); p.onboardingStepID = id
+      XCTAssertEqual(OnboardingStep.restored(p), .trainingDays)
+    }
+  }
+  func testYearlyEstimateUsesTheirTrainingDays() {
+    var b = RoutineBaseline(); b.scrollFrequency = .yes; b.scrollingMinutes = 2; b.trainingDays = 4
+    let e = GymTimeEstimate(b)
+    XCTAssertEqual(e.days, 4)
+    XCTAssertEqual(Int(e.yearlyPhoneHours.rounded()), 118)  // 34 min × 4 × 52 ÷ 60
+    XCTAssertEqual(e.yearlyWorkouts, 157)
+  }
+  func testSplitTemplatesUseOnlyCatalogueExercises() {
+    for template in SplitTemplate.allCases {
+      for (_, ids) in template.splits { XCTAssertEqual(SplitTemplate.exercises(ids).count, ids.count, "\(template)") }
+    }
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
     XCTAssertTrue(OnboardingStep.restA.animated); XCTAssertTrue(OnboardingStep.days.animated)

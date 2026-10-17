@@ -31,6 +31,7 @@ import SwiftUI
           $0.onboarded = false; $0.onboardingStepID = step; $0.name = "Sirish"; $0.focusEnabled = true
           var b = $0.baseline ?? RoutineBaseline()
           b.scrollFrequency = .yes; b.scrollsBetweenSets = true; b.scrollingMinutes = 2
+          if b.trainingDays == nil { b.trainingDays = 4 }
           $0.baseline = b
         }
       }

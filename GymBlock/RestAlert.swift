@@ -41,4 +41,18 @@ enum RestAlert {
   static func cancelIdle() {
     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [idleID])
   }
+  static let trialID = "gymblock.trial"
+  /// The paywall's promise: two days before a free trial turns into a paid plan, a reminder. Only
+  /// delivered if notifications were allowed; never asks for permission by itself.
+  static func scheduleTrialReminder(trialDays: Int, price: String, spanish: Bool) {
+    guard trialDays > 2 else { return }
+    let content = UNMutableNotificationContent()
+    content.title = spanish ? "Tu prueba gratis termina en 2 días" : "Your free trial ends in 2 days"
+    content.body = (spanish ? "Después, %@. Puedes cancelar en Ajustes antes de esa fecha." : "Then it’s %@. You can cancel in Settings before then.")
+      .replacingOccurrences(of: "%@", with: price)
+    let wait = Double(trialDays - 2) * 86_400
+    let request = UNNotificationRequest(identifier: trialID, content: content,
+                                        trigger: UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false))
+    UNUserNotificationCenter.current().add(request)
+  }
 }

@@ -17,12 +17,13 @@ final class BenefitLayoutUITests: XCTestCase {
     XCTAssertTrue(first.waitForExistence(timeout: 6))
     let anchor = first.frame.midY
     tap("onboarding.continue")
+    tap("onboarding.continue")  // Sulav's note.
     let field = app.textFields["profile.name"]
     XCTAssertTrue(field.waitForExistence(timeout: 6)); field.typeText("Sam\n")  // Keyboard page: the button rides the keyboard.
-    // Gender, height, weight, phone question: Continue never moves.
-    XCTAssertTrue(app.buttons["profile.gender.other"].waitForExistence(timeout: 6))
-    tap("profile.gender.other")
-    for _ in 0..<3 {
+    // Days a week, phone question: Continue never moves.
+    XCTAssertTrue(app.buttons["days.4"].waitForExistence(timeout: 6))
+    tap("days.4")
+    for _ in 0..<1 {
       let button = app.buttons["onboarding.continue"]
       XCTAssertTrue(button.waitForExistence(timeout: 6))
       XCTAssertEqual(button.frame.midY, anchor, accuracy: 3)

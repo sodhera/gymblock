@@ -29,7 +29,7 @@ enum Spanish {
   /// The whole lookup, newest dictionary first; the key itself when there's no Spanish. Static, so the
   /// widget preview can translate without a store.
   static func translate(_ key: String) -> String {
-    v6[key] ?? v5[key] ?? benefits[key] ?? reset[key] ?? journey[key] ?? onboarding[key] ?? redesign[key] ?? additions[key] ?? words[key] ?? key
+    v7[key] ?? v6[key] ?? v5[key] ?? benefits[key] ?? reset[key] ?? journey[key] ?? onboarding[key] ?? redesign[key] ?? additions[key] ?? words[key] ?? key
   }
   static let onboarding: [String: String] = [
     "Replay": "Repetir",

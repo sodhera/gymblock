@@ -732,7 +732,7 @@ const mocks = {
 
   pay: scr(`
     <div style="display:flex;align-items:center;gap:${P(8)};padding:${P(16)} ${P(28)} 0;font-size:${P(14)};font-weight:650">${KB(17)}GymBlock Pro</div>
-    <div class="hl left" data-alt="pay" style="padding-top:${P(10)};min-height:${P(2 * 1.1 * 33 + 10)}">Become the lifter who's all in, every set.</div>
+    <div class="hl left" data-alt="pay" style="padding-top:${P(10)};min-height:${P(2 * 1.1 * 33 + 10)}">Sirish, your best sessions start today.</div>
     <div class="stage" style="align-items:stretch;justify-content:flex-start;gap:${P(22)};padding:${P(22)} ${P(28)} ${P(8)}">
       <div style="display:grid;gap:${P(10)}">
         <div style="font-size:${P(13)};color:#6B6964">Your 46-minute workout</div>
@@ -862,7 +862,7 @@ const statics = {
   first: 'Haptics: a heavy tap on Start workout as the apps lock. Sound: the lock click.'
 };
 const alts = {
-  pay: ["Become the lifter who's all in, every set.", 'Train focused. Lift heavier. See the proof.', 'Sirish, your best sessions start today.'],
+  pay: ['Sirish, your best sessions start today.', "Become the lifter who's all in, every set.", 'Train focused. Lift heavier. See the proof.'],
   block: ['Which apps should we lock while you train?', 'Which apps steal your rest time?', 'What pulls you away mid-set?']
 };
 
@@ -909,7 +909,7 @@ const phases = [
   { name: 'Permissions', sum: 'Same order, same App Review rules. Each page shows the exact thing iOS is about to turn on.',
     cur: [C('C16','16-blocking','Block apps','Change','"Block what distracts you." Empty tiles.'),
           C('C17','17-alerts','Rest alerts','Change','No Live Activity shown.')],
-    prop: [M('P16','block','Block apps','Changed','<b>The real lock screen</b>, in the shield\'s actual words. Pick a title below.'),
+    prop: [M('P16','block','Block apps','Changed','<b>The real lock screen</b>, in the shield\'s actual words. Chosen: "Which apps should we lock while you train?"'),
            M('P17','alerts','Rest alerts','Changed','The Lock Screen Live Activity counts down, then the buzz.')] },
   { name: 'Commit', sum: 'Your plan, built from your answers. Pared back to type and hairlines; holding commits to it.',
     cur: [C('C18','18-commit','Hold to commit','Change','Three generic pledges.')],
@@ -919,7 +919,7 @@ const phases = [
     prop: [M('P19','account','Save your plan','Changed','Same Apple and Google sign-up. Fewer words, no card.')] },
   { name: 'Pay', sum: 'Still a hard paywall with a 7-day trial on yearly. It now sells the change in your own numbers: today 34 minutes of each workout go to your phone, with GymBlock none do.',
     cur: [C('C20','20-subscription','Paywall','Change','Three features; the trial is one line of small text. Captured 15 Oct with test-store prices.')],
-    prop: [M('P20','pay','Paywall','Changed','<b>Your workout, two ways</b>, three promises, the trial timeline and a monthly price for each plan. Pick a headline below.')] },
+    prop: [M('P20','pay','Paywall','Changed','<b>Your workout, two ways</b>, three promises, the trial timeline and a monthly price for each plan. Chosen: "Sirish, your best sessions start today."')] },
   { name: 'After paying', sum: 'Splits are asked here, after the paywall, and the flow ends one tap from your first workout.',
     cur: [C('C21','21-splits','Set up splits','Replace','<b>Homework after paying.</b> Shown with three splits added.')],
     prop: [M('P05','split','How you split','Moved','<b>Moved after the paywall.</b> One tap picks a template; no blank editor.'),

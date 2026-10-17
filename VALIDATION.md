@@ -1,5 +1,16 @@
 # Validation — 8 October 2026
 
+## Onboarding V7 (17 October 2026)
+
+Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboarding-mockups/index.html), spec [docs/ONBOARDING-V7-PLAN.md](docs/ONBOARDING-V7-PLAN.md)). Every page was captured on the `GymBlock Store CPP` simulator (iPhone 18 Pro Max, iOS 27.0) with `-journeyStep`, in [screenshots/2026-10-17-onboarding-v7](screenshots/2026-10-17-onboarding-v7/). The welcome was also captured as a burst of frames, which shows the notifications stacking, the kettlebell falling and locking the phone, then the arm flexing from grey to green.
+
+- **Offer, two captures.** Offline, it says subscriptions are off and shows the Debug skip. With `--online` it shows RevenueCat's test store: $4.16/mo yearly with a 7-days-free badge, and $4.99/mo monthly. The online run also sent its analytics events.
+- **Day 5 reminder.** Hidden on that simulator, because notifications weren't allowed there.
+- **Sound.** The cues play through the audio engine. Whether they sound right needs ears and a device.
+- **Haptics.** Not felt: the simulator has no Taptic Engine. Core Haptics patterns need a real iPhone.
+- **Tests.** The app and the test targets build (`build-for-testing`), and the unit and UI tests were updated to the new route. Neither suite was run.
+- **Screen Time.** The prompt and the real shield still need a real iPhone.
+
 ## Custom product page screenshots (17 October 2026)
 
 Eleven custom product pages now have their screenshots, in [screenshots/store-cpp](screenshots/store-cpp/): Workout tracker, Gym log, PR tracker, Rest timer, Reels blocker, Doomscrolling, Social media, Phone & focus, Splits, Progress and Streak. Each has five slides in upload order at 1320×2868 (`6.9/`) and 1206×2622 (`6.3/`), plus an overview strip (`<page>-overview.png`). Each page opens with its own card, whose headline uses the words people search, and never shows the same capture twice. The pages, keyword assignments, promotional texts and upload order are in `docs/listing.md`; the Apple Ads plan points each ad group at its page. Every first card was looked at full size and every strip at overview size. Nothing was uploaded to App Store Connect.

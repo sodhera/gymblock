@@ -86,11 +86,13 @@ enum JourneyFormat {
 /// 6 exercises × 3 sets, 40 s per set, 2-minute rests, 5 workouts a week.
 /// Self-reported time arithmetic only — never a measured or body-outcome claim.
 struct GymTimeEstimate: Equatable {
-  static let exercises = 6, sets = 3, days = 5
+  static let exercises = 6, sets = 3
   static let restMinutes = 2.0
   static let setSeconds = 40.0
   static let workoutLength = 45.0
   var minutesPerRest = 2.0
+  /// Workouts a week: their answer (since 17 Oct 2026), otherwise five.
+  var days = 5
   var rests: Int { Self.exercises * Self.sets - 1 }
   var phoneMinutes: Double { Double(rests) * minutesPerRest }
   var liftingMinutes: Double { Double(Self.exercises * Self.sets) * Self.setSeconds / 60 }
@@ -98,11 +100,12 @@ struct GymTimeEstimate: Equatable {
   var workoutMinutes: Double { liftingMinutes + Double(rests) * max(Self.restMinutes, minutesPerRest) }
   var trainingMinutes: Double { workoutMinutes - phoneMinutes }
   var phoneShare: Double { workoutMinutes > 0 ? phoneMinutes / workoutMinutes : 0 }
-  var yearlyPhoneHours: Double { phoneMinutes * Double(Self.days) * 52 / 60 }
+  var yearlyPhoneHours: Double { phoneMinutes * Double(days) * 52 / 60 }
   /// The yearly phone time expressed as 45-minute workouts.
   var yearlyWorkouts: Int { Int((yearlyPhoneHours * 60 / Self.workoutLength).rounded()) }
   init(minutesPerRest: Double = 2) { self.minutesPerRest = minutesPerRest }
   init(_ b: RoutineBaseline) {
+    days = min(7, max(1, b.trainingDays ?? 5))
     if b.scrollFrequency == .no { minutesPerRest = 0 }
     else { minutesPerRest = b.scrollingMinutes ?? (b.scrollFrequency == .sometimes ? 1 : 2) }
   }
