@@ -1,5 +1,15 @@
 # Validation — 8 October 2026
 
+## Custom product page screenshots (17 October 2026)
+
+The three custom product pages planned in `docs/listing.md` now have their screenshots, in [screenshots/store-cpp](screenshots/store-cpp/): `workout-log/`, `reels-blocker/` and `rest-timer/`, each five slides in upload order at 1320×2868 (`6.9/`) and 1206×2622 (`6.3/`), plus an overview strip per page. All 30 files were checked for size, and every slide and strip was looked at. They're made by `python3 scripts/frame-store-screenshots.py --custom-pages`, which reuses the default set's framing and now stops if a headline would need a third line or run past the edge. Nothing was uploaded to App Store Connect.
+
+- **Reels blocker** opens with a new card, "Block **reels** between sets / Shorts and feeds too", on the existing blocking capture.
+- **Rest timer** opens with "**Rest** on your Lock Screen / No unlocking, no scrolling", on a new real capture, `screenshots/store-2026-10-17/rest-lock-screen.png`. It's the rest Live Activity on the Lock Screen of a new simulator, `GymBlock Store CPP` (iPhone 18 Pro Max, iOS 27.0), launched with `--ui-reset -workoutStage rest -storeShots YES` and locked with the side button. It shows Arms, Dumbbell curl, Set 2 of 3, 20 kg × 10, Rest 0:39 and Start set.
+- iOS puts the activity at the foot of the Lock Screen, below the usual cut, so on this one card the phone sits 110 px higher and 7% smaller. The second line is drawn at 102 pt instead of 120, because at 120 it would be wider than the slide.
+- With `--time 09:41` the Lock Screen read "Sat 1 Jan". An ISO instant fixes it (steps in `docs/listing.md`).
+- Regenerating the default set changes no layout, but the headline pixels differ slightly from the committed files (the system font has changed since 13 Oct), so `store-final/` was left as it was.
+
 ## App Store build 4 (17 October 2026)
 
 App Review rejected build 3 under 5.1.1(iv): the blocking page's "Not now" let people leave before iOS asked for Screen Time access. Build 4: on the blocking page "Choose apps" (which asks iOS first) is the only way on until iOS has asked; after a refusal it offers Continue and Open Settings. The rest-alerts page has one Continue that always goes to iOS's notification prompt. Simulator: both pages show only their one button, and Continue on rest alerts asked iOS and moved on (the prompt itself had already been answered on that simulator). The Screen Time prompt needs a real iPhone and wasn't checked here. The two onboarding UI tests that tap the removed "Not now" buttons still need updating. The exported IPA was checked as before (Apple Distribution, `get-task-allow` false, Family Controls in the app and three Screen Time extensions) and uploaded on 17 Oct.

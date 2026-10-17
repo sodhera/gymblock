@@ -121,7 +121,24 @@ Each page reuses the five framed slides from [Screenshots](#screenshots) (made b
 | Reels blocker | *(new)* Block **reels** between sets / Shorts and feeds too (the blocking capture, `1-blocking-apps.png`) · Track your **workouts** · Beat your **record** · Plan your **progress** · Keep your **streak** alive |
 | Rest timer | *(new)* **Rest** on your Lock Screen / No unlocking, no scrolling (a new capture: the rest Live Activity on the simulator's Lock Screen) · Track your **workouts** · Stop **scrolling** in the gym · Beat your **record** · Keep your **streak** alive |
 
-The two new cards aren't made yet. The rest card needs a real Lock Screen capture with the Live Activity running (`-workoutStage rest`, then lock the simulator); it must be a capture, not a mock-up.
+The three sets were made on 17 Oct 2026, framed like the default set, at both sizes (1320×2868 in `6.9/`, 1206×2622 in `6.3/`), numbered in upload order, each with an overview strip:
+
+| Page | Folder | Overview |
+| --- | --- | --- |
+| Workout log | `screenshots/store-cpp/workout-log/` | `screenshots/store-cpp/workout-log-overview.png` |
+| Reels blocker | `screenshots/store-cpp/reels-blocker/` | `screenshots/store-cpp/reels-blocker-overview.png` |
+| Rest timer | `screenshots/store-cpp/rest-timer/` | `screenshots/store-cpp/rest-timer-overview.png` |
+
+Regenerate them with `python3 scripts/frame-store-screenshots.py --custom-pages` (the page orders and the two new cards are `PAGES` and `NEW_SLIDES` in the script; it stops if a headline would need a third line or run past the edge). The reused slides are framed again from the same captures as the default set, so they match `store-final/` (only sub-pixel text differences from the current system font).
+
+Two differences from the default set's rules:
+- "No unlocking, no scrolling" is wider than the other second lines (1,344 px at 120 pt), so it's drawn at 102 pt. The script only shrinks a second line that wouldn't otherwise fit.
+- With no notifications, iOS puts the Live Activity at the foot of the Lock Screen, below where the phone is usually cut. On the rest card the phone sits 110 px higher and 7% smaller, so the whole activity, down to its Start set button, shows above the bottom edge.
+
+The rest card is a real capture, `screenshots/store-2026-10-17/rest-lock-screen.png` (iPhone 18 Pro Max, iOS 27.0): Arms, Dumbbell curl, 0:39 of rest left after set 1. To retake it:
+1. Set the status bar. The time must be an ISO instant, or the Lock Screen's date reads "Sat 1 Jan": `xcrun simctl status_bar <device> override --time 2026-10-14T03:56:00.000Z --batteryState discharging --batteryLevel 100 --operatorName ""` (03:56Z is 09:41 on this Mac's +5:45 clock; the Lock Screen then shows "Sat 14 Oct").
+2. Launch with `--ui-reset -workoutStage rest -storeShots YES`.
+3. Press the side button within the 40 seconds of rest left. The first time, iOS asks to allow Live Activities; allow, then relaunch and lock again for a clean screen.
 
 ## US keywords from other languages
 
