@@ -14,6 +14,15 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
 - **Continue.** It now appears the moment a scene ends (the 1 s hold and 4.5 s minimum are gone).
 - **Copy and layout.** The days question says "work out" and its week dots are gone. The phone-habit page has haptics but no sound. The plan page no longer asks kg or lb.
 - **Arm.** It uses 40 poses, the nearest one each frame; blending two poses had left a doubled outline.
+- **Sync (second follow-up).** Every beat now lands on its visual moment:
+  - **Pump:** each tap and note lands at the top of the rise, as the arm's contraction peaks.
+  - **Log:** the line draws at a constant speed, and each dot pops with its tap when the line reaches it, timed by the line's length. Before, all the dots popped at the start.
+  - **Countdown:** the digits change every 0.4 s, with a tick on each change and the buzz on 0:00.
+  - **Ring and dots:** the ticks follow the eased count.
+  - **Welcome, brain signals, shield:** the beats land on the flex's peak, the arm's twitch or squeeze, and the kettlebell's squeeze.
+  - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
+  - **Continue:** hidden until the last spring settles.
+  - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
 
 ## Custom product page screenshots (17 October 2026)
 

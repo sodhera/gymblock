@@ -72,7 +72,7 @@ struct DesignFit<Content: View>: View {
 struct WelcomeScene: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  static let duration = 3.55
+  static let duration = 3.85
   var body: some View {
     SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
       DesignFit(size: CGSize(width: 388, height: 560)) { frame(t) }
@@ -424,10 +424,10 @@ struct LockScreenRest: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    SceneClock(duration: 3.1, score: JourneyScores.restUp, done: done) { t in
-      let left = max(0, 5 - Int(((t - 1.0) / 0.32).rounded(.down)) - 1)
-      let remaining = t < 1.0 ? 5 : left
-      let over = t >= 2.7
+    SceneClock(duration: 2.75, score: JourneyScores.restUp, done: done) { t in
+      // One digit every 0.4 s from 0:05; 0:00 is the buzz (JourneyScores.restUp ticks on each change).
+      let remaining = max(0, 5 - Int((t / JourneyScores.countdownStep).rounded(.down)))
+      let over = remaining == 0
       VStack(spacing: 16) {
         Spacer(minLength: 0)
         Text(store.t("On your Lock Screen")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
@@ -439,7 +439,7 @@ struct LockScreenRest: View {
           }
           GeometryReader { g in
             Capsule().fill(.white.opacity(0.14))
-            Capsule().fill(Color(red: 0.18, green: 0.75, blue: 0.52)).frame(width: g.size.width * (0.62 + 0.38 * Ease.seg(t, 0.2, 2.7)))
+            Capsule().fill(Color(red: 0.18, green: 0.75, blue: 0.52)).frame(width: g.size.width * (0.62 + 0.38 * Ease.seg(t, 0, JourneyScores.countdownStep * 5)))
           }.frame(height: 6)
           HStack {
             Text(store.t("Next: Bench press · set 3 of 3")).font(.app(.subheadline)).foregroundStyle(.white).lineLimit(1)
@@ -464,8 +464,8 @@ struct LockScreenRest: View {
           }
         }.padding(.horizontal, 14).padding(.vertical, 12).frame(maxWidth: 360)
           .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
-          .offset(y: t < 2.75 ? -24 : -24 + 24 * Ease.spring(t - 2.75, 14, 0.7))
-          .opacity(Ease.seg(t, 2.75, 2.95))
+          .offset(y: t < 2.05 ? -24 : -24 + 24 * Ease.spring(t - 2.05, 14, 0.7))
+          .opacity(Ease.seg(t, 2.05, 2.25))
         Spacer(minLength: 0)
       }
     }

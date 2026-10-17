@@ -17,6 +17,13 @@ private func pause(_ seconds: Double) async -> Bool {
   try? await Task.sleep(for: .seconds(seconds))
   return !Task.isCancelled
 }
+/// Waits until `t` seconds after `start`, so a sequence of steps keeps time with its score
+/// (scheduled up front) instead of drifting by each sleep's overshoot.
+private func pause(until t: Double, from start: Date) async -> Bool {
+  let wait = t - Date().timeIntervalSince(start)
+  if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+  return !Task.isCancelled
+}
 
 // MARK: - Notifications (welcome, first question)
 
@@ -220,13 +227,13 @@ struct RevealStage: View {
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let fill = 1.6 * max(0.3, p)
     // Ticks climb with the red count; the green lands with a light shimmer, no bass (JourneyScores.reveal).
-    JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill), profile: store.profile)
+    JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill, total: estimate.phoneMinutes), profile: store.profile)
     withAnimation(.easeInOut(duration: fill)) { phone = p; counted = estimate.phoneMinutes }
     guard await pause(fill + 0.25) else { return }
     withAnimation(.easeOut(duration: 0.7)) { training = t }
     guard await pause(0.5) else { return }
     withAnimation(JourneyMotion.gentle) { legend = true }
-    guard await pause(0.25) else { return }
+    guard await pause(0.6) else { return }
     done()
   }
 }
@@ -289,7 +296,7 @@ struct DaysStage: View {
     withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
     guard await pause(duration) else { return }
     withAnimation(JourneyMotion.gentle) { meaning = true }
-    guard await pause(0.25) else { return }
+    guard await pause(0.6) else { return }
     done()
   }
 }
@@ -335,7 +342,7 @@ struct MindStage: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    SceneClock(duration: 3.55, score: focused ? JourneyScores.mindSteady : JourneyScores.mindFading, done: done) { t in
+    SceneClock(duration: focused ? 3.55 : 3.6, score: focused ? JourneyScores.mindSteady : JourneyScores.mindFading, done: done) { t in
       MindFrame(state: focused ? .steady(t) : .fading(t))
     }
     // A new clock for the second page; it starts exactly where the first one ended.
@@ -482,6 +489,8 @@ struct RestStage: View {
     // Scrolling: every set swells to the same middle strength, the rests get nothing. Timed: each
     // set lands stronger (JourneyScores.pump).
     JourneyScorePlayer.shared.play(JourneyScores.pump(pts, timed: timed, durations: durations), profile: store.profile)
+    let start = Date()
+    var at = 0.0
     for i in 1..<pts.count {
       let rising = pts[i].y > pts[i - 1].y + 0.001
       let holding = pts[i].y >= 0.999 && pts[i - 1].y >= 0.999
@@ -492,13 +501,14 @@ struct RestStage: View {
       } else if !holding {
         withAnimation(.easeInOut(duration: duration)) { curl = 0.3; warmth = pts[i].y }
       }
-      guard await pause(duration) else { return }
+      at += duration
+      guard await pause(until: at, from: start) else { return }
       if pts[i].y >= 0.999 && !reached {
         withAnimation(.spring(duration: 0.6, bounce: 0.15)) { reached = true }
       }
     }
     withAnimation(.smooth(duration: 0.5)) { finished = true }
-    guard await pause(0.15) else { return }
+    guard await pause(0.55) else { return }
     done()
   }
 }
@@ -513,6 +523,15 @@ private func logPoint(_ i: Int, _ b: StageBox) -> CGPoint {
   b.p(34 + CGFloat(i) * 63, 196 - CGFloat((logVolume[i] - 150) / 110) * 150)
 }
 struct LogLine: Shape {
+  /// How far along the drawn line each week's point sits (0–1), by length, so a line drawn at a
+  /// constant speed reaches each one at its own time.
+  static let hits: [Double] = {
+    let b = StageBox(size: logRef, ref: logRef)
+    let pts = (0..<5).map { logPoint($0, b) }
+    var lengths = [0.0]
+    for i in 1..<pts.count { lengths.append(lengths[i - 1] + hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y)) }
+    return lengths.map { $0 / (lengths.last ?? 1) }
+  }()
   func path(in rect: CGRect) -> Path {
     let b = StageBox(size: rect.size, ref: logRef)
     var p = Path(); p.move(to: logPoint(0, b))
@@ -529,7 +548,9 @@ struct LogStage: View {
   @State private var revealed = 0
   @State private var forgotten = 0
   @State private var line = 0.0
+  @State private var dots = 0
   @State private var best = false
+  static let draw = 1.2
   var body: some View {
     GeometryReader { g in
       let b = StageBox(size: g.size, ref: logRef)
@@ -553,9 +574,8 @@ struct LogStage: View {
           Circle().fill(last && best ? JourneyColor.accent : JourneyColor.stage)
             .overlay(Circle().strokeBorder(last && best ? JourneyColor.accent : JourneyColor.ink(0.85), lineWidth: b.len(2)))
             .frame(width: b.len(last ? 12 : 9), height: b.len(last ? 12 : 9))
-            .scaleEffect(remembered && line >= Double(i) / 4 - 0.01 ? 1 : 0.01)
+            .scaleEffect(remembered && i < dots ? 1 : 0.01)
             .position(p)
-            .animation(.spring(duration: 0.45, bounce: 0.15), value: line)
           value(i, b)
           Text(store.t(["W1", "W2", "W3", "W4", "Today"][i])).font(.app(.caption2)).foregroundStyle(JourneyColor.secondary)
             .position(b.p(34 + CGFloat(i) * 63, 240))
@@ -585,32 +605,41 @@ struct LogStage: View {
   private func play() async {
     let reduced = JourneyMotion.reduced(systemReduceMotion)
     if !remembered {
-      withAnimation(.smooth(duration: 0.3)) { line = 0; best = false }
+      withAnimation(.smooth(duration: 0.3)) { line = 0; dots = 0; best = false }
       if reduced { revealed = 5; forgotten = 4; done(); return }
       revealed = 0; forgotten = 0
       // One week at a time: it appears in full, holds, fades to "?" in full, and only then does the
       // next appear. Today's stays.
+      guard await pause(JourneyMotion.settle + 0.1) else { return }
+      // Each number fades with a fainter tap and a falling, out-of-tune note (JourneyScores.forgetting),
+      // on the same clock as the fades.
+      JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile)
+      let start = Date()
       for i in 0..<5 {
-        guard await pause(i == 0 ? JourneyMotion.settle + 0.1 : 0.08) else { return }
-        // Each number fades with a fainter tap and a falling, out-of-tune note (JourneyScores.forgetting).
-        if i == 0 { JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile) }
+        guard await pause(until: Double(i) * 0.69, from: start) else { return }
         withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
         guard i < 4 else { break }
-        guard await pause(0.25 + 0.2) else { return }
+        guard await pause(until: Double(i) * 0.69 + 0.45, from: start) else { return }
         withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
-        guard await pause(0.16) else { return }
       }
-      guard await pause(0.2) else { return }
+      guard await pause(until: 4 * 0.69 + 0.35, from: start) else { return }
       done()
     } else {
-      if reduced { line = 1; best = true; done(); return }
+      if reduced { line = 1; dots = 5; best = true; done(); return }
       guard await pause(JourneyMotion.settle + 0.15) else { return }
-      // A tap on every logged week that follows the line, then a double hit on the gain.
-      JourneyScorePlayer.shared.play(JourneyScores.remembering(step: 0.3, best: 1.25), profile: store.profile)
-      withAnimation(.easeInOut(duration: 1.2)) { line = 1 }
-      guard await pause(1.25) else { return }
+      // The line draws at a constant speed; each week's dot pops, with its tap, the moment the line
+      // reaches it, then a double hit on the gain.
+      let hits = LogLine.hits.map { $0 * Self.draw }
+      JourneyScorePlayer.shared.play(JourneyScores.remembering(hits: hits, best: Self.draw + 0.05), profile: store.profile)
+      let start = Date()
+      withAnimation(.linear(duration: Self.draw)) { line = 1 }
+      for (i, hit) in hits.enumerated() {
+        guard await pause(until: hit, from: start) else { return }
+        withAnimation(.spring(duration: 0.45, bounce: 0.15)) { dots = i + 1 }
+      }
+      guard await pause(until: Self.draw + 0.05, from: start) else { return }
       withAnimation(.spring(duration: 0.6, bounce: 0.15)) { best = true }
-      guard await pause(0.3) else { return }
+      guard await pause(0.6) else { return }
       done()
     }
   }
