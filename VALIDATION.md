@@ -1,5 +1,9 @@
 # Validation — 8 October 2026
 
+## App Store build 4 (17 October 2026)
+
+App Review rejected build 3 under 5.1.1(iv): the blocking page's "Not now" let people leave before iOS asked for Screen Time access. Build 4: on the blocking page "Choose apps" (which asks iOS first) is the only way on until iOS has asked; after a refusal it offers Continue and Open Settings. The rest-alerts page has one Continue that always goes to iOS's notification prompt. Simulator: both pages show only their one button, and Continue on rest alerts asked iOS and moved on (the prompt itself had already been answered on that simulator). The Screen Time prompt needs a real iPhone and wasn't checked here. The two onboarding UI tests that tap the removed "Not now" buttons still need updating. The exported IPA was checked as before (Apple Distribution, `get-task-allow` false, Family Controls in the app and three Screen Time extensions) and uploaded on 17 Oct.
+
 ## App Store build 3 (15 October 2026)
 
 App Review rejected build 2 under 3.1.2(c): the offer didn't say a payment starts automatically after the free trial. Build 3 (1.0.0) carries the paywall fix ("7 days free, then $49.99/year, charged automatically.", no trial offered to an Apple Account that has used it) plus split colours, Select on All workouts, the workout clock and the left-hand workout title. `gb_splits.color` was added on the live project (migration `20261015000100_split_colors.sql`) before the build. The exported IPA was checked as for build 2: Apple Distribution, `get-task-allow` false, Family Controls in the app and its three Screen Time extensions. Uploaded to App Store Connect on 15 Oct. On the user's iPhone the sandbox offer showed US$59.99/US$5.99 and no trial: that storefront's prices, and most likely an Apple Account that had already used the trial (unconfirmed).
