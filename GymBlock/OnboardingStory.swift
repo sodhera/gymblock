@@ -394,9 +394,11 @@ struct MindFrame: View {
 
 /// The real lock screen's words (GymBlockShield), for an example app; it slides up and locks.
 struct OnboardingShield: View {
+  var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    SceneClock(duration: 1.4, score: JourneyScores.shield) { t in
+    // Its clock runs to the kettlebell's rebound (1.42 s), then the page's button appears.
+    SceneClock(duration: 1.45, score: JourneyScores.shield, done: done) { t in
       let rise = Ease.out(Ease.seg(t, 0.3, 0.9))
       let click = t < 0.98 ? 1 : 1 - 0.14 * Ease.bump(t, 0.98, 0.18) + 0.08 * Ease.bump(t, 1.12, 0.2)
       VStack(spacing: 10) {
@@ -477,10 +479,12 @@ struct LockScreenRest: View {
 
 /// Their answers as a plan: three lines on the paper, kg or lb beneath, and the hold to commit.
 struct PlanStage: View {
+  var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
   var body: some View {
-    SceneClock(duration: 0.9, score: JourneyScores.plan) { t in
+    // The last line finishes settling at 1.05 s; the hold appears after it.
+    SceneClock(duration: 1.1, score: JourneyScores.plan, done: done) { t in
       VStack(spacing: 18) {
         Spacer(minLength: 0)
         VStack(spacing: 0) {

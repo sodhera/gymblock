@@ -23,6 +23,11 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **Continue, measured (third follow-up).** Each animated page was captured every 0.45 s from launch, timing the last movement in the stage against the first frame with the button.
+  - **Too early before the fix:** on the phone-between-sets page (5.3 s against 8.2 s), the blocking page (5.0 s against 6.0 s) and the plan page (4.9 s against 5.8 s). They were never gated.
+  - **Fix:** all three now wait for their scene.
+  - **Plan page bug:** its clock stopped before its last line finished.
+  - **After the fix:** the button appears after the last movement on all 13 animated pages. Mind A → B, reached by tapping Continue, was checked the same way.
 
 ## Custom product page screenshots (17 October 2026)
 

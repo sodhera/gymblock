@@ -31,7 +31,7 @@ enum OnboardingStep: String, CaseIterable {
   /// The account step or later: the answers are worth keeping in the account from here on.
   var reachedAccount: Bool { [.account, .subscription, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .alerts].contains(self) }
+  var animated: Bool { [.welcome, .scrolling, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
   var stage: String {
     switch self {
@@ -296,8 +296,8 @@ struct OnboardingView: View {
     case .mindA, .mindB: MindStage(focused: step == .mindB, done: markReady)
     case .restA, .restB: RestStage(timed: step == .restB, done: markReady)
     case .logA, .logB: LogStage(remembered: step == .logB, done: markReady)
-    case .commit: PlanStage()
-    case .blocking: BlockStage(locking: locking, choose: chooseApps)
+    case .commit: PlanStage(done: markReady)
+    case .blocking: BlockStage(locking: locking, choose: chooseApps, done: markReady)
     case .account: AccountStage()
     case .splits: SplitTemplateStage(choice: $template)
     case .firstWorkout: FirstWorkoutStage()
@@ -320,7 +320,7 @@ struct OnboardingView: View {
             option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
           }
         }.padding(.bottom, 14)
-        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance)
+        gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance))
         Color.clear.frame(height: 44)
       case .trainingDays:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: trainingDays != nil, action: advance)
@@ -351,12 +351,12 @@ struct OnboardingView: View {
           if found != .profile(onboarded: true) { move(.subscription) }
         }
       case .commit:
-        HoldButton(title: store.t("Hold to commit"), doneTitle: store.t("Committed"), committed: committed,
+        gated(HoldButton(title: store.t("Hold to commit"), doneTitle: store.t("Committed"), committed: committed,
                    onProgress: { p in
                      let next = min(3, Int(p * 3 + 0.001))
                      if next != pledged { withAnimation(.spring(duration: 0.3)) { pledged = next } }
                    },
-                   onComplete: commit)
+                   onComplete: commit))
         Color.clear.frame(height: 44)
       case .blocking:
         // App Review 5.1.1(iv) (17 Oct 2026): until iOS has asked for Screen Time access, Choose apps
@@ -365,11 +365,11 @@ struct OnboardingView: View {
         let asked = askedScreenTime || blocking.status != .notDetermined || StoreShots.on
         let refused = asked && !blocking.authorized && !StoreShots.on
         if blocking.ready || StoreShots.on {
-          JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking)
+          gated(JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking))
         } else if refused {
-          JourneyButton(title: store.t("Continue"), id: "blocking.continue") { skipBlocking() }
+          gated(JourneyButton(title: store.t("Continue"), id: "blocking.continue") { skipBlocking() })
         } else {
-          JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps)
+          gated(JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps))
         }
         if refused {
           JourneyTextButton(title: store.t("Open Settings"), id: "blocking.settings") {
@@ -397,7 +397,7 @@ struct OnboardingView: View {
     }
   }
   /// Continue holds its place and fades in once the page's scene has played.
-  private func gated(_ button: JourneyButton) -> some View {
+  private func gated<Button: View>(_ button: Button) -> some View {
     // Hidden means hidden for VoiceOver too, so nothing can be activated before the scene ends.
     button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 8).allowsHitTesting(ready).accessibilityHidden(!ready)
       .animation(.smooth(duration: 0.3), value: ready)

@@ -55,7 +55,8 @@ import XCTest
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
     XCTAssertTrue(OnboardingStep.restA.animated); XCTAssertTrue(OnboardingStep.days.animated)
-    XCTAssertFalse(OnboardingStep.scrolling.animated); XCTAssertFalse(OnboardingStep.commit.animated)
+    XCTAssertTrue(OnboardingStep.scrolling.animated); XCTAssertTrue(OnboardingStep.commit.animated)  // V7: they animate too.
+    XCTAssertFalse(OnboardingStep.name.animated); XCTAssertFalse(OnboardingStep.trainingDays.animated)
     XCTAssertTrue(OnboardingStep.alerts.animated)
     XCTAssertEqual(PumpPlot.scrolling.map(\.y).max()!, 0.34, accuracy: 0.001)  // Scrolling never reaches the pump line.
     XCTAssertEqual(PumpPlot.timed.map(\.y).max(), 1)

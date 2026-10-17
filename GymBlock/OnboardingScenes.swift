@@ -119,7 +119,7 @@ struct NotificationStage: View {
     let reduced = JourneyMotion.reduced(systemReduceMotion)
     if awake {
       withAnimation(.smooth(duration: 0.4)) { locked = false; stacked = false; shown = 0 }
-      if reduced { shown = 3; return }
+      if reduced { shown = 3; done(); return }
       for i in 0..<3 {
         guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
         withAnimation(JourneyMotion.gentle) { shown = i + 1 }
@@ -127,6 +127,9 @@ struct NotificationStage: View {
         var buzz = JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)); buzz.sounds = []
         JourneyScorePlayer.shared.play(buzz, profile: store.profile)
       }
+      // The last card's spring settles, then Continue.
+      guard await pause(0.85) else { return }
+      done()
       return
     }
     var t = Transaction(); t.disablesAnimations = true
@@ -653,6 +656,7 @@ struct LogStage: View {
 struct BlockStage: View {
   let locking: Bool
   let choose: () -> Void
+  var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
   @State private var stamped = 0
@@ -670,7 +674,7 @@ struct BlockStage: View {
       Spacer(minLength: 0)
       // What they'll meet mid-set: the shield's own words, sliding up and locking.
       Text(store.t("Here’s what you’ll see mid-workout")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
-      OnboardingShield()
+      OnboardingShield(done: done)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 16) {
         if !samples.isEmpty {
           ForEach(samples.prefix(3), id: \.self) { sample($0) }
