@@ -23,6 +23,10 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **Continue, the real cause (fourth follow-up).** On every page reached by tapping Continue, the button was there from the start.
+  - **Cause:** leaving a page cancels the page's 20-second fallback timer. Its `try? await Task.sleep` swallowed the cancellation and called `markReady` at once, on the page just opened. Opening pages directly with `-journeyStep` never hit it, which is why the earlier measurements missed it.
+  - **Fix:** the fallback now checks for cancellation, and every scene's end signal is bound to its own page.
+  - **Checked by tapping through:** the time ring → hours a year → Mind A → Mind B. On each, Continue was hidden when the page opened and showed when its scene ended.
 - **Continue, measured (third follow-up).** Each animated page was captured every 0.45 s from launch, timing the last movement in the stage against the first frame with the button.
   - **Too early before the fix:** on the phone-between-sets page (5.3 s against 8.2 s), the blocking page (5.0 s against 6.0 s) and the plan page (4.9 s against 5.8 s). They were never gated.
   - **Fix:** all three now wait for their scene.

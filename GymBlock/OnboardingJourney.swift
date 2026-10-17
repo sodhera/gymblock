@@ -127,7 +127,15 @@ struct OnboardingView: View {
     .preferredColorScheme(JourneyColor.theme.scheme)
     // Continue waits for the page's animation to finish. Safety net, well past the longest
     // sequence: it still appears if one is interrupted.
-    .task(id: step) { if !ready { try? await Task.sleep(for: .seconds(20)); markReady() } }
+    // Leaving the page cancels this task. The sleep's cancellation is swallowed by `try?`, so it must
+    // be checked, or the next page would get its Continue the moment it opened.
+    .task(id: step) {
+      let page = step
+      guard !ready else { return }
+      try? await Task.sleep(for: .seconds(20))
+      guard !Task.isCancelled else { return }
+      markReady(page)
+    }
     .onChange(of: step) { old, new in Analytics.leave("onboarding." + old.rawValue); Analytics.enter("onboarding." + new.rawValue, ["step": stepIndex(new)]) }
     .onAppear { Analytics.enter("onboarding." + step.rawValue, ["step": stepIndex(step)]) }
     .onDisappear { Analytics.leave("onboarding." + step.rawValue) }
@@ -263,13 +271,13 @@ struct OnboardingView: View {
 
   @ViewBuilder private var stage: some View {
     switch step {
-    case .welcome: WelcomeScene(done: markReady)
+    case .welcome: WelcomeScene(done: sceneDone)
     case .founder: FounderStage()
     case .trainingDays: TrainingDaysStage(days: $trainingDays) { n in
       withAnimation(JourneyMotion.gentle) { trainingDays = n }
       JourneyHaptic.play(.selection, store.profile)
     }
-    case .scrolling: NotificationStage(awake: true, done: markReady)
+    case .scrolling: NotificationStage(awake: true, done: sceneDone)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
     case .gender: GenderStage(gender: gender) { value in
       withAnimation(JourneyMotion.gentle) { gender = value }
@@ -287,17 +295,17 @@ struct OnboardingView: View {
                    value: Binding(get: { weightUnit == 0 ? weightKG.rounded() : min(440, max(66, (weightKG * 2.20462).rounded())) },
                                   set: { weightKG = weightUnit == 0 ? $0 : $0 / 2.20462 }),
                    units: ["kg", "lb"], unitIndex: $weightUnit)
-    case .alerts: LockScreenRest(done: markReady)
+    case .alerts: LockScreenRest(done: sceneDone)
     case .phoneMinutes:
       JourneyWheel(values: stride(from: 0.5, through: 10, by: 0.5).map { $0 }, unit: store.t("min"), id: "baseline.scrollMinutes",
                    value: $draft).frame(height: 216).frame(maxHeight: .infinity)
-    case .reveal: RevealStage(estimate: estimate, done: markReady)
-    case .days: DaysStage(estimate: estimate, done: markReady)
-    case .mindA, .mindB: MindStage(focused: step == .mindB, done: markReady)
-    case .restA, .restB: RestStage(timed: step == .restB, done: markReady)
-    case .logA, .logB: LogStage(remembered: step == .logB, done: markReady)
-    case .commit: PlanStage(done: markReady)
-    case .blocking: BlockStage(locking: locking, choose: chooseApps, done: markReady)
+    case .reveal: RevealStage(estimate: estimate, done: sceneDone)
+    case .days: DaysStage(estimate: estimate, done: sceneDone)
+    case .mindA, .mindB: MindStage(focused: step == .mindB, done: sceneDone)
+    case .restA, .restB: RestStage(timed: step == .restB, done: sceneDone)
+    case .logA, .logB: LogStage(remembered: step == .logB, done: sceneDone)
+    case .commit: PlanStage(done: sceneDone)
+    case .blocking: BlockStage(locking: locking, choose: chooseApps, done: sceneDone)
     case .account: AccountStage()
     case .splits: SplitTemplateStage(choice: $template)
     case .firstWorkout: FirstWorkoutStage()
@@ -404,12 +412,16 @@ struct OnboardingView: View {
   }
   /// A scene has finished. Continue still waits a beat after it, and until the page has been up a
   /// minimum time, so nobody taps through before the point lands.
-  private func markReady() {
-    guard !ready else { return }
-    let page = step
-    // The moment the scene ends (17 Oct 2026: no hold, no minimum time on the page).
-    guard step == page else { return }
+  /// A page's scene has ended: its Continue fades in. Only that page's own signal counts; a late one
+  /// from a page already left never reveals the next page's button.
+  private func markReady(_ page: OnboardingStep) {
+    guard !ready, step == page else { return }
     withAnimation(.smooth(duration: 0.3)) { ready = true }
+  }
+  /// The signal a scene on this page calls when it ends, bound to this page.
+  private var sceneDone: () -> Void {
+    let page = step
+    return { markReady(page) }
   }
 
   private func commit() {
