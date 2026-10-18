@@ -268,7 +268,6 @@ struct OnboardingView: View {
     case .alerts: return "One buzz, right when it’s time. Change it anytime."
     case .reveal: return "A typical workout: 6 exercises × 3 sets, with your rests."
     case .days: return "Your own numbers, multiplied out."
-    case .commit: return "Hold the button until it fills."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
     case .logA, .logB: return "An example log, not your data."
     case .shield: return "It lifts the moment you finish."
@@ -370,13 +369,12 @@ struct OnboardingView: View {
           if found != .profile(onboarded: true) { move(.subscription) }
         }
       case .commit:
-        gated(HoldButton(title: store.t("Hold to commit"), doneTitle: store.t("Committed"), committed: committed,
+        gated(FingerprintHold(title: store.t("Hold to commit"), holdingTitle: store.t("Keep holding…"), doneTitle: store.t("Committed"), committed: committed,
                    onProgress: { p in
                      let next = min(3, Int(p * 3 + 0.001))
                      if next != pledged { withAnimation(.spring(duration: 0.3)) { pledged = next } }
                    },
                    onComplete: commit))
-        Color.clear.frame(height: 44)
       case .blocking:
         // App Review 5.1.1(iv) (17 Oct 2026): until iOS has asked for Screen Time access, Choose apps
         // (which asks first) is the only way on. Once it has asked, choosing apps can wait; a refusal

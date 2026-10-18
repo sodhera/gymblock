@@ -522,7 +522,7 @@ extension Spanish {
     "One buzz when your rest is up. Change it anytime.": "Una vibración cuando acaba tu descanso. Cámbialo cuando quieras.",
     "A typical workout: 6 exercises × 3 sets, 2-minute rests.": "Un entrenamiento típico: 6 ejercicios × 3 series, descansos de 2 minutos.",
     "At 5 workouts a week. Your own numbers, multiplied out.": "Con 5 entrenamientos por semana. Tus propios números, multiplicados.",
-    "Hold the button until it fills.": "Mantén el botón hasta que se llene.",
+    "Keep holding…": "Sigue manteniendo…",
     "An example log, not your data.": "Un registro de ejemplo, no tus datos.",
     "Blocking is a preview in this build: nothing is enforced yet.": "El bloqueo es una vista previa en esta versión: aún no se aplica nada.",
     "How long on your phone, each rest?": "¿Cuánto tiempo con el teléfono en cada descanso?",

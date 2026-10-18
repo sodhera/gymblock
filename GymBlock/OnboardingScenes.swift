@@ -763,61 +763,114 @@ struct CommitStage: View {
   }
 }
 
-/// Press and hold: the capsule fills, haptics ramp, and the commitment completes at 1.6 s.
-struct HoldButton: View {
+/// A fingerprint you hold, after SleepBlock's (18 Oct 2026, at the user's request, replacing the hold
+/// capsule): holding it reads as authorising the plan, not clicking past it. The print fills emerald
+/// from the bottom with a scan line on the fill's edge, a ring closes round it, and the commitment
+/// completes at 1.6 s; letting go early rewinds. The mark is Material Symbols `fingerprint`, weight 100
+/// (CREDITS.md), never SF Symbols' `touchid`, which Apple licenses only for Touch ID itself.
+struct FingerprintHold: View {
   let title: String
+  let holdingTitle: String
   let doneTitle: String
   let committed: Bool
   let onProgress: (Double) -> Void
   let onComplete: () -> Void
-  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(\.scenePhase) private var scenePhase
   @State private var fill = 0.0
   @State private var holding = false
+  @State private var pulse = false
   @State private var ticker: Task<Void, Never>?
   static let duration = 1.6
+  private let print: CGFloat = JourneyLayout.compact ? 64 : 76
+  private var ring: CGFloat { print + 40 }
+  private var progress: Double { committed ? 1 : fill }
   var body: some View {
-    GeometryReader { g in
-      ZStack(alignment: .leading) {
-        Capsule().fill(JourneyColor.button)
-        label(JourneyColor.onButton)
-        Capsule().fill(JourneyColor.commitFill).frame(width: g.size.width * (committed ? 1 : fill))
-        label(JourneyColor.onAccent).mask(alignment: .leading) { Rectangle().frame(width: g.size.width * (committed ? 1 : fill)) }
+    VStack(spacing: 10) {
+      ZStack {
+        Circle().fill(JourneyColor.ink(holding ? 0.09 : 0.05)).frame(width: print + 22, height: print + 22)
+          .overlay(Circle().strokeBorder(JourneyColor.hairline, lineWidth: 1))
+        Circle().trim(from: 0, to: progress)
+          .stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+          .frame(width: ring - 6, height: ring - 6).rotationEffect(.degrees(-90))
+        if committed {
+          Image(systemName: "checkmark").font(.system(size: print * 0.42, weight: .light)).foregroundStyle(JourneyColor.signal)
+            .transition(.scale(scale: 0.6).combined(with: .opacity))
+        } else {
+          mark(JourneyColor.ink(0.28))
+          mark(JourneyColor.signal).mask(alignment: .bottom) { Rectangle().frame(height: print * progress) }
+          // The scan line rides the top of the fill.
+          if progress > 0.02 && progress < 0.99 {
+            Capsule().fill(JourneyColor.signal).frame(width: print * 0.9, height: 1.5)
+              .shadow(color: JourneyColor.signal.opacity(0.7), radius: 4)
+              .offset(y: print / 2 - print * progress)
+          }
+        }
       }
-    }.frame(height: 50).clipShape(Capsule())
-      .scaleEffect(holding ? 0.97 : 1).animation(.smooth(duration: 0.2), value: holding)
-      .contentShape(Capsule())
+      .frame(width: ring, height: ring)
+      .scaleEffect(committed ? 1.03 : holding ? 0.96 : 1)
+      .animation(.spring(response: 0.34, dampingFraction: 0.7), value: committed)
+      .animation(.easeOut(duration: 0.18), value: holding)
+      .overlay {
+        // One outward pulse, on success only.
+        if committed && !reduceMotion {
+          Circle().stroke(JourneyColor.signal.opacity(pulse ? 0 : 0.45), lineWidth: 2)
+            .scaleEffect(pulse ? 1.45 : 1).frame(width: ring, height: ring).allowsHitTesting(false)
+        }
+      }
+      .contentShape(Circle())
       .gesture(DragGesture(minimumDistance: 0)
-        .onChanged { _ in if !holding && !committed { start() } }
+        .onChanged { v in
+          // Sliding off the print is letting go.
+          if abs(v.translation.width) > 60 || abs(v.translation.height) > 60 { release(); return }
+          if !holding && !committed { start() }
+        }
         .onEnded { _ in release() })
-      .accessibilityElement().accessibilityLabel(title).accessibilityAddTraits(.isButton)
-      .accessibilityIdentifier("commit.hold")
-      .accessibilityAction { finish() }
+      Text(committed ? doneTitle : holding ? holdingTitle : title)
+        .font(JourneyType.label).foregroundStyle(committed ? JourneyColor.signal : JourneyColor.secondary)
+        .contentTransition(.opacity).animation(.easeInOut(duration: 0.2), value: committed)
+    }
+    .frame(maxWidth: .infinity)
+    .accessibilityElement().accessibilityLabel(title).accessibilityAddTraits(.isButton)
+    .accessibilityIdentifier("commit.hold")
+    // VoiceOver can't express a press and hold, so it gets a plain action.
+    .accessibilityAction { finish() }
+    .onChange(of: scenePhase) { _, phase in if phase != .active { release() } }
+    .onChange(of: committed) { _, done in
+      guard done else { return }
+      DispatchQueue.main.async { withAnimation(.easeOut(duration: 0.7)) { pulse = true } }
+    }
   }
-  private func label(_ color: Color) -> some View {
-    Text(committed ? doneTitle : title).font(JourneyType.button).foregroundStyle(color).frame(maxWidth: .infinity)
+  private func mark(_ color: Color) -> some View {
+    Image("FingerprintMark").renderingMode(.template).resizable().scaledToFit()
+      .frame(width: print, height: print).foregroundStyle(color)
   }
   private func start() {
     holding = true
     let begin = Date()
     withAnimation(.linear(duration: Self.duration)) { fill = 1 }
-    // One continuous buzz that climbs from barely there to full while the finger stays down.
+    // One continuous buzz that climbs while the finger stays down, and a tick every fifth, like a
+    // scanner reading ridges.
     JourneyScorePlayer.shared.swell(Self.duration, from: 0.05, to: 0.7, sharpness: 0.4)
     ticker = Task { @MainActor in
+      var tick = 0
       while !Task.isCancelled {
         let p = min(1, Date().timeIntervalSince(begin) / Self.duration)
         onProgress(p)
+        if Int(p * 5) > tick { tick = Int(p * 5); if p < 1 { JourneyHaptic.pressLight() } }
         if p >= 1 { finish(); return }
-        try? await Task.sleep(for: .milliseconds(90))
+        try? await Task.sleep(for: .milliseconds(40))
       }
     }
   }
   private func release() {
+    guard holding, !committed else { holding = false; return }
     holding = false
-    guard !committed else { return }
     ticker?.cancel()
     JourneyScorePlayer.shared.stop()
     onProgress(0)
-    withAnimation(.easeOut(duration: 0.3)) { fill = 0 }
+    // Rewinds rather than snapping to zero: a slip isn't punished.
+    withAnimation(.easeOut(duration: 0.4)) { fill = 0 }
   }
   private func finish() {
     ticker?.cancel()
