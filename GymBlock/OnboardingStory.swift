@@ -262,7 +262,11 @@ struct FounderStage: View {
       Text(store.t("Little things, done right, every session."))
       VStack(alignment: .leading, spacing: 2) {
         Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
-        Text("Sulav").font(.custom("SnellRoundhand-Bold", size: signature, relativeTo: .title)).foregroundStyle(JourneyColor.text)
+        // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in
+        // light and dark; about as tall as the typed name it replaced was large.
+        Image("FounderSignature").renderingMode(.template).resizable().scaledToFit()
+          .frame(height: signature * 1.5).foregroundStyle(JourneyColor.text)
+          .accessibilityLabel("Sulav")
         Text(store.t("Founder, GymBlock")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       }.padding(.top, 2)
     }
