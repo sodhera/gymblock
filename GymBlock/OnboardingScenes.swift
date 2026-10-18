@@ -63,95 +63,70 @@ struct PingCard: View {
   }
 }
 
-/// Notifications pile up, then fold into one dimmed, locked stack with the kettlebell resting on
-/// it, so the page ends full rather than on an empty stage. On the first question they creep back.
+/// The phone question's notifications: three cards land one after another, newest on top, each
+/// on its own light tap. The stack keeps its full size from the start (no jump as cards arrive) and
+/// scales down to fit the space the page leaves it, so small screens and large text never overlap
+/// the headline or the answers.
 struct NotificationStage: View {
   let awake: Bool
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var shown = 0
-  @State private var stacked = false
-  @State private var locked = false
-  /// Card pitch while the notifications are spread out, and the gap that shows between stacked cards.
-  private let pitch: CGFloat = 74
-  private let peek: CGFloat = 13
-  /// Where the stacked front card sits; the kettlebell rests above it and the caption sits below.
-  private let stackY: CGFloat = 36
+  /// Top to bottom: the newest (YouTube) sits on top, the first to arrive (Messages) at the bottom.
+  private var slots: [Ping] { Array(Ping.all.prefix(3).reversed()) }
   var body: some View {
-    let visible = Array(Ping.all.prefix(shown).reversed())
-    ZStack {
-      ForEach(Array(visible.enumerated()), id: \.element.id) { k, ping in
-        PingCard(ping: ping)
-          // Stacked, the front card stays solid but greyed out; the ones behind show only their edges.
-          .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-              .fill(JourneyColor.stage.opacity(k == 0 ? 0.5 : 1))
-              .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(JourneyColor.hairline, lineWidth: 1))
-              .opacity(stacked ? 1 : 0)
-          }
-          .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(JourneyColor.stage).opacity(stacked ? 1 : 0))
-          .shadow(color: .black.opacity(stacked ? 0.06 : 0), radius: 8, y: 3)
-          .overlay(alignment: .topTrailing) {
-            if k == 0 { lockBadge.offset(x: 6, y: -8).scaleEffect(locked ? 1 : 0.3).opacity(locked ? 1 : 0) }
-          }
-          .scaleEffect(stacked ? 1 - CGFloat(k) * 0.055 : 1, anchor: .bottom)
-          .offset(y: stacked ? stackY + CGFloat(k) * peek : (CGFloat(k) - CGFloat(visible.count - 1) / 2) * pitch)
-          .zIndex(Double(-k))
-          .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+    ScaleToFit {
+      VStack(spacing: 10) {
+        ForEach(Array(slots.enumerated()), id: \.element.id) { k, ping in
+          // Slot k is the (3 - k)th to arrive.
+          let on = shown >= 3 - k
+          PingCard(ping: ping)
+            .opacity(on ? 1 : 0).offset(y: on ? 0 : -14).scaleEffect(on ? 1 : 0.96)
+            .animation(.spring(duration: 0.38, bounce: 0.2), value: on)
+        }
       }.frame(maxWidth: 360)
-      BrandMark(size: 92)
-        .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: 120)).frame(width: 240, height: 240))
-        .offset(y: locked ? stackY - 118 : stackY - 280).opacity(locked ? 1 : 0)
-      Text(store.t("Apps locked while you train")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
-        .offset(y: stackY + 112).opacity(locked ? 1 : 0)
-    }.frame(maxWidth: .infinity, maxHeight: .infinity)
-      .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
-      .accessibilityLabel(store.t(awake ? "Notifications arriving." : "Notifications are cleared and apps are locked while you train."))
-      .task(id: awake) { await play() }
-  }
-  private var lockBadge: some View {
-    Image(systemName: "lock.fill").font(.system(size: 11, weight: .bold)).foregroundStyle(JourneyColor.onAccent)
-      .frame(width: 26, height: 26).background(Circle().fill(JourneyColor.accent))
-      .overlay(Circle().strokeBorder(JourneyColor.stage, lineWidth: 2))
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
+    .accessibilityLabel(store.t("Notifications arriving."))
+    .task { await play() }
   }
   private func play() async {
-    let reduced = JourneyMotion.reduced(systemReduceMotion)
-    if awake {
-      withAnimation(.smooth(duration: 0.4)) { locked = false; stacked = false; shown = 0 }
-      if reduced { shown = 3; done(); return }
-      for i in 0..<3 {
-        guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
-        // A double tap per app, a little stronger each time, like they're creeping closer. No sound
-        // here. The card arrives on the tap's moment.
-        var buzz = JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)); buzz.sounds = []
-        let begin = JourneyScorePlayer.shared.play(buzz, profile: store.profile)
-        guard await pause(until: 0, from: begin) else { return }
-        withAnimation(JourneyMotion.gentle) { shown = i + 1 }
-      }
-      // The last card's spring settles, then Continue.
-      guard await pause(0.85) else { return }
-      done()
-      return
+    if JourneyMotion.reduced(systemReduceMotion) { shown = 3; done(); return }
+    shown = 0
+    for i in 0..<3 {
+      guard await pause(i == 0 ? JourneyMotion.settle : 0.45) else { return }
+      // One light tap per card, a little stronger each time, like they're creeping closer; no
+      // sound. The card arrives on the tap's moment.
+      let begin = JourneyScorePlayer.shared.play(JourneyScores.notification(strength: 0.3 + 0.08 * Double(i)), profile: store.profile)
+      guard await pause(until: 0, from: begin) else { return }
+      shown = i + 1
     }
-    var t = Transaction(); t.disablesAnimations = true
-    withTransaction(t) { shown = 0; stacked = false; locked = false }
-    if reduced { shown = Ping.all.count; stacked = true; locked = true; done(); return }
-    for i in 0..<Ping.all.count {
-      guard await pause(i == 0 ? JourneyMotion.settle + 0.15 : 0.5) else { return }
-      withAnimation(JourneyMotion.gentle) { shown = i + 1 }
-      JourneyHaptic.notification(store.profile)
-    }
-    guard await pause(0.9) else { return }
-    withAnimation(.smooth(duration: 0.7)) { stacked = true }
-    JourneyHaptic.play(.soft, store.profile, intensity: 0.7)
-    guard await pause(0.55) else { return }
-    withAnimation(.spring(duration: 0.7, bounce: 0.18)) { locked = true }
-    JourneyHaptic.play(.rigid, store.profile)
-    guard await pause(0.12) else { return }
-    JourneyHaptic.play(.success, store.profile)
-    guard await pause(0.35) else { return }
+    // The last card's spring settles, then Continue.
+    guard await pause(0.45) else { return }
     done()
+  }
+}
+
+/// Shows content at its natural height, scaled down (never up) to fit the space it's given, so a
+/// small screen or large text shrinks the scene instead of pushing it into the headline or buttons.
+struct ScaleToFit<Content: View>: View {
+  @ViewBuilder let content: () -> Content
+  @State private var natural: CGFloat = 0
+  var body: some View {
+    GeometryReader { g in
+      let s = natural > 0 ? min(1, g.size.height / natural) : 1
+      content()
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: g.size.width)
+        .background(GeometryReader { c in
+          Color.clear
+            .onAppear { natural = c.size.height }
+            .onChange(of: c.size.height) { _, h in natural = h }
+        })
+        .scaleEffect(s)
+        .frame(width: g.size.width, height: g.size.height)
+    }
   }
 }
 
@@ -232,7 +207,7 @@ struct RevealStage: View {
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let fill = 1.6 * max(0.3, p)
     // Ticks climb with the red count; the green lands with a light shimmer, no bass (JourneyScores.reveal).
-    let begin = JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill, total: estimate.phoneMinutes), profile: store.profile)
+    let begin = JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill), profile: store.profile)
     guard await pause(until: 0, from: begin) else { return }
     withAnimation(.easeInOut(duration: fill)) { phone = p; counted = estimate.phoneMinutes }
     guard await pause(fill + 0.25) else { return }
@@ -673,8 +648,7 @@ struct BlockStage: View {
   var body: some View {
     let all = items
     let shown = Array(all.prefix(all.count > 4 ? 3 : 4))
-    VStack(spacing: 18) {
-      Spacer(minLength: 0)
+    ScaleToFit { VStack(spacing: 18) {
       // What they'll meet mid-set: the shield's own words, sliding up and locking.
       Text(store.t("Here’s what you’ll see mid-workout")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
       OnboardingShield(done: done)
@@ -694,8 +668,7 @@ struct BlockStage: View {
         .font(JourneyType.label).foregroundStyle(JourneyColor.secondary).monospacedDigit().multilineTextAlignment(.center)
         .contentTransition(.numericText()).animation(.smooth(duration: 0.3), value: all.count)
         .accessibilityIdentifier("blocking.summary")
-      Spacer(minLength: 0)
-    }
+    }.frame(maxHeight: .infinity) }
     .task(id: locking) {
       guard locking else { stamped = 0; return }
       for i in 0..<min(4, all.count) {
@@ -821,7 +794,7 @@ struct HoldButton: View {
     let begin = Date()
     withAnimation(.linear(duration: Self.duration)) { fill = 1 }
     // One continuous buzz that climbs from barely there to full while the finger stays down.
-    JourneyScorePlayer.shared.swell(Self.duration, from: 0.1, to: 1, sharpness: 0.45)
+    JourneyScorePlayer.shared.swell(Self.duration, from: 0.05, to: 0.7, sharpness: 0.4)
     ticker = Task { @MainActor in
       while !Task.isCancelled {
         let p = min(1, Date().timeIntervalSince(begin) / Self.duration)

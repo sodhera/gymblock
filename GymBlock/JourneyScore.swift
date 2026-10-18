@@ -1,9 +1,11 @@
+import AudioToolbox
 import AVFoundation
 import CoreHaptics
 
 /// One onboarding scene's haptics and sounds on a single clock (docs/ONBOARDING-V7-PLAN.md).
 /// Strength follows the story: focus that fades gets weaker taps, a pump that builds gets stronger
-/// ones, a long phone rest gets nothing. Sounds are GymBlock's own (scripts/generate-onboarding-sounds.py).
+/// ones, a long phone rest gets nothing. Sound is rare and real: iOS's own sounds, for the three
+/// moments that are sounds in life (a notification arriving, the phone locking, rest's up).
 struct JourneyScore {
   enum Haptic {
     /// A single tap: strength and crispness, 0–1.
@@ -11,43 +13,48 @@ struct JourneyScore {
     /// A continuous buzz from one strength to another: time, duration, from, to, sharpness.
     case swell(Double, Double, Double, Double, Double)
   }
+  /// The sounds onboarding uses, all iOS's own (/System/Library/Audio/UISounds), never synthesized.
+  enum Sound: CaseIterable {
+    /// The Messages "received" ding: a notification arriving.
+    case notification
+    /// The iPhone's lock click: the kettlebell locking the phone, the shield locking an app.
+    case lock
+    /// The tri-tone: rest's up.
+    case alert
+    var file: String {
+      switch self { case .notification: return "ReceivedMessage"; case .lock: return "lock"; case .alert: return "sms-received1" }
+    }
+    /// The same sound by system sound ID, if the file can't be opened.
+    var systemID: SystemSoundID {
+      switch self { case .notification: return 1003; case .lock: return 1100; case .alert: return 1007 }
+    }
+  }
   struct Cue {
     let at: Double
-    let name: String
-    var volume: Float = 1
+    let sound: Sound
+    var volume: Float = 0.35
   }
   var haptics: [Haptic] = []
   var sounds: [Cue] = []
   init(haptics: [Haptic] = [], sounds: [Cue] = []) { self.haptics = haptics; self.sounds = sounds }
-  static func cue(_ at: Double, _ name: String, _ volume: Float = 1) -> Cue { Cue(at: at, name: name, volume: volume) }
 }
 
-/// Plays scores: Core Haptics patterns for the feel, an audio engine for sample-accurate sound.
-/// The audio session is ambient, so the silent switch silences it and music keeps playing.
+/// Plays scores: Core Haptics patterns for the feel, AVAudioPlayer scheduled on the device clock for
+/// the sound. The audio session is ambient, so the silent switch silences it and music keeps playing.
 @MainActor final class JourneyScorePlayer {
   static let shared = JourneyScorePlayer()
   private var engine: CHHapticEngine?
-  private var players: [CHHapticPatternPlayer] = []
-  private let audio = AVAudioEngine()
-  private var nodes: [AVAudioPlayerNode] = []
-  private var nextNode = 0
-  private var buffers: [String: AVAudioPCMBuffer] = [:]
+  private var hapticPlayers: [CHHapticPatternPlayer] = []
+  /// A few players per sound, so cues that overlap (four notifications in a row) don't cut each other off.
+  private var pools: [JourneyScore.Sound: [AVAudioPlayer]] = [:]
+  private var next: [JourneyScore.Sound: Int] = [:]
+  private var pending: [DispatchWorkItem] = []
   private var audioReady = false
-  private var loading = false
-  private let format = AVAudioFormat(standardFormatWithSampleRate: 32000, channels: 1)!
 
-  /// Wakes the Taptic Engine, starts the audio engine and loads every cue, so the first scene's
-  /// sounds don't pay the engine's start-up time.
+  /// Wakes the Taptic Engine and opens the sounds, so the first scene doesn't start late.
   func prepare() {
     setUpHaptics()
     setUpAudio()
-    startAudio()
-    guard buffers.isEmpty, !loading else { return }
-    loading = true
-    Task.detached(priority: .userInitiated) {
-      let loaded = Self.loadAll()
-      await MainActor.run { self.buffers.merge(loaded) { a, _ in a }; self.loading = false }
-    }
   }
 
   /// How long the audio path takes to reach the ear: the hardware buffer plus the route's own delay
@@ -73,20 +80,17 @@ struct JourneyScore {
   func swell(_ duration: Double, from: Double, to: Double, sharpness: Double) {
     playHaptics([.swell(0, duration, from, to, sharpness)], lead: 0)
   }
-  func sound(_ name: String, volume: Float = 1, profile: Profile) {
-    guard profile.soundEnabled ?? true else { return }
-    playSounds([JourneyScore.cue(0, name, volume)], lead: 0.005)
-  }
   /// The page changed: whatever was still to come is dropped.
   func stop() {
-    for p in players { try? p.stop(atTime: CHHapticTimeImmediate) }
-    players.removeAll()
-    for n in nodes where n.isPlaying { n.stop() }
+    for p in hapticPlayers { try? p.stop(atTime: CHHapticTimeImmediate) }
+    hapticPlayers.removeAll()
+    for w in pending { w.cancel() }
+    pending.removeAll()
+    for pool in pools.values { for p in pool where p.isPlaying { p.stop(); p.currentTime = 0 } }
   }
   /// Onboarding is over: the engines sleep.
   func shutDown() {
     stop()
-    if audio.isRunning { audio.stop() }
     engine?.stop()
   }
 
@@ -130,8 +134,8 @@ struct JourneyScore {
       try engine.start()
       let player = try engine.makePlayer(with: CHHapticPattern(events: events, parameterCurves: curves))
       try player.start(atTime: engine.currentTime + lead)
-      players.append(player)
-      if players.count > 24 { players.removeFirst(players.count - 24) }
+      hapticPlayers.append(player)
+      if hapticPlayers.count > 24 { hapticPlayers.removeFirst(hapticPlayers.count - 24) }
     } catch {}
   }
 
@@ -140,56 +144,41 @@ struct JourneyScore {
   private func setUpAudio() {
     guard !audioReady else { return }
     try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
-    for _ in 0..<14 {
-      let n = AVAudioPlayerNode()
-      audio.attach(n)
-      audio.connect(n, to: audio.mainMixerNode, format: format)
-      nodes.append(n)
-    }
-    audio.prepare()
-    audioReady = true
-  }
-  nonisolated private static func loadAll() -> [String: AVAudioPCMBuffer] {
-    var out: [String: AVAudioPCMBuffer] = [:]
-    for url in Bundle.main.urls(forResourcesWithExtension: "wav", subdirectory: nil) ?? [] {
-      let name = url.deletingPathExtension().lastPathComponent
-      if let b = read(url) { out[name] = b }
-    }
-    return out
-  }
-  nonisolated private static func read(_ url: URL) -> AVAudioPCMBuffer? {
-    guard let file = try? AVAudioFile(forReading: url),
-      let b = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length))
-    else { return nil }
-    do { try file.read(into: b) } catch { return nil }
-    return b
-  }
-  private func buffer(_ name: String) -> AVAudioPCMBuffer? {
-    if let b = buffers[name] { return b }
-    guard let url = Bundle.main.url(forResource: name, withExtension: "wav"), let b = Self.read(url) else { return nil }
-    buffers[name] = b
-    return b
-  }
-  private func startAudio() {
-    guard !audio.isRunning else { return }
     try? AVAudioSession.sharedInstance().setActive(true, options: [])
-    try? audio.start()
-    if audio.isRunning { for n in nodes where !n.isPlaying { n.play() } }
+    for sound in JourneyScore.Sound.allCases {
+      // On a phone this is iOS's own folder; the simulator keeps iOS's files under its runtime root.
+      let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
+      let url = URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\(sound.file).caf")
+      pools[sound] = (0..<3).compactMap { _ in
+        guard let p = try? AVAudioPlayer(contentsOf: url) else { return nil }
+        p.prepareToPlay()
+        return p
+      }
+    }
+    audioReady = true
+    #if DEBUG
+      NSLog("GymBlock sounds: %d of %d iOS sounds opened", pools.values.filter { !$0.isEmpty }.count, JourneyScore.Sound.allCases.count)
+    #endif
   }
   private func playSounds(_ list: [JourneyScore.Cue], lead: Double) {
     setUpAudio()
-    startAudio()
-    guard audio.isRunning, !list.isEmpty else { return }
     let lead = max(0, lead)
-    let now = mach_absolute_time()
-    for cue in list.sorted(by: { $0.at < $1.at }) {
-      guard let b = buffer(cue.name), b.format == format else { continue }
-      let node = nodes[nextNode]
-      nextNode = (nextNode + 1) % nodes.count
-      if !node.isPlaying { node.play() }
-      node.volume = cue.volume
-      let when = AVAudioTime(hostTime: now + AVAudioTime.hostTime(forSeconds: lead + cue.at))
-      node.scheduleBuffer(b, at: when, options: [], completionHandler: nil)
+    for cue in list {
+      if let pool = pools[cue.sound], !pool.isEmpty {
+        let i = next[cue.sound, default: 0] % pool.count
+        next[cue.sound] = i + 1
+        let player = pool[i]
+        if player.isPlaying { player.stop() }
+        player.currentTime = 0
+        player.volume = cue.volume
+        player.play(atTime: player.deviceCurrentTime + lead + cue.at)
+      } else {
+        // The file couldn't be opened: the same sound by ID, on the moment (no volume control).
+        let id = cue.sound.systemID
+        let work = DispatchWorkItem { AudioServicesPlaySystemSound(id) }
+        pending.append(work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + lead + cue.at, execute: work)
+      }
     }
   }
 }

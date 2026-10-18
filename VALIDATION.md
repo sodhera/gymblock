@@ -23,6 +23,14 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **iPhone SE and sound (sixth follow-up, 18 Oct, after testing on the user's iPhone SE).**
+  - **Sound:** the synthesized sounds were too intense and sounded made up. They're gone (and their generator). Onboarding now plays iOS's own sounds, and only three: the Messages ding as notifications land on the welcome screen, the iPhone's lock click when the kettlebell lands and when the shield locks, and the tri-tone when rest is up. Everything else is silent, with no background hum. All three opened on the user's iPhone (`GymBlock sound files: 3 of 3 open`).
+  - **Haptics:** cut to single taps on meaningful beats; there's no tap on page changes any more. The pump pages are unchanged.
+  - **Sulav's note:** shorter, set on the paper with no card. It uses the largest text that fits, and the whole note, signature included, fits on SE.
+  - **Phone-habit page:** the cards land 0.45 s apart (they were 1.1 s) and scale to fit, so on SE they no longer cover the headline or caption.
+  - **Blocking page:** it scales to fit, so on SE it no longer pushes the top bar off the screen.
+  - **Checked:** all 21 pages captured on an iPhone SE (3rd gen, iOS 26.5) simulator and on the iPhone 18 Pro Max simulator.
+  - **Phone copy:** a personal-team copy (`com.sirishjoshi.gymblock.devtest`, "GymBlock Test") is installed on the user's iPhone. It runs offline and can't use Screen Time.
 - **Transitions and sound timing (fifth follow-up).**
   - **Transitions:** a page change now fades out in 0.12 s and springs in over 0.3 s, and its scene starts at 0.22 s. Before, it was 0.18 s, 0.5 s and 0.4 s, which read as slow.
   - **Sound and picture on one moment:** the audio engine now starts when onboarding opens, instead of at the first ding. Each score returns the moment its t = 0 lands, scheduled ahead by the audio route's own latency (hardware buffer plus output delay, which is long over Bluetooth). Haptics and the scene's motion start on that same moment.

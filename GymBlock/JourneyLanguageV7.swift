@@ -22,6 +22,10 @@ extension Spanish {
       "Guarda un registro honesto de cada serie. Siempre sabrás lo que hiciste de verdad la última vez y qué superar hoy.",
     "Little things, done right, every session.": "Pequeñas cosas, bien hechas, en cada sesión.",
     "Founder, GymBlock": "Fundador de GymBlock",
+    "I built GymBlock because my rests kept turning into scrolling. One quick check became ten, and by my next set the focus and the pump were gone.":
+      "Creé GymBlock porque mis descansos acababan siendo móvil. Un vistazo se convertía en diez y, para la siguiente serie, ya no tenía ni el foco ni la congestión.",
+    "So GymBlock does two things: it locks the apps that pull you away while you train, and it keeps an honest record of every set, so you always know what to beat.":
+      "Por eso GymBlock hace dos cosas: bloquea las apps que te distraen mientras entrenas y guarda un registro honesto de cada serie, para que siempre sepas qué superar.",
     "First, what should we call you?": "Primero, ¿cómo te llamamos?",
     "It’s how we’ll greet you in the app.": "Así te saludaremos en la app.",
     "Nice to meet you, %@. How many days a week do you work out?": "Encantados, %@. ¿Cuántos días a la semana entrenas?",

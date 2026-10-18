@@ -560,8 +560,8 @@ struct OnboardingView: View {
   private func move(_ next: OnboardingStep) {
     guard !moving else { return }
     moving = true
+    // No tap on every page change: haptics are kept for beats that mean something.
     JourneyScorePlayer.shared.stop()
-    JourneyHaptic.play(.soft, store.profile, intensity: 0.55)
     // Quick: out in 0.12 s, in with a 0.3 s spring (they read as slow at 0.18 + 0.5 s).
     let out = reduceMotion ? 0.08 : 0.12
     stageLeaving = next.stage != step.stage
