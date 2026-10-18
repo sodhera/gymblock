@@ -11,7 +11,7 @@ The person should leave thinking: *"I lose a lot of my gym time to my phone. Gym
 - **Voice:** every page after the note speaks as "we", plainly ("First, what should we call you?").
 - **Questions:** gender, height and weight left onboarding; they were saved but used for nothing (they stay editable in Profile). One question replaces them, how many days a week you lift. It feeds the yearly number, Home's weekly goal and the widgets.
 - **Splits:** they're asked after the offer, as one tap on a template, and onboarding ends one tap from the first workout instead of on a blank split editor.
-- **Haptics and sound:** designed haptics on the beats that matter, and iOS's own sounds at three moments only, see below. Sound is on in onboarding unless turned off in Settings, and the silent switch silences it.
+- **Haptics and sound:** designed haptics on the beats that matter, and iOS's own sounds at three moments only, see below. Sound is on in onboarding unless turned off in Settings. It plays with the Ring/Silent switch on silent too (the user's choice, 18 Oct 2026: a playback audio session, mixed with others, so music keeps playing); the volume buttons still set how loud. The workout's own sounds, off unless turned on in Settings, still follow the switch.
 - **Offer:** it sells the change in the person's own numbers: Today, red phone time and green lifting; With GymBlock, one fully green bar ("34 min focused workout"). The trial shows as a timeline.
 
 ## Pages (21; 19 for Rarely, which skips minutes and hours)

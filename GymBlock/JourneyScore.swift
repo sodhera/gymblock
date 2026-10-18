@@ -82,7 +82,8 @@ struct JourneyScore {
 }
 
 /// Plays scores: Core Haptics patterns for the feel, AVAudioPlayer scheduled on the device clock for
-/// the sound. The audio session is ambient, so the silent switch silences it and music keeps playing.
+/// the sound. The audio session is playback mixed with others: the sounds play with the Ring/Silent
+/// switch on silent (the user's choice, 18 Oct 2026), and music or a podcast keeps playing under them.
 @MainActor final class JourneyScorePlayer {
   static let shared = JourneyScorePlayer()
   private var engine: CHHapticEngine?
@@ -94,6 +95,7 @@ struct JourneyScore {
   private var live: [(player: AVAudioPlayer, done: Date)] = []
   private var pending: [DispatchWorkItem] = []
   private var audioReady = false
+  private var sessionOn = false
 
   /// Wakes the Taptic Engine and opens the sounds, so the first scene doesn't start late.
   func prepare() {
@@ -137,6 +139,10 @@ struct JourneyScore {
   func shutDown() {
     stop()
     engine?.stop()
+    if sessionOn {
+      try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+      sessionOn = false
+    }
   }
 
   // MARK: Haptics
@@ -187,9 +193,13 @@ struct JourneyScore {
   // MARK: Sound
 
   private func setUpAudio() {
+    if !sessionOn {
+      // Playback, not ambient, so silent mode doesn't mute onboarding; the volume buttons still do.
+      try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+      try? AVAudioSession.sharedInstance().setActive(true, options: [])
+      sessionOn = true
+    }
     guard !audioReady else { return }
-    try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
-    try? AVAudioSession.sharedInstance().setActive(true, options: [])
     for sound in JourneyScore.Sound.allCases {
       // On a phone iOS's sounds are in its own folder; the simulator keeps them under its runtime root.
       let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
