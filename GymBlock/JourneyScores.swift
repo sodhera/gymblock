@@ -48,13 +48,13 @@ enum JourneyScores {
   }
 
   /// Scrolling weakens it: one tap per signal where it lands on the arm's twitch (or dies), each
-  /// weaker than the last (70%, 45%, 25%, 10%), under a sad trombone. The trombone (sped up 25%)
-  /// starts with the first signal, so its second, third and last notes land on the fading beats
-  /// (1.13, 1.93, 2.69 s against 1.12, 1.94, 2.75) (MindState.fading).
+  /// weaker than the last (70%, 45%, 25%, 10%), and the womp-womp-wommmp (Mixkit's "Trombone
+  /// disappoint") as the verdict: its long last note lands at 2.75 s, as the brain's face finishes
+  /// falling and the third signal fizzles (MindState.fading).
   static let mindFading: JourneyScore = {
     let beats = [0.25 + 0.62 + 0.25, 1.05 + 0.66 + 0.225, 1.85 + 0.7 + 0.2, 2.65 + 0.62]
     let strength = [0.7, 0.45, 0.25, 0.1], sharp = [0.55, 0.45, 0.3, 0.2]
-    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) }, sounds: [cue(0.25, .trombone, 0.4)])
+    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) }, sounds: [cue(beats[2] - 1.0, .trombone, 0.45)])
   }()
 
   /// Put it away: three identical taps on the arm's squeeze (0.235 s after each signal arrives),

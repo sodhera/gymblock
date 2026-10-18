@@ -170,11 +170,11 @@ struct RevealStage: View {
         SplitRing(phone: phone, training: training)
         VStack(spacing: 2) {
           CountingText(value: counted) { "\(Int($0.rounded()))" }
-            .font(.app(size: 52, weight: .bold, design: .default)).monospacedDigit()
+            .font(.app(size: JourneyLayout.compact ? 44 : 52, weight: .bold, design: .default)).monospacedDigit()
             .foregroundStyle(JourneyColor.text).frame(minWidth: 120)
-          Text(store.t("min on your phone")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("min on your phone")).font(.app(JourneyLayout.compact ? .caption : .subheadline)).foregroundStyle(JourneyColor.secondary)
         }
-      }.frame(width: 200, height: 200)
+      }.frame(width: JourneyLayout.compact ? 176 : 200, height: JourneyLayout.compact ? 176 : 200)
         .accessibilityElement(children: .ignore).accessibilityIdentifier("reveal.phone")
         .accessibilityLabel("\(Int(estimate.phoneMinutes.rounded())) " + store.t("min on your phone") + ", "
           + "\(Int(estimate.trainingMinutes.rounded())) " + store.t("min training"))
@@ -256,11 +256,11 @@ struct DaysStage: View {
   private var dots: Int { max(1, Int(ceil(Double(estimate.yearlyWorkouts) / Double(perDot)))) }
   var body: some View {
     VStack(spacing: 18) {
-      WorkoutDots(dots: dots, lit: lit).frame(maxWidth: 320).frame(maxHeight: .infinity)
+      WorkoutDots(dots: dots, lit: lit).frame(maxWidth: JourneyLayout.compact ? 240 : 320).frame(maxHeight: .infinity)
         .accessibilityHidden(true)
       VStack(spacing: 4) {
         Text("= \(estimate.yearlyWorkouts) " + store.t("workouts"))
-          .font(.app(.title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
+          .font(.app(JourneyLayout.compact ? .title2 : .title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
           .accessibilityIdentifier("days.workouts")
         Text(perDot == 1 ? store.t("Each dot is one 45-min workout.")
              : String(format: store.t("Each dot is %@ workouts of 45 min."), "\(perDot)"))
@@ -441,9 +441,9 @@ struct RestStage: View {
                 restLabel: store.t("Rest") + " " + (timed ? "1:30" : "3:40"),
                 axisY: store.t("Pump"), axisX: store.t("Time"), pumpLabel: store.t("FULL PUMP"),
                 verdict: store.t(reached ? "Reached" : "Never reached"))
-        .frame(height: 250)
+        .frame(height: JourneyLayout.compact ? 190 : 250)
       ArmView(curl: curl, warmth: warmth)
-        .frame(maxWidth: 110, maxHeight: 110)
+        .frame(maxWidth: JourneyLayout.compact ? 80 : 110, maxHeight: JourneyLayout.compact ? 80 : 110)
         .background(Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.26), .clear], center: .center, startRadius: 0, endRadius: 80))
           .frame(width: 170, height: 170).opacity(reached ? 1 : 0))
     }.frame(maxHeight: .infinity)

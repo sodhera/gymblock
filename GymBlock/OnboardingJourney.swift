@@ -106,12 +106,16 @@ struct OnboardingView: View {
         topBar.frame(height: 44).padding(.horizontal, 12)
         // The welcome scene carries its own words; every other page has the headline box.
         if step != .welcome {
-          headline.padding(.horizontal, 28).padding(.top, 14)
+          headline.padding(.horizontal, JourneyLayout.compact ? 24 : 28).padding(.top, JourneyLayout.compact ? 6 : 14)
             .opacity(shown ? 1 : 0).offset(x: slide)
         }
         ZStack {
           stage.id(step.stage).transition(.identity)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.horizontal, 24).padding(.vertical, 12)
+        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+          // Small screens keep a margin around every scene instead of filling the screen edge to edge.
+          // (Sulav's note is text, so it keeps the usual margin.)
+          .padding(.horizontal, JourneyLayout.compact && step != .founder ? 32 : (JourneyLayout.compact ? 18 : 24))
+          .padding(.vertical, JourneyLayout.compact ? 14 : 12)
           // A stage shared by two pages stays put; only a new stage fades and slides.
           .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
         Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
@@ -188,7 +192,7 @@ struct OnboardingView: View {
   /// a one-line headline sits in the middle of it rather than above a hole.
   private var headline: some View {
     ZStack(alignment: .center) {
-      Text("A\nB").font(JourneyType.headline).hidden().accessibilityHidden(true)
+      Text("A\nB").font(headlineFont).hidden().accessibilityHidden(true)
       headlineText.id(step).transition(.identity)
     }.frame(maxWidth: .infinity)
   }
@@ -201,10 +205,12 @@ struct OnboardingView: View {
       } else {
         Text(store.t(headlineCopy))
       }
-    }.font(JourneyType.headline).tracking(-0.3).multilineTextAlignment(.center)
+    }.font(headlineFont).tracking(-0.3).multilineTextAlignment(.center)
       .lineLimit(step == .reveal ? 3 : 2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
   }
+  /// The large title, one step smaller on small screens.
+  private var headlineFont: Font { JourneyLayout.compact ? Font.app(.title2, design: .default, weight: .bold) : JourneyType.headline }
   private var headlineCopy: String {
     switch step {
     case .name: return "First, what should we call you?"

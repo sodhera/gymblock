@@ -34,7 +34,7 @@ The person should leave thinking: *"I lose a lot of my gym time to my phone. Gym
 | 17 | {Name}, here's your plan. | Three lines on the paper: days a week, what's locked, rests (`PlanStage`) | Hold to commit |
 | 18 | Let's save your plan to your account. | Account card | Sign up with Apple / Google |
 | 19 | (offer) {Name}, your best sessions start today. | Your workout two ways, three promises, trial timeline, plans | Start 7-day free trial |
-| 20 | You're in. How do you usually split your training? | Push · Pull · Legs, Upper · Lower, Full body, One muscle a day, No fixed plan (or Keep my splits) with a preview (`SplitTemplateStage`) | Continue |
+| 20 | You're in. How do you usually split your training? | Push · Pull · Legs, Upper · Lower, Full body, One muscle a day, No fixed plan (or Keep my splits) with a preview, and Build my own split, which opens the split editor (`SplitTemplateStage`) | Continue |
 | 21 | Ready? Your first workout is {split}. | Its exercises, Edit (`FirstWorkoutStage`) | Start workout · I'm not at the gym yet |
 
 Old saved progress on gender, height or weight resumes at the days question; nothing stored is discarded.
@@ -57,7 +57,7 @@ Haptics land only on beats that mean something, mostly single taps. Every sound 
 | Phone between sets | One light tap per card, a little stronger each time | None |
 | Ring | One soft tap when the red count lands, one when the green does | A clock tock ticking the phone time away (following the eased count); a light clink as the green lands |
 | Hours a year | A run of light taps that follows the dots as they light, each a touch firmer, then one heavy hit | Tocks with the taps, then a heavy plate drop on the total |
-| Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | A sad trombone (sped up 25%), its notes on the fading signals |
+| Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | The womp-womp-wommmp (Mixkit's "Trombone disappoint"), its long last note on the third fading beat, as the brain's face finishes falling |
 | Mind B | The same tap three times (60%) | A clink on each squeeze, heavier each time; the last over an iron plate |
 | Pump A / B (the user's favourite; haptics unchanged) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests / stronger every set, a second tap when full | The same dull clank every set / plates getting heavier every set, a clink when full |
 | Memory / log | A fainter tap as each number fades / a light tap as the line reaches each dot, a firmer one on +5 kg | None / a key click per logged week, a clink on +5 kg |
@@ -67,6 +67,21 @@ Haptics land only on beats that mean something, mostly single taps. Every sound 
 | Start workout (last page) | One tap | The lock click, as the apps lock |
 
 Page changes have no haptic. Haptic feel needs a real iPhone; the simulator has no Taptic Engine.
+
+## Small screens
+
+`JourneyLayout.compact` (screens under 700 pt tall: iPhone SE and other 4.7-inch phones) keeps every page from filling the screen edge to edge:
+- **Text and rows:** headlines one size smaller (title 2), answer rows 44 pt instead of 52.
+- **Spacing:** wider side margins around every scene (32 pt instead of 24).
+- **Scenes:**
+  - the welcome drawn at no more than 74% of its design size;
+  - a 160-pt ring;
+  - a narrower dot grid;
+  - a shorter pump chart and smaller arm;
+  - tighter plan rows;
+  - a smaller offer headline;
+  - five exercises (plus "+ N more") on the first-workout card.
+- **Fit to the space:** the phone-habit notifications, the blocking page and Sulav's note scale to fit what's left.
 
 ## Motion
 

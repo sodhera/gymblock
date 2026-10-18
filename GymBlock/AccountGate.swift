@@ -121,7 +121,7 @@ struct PaywallView: View {
                 Text("GymBlock Pro").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
               }.accessibilityElement(children: .combine)
               Text(headline)
-                .font(.app(size: 33, weight: .bold)).tracking(-0.6).foregroundStyle(JourneyColor.text)
+                .font(.app(size: JourneyLayout.compact ? 27 : 33, weight: .bold)).tracking(-0.6).foregroundStyle(JourneyColor.text)
                 .fixedSize(horizontal: false, vertical: true).padding(.top, 10)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
               Spacer(minLength: 18).frame(maxHeight: 26)

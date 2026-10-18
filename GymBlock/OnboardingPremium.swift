@@ -115,6 +115,12 @@ enum JourneyType {
   static var eyebrow: Font { Font.app(.subheadline, design: .default, weight: .medium) }
 }
 
+/// Small screens (iPhone SE and other 4.7-inch phones, 667 pt tall): the same pages with tighter
+/// type, rows and stages, so nothing fills the screen edge to edge.
+enum JourneyLayout {
+  static let compact = UIScreen.main.bounds.height < 700
+}
+
 /// Motion: calm, slightly slow, never bouncy. One curve family everywhere.
 enum JourneyMotion {
   static func reduced(_ system: Bool) -> Bool {
@@ -372,7 +378,7 @@ struct JourneyOption: View {
         Image(systemName: "checkmark.circle.fill").font(.system(.body, weight: .semibold))
           .symbolRenderingMode(.palette).foregroundStyle(JourneyColor.onAccent, JourneyColor.accent)
           .opacity(selected ? 1 : 0).scaleEffect(selected ? 1 : 0.6).accessibilityHidden(true)
-      }.padding(.horizontal, 18).frame(maxWidth: .infinity, minHeight: 52)
+      }.padding(.horizontal, 18).frame(maxWidth: .infinity, minHeight: JourneyLayout.compact ? 44 : 52)
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous),
                       tint: selected ? JourneyColor.ink(0.12) : nil, interactive: true)

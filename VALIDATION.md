@@ -23,6 +23,10 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **Trombone, small screens, own splits (eighth follow-up).**
+  - **Trombone:** the user picked Mixkit's "Trombone disappoint" (item 744, 0.47 MB, downloaded with their OK), the womp-womp-wommmp. It replaces the slow trombone, and its long last note lands on Mind A's third fading beat. The user liked the Mind B clinks, so they stay.
+  - **Small screens:** a compact layout for 4.7-inch screens (see the plan's "Small screens"), reviewed page by page on the iPhone SE (iOS 26.5) simulator.
+  - **Own splits:** after the offer, "Build my own split" opens the split editor. A saved split is selected, and you can build more.
 - **More sound, letter, offer bars (seventh follow-up, 18 Oct).**
   - **Downloads (approved by the user):** Mixkit's "Slow sad trombone fail" (472.wav, 1.06 MB, Mixkit SFX Free License) and Kenney's Impact Sounds (0.80 MB, CC0). They were converted with ffmpeg into nine level-matched clips (`gb-*.caf`, 0.7 MB in all).
   - **Where the sounds go:** a clock ticking the red phone time on the ring; tocks and taps that follow the hours-a-year dots, then a plate drop; a sad trombone whose notes land on Mind A's fading signals; clinks getting heavier on Mind B; a dull clank per set on Pump A and heavier plates on Pump B; key clicks as the log's line reaches each week; a plate re-rack on commit; the lock click on Start workout.

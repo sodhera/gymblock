@@ -56,10 +56,11 @@ struct SceneClock<Content: View>: View {
 /// Lays a scene out at a fixed design size and scales it to the space it gets.
 struct DesignFit<Content: View>: View {
   let size: CGSize
+  var maxScale: CGFloat = 1.15
   @ViewBuilder let content: () -> Content
   var body: some View {
     GeometryReader { g in
-      let s = min(1.15, min(g.size.width / size.width, g.size.height / size.height))
+      let s = min(maxScale, min(g.size.width / size.width, g.size.height / size.height))
       content().frame(width: size.width, height: size.height).scaleEffect(s)
         .frame(width: g.size.width, height: g.size.height)
     }
@@ -76,7 +77,8 @@ struct WelcomeScene: View {
   static let duration = 3.85
   var body: some View {
     SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
-      DesignFit(size: CGSize(width: 388, height: 560)) { frame(t) }
+      // Small screens keep air around it rather than filling edge to edge.
+      DesignFit(size: CGSize(width: 388, height: 560), maxScale: JourneyLayout.compact ? 0.74 : 1.15) { frame(t) }
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
     .accessibilityLabel(store.t("Stop scrolling, stay focused. Record everything, get jacked. Your apps lock while you train."))
@@ -279,7 +281,7 @@ struct TrainingDaysStage: View {
           let on = days == n
           Button { choose(n) } label: {
             Text(n == 6 ? "6+" : "\(n)").font(.app(.title2, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
-              .frame(width: 60, height: 60)
+              .frame(width: JourneyLayout.compact ? 50 : 60, height: JourneyLayout.compact ? 50 : 60)
               .background(Circle().fill(on ? Color.white : .clear))
               .journeyGlass(Circle(), interactive: true)
               .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: on ? 1.6 : 0))
@@ -438,7 +440,7 @@ struct LockScreenRest: View {
       // One digit every 0.4 s from 0:05; 0:00 is the buzz (JourneyScores.restUp ticks on each change).
       let remaining = max(0, 5 - Int((t / JourneyScores.countdownStep).rounded(.down)))
       let over = remaining == 0
-      VStack(spacing: 16) {
+      VStack(spacing: JourneyLayout.compact ? 12 : 16) {
         Spacer(minLength: 0)
         Text(store.t("On your Lock Screen")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
         VStack(spacing: 12) {
@@ -452,7 +454,7 @@ struct LockScreenRest: View {
             Capsule().fill(Color(red: 0.18, green: 0.75, blue: 0.52)).frame(width: g.size.width * (0.62 + 0.38 * Ease.seg(t, 0, JourneyScores.countdownStep * 5)))
           }.frame(height: 6)
           HStack {
-            Text(store.t("Next: Bench press · set 3 of 3")).font(.app(.subheadline)).foregroundStyle(.white).lineLimit(1)
+            Text(store.t("Next: Bench press · set 3 of 3")).font(.app(JourneyLayout.compact ? .footnote : .subheadline)).foregroundStyle(.white).lineLimit(1)
             Spacer(minLength: 6)
             Text(store.t("Start set")).font(.app(.footnote, weight: .semibold)).foregroundStyle(.white)
               .padding(.horizontal, 12).padding(.vertical, 5).background(Capsule().fill(.white.opacity(0.14)))
@@ -500,8 +502,8 @@ struct PlanStage: View {
             let k = Ease.out(Ease.seg(t, 0.15 + Double(i) * 0.2, 0.65 + Double(i) * 0.2))
             VStack(alignment: .leading, spacing: 3) {
               Text(row.0).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-              Text(row.1).font(.app(.title2, weight: .semibold)).foregroundStyle(JourneyColor.text).tracking(-0.3)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 15)
+              Text(row.1).font(.app(JourneyLayout.compact ? .title3 : .title2, weight: .semibold)).foregroundStyle(JourneyColor.text).tracking(-0.3)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, JourneyLayout.compact ? 10 : 15)
               .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
               .opacity(k).offset(y: (1 - k) * 12)
           }
@@ -558,20 +560,24 @@ enum SplitTemplate: String, CaseIterable, Identifiable {
   static func exercises(_ ids: [String]) -> [Exercise] { ids.compactMap { id in Exercise.catalog.first { $0.id == id } } }
 }
 
+/// One tap on the split most people run, or build your own in the split editor (name, exercises,
+/// order). Splits you build are kept and selected; build as many as you like.
 struct SplitTemplateStage: View {
   @Binding var choice: SplitTemplate?
   @EnvironmentObject private var store: GymStore
+  @State private var building = false
+  private var compact: Bool { JourneyLayout.compact }
   private var options: [SplitTemplate] {
     (store.data.workouts.isEmpty ? [] : [.keep]) + [.pushPullLegs, .upperLower, .fullBody, .bodyPart, .none]
   }
   var body: some View {
-    VStack(spacing: 14) {
+    VStack(spacing: compact ? 10 : 14) {
       Spacer(minLength: 0)
       preview.animation(JourneyMotion.gentle, value: choice)
-      JourneyGlassGroup(spacing: 10) {
-        VStack(spacing: 10) {
+      JourneyGlassGroup(spacing: compact ? 8 : 10) {
+        VStack(spacing: compact ? 8 : 10) {
           ForEach(options) { option in
-            JourneyOption(title: option == .keep ? String(format: store.t("Keep my %@ splits"), "\(store.data.workouts.count)") : store.t(option.title),
+            JourneyOption(title: option == .keep ? keepTitle : store.t(option.title),
                           selected: choice == option, id: "splits.template." + option.rawValue) {
               withAnimation(JourneyMotion.gentle) { choice = option }
               JourneyHaptic.play(.selection, store.profile)
@@ -579,7 +585,29 @@ struct SplitTemplateStage: View {
           }
         }
       }
+      Button { building = true } label: {
+        Label(store.t(store.data.workouts.isEmpty ? "Build my own split" : "Build another split"), systemImage: "plus")
+          .font(JourneyType.option).foregroundStyle(JourneyColor.text)
+          .frame(maxWidth: .infinity, minHeight: compact ? 44 : 52)
+          .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+          .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .strokeBorder(JourneyColor.ink(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
+      }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("splits.build")
     }
+    .sheet(isPresented: $building) {
+      NavigationStack {
+        SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
+          store.updateProfile { if $0.preferredSplitID == nil { $0.preferredSplitID = split.id } }
+          withAnimation(JourneyMotion.gentle) { choice = .keep }
+          JourneyHaptic.play(.success, store.profile)
+          building = false
+        }
+      }.presentationDetents([.large]).tint(JourneyColor.text)
+    }
+  }
+  private var keepTitle: String {
+    let n = store.data.workouts.count
+    return n == 1 ? store.t("Keep my split") : String(format: store.t("Keep my %@ splits"), "\(n)")
   }
   @ViewBuilder private var preview: some View {
     let rows: [(String, String, Int)] = {
@@ -627,12 +655,18 @@ struct FirstWorkoutStage: View {
             Button(store.t("Edit")) { editing = split }.font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
               .accessibilityIdentifier("first.edit")
           }.padding(.horizontal, 16).padding(.vertical, 12)
-          ForEach(split.exercises.prefix(7)) { e in
+          ForEach(split.exercises.prefix(JourneyLayout.compact ? 5 : 7)) { e in
             HStack {
               Text(store.t(e.name)).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
               Spacer()
               Text(e.timed ? store.t("Timed") : String(format: store.t("%@ sets"), "3")).font(.app(.footnote)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
-            }.padding(.horizontal, 16).padding(.vertical, 11)
+            }.padding(.horizontal, 16).padding(.vertical, JourneyLayout.compact ? 8 : 11)
+              .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
+          }
+          let shown = JourneyLayout.compact ? 5 : 7
+          if split.exercises.count > shown {
+            Text(String(format: store.t("+ %@ more"), "\(split.exercises.count - shown)")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 8)
               .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
           }
         }.journeySurface().accessibilityIdentifier("first.split")

@@ -26,7 +26,7 @@ struct JourneyScore {
     case tock
     /// A key press: a set being logged.
     case typing
-    /// Mixkit's slow sad trombone, sped up so its notes land on the fading signals.
+    /// Mixkit's "Trombone disappoint": womp, womp, wommmp.
     case trombone
     /// Recorded metal clinks, brightest and lightest first (Kenney Impact Sounds, CC0).
     case clink1, clink2, clink3
