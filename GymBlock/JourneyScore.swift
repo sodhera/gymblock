@@ -35,6 +35,12 @@ struct JourneyScore {
     case plateLight, plateMedium, plateHeavy, plateDrop
     /// A short, dull metal clank: the same set again.
     case clankDull
+    /// iOS's keyboard tick: a set logged, a pump building.
+    case tink
+    /// The Health app's "reading failed": focus slipping.
+    case readingFail
+    /// The Activity ring closing ("goal attained"): full pump, a new best.
+    case goalAttained
     var file: String {
       switch self {
       case .notification: return "ReceivedMessage"
@@ -53,10 +59,16 @@ struct JourneyScore {
       case .plateHeavy: return "gb-plate-heavy"
       case .plateDrop: return "gb-plate-drop"
       case .clankDull: return "gb-clank-dull"
+      case .tink: return "Tink"
+      case .readingFail: return "nano/HealthReadingFail_Haptic"
+      case .goalAttained: return "nano/Alert_ActivityGoalAttained_Haptic"
       }
     }
     /// Recorded clips ship in the app; the rest are iOS's.
     var bundled: Bool { file.hasPrefix("gb-") }
+    /// The Apple Watch sounds are recorded far quieter than the rest (about 12 to 18 dB), so they're
+    /// raised to the others' level when they're opened.
+    var raised: Bool { file.hasPrefix("nano/") }
     /// An iOS sound by system sound ID, if its file can't be opened.
     var systemID: SystemSoundID? {
       switch self {
@@ -65,6 +77,7 @@ struct JourneyScore {
       case .alert: return 1007
       case .tock: return 1104
       case .typing: return 1306
+      case .tink: return 1103
       default: return nil
       }
     }
@@ -121,6 +134,8 @@ struct JourneyScore {
     if sound { playSounds(score.sounds, lead: lead - latency) }
     return Date().addingTimeInterval(lead)
   }
+  /// A primary button pressed (onboarding's Continue and the like).
+  func press() { playHaptics(JourneyScores.press(0), lead: 0) }
   /// One designed moment, now.
   func tap(_ intensity: Double, _ sharpness: Double) { playHaptics([.tap(0, intensity, sharpness)], lead: 0) }
   func swell(_ duration: Double, from: Double, to: Double, sharpness: Double) {
@@ -205,13 +220,32 @@ struct JourneyScore {
       let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
       guard let url = sound.bundled ? Bundle.main.url(forResource: sound.file, withExtension: "caf")
         : URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\(sound.file).caf"),
-        let data = try? Data(contentsOf: url) else { continue }
+        let data = sound.raised ? Self.raised(url) : try? Data(contentsOf: url) else { continue }
       clips[sound] = data
     }
     audioReady = true
     #if DEBUG
       NSLog("GymBlock sounds: %d of %d opened", clips.count, JourneyScore.Sound.allCases.count)
     #endif
+  }
+  /// A quiet clip brought up to a -3 dB peak in memory, as 16-bit WAV for AVAudioPlayer.
+  private static func raised(_ url: URL) -> Data? {
+    guard let file = try? AVAudioFile(forReading: url),
+      let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)),
+      (try? file.read(into: buffer)) != nil, let samples = buffer.floatChannelData
+    else { return nil }
+    let frames = Int(buffer.frameLength), channels = Int(buffer.format.channelCount)
+    var peak: Float = 0
+    for c in 0..<channels { for i in 0..<frames { peak = max(peak, abs(samples[c][i])) } }
+    guard peak > 0 else { return nil }
+    let gain = powf(10, -3 / 20) / peak, rate = UInt32(buffer.format.sampleRate), frameBytes = UInt16(2 * channels)
+    var data = Data()
+    func put<T: FixedWidthInteger>(_ v: T) { withUnsafeBytes(of: v.littleEndian) { data.append(contentsOf: $0) } }
+    data.append(contentsOf: Array("RIFF".utf8)); put(UInt32(36 + frames * Int(frameBytes))); data.append(contentsOf: Array("WAVEfmt ".utf8))
+    put(UInt32(16)); put(UInt16(1)); put(UInt16(channels)); put(rate); put(rate * UInt32(frameBytes)); put(frameBytes); put(UInt16(16))
+    data.append(contentsOf: Array("data".utf8)); put(UInt32(frames * Int(frameBytes)))
+    for i in 0..<frames { for c in 0..<channels { put(Int16(max(-1, min(1, samples[c][i] * gain)) * 32767)) } }
+    return data
   }
   private func playSounds(_ list: [JourneyScore.Cue], lead: Double) {
     setUpAudio()

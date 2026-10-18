@@ -23,6 +23,24 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **Review round (twelfth follow-up, 18 Oct).** A tester's notes, then a review page of before and after captures with playable sound options (kept on this Mac, since it plays copies of Apple's system sounds), then the user's picks, felt on their iPhone before they were merged.
+  - **Welcome:** one thing moves at a time. "Stay focused" used to slide in as the arm began to flex. Now the phone locks, then "Stay focused", then "Record everything" and "Get jacked", and only then does the arm flex. Checked in a simulator recording.
+  - **Ring:** "Lifting", not "Training", with the sum under each number (18 sets × 40 s; 17 rests × the person's minutes). The tester had read 12 min for 6 × 3 sets as a mistake. Red and green now meet; each had stopped 0.4% short.
+  - **Blocking, two pages:** the shield ("Open a locked app while you train, and you'll see this.") gets its own page before "Which apps should we lock while you train?". The apps page shows two rows of slots until something is chosen. That makes 22 pages.
+  - **Days a week:** glass rows like every other question, instead of outlined circles.
+  - **Memory:** "It's easy to forget how well you did." The question it replaced seemed to be answered by the chart below it.
+  - **Sounds, picked by ear:** Health's "reading failed" on Mind A, each clearly quieter; soft ticks and the Activity ring's "goal attained" on Mind B; the same soft tock on Pump A; a building tick and "goal attained" on Pump B; soft ticks and "goal attained" on the log. The Apple Watch sounds are recorded 12 to 18 dB quieter than the others, so they're raised to a −3 dB peak as they're opened. `GymBlock sound files: 19 of 19 open` in the simulator and on the user's iPhone.
+  - **Haptics:** a vocabulary (press, ping, thud, latch, heartbeat, tick, falter, ring) in place of single taps, each under its sound's notes. Continue and onboarding's other main buttons now press in; the rest of the app is unchanged.
+  - **Also from the review:**
+    - Sulav's note is 18.5 pt on the largest phones.
+    - "…118 hours a year on your phone", with the number kept on the same line as "hours".
+    - The pump charts' labels are a step larger.
+    - "We'll buzz you / when rest is up."
+    - The offer's bar reads "46 min focused workout", the whole workout.
+  - **Checked:**
+    - `BenefitSceneTests` passes on the simulator (12 tests, 1 skipped), with its timing test updated for the new sounds.
+    - The UI journeys were updated for the new headlines and the shield page, but not run. They still walk pages V7 removed, such as height, so they need a refresh of their own.
+    - The haptics' feel is the user's: they tested the build on their iPhone and said it's fine.
 - **Hours a year and the log, on the beat (eleventh follow-up, 18 Oct).** On the user's iPhone, the plate drop came a dot or two before the last dot, and the log's sounds weren't on its dots.
   - **Why:** both pages started a SwiftUI animation after a sleep. A drawn frame takes about two frames to reach the screen. The count eases out, so the last two dots take about 0.15 s, and any lag left one lit after the thump. Each log dot only started growing on its click, and today's key click and the +5 kg clink were 0.05 s apart.
   - **Now:** both pages are drawn from their score's clock (`SceneClock`). Each log dot is at its fullest on its click (`LogFrame`). Today's dot, its key click, the clink and one firmer tap are a single beat, with the green and the +5 kg. Every clock-drawn scene, and every step timed against a score, now draws 0.03 s ahead (`JourneyScores.displayLead`).

@@ -6,7 +6,7 @@ import XCTest
     for answer in HabitAnswer.allCases {
       var b = RoutineBaseline(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(13)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
+      XCTAssertEqual(Array(route.suffix(14)), [.mindA, .mindB, .restA, .restB, .logA, .logB, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
       XCTAssertEqual(route.contains(.phoneMinutes), answer != .no)
       XCTAssertEqual(route.contains(.days), answer != .no)  // No phone time, nothing to add up.
       XCTAssertEqual(Array(route.prefix(4)), [.founder, .name, .trainingDays, .scrolling])  // Sulav's note, then one question a page.
@@ -64,19 +64,25 @@ import XCTest
   }
   func testSoundsAndTapsLandOnTheSameBeat() {
     func taps(_ score: JourneyScore) -> [Double] { score.haptics.compactMap { if case let .tap(t, _, _) = $0 { t } else { nil } } }
-    // Mind A: each trombone note is heard on its twitch, with that twitch's tap.
+    func has(_ score: JourneyScore, tapAt t: Double) -> Bool { taps(score).contains { abs($0 - t) < 0.0001 } }
+    // Mind A: "reading failed" is heard on each twitch, with its falter, each weaker than the last.
     let mind = JourneyScores.mindFading
-    XCTAssertEqual(mind.sounds.map(\.sound), [.womp1, .womp2, .womp3])
-    for (cue, tap) in zip(mind.sounds, taps(mind)) { XCTAssertEqual(cue.at + JourneyScore.wompAttack, tap, accuracy: 0.0001) }
-    // Pump B: when it's full, the clink, that set's plate and the tap are one moment.
+    XCTAssertEqual(mind.sounds.map(\.sound), [.readingFail, .readingFail, .readingFail])
+    for cue in mind.sounds { XCTAssertTrue(has(mind, tapAt: cue.at + JourneyScores.failAttack)) }
+    XCTAssertEqual(mind.sounds.map(\.volume), mind.sounds.map(\.volume).sorted(by: >))
+    // Mind B: the ring closes on the third squeeze, its first tap under its first note.
+    let steady = JourneyScores.mindSteady
+    let closes = try! XCTUnwrap(steady.sounds.first { $0.sound == .goalAttained })
+    XCTAssertTrue(has(steady, tapAt: closes.at + JourneyScores.ringAttack))
+    // Pump B: when it's full, the ring closes on the beat the line reaches the top, and nothing follows.
     let pts = PumpPlot.timed
     let durations = (1..<pts.count).map { i in pts[i].y > pts[i - 1].y + 0.001 ? 0.34 : pts[i].y >= 0.999 && pts[i - 1].y >= 0.999 ? 0.5 : 0.45 }
     let pump = JourneyScores.pump(pts, timed: true, durations: durations)
-    let clink = try! XCTUnwrap(pump.sounds.first { $0.sound == .clink2 })
-    XCTAssertTrue(pump.sounds.contains { [.plateLight, .plateMedium, .plateHeavy].contains($0.sound) && abs($0.at - clink.at) < 0.0001 })
-    XCTAssertEqual(taps(pump).filter { abs($0 - clink.at) < 0.0001 }.count, 1)
-    XCTAssertEqual(taps(pump).max()!, clink.at, accuracy: 0.0001)  // Nothing after it.
-    // Pump A: nothing after the last clank.
+    let full = try! XCTUnwrap(pump.sounds.first { $0.sound == .goalAttained }).at + JourneyScores.ringAttack
+    XCTAssertTrue(has(pump, tapAt: full))
+    XCTAssertEqual(taps(pump).max()!, full + 0.25, accuracy: 0.0001)  // Its last tap, under its last note.
+    XCTAssertEqual(pump.sounds.filter { $0.sound == .tink }.map(\.volume), pump.sounds.filter { $0.sound == .tink }.map(\.volume).sorted())
+    // Pump A: the same tock each set, and nothing after the last one.
     let scroll = JourneyScores.pump(PumpPlot.scrolling, timed: false, durations: Array(repeating: 0.34, count: PumpPlot.scrolling.count - 1))
     XCTAssertEqual(taps(scroll).max()!, scroll.sounds.map(\.at).max()!, accuracy: 0.0001)
     // Hours a year: the dots follow the ticks' curve, and the last one lights on the plate drop.
@@ -85,17 +91,17 @@ import XCTest
     XCTAssertLessThan(JourneyScores.easeInOut((DaysStage.fill - 0.001) / DaysStage.fill), 1)
     XCTAssertEqual(JourneyScores.easeInOut(1), 1)
     for p in stride(from: 0.05, through: 0.95, by: 0.15) { XCTAssertEqual(JourneyScores.easeInOut(JourneyScores.easeInOutTime(p)), p, accuracy: 0.001) }
-    // The log: each week's dot is at its fullest on its key click; today's click, clink and one tap
-    // are one beat, with the green and the +5 kg.
+    // The log: each week's dot is at its fullest on its tick; today's is the ring closing, with the
+    // green and the +5 kg.
     let log = JourneyScores.remembering(hits: LogFrame.hits)
     for (i, hit) in LogFrame.hits.enumerated() {
-      XCTAssertTrue(log.sounds.contains { $0.sound == .typing && abs($0.at - hit) < 0.0001 })
+      XCTAssertTrue(has(log, tapAt: hit))
+      if i < LogFrame.hits.count - 1 { XCTAssertTrue(log.sounds.contains { $0.sound == .tink && abs($0.at - hit) < 0.0001 }) }
       XCTAssertEqual(LogFrame(t: hit).dot(i), 1.2, accuracy: 0.0001)
       XCTAssertLessThan(LogFrame(t: hit - 0.02).dot(i), 1.2)
       XCTAssertLessThan(LogFrame(t: hit + 0.02).dot(i), 1.2)
     }
-    XCTAssertTrue(log.sounds.contains { $0.sound == .clink2 && abs($0.at - LogFrame.today) < 0.0001 })
-    XCTAssertEqual(taps(log).count, LogFrame.hits.count)
+    XCTAssertTrue(log.sounds.contains { $0.sound == .goalAttained && abs($0.at + JourneyScores.ringAttack - LogFrame.today) < 0.0001 })
     XCTAssertEqual(LogFrame(t: LogFrame.today).gain, 1, accuracy: 0.0001)
     XCTAssertTrue(LogFrame(t: LogFrame.today).green)
     XCTAssertFalse(LogFrame(t: LogFrame.today - 0.01).green)

@@ -144,10 +144,10 @@ struct SplitRing: View, Animatable {
   var body: some View {
     ZStack {
       Circle().stroke(JourneyColor.ink(0.08), lineWidth: 14)
-      Circle().trim(from: 0, to: max(0, phone - 0.004))
+      Circle().trim(from: 0, to: max(0, phone))
         .stroke(JourneyColor.danger, style: StrokeStyle(lineWidth: 14, lineCap: .butt))
         .rotationEffect(.degrees(-90))
-      Circle().trim(from: min(1, phone + 0.004), to: min(1, phone + training))
+      Circle().trim(from: min(1, phone), to: min(1, phone + training))
         .stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 14, lineCap: .butt))
         .rotationEffect(.degrees(-90))
     }
@@ -178,11 +178,15 @@ struct RevealStage: View {
       }.frame(width: JourneyLayout.compact ? 176 : 200, height: JourneyLayout.compact ? 176 : 200)
         .accessibilityElement(children: .ignore).accessibilityIdentifier("reveal.phone")
         .accessibilityLabel("\(Int(estimate.phoneMinutes.rounded())) " + store.t("min on your phone") + ", "
-          + "\(Int(estimate.trainingMinutes.rounded())) " + store.t("min training"))
+          + "\(Int(estimate.trainingMinutes.rounded())) " + store.t("min lifting"))
+      // The sums behind both numbers, so "12 min" for 18 sets reads as lifting time, not a mistake.
       HStack(spacing: 0) {
-        legendItem(JourneyColor.danger, store.t("On your phone"), estimate.phoneMinutes, id: "reveal.legend.phone")
-        Rectangle().fill(JourneyColor.hairline).frame(width: 1, height: 40)
-        legendItem(JourneyColor.signal, store.t("Training"), estimate.trainingMinutes, id: "reveal.legend.training")
+        legendItem(JourneyColor.danger, store.t("On your phone"), estimate.phoneMinutes,
+                   String(format: store.t("%@ rests × %@ min"), "\(estimate.rests)", Self.minutes(estimate.minutesPerRest)), id: "reveal.legend.phone")
+        Rectangle().fill(JourneyColor.hairline).frame(width: 1, height: 52)
+        legendItem(JourneyColor.signal, store.t("Lifting"), estimate.trainingMinutes,
+                   String(format: store.t("%@ sets × %@ s"), "\(GymTimeEstimate.exercises * GymTimeEstimate.sets)", "\(Int(GymTimeEstimate.setSeconds))"),
+                   id: "reveal.legend.training")
       }.padding(.vertical, 14).frame(maxWidth: 340)
         .journeyGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .opacity(legend ? 1 : 0).offset(y: legend ? 0 : 10)
@@ -190,7 +194,7 @@ struct RevealStage: View {
     }
     .task { await play() }
   }
-  private func legendItem(_ color: Color, _ label: String, _ minutes: Double, id: String) -> some View {
+  private func legendItem(_ color: Color, _ label: String, _ minutes: Double, _ sum: String, id: String) -> some View {
     VStack(spacing: 4) {
       HStack(spacing: 6) {
         Circle().fill(color).frame(width: 8, height: 8)
@@ -198,8 +202,11 @@ struct RevealStage: View {
       }
       Text("\(Int(minutes.rounded())) " + store.t("min")).font(.app(.title3, weight: .semibold)).monospacedDigit()
         .foregroundStyle(JourneyColor.text)
+      Text(sum).font(.app(.caption)).monospacedDigit().foregroundStyle(JourneyColor.secondary).lineLimit(1).minimumScaleFactor(0.8)
     }.frame(maxWidth: .infinity).accessibilityElement(children: .combine).accessibilityIdentifier(id)
   }
+  /// 3 → "3", 1.5 → "1.5".
+  static func minutes(_ m: Double) -> String { m == m.rounded() ? "\(Int(m))" : String(format: "%.1f", m) }
   private func play() async {
     let p = estimate.phoneShare, t = 1 - estimate.phoneShare
     if JourneyMotion.reduced(systemReduceMotion) {
@@ -378,9 +385,9 @@ struct PumpChart: View, Animatable {
         Path { $0.move(to: pt(CGPoint(x: 0, y: 1))); $0.addLine(to: pt(CGPoint(x: 1, y: 1))) }
           .stroke(reached ? JourneyColor.accent : JourneyColor.ink(0.28), style: StrokeStyle(lineWidth: 1.2, dash: [4, 5]))
         HStack(spacing: 6) {
-          Text(pumpLabel).font(.app(.caption2, weight: .bold)).tracking(0.6)
+          Text(pumpLabel).font(.app(.caption, weight: .bold)).tracking(0.6)
             .foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary)
-          if finished { Text(verdict).font(.app(.caption2)).foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary) }
+          if finished { Text(verdict).font(.app(.caption)).foregroundStyle(reached ? JourneyColor.accent : JourneyColor.secondary) }
         }.frame(width: plot.width, alignment: .trailing).position(x: plot.midX, y: plot.minY - 12)
         // Data
         line(pt).stroke(timed ? JourneyColor.ink(0.9) : JourneyColor.ink(0.45),
@@ -391,7 +398,7 @@ struct PumpChart: View, Animatable {
           let mid = (points[end - 1].x + points[end].x) / 2
           HStack(spacing: 3) {
             if !timed { Image(systemName: "iphone").font(.system(size: 9, weight: .semibold)) }
-            Text(restLabel).font(.app(.caption2, weight: .medium)).monospacedDigit()
+            Text(restLabel).font(.app(.caption, weight: .medium)).monospacedDigit()
           }.foregroundStyle(timed ? JourneyColor.text : JourneyColor.secondary).fixedSize()
             .position(x: plot.minX + mid * plot.width, y: plot.maxY + 14)
             .opacity(progress >= Double(end) - 0.05 ? 1 : 0)
@@ -649,10 +656,8 @@ struct BlockStage: View {
   var body: some View {
     let all = items
     let shown = Array(all.prefix(all.count > 4 ? 3 : 4))
+    // The shield has its own page before this one (OnboardingStep.shield); here, only the apps.
     ScaleToFit { VStack(spacing: 18) {
-      // What they'll meet mid-set: the shield's own words, sliding up and locking.
-      Text(store.t("Here’s what you’ll see mid-workout")).font(JourneyType.eyebrow).foregroundStyle(JourneyColor.secondary)
-      OnboardingShield(done: done)
       LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 16) {
         if !samples.isEmpty {
           ForEach(samples.prefix(3), id: \.self) { sample($0) }
@@ -660,7 +665,8 @@ struct BlockStage: View {
         } else {
           ForEach(Array(shown.enumerated()), id: \.element) { i, item in tile(item, locked: i < stamped) }
           if all.count > 4 { more(all.count - 3) }
-          ForEach(0..<max(0, 4 - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
+          // Nothing chosen yet: two rows of slots, so the page reads as a place to fill, not an empty one.
+          ForEach(0..<max(0, (all.isEmpty ? 8 : 4) - all.count), id: \.self) { i in empty(first: all.isEmpty && i == 0) }
         }
       }.frame(maxWidth: 320)
       Text(!samples.isEmpty ? String(format: store.t("%@ blocked from Start to Finish."), "\(samples.count) " + store.t("apps"))

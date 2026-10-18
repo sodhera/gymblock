@@ -4,7 +4,7 @@ import SwiftUI
 /// Onboarding: one question or one idea per page, on a fixed grid —
 /// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V5-PLAN.md.
 enum OnboardingStep: String, CaseIterable {
-  case welcome, founder, name, trainingDays, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, blocking, alerts, commit, account, subscription, splits, firstWorkout
+  case welcome, founder, name, trainingDays, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, shield, blocking, alerts, commit, account, subscription, splits, firstWorkout
   // Asked before 17 Oct 2026 (V5); saved progress on them resumes at the days question.
   case gender, height, weight
   // Decode-only steps saved by earlier journeys.
@@ -31,7 +31,7 @@ enum OnboardingStep: String, CaseIterable {
   /// The account step or later: the answers are worth keeping in the account from here on.
   var reachedAccount: Bool { [.account, .subscription, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .scrolling, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit].contains(self) }
+  var animated: Bool { [.welcome, .scrolling, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .shield, .alerts, .commit].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
   var stage: String {
     switch self {
@@ -51,7 +51,7 @@ enum OnboardingRoute {
     if scrolls { steps.append(.phoneMinutes) }
     steps.append(.reveal)
     if scrolls { steps.append(.days) }
-    return steps + [.mindA, .mindB, .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    return steps + [.mindA, .mindB, .restA, .restB, .logA, .logB, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
   }
 }
 
@@ -140,6 +140,7 @@ struct OnboardingView: View {
       guard !Task.isCancelled else { return }
       markReady(page)
     }
+    .environment(\.journeyPress, true)
     .onChange(of: step) { old, new in Analytics.leave("onboarding." + old.rawValue); Analytics.enter("onboarding." + new.rawValue, ["step": stepIndex(new)]) }
     .onAppear { Analytics.enter("onboarding." + step.rawValue, ["step": stepIndex(step)]) }
     .onDisappear { Analytics.leave("onboarding." + step.rawValue) }
@@ -217,7 +218,7 @@ struct OnboardingView: View {
     case .gender: return "What’s your gender?"
     case .height: return "How tall are you?"
     case .weight: return "How much do you weigh?"
-    case .alerts: return "We’ll buzz you when rest is up."
+    case .alerts: return "We’ll buzz you\nwhen rest is up."
     case .scrolling: return "Be honest. Do you check your phone between sets?"
     case .phoneMinutes: return "Roughly how long, each rest?"
     case .reveal: return "Here’s where your workout time goes."
@@ -227,8 +228,9 @@ struct OnboardingView: View {
     case .mindB: return "Put it away. Feel every rep."
     case .restA: return "Long scrolls between sets?\nThe pump never builds."
     case .restB: return "Rest on time,\nand it keeps building."
-    case .logA: return "Quick: what did you bench last week?"
+    case .logA: return "It’s easy to forget how well you did."
     case .logB: return "Your log remembers. Every set."
+    case .shield: return "Open a locked app while you train, and you’ll see this."
     case .blocking: return "Which apps should we lock while you train?"
     case .account: return "Let’s save your plan to your account."
     case .splits: return "You’re in. How do you usually split your training?"
@@ -249,7 +251,9 @@ struct OnboardingView: View {
     }
   }
   private var daysHeadline: String {
-    String(format: store.t("At your %@ workouts a week, that’s %@ hours a year."), "\(estimate.days)", "\(Int(estimate.yearlyPhoneHours.rounded()))")
+    // The number keeps its unit on the same line ("118 hours", never "118 / hours").
+    String(format: store.t("At %@ workouts a week, that’s %@ hours a year on your phone."), "\(estimate.days)", "\(Int(estimate.yearlyPhoneHours.rounded()))")
+      .replacingOccurrences(of: "\(Int(estimate.yearlyPhoneHours.rounded())) ", with: "\(Int(estimate.yearlyPhoneHours.rounded()))\u{00A0}")
   }
   private var firstWorkoutHeadline: String {
     let split = store.data.workouts.first { $0.id == store.profile.preferredSplitID } ?? store.data.workouts.first
@@ -268,6 +272,7 @@ struct OnboardingView: View {
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
     case .mindA, .mindB, .restA, .restB: return "Illustrative, not a measurement."
     case .logA, .logB: return "An example log, not your data."
+    case .shield: return "It lifts the moment you finish."
     case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
     case .splits: return (JourneyLayout.compact ? SplitTemplateStage.summary(template, store: store) : nil) ?? "Change them anytime."
@@ -311,7 +316,8 @@ struct OnboardingView: View {
     case .restA, .restB: RestStage(timed: step == .restB, done: sceneDone)
     case .logA, .logB: LogStage(remembered: step == .logB, done: sceneDone)
     case .commit: PlanStage(done: sceneDone)
-    case .blocking: BlockStage(locking: locking, choose: chooseApps, done: sceneDone)
+    case .shield: ShieldStage(done: sceneDone)
+    case .blocking: BlockStage(locking: locking, choose: chooseApps)
     case .account: AccountStage()
     case .splits: SplitTemplateStage(choice: $template)
     case .firstWorkout: FirstWorkoutStage()

@@ -317,7 +317,18 @@ struct JourneyPressStyle: ButtonStyle {
 
 /// The primary action: bright, prominent Liquid Glass. Disabled, it stays in place at low opacity
 /// so the page never looks like it is missing its button.
+/// Onboarding's primary buttons press in with a designed feel (`JourneyScores.press`); the rest of
+/// the app keeps its own.
+private struct JourneyPressKey: EnvironmentKey { static let defaultValue = false }
+extension EnvironmentValues {
+  var journeyPress: Bool {
+    get { self[JourneyPressKey.self] }
+    set { self[JourneyPressKey.self] = newValue }
+  }
+}
+
 struct JourneyButton: View {
+  @Environment(\.journeyPress) private var pressFeel
   let title: String
   var symbol: String? = nil
   var id = ""
@@ -333,7 +344,7 @@ struct JourneyButton: View {
       }.opacity(loading ? 0 : 1)
       if loading { ProgressView().tint(JourneyColor.onButton) }
     }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
-    let tapped = { Analytics.tap(id); action() }
+    let tapped = { if pressFeel { JourneyScorePlayer.shared.press() }; Analytics.tap(id); action() }
     Group {
       if #available(iOS 26.0, *) {
         Button(action: tapped) { label }.buttonStyle(.glassProminent).tint(JourneyColor.button)

@@ -302,9 +302,9 @@ private struct TwoWays: View {
         (phone, JourneyColor.danger, phone > 0 ? String(format: store.t("%@ min on your phone"), "\(Int(phone.rounded()))") : ""),
         (lifting, JourneyColor.signal, ""),
       ])
-      // With GymBlock the whole bar is green: the minutes that went to the phone are focused ones.
+      // With GymBlock the whole bar is green: the whole workout, focused (18 Oct 2026: its full length, not the phone minutes).
       bar(store.t("With GymBlock"), JourneyColor.text, [
-        (estimate.workoutMinutes, JourneyColor.signal, String(format: store.t("%@ min focused workout"), "\(Int(phone.rounded()))")),
+        (estimate.workoutMinutes, JourneyColor.signal, String(format: store.t("%@ min focused workout"), "\(Int(estimate.workoutMinutes.rounded()))")),
       ])
     }.accessibilityElement(children: .combine).accessibilityIdentifier("paywall.twoWays")
   }

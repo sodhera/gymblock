@@ -75,7 +75,11 @@ struct DesignFit<Content: View>: View {
 struct WelcomeScene: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  static let duration = 3.85
+  /// One thing moves at a time, so the eye is never in two places: the phone fills and locks, then
+  /// "Stay focused"; then "Record everything" and "Get jacked"; only then does the arm flex (its
+  /// spring peaks 0.315 s after it starts).
+  static let jacked = 3.6, flex = jacked + 0.4, peak = flex + 0.315
+  static let duration = 5.0
   var body: some View {
     SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
       // Small screens keep air around it rather than filling edge to edge.
@@ -94,7 +98,7 @@ struct WelcomeScene: View {
         arm(t)
       }.frame(height: 360)
       Spacer(minLength: 0)
-      row(store.t("Record\neverything"), store.t("Get\njacked"), t: t, left: 0.3, arrow: 3.0, right: 3.2, pop: true)
+      row(store.t("Record\neverything"), store.t("Get\njacked"), t: t, left: 3.1, arrow: Self.jacked - 0.25, right: Self.jacked, pop: true)
     }
   }
   private func row(_ a: String, _ b: String, t: Double, left: Double, arrow: Double, right: Double, pop: Bool) -> some View {
@@ -115,14 +119,14 @@ struct WelcomeScene: View {
     }.tracking(-0.8)
   }
   private func arm(_ t: Double) -> some View {
-    let flex = t < 2.55 ? 0 : Ease.spring(t - 2.55, 11, 0.42)
+    let flex = t < Self.flex ? 0 : Ease.spring(t - Self.flex, 11, 0.42)
     // Settles exactly on the last pose, so the resting arm is one clean frame, not two blended.
     let curl = min(1, 0.12 + 0.88 * flex)
-    let glow = t < 2.7 ? 0 : Ease.spring(t - 2.7, 8, 0.5)
+    let glow = t < Self.flex + 0.15 ? 0 : Ease.spring(t - Self.flex - 0.15, 8, 0.5)
     return ZStack {
       Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.24), .clear], center: .center, startRadius: 0, endRadius: 125))
-        .frame(width: 250, height: 250).scaleEffect(0.75 + 0.25 * glow).opacity(Ease.out(Ease.seg(t, 2.7, 3.2)))
-      ArmView(curl: curl, warmth: Ease.inOut(Ease.seg(t, 2.55, 3.15))).frame(width: 206, height: 206)
+        .frame(width: 250, height: 250).scaleEffect(0.75 + 0.25 * glow).opacity(Ease.out(Ease.seg(t, Self.flex + 0.15, Self.flex + 0.65)))
+      ArmView(curl: curl, warmth: Ease.inOut(Ease.seg(t, Self.flex, Self.flex + 0.6))).frame(width: 206, height: 206)
     }.frame(width: 206)
   }
 }
@@ -234,20 +238,22 @@ struct FounderStage: View {
     // The larger setting where it fits, the body size on small screens, scrolling only as a last
     // resort (the largest accessibility sizes).
     ViewThatFits(in: .vertical) {
-      letter(.title3, spacing: 16)
-      letter(.body, spacing: 12)
-      letter(.callout, spacing: 9, signature: 26)
+      letter(.app(.title3), spacing: 16)
+      // Between title 3 and body: on the largest phones the body size left an empty band under the note.
+      letter(.app(size: UIFontMetrics(forTextStyle: .body).scaledValue(for: 18.5)), spacing: 14)
+      letter(.app(.body), spacing: 12)
+      letter(.app(.callout), spacing: 9, signature: 26)
       // Small screens: the callout setting, scaled down just enough to fit. Accessibility sizes scroll
       // instead, so their text stays large.
       if typeSize.isAccessibilitySize {
-        ScrollView { letter(.body, spacing: 12) }.scrollIndicators(.hidden)
+        ScrollView { letter(.app(.body), spacing: 12) }.scrollIndicators(.hidden)
       } else {
-        ScaleToFit { letter(.callout, spacing: 9, signature: 26) }
+        ScaleToFit { letter(.app(.callout), spacing: 9, signature: 26) }
       }
     }
     .accessibilityElement(children: .combine).accessibilityIdentifier("founder.note")
   }
-  private func letter(_ style: Font.TextStyle, spacing: CGFloat, signature: CGFloat = 32) -> some View {
+  private func letter(_ font: Font, spacing: CGFloat, signature: CGFloat = 32) -> some View {
     VStack(alignment: .leading, spacing: spacing) {
       Text(store.t("Hey friend,"))
       Text(store.t("In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them."))
@@ -260,7 +266,7 @@ struct FounderStage: View {
         Text(store.t("Founder, GymBlock")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       }.padding(.top, 2)
     }
-    .font(.app(style)).foregroundStyle(JourneyColor.text.opacity(0.86)).lineSpacing(3)
+    .font(font).foregroundStyle(JourneyColor.text.opacity(0.86)).lineSpacing(3)
     .fixedSize(horizontal: false, vertical: true)
     .padding(.horizontal, 6)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -275,24 +281,16 @@ struct TrainingDaysStage: View {
   let choose: (Int) -> Void
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    VStack(spacing: 26) {
+    // The same glass rows as every other question, so answers look the same everywhere.
+    VStack(spacing: 0) {
       Spacer(minLength: 0)
-      HStack(spacing: 10) {
-        ForEach([2, 3, 4, 5, 6], id: \.self) { n in
-          let on = days == n
-          Button { choose(n) } label: {
-            Text(n == 6 ? "6+" : "\(n)").font(.app(.title2, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
-              .frame(width: JourneyLayout.compact ? 50 : 60, height: JourneyLayout.compact ? 50 : 60)
-              .background(Circle().fill(on ? Color.white : .clear))
-              .journeyGlass(Circle(), interactive: true)
-              .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: on ? 1.6 : 0))
-              .overlay(alignment: .topTrailing) {
-                Image(systemName: "checkmark.circle.fill").font(.system(size: 18)).symbolRenderingMode(.palette)
-                  .foregroundStyle(JourneyColor.onAccent, JourneyColor.signal).background(Circle().fill(JourneyColor.stage).padding(2))
-                  .offset(x: 3, y: -3).scaleEffect(on ? 1 : 0.4).opacity(on ? 1 : 0)
-              }
-          }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("days.\(n)").accessibilityAddTraits(on ? .isSelected : [])
-            .accessibilityLabel(String(format: store.t("%@ days a week"), n == 6 ? "6+" : "\(n)"))
+      JourneyGlassGroup(spacing: JourneyLayout.compact ? 8 : 10) {
+        VStack(spacing: JourneyLayout.compact ? 8 : 10) {
+          ForEach([2, 3, 4, 5, 6], id: \.self) { n in
+            JourneyOption(title: n == 6 ? store.t("6 or more") : String(format: store.t("%@ days"), "\(n)"),
+                          selected: days == n, id: "days.\(n)") { choose(n) }
+              .accessibilityLabel(String(format: store.t("%@ days a week"), n == 6 ? "6+" : "\(n)"))
+          }
         }
       }
       Spacer(minLength: 0)
@@ -427,6 +425,16 @@ struct OnboardingShield: View {
       .opacity(rise).offset(y: (1 - rise) * 60)
     }
     .accessibilityElement(children: .combine).accessibilityIdentifier("blocking.shieldPreview")
+  }
+}
+
+/// What a locked app shows mid-workout, on its own page before the apps are chosen: one idea a page.
+struct ShieldStage: View {
+  let done: () -> Void
+  var body: some View {
+    DesignFit(size: CGSize(width: 320, height: 330), maxScale: JourneyLayout.compact ? 1 : 1.15) {
+      OnboardingShield(done: done)
+    }
   }
 }
 

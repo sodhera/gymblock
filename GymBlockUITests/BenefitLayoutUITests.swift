@@ -32,7 +32,7 @@ final class BenefitLayoutUITests: XCTestCase {
     tap("habit.scrolling.yes")
     XCTAssertEqual(app.buttons["onboarding.continue"].frame.midY, anchor, accuracy: 3)
     tap("onboarding.continue")
-    for _ in 0..<9 {
+    for _ in 0..<10 {  // Up to the apps page, the shield page included.
       let button = app.buttons["onboarding.continue"]
       XCTAssertTrue(button.waitForExistence(timeout: 6))
       XCTAssertEqual(button.frame.midY, anchor, accuracy: 3)

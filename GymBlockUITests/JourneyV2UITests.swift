@@ -52,7 +52,7 @@ final class JourneyV5UITests: XCTestCase {
   }
   /// Rest alerts: the system prompt appears once per simulator; allow it if it does.
   private func allowAlerts() {
-    page("We’ll buzz you when rest is up."); tap("alerts.on")
+    page("We’ll buzz you\nwhen rest is up."); tap("alerts.on")
     let allow = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["Allow"]
     if allow.waitForExistence(timeout: 4) { allow.tap() }
   }
@@ -80,8 +80,9 @@ final class JourneyV5UITests: XCTestCase {
     let shown = expectation(for: NSPredicate(format: "enabled == true"), evaluatedWith: app.buttons["onboarding.continue"])
     wait(for: [shown], timeout: 7); snap("09-rest-a")
     next(); page("Rest on time,\nand it keeps building."); snap("10-rest-b")
-    next(); page("Quick: what did you bench last week?"); settle(4); snap("09-log-a")
+    next(); page("It’s easy to forget how well you did."); settle(4); snap("09-log-a")
     next(); page("Your log remembers. Every set."); settle(3); snap("10-log-b")
+    next(); page("Open a locked app while you train, and you’ll see this."); settle(2); snap("11-shield")
     next(); page("Which apps should we lock while you train?")
     // Apps come from Screen Time's own picker, which needs the iPhone passcode: not reachable from a UI test.
     XCTAssertEqual(app.staticTexts["blocking.summary"].label, "Choose the apps that pull you in.")
@@ -132,9 +133,9 @@ final class JourneyV5UITests: XCTestCase {
     page("Roughly how long, each rest?"); next()
     page("Ana, here’s where your workout time goes.")
     XCTAssertTrue(any("reveal.phone").label.contains("17 min on your phone"))  // Sometimes defaults to 1 min per rest.
-    for _ in 0..<8 { next() }
+    for _ in 0..<9 { next() }  // Through the shield page to the apps.
     page("Which apps should we lock while you train?"); tap("blocking.later")
-    page("We’ll buzz you when rest is up."); tap("alerts.later")
+    page("We’ll buzz you\nwhen rest is up."); tap("alerts.later")
     page("Ana, here’s your plan."); app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Let’s save your plan to your account."); tap("account.debugSkip")
     page("Ana, your best sessions start today.")
@@ -154,9 +155,9 @@ final class JourneyV5UITests: XCTestCase {
     app.launch()
     next(); profile(); snap("large-height"); body(); answer("habit.scrolling.yes"); next()
     page("Sam, here’s where your workout time goes."); snap("large-reveal")
-    for name in ["days", "mind-a", "mind-b", "rest-a", "rest-b", "log-a", "log-b"] { next(); snap("large-" + name) }
+    for name in ["days", "mind-a", "mind-b", "rest-a", "rest-b", "log-a", "log-b", "shield"] { next(); snap("large-" + name) }
     next(); page("Which apps should we lock while you train?"); snap("large-blocking")
-    tap("blocking.later"); page("We’ll buzz you when rest is up."); snap("large-alerts"); tap("alerts.later")
+    tap("blocking.later"); page("We’ll buzz you\nwhen rest is up."); snap("large-alerts"); tap("alerts.later")
     page("Sam, here’s your plan."); snap("large-commit")
     app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Let’s save your plan to your account."); tap("account.debugSkip")
