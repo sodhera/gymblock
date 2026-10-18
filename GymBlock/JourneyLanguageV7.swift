@@ -34,7 +34,7 @@ extension Spanish {
       "Por eso GymBlock hace dos cosas: bloquea las apps que te distraen mientras entrenas y guarda un registro honesto de cada serie, para que siempre sepas qué superar.",
     "First, what should we call you?": "Primero, ¿cómo te llamamos?",
     "It’s how we’ll greet you in the app.": "Así te saludaremos en la app.",
-    "Nice to meet you, %@. How many days a week do you work out?": "Encantados, %@. ¿Cuántos días a la semana entrenas?",
+    "Hi %@. How many days a week do you work out?": "Hola, %@. ¿Cuántos días a la semana entrenas?",
     "%@ days a week": "%@ días a la semana",
     "Once a week": "Una vez a la semana",
     "Every day": "Todos los días",

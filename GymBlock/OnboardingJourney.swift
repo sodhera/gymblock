@@ -245,7 +245,7 @@ struct OnboardingView: View {
     guard !name.isEmpty else { return nil }
     switch step {
     case .reveal: return name + ", " + store.t("here’s where your workout time goes.")
-    case .trainingDays: return String(format: store.t("Nice to meet you, %@. How many days a week do you work out?"), name)
+    case .trainingDays: return String(format: store.t("Hi %@. How many days a week do you work out?"), name)
     case .commit: return name + ", " + store.t("here’s your plan.")
     default: return nil
     }
