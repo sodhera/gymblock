@@ -18,9 +18,10 @@ private func pause(_ seconds: Double) async -> Bool {
   return !Task.isCancelled
 }
 /// Waits until `t` seconds after `start`, so a sequence of steps keeps time with its score
-/// (scheduled up front) instead of drifting by each sleep's overshoot.
+/// (scheduled up front) instead of drifting by each sleep's overshoot. It returns the display's
+/// lead early, so the frame a step changes is on screen on its beat.
 private func pause(until t: Double, from start: Date) async -> Bool {
-  let wait = t - Date().timeIntervalSince(start)
+  let wait = t - JourneyScores.displayLead - Date().timeIntervalSince(start)
   if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
   return !Task.isCancelled
 }
@@ -248,38 +249,29 @@ struct DaysStage: View {
   let estimate: GymTimeEstimate
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-  @State private var lit = 0.0
-  @State private var meaning = false
+  /// How long the dots take to light, eased like the ticks that follow them (JourneyScores.year).
+  static let fill = 1.8
   /// Keeps the grid readable: one dot per workout up to 280, otherwise each dot stands for several.
   private var perDot: Int { max(1, Int(ceil(Double(estimate.yearlyWorkouts) / 280))) }
   private var dots: Int { max(1, Int(ceil(Double(estimate.yearlyWorkouts) / Double(perDot)))) }
   var body: some View {
-    VStack(spacing: 18) {
-      WorkoutDots(dots: dots, lit: lit).frame(maxWidth: JourneyLayout.compact ? 240 : 320).frame(maxHeight: .infinity)
-        .accessibilityHidden(true)
-      VStack(spacing: 4) {
-        Text("= \(estimate.yearlyWorkouts) " + store.t("workouts"))
-          .font(.app(JourneyLayout.compact ? .title2 : .title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
-          .accessibilityIdentifier("days.workouts")
-        Text(perDot == 1 ? store.t("Each dot is one 45-min workout.")
-             : String(format: store.t("Each dot is %@ workouts of 45 min."), "\(perDot)"))
-          .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-      }.opacity(meaning ? 1 : 0).offset(y: meaning ? 0 : 8)
+    // Drawn from the score's clock, so the last dot lights on the plate drop, not after it.
+    SceneClock(duration: Self.fill + 0.45, score: JourneyScores.year(fill: Self.fill), done: done) { t in
+      let meaning = Ease.out(Ease.seg(t, Self.fill, Self.fill + 0.4))
+      VStack(spacing: 18) {
+        WorkoutDots(dots: dots, lit: Double(dots) * JourneyScores.easeInOut(t / Self.fill))
+          .frame(maxWidth: JourneyLayout.compact ? 240 : 320).frame(maxHeight: .infinity)
+          .accessibilityHidden(true)
+        VStack(spacing: 4) {
+          Text("= \(estimate.yearlyWorkouts) " + store.t("workouts"))
+            .font(.app(JourneyLayout.compact ? .title2 : .title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
+            .accessibilityIdentifier("days.workouts")
+          Text(perDot == 1 ? store.t("Each dot is one 45-min workout.")
+               : String(format: store.t("Each dot is %@ workouts of 45 min."), "\(perDot)"))
+            .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
+        }.opacity(meaning).offset(y: 8 * (1 - meaning))
+      }
     }
-    .task { await play() }
-  }
-  private func play() async {
-    if JourneyMotion.reduced(systemReduceMotion) { lit = Double(dots); meaning = true; done(); return }
-    guard await pause(JourneyMotion.settle + 0.1) else { return }
-    let duration = 1.8
-    let begin = JourneyScorePlayer.shared.play(JourneyScores.year(fill: duration), profile: store.profile)
-    guard await pause(until: 0, from: begin) else { return }
-    withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
-    guard await pause(duration) else { return }
-    withAnimation(JourneyMotion.gentle) { meaning = true }
-    guard await pause(0.6) else { return }
-    done()
   }
 }
 
@@ -522,6 +514,29 @@ struct LogLine: Shape {
   }
 }
 
+/// The log page's moment `t` on its score's clock (JourneyScores.remembering). The line draws at a
+/// constant speed; each week's dot pops to its fullest the instant the line reaches it, on its key
+/// click and tap; today's dot is the gain, and turns green as +5 kg lands, on that same beat.
+struct LogFrame {
+  /// When the line starts (the first dot grows just before it), how long it draws, and how long a
+  /// dot takes to grow to its peak.
+  static let start = 0.1, draw = 1.2, pop = 0.08
+  static let hits = LogLine.hits.map { start + $0 * draw }
+  static var today: Double { hits[hits.count - 1] }
+  static var end: Double { today + 0.45 }
+  let t: Double
+  var line: Double { Ease.seg(t, Self.start, Self.start + Self.draw) }
+  func dot(_ i: Int) -> Double { Self.pop(t - Self.hits[i]) }
+  var gain: Double { Ease.out(Ease.seg(t, Self.today - Self.pop, Self.today)) }
+  var green: Bool { t >= Self.today }
+  /// A pop that peaks on its beat (`u` = 0): it grows over the `pop` before, overshoots, settles.
+  static func pop(_ u: Double) -> Double {
+    if u < -pop { return 0 }
+    if u < 0 { return 1.2 * Ease.out((u + pop) / pop) }
+    return 1 + 0.2 * (1 - Ease.out(min(1, u / 0.3)))
+  }
+}
+
 struct LogStage: View {
   let remembered: Bool
   let done: () -> Void
@@ -529,10 +544,6 @@ struct LogStage: View {
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var revealed = 0
   @State private var forgotten = 0
-  @State private var line = 0.0
-  @State private var dots = 0
-  @State private var best = false
-  static let draw = 1.2
   var body: some View {
     GeometryReader { g in
       let b = StageBox(size: g.size, ref: logRef)
@@ -549,29 +560,41 @@ struct LogStage: View {
           Text(store.t("Week") + " →").font(.app(.caption2, weight: .medium)).foregroundStyle(JourneyColor.secondary)
             .position(b.p(282, 266))
         }.opacity(remembered ? 1 : 0)
-        LogLine().trim(from: 0, to: line).stroke(JourneyColor.ink(0.8), style: StrokeStyle(lineWidth: b.len(2.2), lineCap: .round, lineJoin: .round))
+        if remembered {
+          // The line, the dots and the gain are drawn from the score's clock, so each pop is seen on
+          // the click that's heard.
+          SceneClock(duration: LogFrame.end, score: JourneyScores.remembering(hits: LogFrame.hits), done: done) { t in
+            logged(LogFrame(t: t), b)
+          }
+        }
         ForEach(0..<5, id: \.self) { i in
-          let p = logPoint(i, b)
-          let last = i == 4
-          Circle().fill(last && best ? JourneyColor.accent : JourneyColor.stage)
-            .overlay(Circle().strokeBorder(last && best ? JourneyColor.accent : JourneyColor.ink(0.85), lineWidth: b.len(2)))
-            .frame(width: b.len(last ? 12 : 9), height: b.len(last ? 12 : 9))
-            .scaleEffect(remembered && i < dots ? 1 : 0.01)
-            .position(p)
           value(i, b)
           Text(store.t(["W1", "W2", "W3", "W4", "Today"][i])).font(.app(.caption2)).foregroundStyle(JourneyColor.secondary)
             .position(b.p(34 + CGFloat(i) * 63, 240))
         }
-        Text("+5 kg").font(.app(.headline, weight: .semibold)).foregroundStyle(JourneyColor.accent)
-          .position(b.p(286, 16)).opacity(best ? 1 : 0).offset(y: best ? 0 : 6)
-          .accessibilityIdentifier("journey.newBest")
       }
     }
     .accessibilityElement().accessibilityIdentifier("journey.logging")
     .accessibilityLabel(store.t(remembered
       ? "Logged weeks form a rising line; today is 5 kilograms heavier than week 1."
       : "Remembered weights fade into question marks, week after week."))
-    .task(id: remembered) { await play() }
+    .task(id: remembered) { if !remembered { await forget() } }
+  }
+  private func logged(_ f: LogFrame, _ b: StageBox) -> some View {
+    ZStack {
+      LogLine().trim(from: 0, to: f.line).stroke(JourneyColor.ink(0.8), style: StrokeStyle(lineWidth: b.len(2.2), lineCap: .round, lineJoin: .round))
+      ForEach(0..<5, id: \.self) { i in
+        let today = i == 4 && f.green
+        Circle().fill(today ? JourneyColor.accent : JourneyColor.stage)
+          .overlay(Circle().strokeBorder(today ? JourneyColor.accent : JourneyColor.ink(0.85), lineWidth: b.len(2)))
+          .frame(width: b.len(i == 4 ? 12 : 9), height: b.len(i == 4 ? 12 : 9))
+          .scaleEffect(max(0.01, f.dot(i)))
+          .position(logPoint(i, b))
+      }
+      Text("+5 kg").font(.app(.headline, weight: .semibold)).foregroundStyle(JourneyColor.accent)
+        .position(b.p(286, 16)).opacity(f.gain).offset(y: 6 * (1 - f.gain))
+        .accessibilityIdentifier("journey.newBest")
+    }
   }
   private func value(_ i: Int, _ b: StageBox) -> some View {
     let lost = !remembered && i < forgotten
@@ -584,45 +607,23 @@ struct LogStage: View {
       .position(x: logPoint(i, b).x, y: y)
       .animation(.spring(duration: 0.6, bounce: 0.1).delay(remembered ? Double(i) * 0.06 : 0), value: remembered)
   }
-  private func play() async {
-    let reduced = JourneyMotion.reduced(systemReduceMotion)
-    if !remembered {
-      withAnimation(.smooth(duration: 0.3)) { line = 0; dots = 0; best = false }
-      if reduced { revealed = 5; forgotten = 4; done(); return }
-      revealed = 0; forgotten = 0
-      // One week at a time: it appears in full, holds, fades to "?" in full, and only then does the
-      // next appear. Today's stays.
-      guard await pause(JourneyMotion.settle + 0.1) else { return }
-      // Each number fades with a fainter tap and a falling, out-of-tune note (JourneyScores.forgetting),
-      // on the same clock as the fades.
-      let start = JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile)
-      for i in 0..<5 {
-        guard await pause(until: Double(i) * 0.69, from: start) else { return }
-        withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
-        guard i < 4 else { break }
-        guard await pause(until: Double(i) * 0.69 + 0.45, from: start) else { return }
-        withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
-      }
-      guard await pause(until: 4 * 0.69 + 0.35, from: start) else { return }
-      done()
-    } else {
-      if reduced { line = 1; dots = 5; best = true; done(); return }
-      guard await pause(JourneyMotion.settle + 0.15) else { return }
-      // The line draws at a constant speed; each week's dot pops, with its tap, the moment the line
-      // reaches it, then a double hit on the gain.
-      let hits = LogLine.hits.map { $0 * Self.draw }
-      let start = JourneyScorePlayer.shared.play(JourneyScores.remembering(hits: hits, best: Self.draw + 0.05), profile: store.profile)
-      guard await pause(until: 0, from: start) else { return }
-      withAnimation(.linear(duration: Self.draw)) { line = 1 }
-      for (i, hit) in hits.enumerated() {
-        guard await pause(until: hit, from: start) else { return }
-        withAnimation(.spring(duration: 0.45, bounce: 0.15)) { dots = i + 1 }
-      }
-      guard await pause(until: Self.draw + 0.05, from: start) else { return }
-      withAnimation(.spring(duration: 0.6, bounce: 0.15)) { best = true }
-      guard await pause(0.6) else { return }
-      done()
+  /// One week at a time: it appears in full, holds, fades to "?" in full, and only then does the
+  /// next appear. Today's stays.
+  private func forget() async {
+    if JourneyMotion.reduced(systemReduceMotion) { revealed = 5; forgotten = 4; done(); return }
+    revealed = 0; forgotten = 0
+    guard await pause(JourneyMotion.settle + 0.1) else { return }
+    // Each number fades with a fainter tap (JourneyScores.forgetting), on the same clock as the fades.
+    let start = JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile)
+    for i in 0..<5 {
+      guard await pause(until: Double(i) * 0.69, from: start) else { return }
+      withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
+      guard i < 4 else { break }
+      guard await pause(until: Double(i) * 0.69 + 0.45, from: start) else { return }
+      withAnimation(.easeOut(duration: 0.14)) { forgotten = i + 1 }
     }
+    guard await pause(until: 4 * 0.69 + 0.35, from: start) else { return }
+    done()
   }
 }
 

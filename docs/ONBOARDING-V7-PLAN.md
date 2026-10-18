@@ -56,11 +56,11 @@ Haptics land only on beats that mean something, mostly single taps. Every sound 
 | Welcome | A light tap per notification, one firm hit when the kettlebell lands, one tap on the flex's peak | The Messages ding per notification, the lock click on the landing, a plate on the flex |
 | Phone between sets | One light tap per card, a little stronger each time | None |
 | Ring | One soft tap when the red count lands, one when the green does | A clock tock ticking the phone time away (following the eased count); a light clink as the green lands |
-| Hours a year | A run of light taps that follows the dots as they light, each a touch firmer, then one heavy hit | Tocks with the taps, then a heavy plate drop on the total |
+| Hours a year | A run of light taps that follows the dots as they light, each a touch firmer, then one heavy hit as the last dot lights | Tocks with the taps, then a heavy plate drop on the last dot |
 | Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | Mixkit's "Trombone disappoint", cut into its three notes. Each note is heard on a twitch, with its tap: womp on the contraction, womp on the half contraction, then the long wommmp on the last small twitch, carrying through as the fourth signal fizzles |
 | Mind B | The same tap three times (60%) | A clink on each squeeze, heavier each time; the last over an iron plate |
 | Pump A / B (the user's favourite) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests or after the last set / stronger every set, the strongest tap when full | The same dull clank every set / plates getting heavier every set; when full, a bright clink on the same instant as the plate and the tap |
-| Memory / log | A fainter tap as each number fades / a light tap as the line reaches each dot, a firmer one on +5 kg | None / a key click per logged week, a clink on +5 kg |
+| Memory / log | A fainter tap as each number fades / a light tap as each week's dot pops at its fullest, where the line reaches it; today's dot gets one firmer tap as it turns green and +5 kg lands | None / a key click per logged week; today's key click and a clink on the same beat |
 | Blocking | One crisp tap as the shield locks | The lock click |
 | Rest alerts | A light, crisp tick each second as the Live Activity counts down, then the real double buzz on 0:00 | The tri-tone on 0:00 |
 | Hold to commit | A buzz that climbs while held; one firm tap when committed | A plate going back on the rack |
@@ -86,4 +86,4 @@ Page changes have no haptic. Haptic feel needs a real iPhone; the simulator has 
 
 ## Motion
 
-The welcome and both mind-muscle pages are drawn from one clock (`SceneClock`, a `TimelineView` at the display's refresh rate). Springs and easing are computed per frame, and the arm blends between neighbouring pre-rendered poses, so it bends continuously. Reduce Motion shows each scene's last frame and skips its score. Continue fades in the moment a scene ends: no hold and no minimum time on the page, and each scene's clock ends with its last movement. kg or lb is no longer asked; it follows the phone's region the first time and can be changed in Profile.
+The welcome, both mind-muscle pages, the hours-a-year dots and the log are drawn from one clock (`SceneClock`, a `TimelineView` at the display's refresh rate), the same clock as their score. Every scene draws about two frames (0.03 s, `JourneyScores.displayLead`) ahead, the time the screen takes to show a frame, so what's seen lands on what's heard. Springs and easing are computed per frame, and the arm blends between neighbouring pre-rendered poses, so it bends continuously. Reduce Motion shows each scene's last frame and skips its score. Continue fades in the moment a scene ends: no hold and no minimum time on the page, and each scene's clock ends with its last movement. kg or lb is no longer asked; it follows the phone's region the first time and can be changed in Profile.

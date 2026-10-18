@@ -79,6 +79,26 @@ import XCTest
     // Pump A: nothing after the last clank.
     let scroll = JourneyScores.pump(PumpPlot.scrolling, timed: false, durations: Array(repeating: 0.34, count: PumpPlot.scrolling.count - 1))
     XCTAssertEqual(taps(scroll).max()!, scroll.sounds.map(\.at).max()!, accuracy: 0.0001)
+    // Hours a year: the dots follow the ticks' curve, and the last one lights on the plate drop.
+    let year = JourneyScores.year(fill: DaysStage.fill)
+    XCTAssertEqual(try! XCTUnwrap(year.sounds.first { $0.sound == .plateDrop }).at, DaysStage.fill, accuracy: 0.0001)
+    XCTAssertLessThan(JourneyScores.easeInOut((DaysStage.fill - 0.001) / DaysStage.fill), 1)
+    XCTAssertEqual(JourneyScores.easeInOut(1), 1)
+    for p in stride(from: 0.05, through: 0.95, by: 0.15) { XCTAssertEqual(JourneyScores.easeInOut(JourneyScores.easeInOutTime(p)), p, accuracy: 0.001) }
+    // The log: each week's dot is at its fullest on its key click; today's click, clink and one tap
+    // are one beat, with the green and the +5 kg.
+    let log = JourneyScores.remembering(hits: LogFrame.hits)
+    for (i, hit) in LogFrame.hits.enumerated() {
+      XCTAssertTrue(log.sounds.contains { $0.sound == .typing && abs($0.at - hit) < 0.0001 })
+      XCTAssertEqual(LogFrame(t: hit).dot(i), 1.2, accuracy: 0.0001)
+      XCTAssertLessThan(LogFrame(t: hit - 0.02).dot(i), 1.2)
+      XCTAssertLessThan(LogFrame(t: hit + 0.02).dot(i), 1.2)
+    }
+    XCTAssertTrue(log.sounds.contains { $0.sound == .clink2 && abs($0.at - LogFrame.today) < 0.0001 })
+    XCTAssertEqual(taps(log).count, LogFrame.hits.count)
+    XCTAssertEqual(LogFrame(t: LogFrame.today).gain, 1, accuracy: 0.0001)
+    XCTAssertTrue(LogFrame(t: LogFrame.today).green)
+    XCTAssertFalse(LogFrame(t: LogFrame.today - 0.01).green)
     // Rest alerts: a tick on each second of the countdown, then the double buzz on 0:00.
     for (k, t) in taps(JourneyScores.restUp).prefix(5).enumerated() { XCTAssertEqual(t, Double(k + 1) * JourneyScores.countdownStep, accuracy: 0.0001) }
   }

@@ -10,13 +10,25 @@ enum JourneyScores {
     JourneyScore.Cue(at: t, sound: sound, volume: v)
   }
 
+  /// How long the screen takes to show a frame once it's drawn (about two frames at 60 Hz). Scenes
+  /// draw that far ahead of their score's clock, so what's seen lands on the beat that's heard.
+  static let displayLead = 0.03
+
+  private static func bez(_ s: Double, _ a: Double, _ b: Double) -> Double { 3 * (1 - s) * (1 - s) * s * a + 3 * (1 - s) * s * s * b + s * s * s }
   /// When SwiftUI's `.easeInOut` (the curve 0.42, 0, 0.58, 1) reaches `progress`, as a share of its
   /// duration: a beat that follows an eased count lands on the value, not on an even time.
   static func easeInOutTime(_ progress: Double) -> Double {
-    func bez(_ s: Double, _ a: Double, _ b: Double) -> Double { 3 * (1 - s) * (1 - s) * s * a + 3 * (1 - s) * s * s * b + s * s * s }
     var lo = 0.0, hi = 1.0
     for _ in 0..<40 { let mid = (lo + hi) / 2; if bez(mid, 0, 1) < progress { lo = mid } else { hi = mid } }
     return bez((lo + hi) / 2, 0.42, 0.58)
+  }
+  /// The same curve the other way round: how far along it is at `time` (a share of its duration).
+  static func easeInOut(_ time: Double) -> Double {
+    guard time > 0 else { return 0 }
+    guard time < 1 else { return 1 }
+    var lo = 0.0, hi = 1.0
+    for _ in 0..<40 { let mid = (lo + hi) / 2; if bez(mid, 0.42, 0.58) < time { lo = mid } else { hi = mid } }
+    return bez((lo + hi) / 2, 0, 1)
   }
 
   /// A notification arriving on the phone-habit page: one light tap, no sound.
@@ -38,7 +50,8 @@ enum JourneyScores {
   }
 
   /// The year in workouts: a run of ticks and light taps that follows the dots as they light (eased,
-  /// like the fill), each a touch firmer, then a heavy plate drop on the total.
+  /// like the fill), each a touch firmer, then a heavy plate drop as the last dot lights (DaysStage
+  /// draws the dots from this score's clock).
   static func year(fill: Double) -> JourneyScore {
     let n = 16
     let times = (1...n).map { fill * easeInOutTime(Double($0) / Double(n + 1)) }
@@ -103,12 +116,13 @@ enum JourneyScores {
     JourneyScore(haptics: (0..<4).map { .tap(Double($0) * period + fade, [0.4, 0.3, 0.2, 0.12][$0], 0.3) })
   }
 
-  /// The log: a light tap and a key click (a set being logged) the moment the line reaches each
-  /// week's dot, following it up and down, and a firmer tap with a clink on +5 kg.
-  static func remembering(hits: [Double], best: Double) -> JourneyScore {
-    let levels = [0.3, 0.45, 0.38, 0.55, 0.65]
-    return JourneyScore(haptics: hits.enumerated().map { .tap($0.element, levels[min(4, $0.offset)], 0.5) } + [.tap(best, 0.8, 0.55)],
-                        sounds: hits.map { cue($0, .typing, 0.4) } + [cue(best, .clink2, 0.4)])
+  /// The log: a light tap and a key click (a set being logged) as each week's dot pops, the moment
+  /// the line reaches it, following it up and down. Today's dot is the gain: its key click, a clink
+  /// and one firmer tap are a single beat, as it turns green and +5 kg lands (LogFrame).
+  static func remembering(hits: [Double]) -> JourneyScore {
+    let levels = [0.3, 0.45, 0.38, 0.55], today = hits.count - 1
+    return JourneyScore(haptics: hits.enumerated().map { $0.offset == today ? .tap($0.element, 0.8, 0.55) : .tap($0.element, levels[min(3, $0.offset)], 0.5) },
+                        sounds: hits.map { cue($0, .typing, 0.4) } + [cue(hits[today], .clink2, 0.4)])
   }
 
   /// The lock screen locks: the iPhone's lock click and one crisp tap, on the kettlebell's squeeze (1.07 s).

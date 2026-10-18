@@ -23,7 +23,8 @@ enum Ease {
 }
 
 /// Runs a scene from its own clock at the display's refresh rate, with its haptic and sound score
-/// starting on the same frame. Reduce Motion shows the last frame and skips the score.
+/// starting on the same frame. Each frame is drawn `JourneyScores.displayLead` ahead, the time the
+/// screen takes to show it. Reduce Motion shows the last frame and skips the score.
 struct SceneClock<Content: View>: View {
   let duration: Double
   var score: JourneyScore? = nil
@@ -35,7 +36,7 @@ struct SceneClock<Content: View>: View {
   @State private var finished = false
   var body: some View {
     TimelineView(.animation(paused: start == nil || finished)) { context in
-      content(finished ? duration : start.map { max(0, min(duration, context.date.timeIntervalSince($0))) } ?? 0)
+      content(finished ? duration : start.map { max(0, min(duration, context.date.timeIntervalSince($0) + JourneyScores.displayLead)) } ?? 0)
     }
     .task { await run() }
   }
