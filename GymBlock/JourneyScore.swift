@@ -163,10 +163,11 @@ struct JourneyScore {
       switch h {
       case let .tap(t, i, s):
         events.append(CHHapticEvent(eventType: .hapticTransient, parameters: [
-          CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(i)),
+          CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(JourneyHaptic.boost(i))),
           CHHapticEventParameter(parameterID: .hapticSharpness, value: Float(s)),
         ], relativeTime: t))
-      case let .swell(t, d, a, b, s):
+      case let .swell(t, d, from, to, s):
+        let a = JourneyHaptic.boost(from), b = JourneyHaptic.boost(to)
         let peak = max(a, b, 0.01)
         events.append(CHHapticEvent(eventType: .hapticContinuous, parameters: [
           CHHapticEventParameter(parameterID: .hapticIntensity, value: Float(peak)),

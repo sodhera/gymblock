@@ -140,36 +140,39 @@ enum JourneyMotion {
 /// Designed haptics: prepared generators (no latency) and a few patterns with meaning.
 @MainActor enum JourneyHaptic {
   case selection, light, soft, medium, rigid, heavy, success
-  private static let selector = UISelectionFeedbackGenerator()
   private static let notifier = UINotificationFeedbackGenerator()
   private static var impacts: [UIImpactFeedbackGenerator.FeedbackStyle: UIImpactFeedbackGenerator] = [:]
   private static func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) -> UIImpactFeedbackGenerator {
     if let g = impacts[style] { return g }
     let g = UIImpactFeedbackGenerator(style: style); g.prepare(); impacts[style] = g; return g
   }
+  /// One step firmer than each name (18 Oct 2026, at the user's request: the haptics felt too faint).
   private static func style(_ kind: Self) -> UIImpactFeedbackGenerator.FeedbackStyle {
     switch kind {
-    case .light: return .light
-    case .soft: return .soft
-    case .medium: return .medium
+    case .light, .soft: return .medium
     case .rigid: return .rigid
     default: return .heavy
     }
   }
+  /// Every strength lifted (18 Oct 2026): the square root keeps the order (a fading run still fades,
+  /// a crescendo still builds) while a 0.25 tap becomes 0.5 and a 0.5 one about 0.7. The scored
+  /// onboarding haptics (`JourneyScore`) go through it too.
+  nonisolated static func boost(_ intensity: Double) -> Double { min(1, max(0, intensity)).squareRoot() }
   /// Haptics are always on (11 Oct 2026): designed feedback is part of the app, not a preference.
   /// Each generator is readied again after it fires, so the next tap in a run lands on time.
   static func play(_ kind: Self, _ profile: Profile, intensity: CGFloat = 1) {
     switch kind {
-    case .selection: selector.selectionChanged(); selector.prepare()
+    // A selection tick is a light impact now: iOS's selection feedback is too faint to notice.
+    case .selection: let g = impact(.light); g.impactOccurred(intensity: CGFloat(boost(0.8))); g.prepare()
     case .success: notifier.notificationOccurred(.success); notifier.prepare()
-    default: let g = impact(style(kind)); g.impactOccurred(intensity: intensity); g.prepare()
+    default: let g = impact(style(kind)); g.impactOccurred(intensity: CGFloat(boost(Double(intensity)))); g.prepare()
     }
   }
   /// Wakes the Taptic Engine ahead of a beat that must land with what's on screen; an idle one
   /// starts late. It stays ready for a few seconds.
   static func prepare(_ kind: Self) {
     switch kind {
-    case .selection: selector.prepare()
+    case .selection: impact(.light).prepare()
     case .success: notifier.prepare()
     default: impact(style(kind)).prepare()
     }
