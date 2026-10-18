@@ -416,12 +416,13 @@ struct JourneyBackButton: View {
   var body: some View {
     let action = { JourneyHaptic.pressLight(); self.action() }
     let icon = Image(systemName: "chevron.left").font(.system(.footnote, weight: .bold)).foregroundStyle(JourneyColor.text)
-      .frame(width: 36, height: 36)
     Group {
       if #available(iOS 26.0, *) {
-        Button(action: action) { icon }.buttonStyle(.glass).buttonBorderShape(.circle)
+        // The glass style adds its own padding: a 28-pt frame lands on the standard 44 pt, the same as
+        // the round buttons elsewhere (it was 36, about 52 pt, and looked oversized).
+        Button(action: action) { icon.frame(width: 28, height: 28) }.buttonStyle(.glass).buttonBorderShape(.circle)
       } else {
-        Button(action: action) { icon.background(Circle().fill(JourneyColor.fill)) }.buttonStyle(JourneyPressStyle())
+        Button(action: action) { icon.frame(width: 44, height: 44).background(Circle().fill(JourneyColor.fill)) }.buttonStyle(JourneyPressStyle())
       }
     }.accessibilityLabel(label).accessibilityIdentifier("onboarding.back")
   }
