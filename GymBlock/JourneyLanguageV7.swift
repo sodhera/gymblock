@@ -22,6 +22,12 @@ extension Spanish {
       "Guarda un registro honesto de cada serie. Siempre sabrás lo que hiciste de verdad la última vez y qué superar hoy.",
     "Little things, done right, every session.": "Pequeñas cosas, bien hechas, en cada sesión.",
     "Founder, GymBlock": "Fundador de GymBlock",
+    "In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them.":
+      "En el gimnasio crecemos siendo honestos y constantes. Eso vale para las series y para los minutos entre ellas.",
+    "Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone.":
+      "Los míos se me iban en el móvil. Un vistazo rápido se convertía en diez y, cuando volvía a coger el peso, ya no tenía ni el foco ni la congestión.",
+    "GymBlock is how I took those minutes back. It locks the apps that pull you away while you train, and keeps an honest record of every set, so you always know what you did last time and what to beat today.":
+      "GymBlock es cómo recuperé esos minutos. Bloquea las apps que te distraen mientras entrenas y guarda un registro honesto de cada serie, para que siempre sepas lo que hiciste la última vez y qué superar hoy.",
     "I built GymBlock because my rests kept turning into scrolling. One quick check became ten, and by my next set the focus and the pump were gone.":
       "Creé GymBlock porque mis descansos acababan siendo móvil. Un vistazo se convertía en diez y, para la siguiente serie, ya no tenía ni el foco ni la congestión.",
     "So GymBlock does two things: it locks the apps that pull you away while you train, and it keeps an honest record of every set, so you always know what to beat.":
@@ -102,6 +108,7 @@ extension Spanish {
     "With GymBlock": "Con GymBlock",
     "%@ min on your phone": "%@ min en el móvil",
     "%@ min of timed rest": "%@ min de descanso medido",
+    "%@ min focused workout": "%@ min de entrenamiento con foco",
     "Lifting, %@ min": "Levantando, %@ min",
     "Phone: 0 min": "Móvil: 0 min",
     "Full access, $0": "Acceso completo, gratis",

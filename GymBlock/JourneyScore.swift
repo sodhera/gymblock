@@ -13,7 +13,8 @@ struct JourneyScore {
     /// A continuous buzz from one strength to another: time, duration, from, to, sharpness.
     case swell(Double, Double, Double, Double, Double)
   }
-  /// The sounds onboarding uses, all iOS's own (/System/Library/Audio/UISounds), never synthesized.
+  /// The sounds onboarding uses: iOS's own (/System/Library/Audio/UISounds) and recorded clips
+  /// bundled in Resources/Sounds (CREDITS.md). Never synthesized.
   enum Sound: CaseIterable {
     /// The Messages "received" ding: a notification arriving.
     case notification
@@ -21,12 +22,48 @@ struct JourneyScore {
     case lock
     /// The tri-tone: rest's up.
     case alert
+    /// The keyboard's tock: a clock ticking away the phone time.
+    case tock
+    /// A key press: a set being logged.
+    case typing
+    /// Mixkit's slow sad trombone, sped up so its notes land on the fading signals.
+    case trombone
+    /// Recorded metal clinks, brightest and lightest first (Kenney Impact Sounds, CC0).
+    case clink1, clink2, clink3
+    /// Recorded iron-plate hits, light to heavy, and a deep drop.
+    case plateLight, plateMedium, plateHeavy, plateDrop
+    /// A short, dull metal clank: the same set again.
+    case clankDull
     var file: String {
-      switch self { case .notification: return "ReceivedMessage"; case .lock: return "lock"; case .alert: return "sms-received1" }
+      switch self {
+      case .notification: return "ReceivedMessage"
+      case .lock: return "lock"
+      case .alert: return "sms-received1"
+      case .tock: return "Tock"
+      case .typing: return "key_press_click"
+      case .trombone: return "gb-trombone"
+      case .clink1: return "gb-clink-1"
+      case .clink2: return "gb-clink-2"
+      case .clink3: return "gb-clink-3"
+      case .plateLight: return "gb-plate-light"
+      case .plateMedium: return "gb-plate-medium"
+      case .plateHeavy: return "gb-plate-heavy"
+      case .plateDrop: return "gb-plate-drop"
+      case .clankDull: return "gb-clank-dull"
+      }
     }
-    /// The same sound by system sound ID, if the file can't be opened.
-    var systemID: SystemSoundID {
-      switch self { case .notification: return 1003; case .lock: return 1100; case .alert: return 1007 }
+    /// Recorded clips ship in the app; the rest are iOS's.
+    var bundled: Bool { file.hasPrefix("gb-") }
+    /// An iOS sound by system sound ID, if its file can't be opened.
+    var systemID: SystemSoundID? {
+      switch self {
+      case .notification: return 1003
+      case .lock: return 1100
+      case .alert: return 1007
+      case .tock: return 1104
+      case .typing: return 1306
+      default: return nil
+      }
     }
   }
   struct Cue {
@@ -45,9 +82,11 @@ struct JourneyScore {
   static let shared = JourneyScorePlayer()
   private var engine: CHHapticEngine?
   private var hapticPlayers: [CHHapticPatternPlayer] = []
-  /// A few players per sound, so cues that overlap (four notifications in a row) don't cut each other off.
-  private var pools: [JourneyScore.Sound: [AVAudioPlayer]] = [:]
-  private var next: [JourneyScore.Sound: Int] = [:]
+  /// Each sound's audio, read once. Every cue gets its own player (a player holds one scheduled
+  /// start), so a run of ticks or four notifications in a row never drop a beat.
+  private var clips: [JourneyScore.Sound: Data] = [:]
+  /// Players still to play or playing, with when they're done; kept alive until then.
+  private var live: [(player: AVAudioPlayer, done: Date)] = []
   private var pending: [DispatchWorkItem] = []
   private var audioReady = false
 
@@ -86,7 +125,8 @@ struct JourneyScore {
     hapticPlayers.removeAll()
     for w in pending { w.cancel() }
     pending.removeAll()
-    for pool in pools.values { for p in pool where p.isPlaying { p.stop(); p.currentTime = 0 } }
+    for p in live { p.player.stop() }
+    live.removeAll()
   }
   /// Onboarding is over: the engines sleep.
   func shutDown() {
@@ -146,35 +186,30 @@ struct JourneyScore {
     try? AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])
     try? AVAudioSession.sharedInstance().setActive(true, options: [])
     for sound in JourneyScore.Sound.allCases {
-      // On a phone this is iOS's own folder; the simulator keeps iOS's files under its runtime root.
+      // On a phone iOS's sounds are in its own folder; the simulator keeps them under its runtime root.
       let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
-      let url = URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\(sound.file).caf")
-      pools[sound] = (0..<3).compactMap { _ in
-        guard let p = try? AVAudioPlayer(contentsOf: url) else { return nil }
-        p.prepareToPlay()
-        return p
-      }
+      guard let url = sound.bundled ? Bundle.main.url(forResource: sound.file, withExtension: "caf")
+        : URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\(sound.file).caf"),
+        let data = try? Data(contentsOf: url) else { continue }
+      clips[sound] = data
     }
     audioReady = true
     #if DEBUG
-      NSLog("GymBlock sounds: %d of %d iOS sounds opened", pools.values.filter { !$0.isEmpty }.count, JourneyScore.Sound.allCases.count)
+      NSLog("GymBlock sounds: %d of %d opened", clips.count, JourneyScore.Sound.allCases.count)
     #endif
   }
   private func playSounds(_ list: [JourneyScore.Cue], lead: Double) {
     setUpAudio()
     let lead = max(0, lead)
+    live.removeAll { $0.done < Date() }
     for cue in list {
-      if let pool = pools[cue.sound], !pool.isEmpty {
-        let i = next[cue.sound, default: 0] % pool.count
-        next[cue.sound] = i + 1
-        let player = pool[i]
-        if player.isPlaying { player.stop() }
-        player.currentTime = 0
+      if let data = clips[cue.sound], let player = try? AVAudioPlayer(data: data) {
         player.volume = cue.volume
+        player.prepareToPlay()
         player.play(atTime: player.deviceCurrentTime + lead + cue.at)
-      } else {
-        // The file couldn't be opened: the same sound by ID, on the moment (no volume control).
-        let id = cue.sound.systemID
+        live.append((player, Date().addingTimeInterval(lead + cue.at + player.duration + 0.5)))
+      } else if let id = cue.sound.systemID {
+        // The file couldn't be opened: the same iOS sound by ID, on the moment (no volume control).
         let work = DispatchWorkItem { AudioServicesPlaySystemSound(id) }
         pending.append(work)
         DispatchQueue.main.asyncAfter(deadline: .now() + lead + cue.at, execute: work)

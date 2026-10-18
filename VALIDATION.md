@@ -23,6 +23,13 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **More sound, letter, offer bars (seventh follow-up, 18 Oct).**
+  - **Downloads (approved by the user):** Mixkit's "Slow sad trombone fail" (472.wav, 1.06 MB, Mixkit SFX Free License) and Kenney's Impact Sounds (0.80 MB, CC0). They were converted with ffmpeg into nine level-matched clips (`gb-*.caf`, 0.7 MB in all).
+  - **Where the sounds go:** a clock ticking the red phone time on the ring; tocks and taps that follow the hours-a-year dots, then a plate drop; a sad trombone whose notes land on Mind A's fading signals; clinks getting heavier on Mind B; a dull clank per set on Pump A and heavier plates on Pump B; key clicks as the log's line reaches each week; a plate re-rack on commit; the lock click on Start workout.
+  - **Audio fix:** each cue now gets its own player. A player holds one scheduled start, so runs of the same sound used to drop beats.
+  - **Checked:** all 14 sounds open on the user's iPhone and in the simulator (`GymBlock sound files: 14 of 14 open`).
+  - **Letter:** Sulav's approved note. The whole note fits on SE, scaled down slightly.
+  - **Offer:** "With GymBlock" is one fully green bar, "34 min focused workout", and the lifting/phone legend is gone.
 - **iPhone SE and sound (sixth follow-up, 18 Oct, after testing on the user's iPhone SE).**
   - **Sound:** the synthesized sounds were too intense and sounded made up. They're gone (and their generator). Onboarding now plays iOS's own sounds, and only three: the Messages ding as notifications land on the welcome screen, the iPhone's lock click when the kettlebell lands and when the shield locks, and the tri-tone when rest is up. Everything else is silent, with no background hum. All three opened on the user's iPhone (`GymBlock sound files: 3 of 3 open`).
   - **Haptics:** cut to single taps on meaningful beats; there's no tap on page changes any more. The pump pages are unchanged.

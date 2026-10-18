@@ -226,6 +226,7 @@ struct LockPhone: View {
 /// animation, no sound. Short enough to read in ten seconds.
 struct FounderStage: View {
   @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
   var body: some View {
     // The larger setting where it fits, the body size on small screens, scrolling only as a last
     // resort (the largest accessibility sizes).
@@ -233,15 +234,22 @@ struct FounderStage: View {
       letter(.title3, spacing: 16)
       letter(.body, spacing: 12)
       letter(.callout, spacing: 9, signature: 26)
-      ScrollView { letter(.body, spacing: 12) }.scrollIndicators(.hidden)
+      // Small screens: the callout setting, scaled down just enough to fit. Accessibility sizes scroll
+      // instead, so their text stays large.
+      if typeSize.isAccessibilitySize {
+        ScrollView { letter(.body, spacing: 12) }.scrollIndicators(.hidden)
+      } else {
+        ScaleToFit { letter(.callout, spacing: 9, signature: 26) }
+      }
     }
     .accessibilityElement(children: .combine).accessibilityIdentifier("founder.note")
   }
   private func letter(_ style: Font.TextStyle, spacing: CGFloat, signature: CGFloat = 32) -> some View {
     VStack(alignment: .leading, spacing: spacing) {
       Text(store.t("Hey friend,"))
-      Text(store.t("I built GymBlock because my rests kept turning into scrolling. One quick check became ten, and by my next set the focus and the pump were gone."))
-      Text(store.t("So GymBlock does two things: it locks the apps that pull you away while you train, and it keeps an honest record of every set, so you always know what to beat."))
+      Text(store.t("In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them."))
+      Text(store.t("Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone."))
+      Text(store.t("GymBlock is how I took those minutes back. It locks the apps that pull you away while you train, and keeps an honest record of every set, so you always know what you did last time and what to beat today."))
       Text(store.t("Little things, done right, every session."))
       VStack(alignment: .leading, spacing: 2) {
         Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)

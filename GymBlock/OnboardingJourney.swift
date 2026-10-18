@@ -612,8 +612,8 @@ struct OnboardingView: View {
   /// The end of onboarding: into the app, with the first split (if any) lined up on Home, or
   /// straight into it.
   private func finish(skipped: Bool, start: Bool = false) {
-    JourneyHaptic.play(.success, store.profile)
-    JourneyScorePlayer.shared.shutDown()
+    // Starting the workout has its own beat (the lock); otherwise a success tap.
+    if !start { JourneyHaptic.play(.success, store.profile) }
     let p = store.profile
     OnboardingAnalytics.completed([
       "splits": store.data.workouts.count, "splits_skipped": skipped, "blocking": p.focusEnabled, "rest_alerts": p.restAlerts,
@@ -624,8 +624,11 @@ struct OnboardingView: View {
       $0.onboarded = true; $0.onboardingStepID = OnboardingStep.firstWorkout.rawValue
     }
     if start {
+      JourneyScorePlayer.shared.play(JourneyScores.startWorkout, profile: store.profile)
       let split = store.data.workouts.first { $0.id == store.profile.preferredSplitID }
       store.startSession(workout: split)
     }
+    // Let the last sound finish, then the engines sleep.
+    Task { @MainActor in try? await Task.sleep(for: .seconds(1.5)); JourneyScorePlayer.shared.shutDown() }
   }
 }

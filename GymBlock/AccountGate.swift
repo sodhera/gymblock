@@ -288,7 +288,7 @@ private struct Benefit: View {
 }
 
 /// Their workout, two ways, from their own answers: today the rests go to the phone; with GymBlock
-/// none of it does and every rest is timed. Rests stay rests: it never claims they become lifting.
+/// the whole bar is green, the phone minutes focused ones (the user's wording, 18 Oct 2026).
 private struct TwoWays: View {
   let estimate: GymTimeEstimate
   @EnvironmentObject private var store: GymStore
@@ -302,14 +302,10 @@ private struct TwoWays: View {
         (phone, JourneyColor.danger, phone > 0 ? String(format: store.t("%@ min on your phone"), "\(Int(phone.rounded()))") : ""),
         (lifting, JourneyColor.signal, ""),
       ])
+      // With GymBlock the whole bar is green: the minutes that went to the phone are focused ones.
       bar(store.t("With GymBlock"), JourneyColor.text, [
-        (rest, JourneyColor.ink(0.12), String(format: store.t("%@ min of timed rest"), "\(Int(rest.rounded()))")),
-        (lifting, JourneyColor.signal, ""),
+        (estimate.workoutMinutes, JourneyColor.signal, String(format: store.t("%@ min focused workout"), "\(Int(phone.rounded()))")),
       ])
-      HStack(spacing: 14) {
-        HStack(spacing: 5) { Circle().fill(JourneyColor.signal).frame(width: 7, height: 7); Text(String(format: store.t("Lifting, %@ min"), "\(Int(lifting.rounded()))")) }
-        Text(store.t("Phone: 0 min"))
-      }.font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.leading, 112)
     }.accessibilityElement(children: .combine).accessibilityIdentifier("paywall.twoWays")
   }
   private func bar(_ label: String, _ color: Color, _ parts: [(Double, Color, String)]) -> some View {
@@ -324,7 +320,7 @@ private struct TwoWays: View {
               ZStack(alignment: .leading) {
                 part.1
                 Text(part.2).font(.app(.caption2, weight: .semibold)).lineLimit(1)
-                  .foregroundStyle(part.1 == JourneyColor.danger ? Color.white : JourneyColor.text.opacity(0.8)).padding(.leading, 8)
+                  .foregroundStyle(part.1 == JourneyColor.danger || part.1 == JourneyColor.signal ? Color.white : JourneyColor.text.opacity(0.8)).padding(.leading, 8)
               }.frame(width: max(2, (g.size.width - 2 * CGFloat(parts.count - 1)) * part.0 / total))
             }
           }

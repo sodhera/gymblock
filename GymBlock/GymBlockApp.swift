@@ -23,12 +23,14 @@ import SwiftUI
     #endif
     let store = GymStore()
     #if DEBUG
-      // Onboarding plays iOS's own sounds from the system folder; say at launch whether they can be read.
+      // Onboarding plays iOS's own sounds and bundled recordings; say at launch which can be opened.
       let root = ProcessInfo.processInfo.environment["IPHONE_SIMULATOR_ROOT"] ?? ""
-      let readable = ["ReceivedMessage", "lock", "sms-received1"].filter {
-        (try? AVAudioPlayer(contentsOf: URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\($0).caf"))) != nil
+      let opened = JourneyScore.Sound.allCases.filter { sound in
+        let url = sound.bundled ? Bundle.main.url(forResource: sound.file, withExtension: "caf")
+          : URL(fileURLWithPath: root + "/System/Library/Audio/UISounds/\(sound.file).caf")
+        return url.flatMap { try? AVAudioPlayer(contentsOf: $0) } != nil
       }
-      NSLog("GymBlock sound files: %d of 3 open (%@)", readable.count, readable.joined(separator: ", "))
+      NSLog("GymBlock sound files: %d of %d open", opened.count, JourneyScore.Sound.allCases.count)
       if ProcessInfo.processInfo.arguments.contains("--demo") { store.loadDemoIfEmpty() }
       // Development only: re-enter the app without the paywall (absent from Release builds).
       if ProcessInfo.processInfo.arguments.contains("--skip-onboarding") { store.updateProfile { $0.onboarded = true } }

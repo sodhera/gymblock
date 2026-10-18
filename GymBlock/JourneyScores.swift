@@ -1,9 +1,9 @@
 import CoreGraphics
 
 /// Each onboarding scene's haptic and sound score, timed to its animation (t = 0 is when the scene
-/// starts moving). Restraint is the rule (18 Oct 2026): a haptic only on a beat that means
-/// something, single taps rather than swells, and sound only where life has one: a notification
-/// arriving, the phone locking, rest's up. Everything else is silent.
+/// starts moving). A haptic only on a beat that means something, mostly single taps; sounds are
+/// real ones (iOS's own, or recorded clips in Resources/Sounds), each placed on the frame it
+/// belongs to, and nothing plays underneath as a bed.
 enum JourneyScores {
   typealias H = JourneyScore.Haptic
   static func cue(_ t: Double, _ sound: JourneyScore.Sound, _ v: Float = 0.35) -> JourneyScore.Cue {
@@ -26,50 +26,74 @@ enum JourneyScores {
   /// locks the phone with the iPhone's lock click and one firm hit; one tap on the flex's peak (2.87 s).
   static let welcome = JourneyScore(
     haptics: [.tap(0.35, 0.4, 0.5), .tap(0.75, 0.4, 0.5), .tap(1.1, 0.4, 0.5), .tap(1.4, 0.4, 0.5), .tap(2.13, 0.9, 0.2), .tap(2.87, 0.6, 0.45)],
-    sounds: [cue(0.35, .notification, 0.28), cue(0.75, .notification, 0.28), cue(1.1, .notification, 0.28), cue(1.4, .notification, 0.28), cue(2.13, .lock, 0.5)])
+    sounds: [cue(0.35, .notification, 0.28), cue(0.75, .notification, 0.28), cue(1.1, .notification, 0.28), cue(1.4, .notification, 0.28),
+             cue(2.13, .lock, 0.5), cue(2.87, .plateMedium, 0.4)])
 
-  /// The phone-time ring: one soft tap when the red count lands, one when the green does.
+  /// The phone-time ring: a clock ticks the red phone time away (the ticks follow the eased count),
+  /// one soft tap when it lands; the green training time lands with a light clink.
   static func reveal(fill: Double) -> JourneyScore {
-    JourneyScore(haptics: [.tap(fill, 0.45, 0.35), .tap(fill + 0.25 + 0.5, 0.35, 0.6)])
+    let ticks = (1...10).map { cue(fill * easeInOutTime(Double($0) / 10), .tock, 0.35) }
+    return JourneyScore(haptics: [.tap(fill, 0.45, 0.35), .tap(fill + 0.25 + 0.5, 0.35, 0.6)],
+                        sounds: ticks + [cue(fill + 0.25, .clink1, 0.3)])
   }
 
-  /// The year in workouts: one tap on the total.
-  static func year(fill: Double) -> JourneyScore { JourneyScore(haptics: [.tap(fill, 0.6, 0.3)]) }
+  /// The year in workouts: a run of ticks and light taps that follows the dots as they light (eased,
+  /// like the fill), each a touch firmer, then a heavy plate drop on the total.
+  static func year(fill: Double) -> JourneyScore {
+    let n = 16
+    let times = (1...n).map { fill * easeInOutTime(Double($0) / Double(n + 1)) }
+    return JourneyScore(
+      haptics: times.enumerated().map { .tap($0.element, 0.15 + 0.2 * Double($0.offset) / Double(n - 1), 0.75) } + [.tap(fill, 0.9, 0.25)],
+      sounds: times.map { cue($0, .tock, 0.3) } + [cue(fill, .plateDrop, 0.55)])
+  }
 
   /// Scrolling weakens it: one tap per signal where it lands on the arm's twitch (or dies), each
-  /// weaker than the last (70%, 45%, 25%, 10%). The fading focus is felt, not heard (MindState.fading).
+  /// weaker than the last (70%, 45%, 25%, 10%), under a sad trombone. The trombone (sped up 25%)
+  /// starts with the first signal, so its second, third and last notes land on the fading beats
+  /// (1.13, 1.93, 2.69 s against 1.12, 1.94, 2.75) (MindState.fading).
   static let mindFading: JourneyScore = {
     let beats = [0.25 + 0.62 + 0.25, 1.05 + 0.66 + 0.225, 1.85 + 0.7 + 0.2, 2.65 + 0.62]
     let strength = [0.7, 0.45, 0.25, 0.1], sharp = [0.55, 0.45, 0.3, 0.2]
-    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) })
+    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) }, sounds: [cue(0.25, .trombone, 0.4)])
   }()
 
   /// Put it away: three identical taps on the arm's squeeze (0.235 s after each signal arrives),
-  /// steady like a heartbeat (MindState.steady).
-  static let mindSteady = JourneyScore(haptics: [0.35, 1.2, 2.05].map { .tap($0 + 0.63 + 0.235, 0.6, 0.5) })
+  /// steady like a heartbeat, and a metal clink on each that gets heavier: a light clink, a brighter
+  /// one, then a clink over an iron plate (MindState.steady).
+  static let mindSteady: JourneyScore = {
+    let beats = [0.35, 1.2, 2.05].map { $0 + 0.63 + 0.235 }
+    return JourneyScore(
+      haptics: beats.map { .tap($0, 0.6, 0.5) },
+      sounds: [cue(beats[0], .clink1, 0.3), cue(beats[1], .clink2, 0.45), cue(beats[2], .clink3, 0.55), cue(beats[2], .plateHeavy, 0.5)])
+  }()
 
-  /// The pump (the user's favourite pages, kept as they were): each set swells to its peak and
-  /// lands as the arm's contraction peaks. Scrolling: the same middle strength every time, nothing
-  /// in the long rests. Timed: stronger every set, a second tap when it's full. No sound.
+  /// The pump (the user's favourite pages; their haptics unchanged): each set swells to its peak and
+  /// lands as the arm's contraction peaks, with a plate sound on the peak. Scrolling: the same dull
+  /// clank every set and nothing in the long rests. Timed: plates getting heavier every set, and a
+  /// bright clink over the heaviest when it's full.
   static func pump(_ points: [CGPoint], timed: Bool, durations: [Double]) -> JourneyScore {
-    var h: [H] = []
+    var h: [H] = [], s: [JourneyScore.Cue] = []
     var t = 0.0, rise = 0
+    let plates: [(JourneyScore.Sound, Float)] = [(.plateLight, 0.25), (.plateLight, 0.35), (.plateMedium, 0.4), (.plateMedium, 0.5), (.plateHeavy, 0.6)]
     for i in 1..<points.count {
       let d = durations[i - 1]
       if points[i].y > points[i - 1].y + 0.001 {
         if timed {
           let level = min(1, 0.35 + 0.16 * Double(rise))
           h += [.swell(t, d, max(0.1, level - 0.3), level, 0.5), .tap(t + d, level, 0.4 + 0.08 * Double(rise))]
-          if points[i].y >= 0.999 { h.append(.tap(t + d + 0.12, 0.7, 0.6)) }
+          let plate = plates[min(plates.count - 1, rise)]
+          s.append(cue(t + d, plate.0, plate.1))
+          if points[i].y >= 0.999 { h.append(.tap(t + d + 0.12, 0.7, 0.6)); s.append(cue(t + d + 0.12, .clink2, 0.35)) }
         } else {
           h += [.swell(t, d, 0.25, 0.5, 0.4), .tap(t + d, 0.5, 0.5)]
+          s.append(cue(t + d, .clankDull, 0.35))
         }
         rise += 1
       }
       t += d
     }
     if !timed { h.append(.tap(t + 0.05, 0.25, 0.2)) }
-    return JourneyScore(haptics: h)
+    return JourneyScore(haptics: h, sounds: s)
   }
 
   /// Memory: a fainter tap as each number fades to "?".
@@ -77,11 +101,12 @@ enum JourneyScores {
     JourneyScore(haptics: (0..<4).map { .tap(Double($0) * period + fade, [0.4, 0.3, 0.2, 0.12][$0], 0.3) })
   }
 
-  /// The log: a light tap the moment the line reaches each week's dot, following it up and down,
-  /// and one firmer tap on +5 kg.
+  /// The log: a light tap and a key click (a set being logged) the moment the line reaches each
+  /// week's dot, following it up and down, and a firmer tap with a clink on +5 kg.
   static func remembering(hits: [Double], best: Double) -> JourneyScore {
     let levels = [0.3, 0.45, 0.38, 0.55, 0.65]
-    return JourneyScore(haptics: hits.enumerated().map { .tap($0.element, levels[min(4, $0.offset)], 0.5) } + [.tap(best, 0.8, 0.55)])
+    return JourneyScore(haptics: hits.enumerated().map { .tap($0.element, levels[min(4, $0.offset)], 0.5) } + [.tap(best, 0.8, 0.55)],
+                        sounds: hits.map { cue($0, .typing, 0.4) } + [cue(best, .clink2, 0.4)])
   }
 
   /// The lock screen locks: the iPhone's lock click and one crisp tap, on the kettlebell's squeeze (1.07 s).
@@ -95,6 +120,9 @@ enum JourneyScores {
     return JourneyScore(haptics: [.tap(zero, 0.9, 0.6), .tap(zero + 0.13, 0.7, 0.6)], sounds: [cue(zero, .alert, 0.35)])
   }()
 
-  /// Committed: one firm tap.
-  static let committed = JourneyScore(haptics: [.tap(0, 0.85, 0.4)])
+  /// Committed: one firm tap and the clank of a plate going back on the rack.
+  static let committed = JourneyScore(haptics: [.tap(0, 0.85, 0.4)], sounds: [cue(0, .plateHeavy, 0.5)])
+
+  /// Start workout, at the end of onboarding: the apps lock.
+  static let startWorkout = JourneyScore(haptics: [.tap(0, 0.8, 0.8)], sounds: [cue(0, .lock, 0.45)])
 }

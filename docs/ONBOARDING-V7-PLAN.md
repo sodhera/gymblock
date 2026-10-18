@@ -12,14 +12,14 @@ The person should leave thinking: *"I lose a lot of my gym time to my phone. Gym
 - **Questions:** gender, height and weight left onboarding; they were saved but used for nothing (they stay editable in Profile). One question replaces them, how many days a week you lift. It feeds the yearly number, Home's weekly goal and the widgets.
 - **Splits:** they're asked after the offer, as one tap on a template, and onboarding ends one tap from the first workout instead of on a blank split editor.
 - **Haptics and sound:** designed haptics on the beats that matter, and iOS's own sounds at three moments only, see below. Sound is on in onboarding unless turned off in Settings, and the silent switch silences it.
-- **Offer:** it sells the change in the person's own numbers and shows the trial as a timeline.
+- **Offer:** it sells the change in the person's own numbers: Today, red phone time and green lifting; With GymBlock, one fully green bar ("34 min focused workout"). The trial shows as a timeline.
 
 ## Pages (21; 19 for Rarely, which skips minutes and hours)
 
 | # | Headline | Stage | Action |
 |---|---|---|---|
 | 1 | (the stage carries the words) | Stop scrolling → Stay focused / Record everything → Get jacked; lock screen, notifications, falling kettlebell, flexing arm (`WelcomeScene`) | Get started · I already have an account |
-| 2 | "Perfection is lots of little things done right." | Sulav's short note, set on the paper with no card (the largest text that fits; scrolls only at accessibility sizes); no animation, no sound (`FounderStage`) | Continue |
+| 2 | "Perfection is lots of little things done right." | Sulav's note (approved 18 Oct 2026), set on the paper with no card. It uses the largest text that fits and scales down slightly on small screens; it scrolls only at accessibility sizes. No animation, no sound (`FounderStage`) | Continue |
 | 3 | First, what should we call you? | Name field | Continue |
 | 4 | Nice to meet you, {Name}. How many days a week do you work out? | 2 · 3 · 4 · 5 · 6+ (`TrainingDaysStage`) | Continue (after choosing) |
 | 5 | Be honest. Do you check your phone between sets? | Three cards land 0.45 s apart, each on a light tap, scaled to fit the space (iPhone SE, large text) | Every rest · Sometimes · Rarely |
@@ -49,19 +49,22 @@ Old saved progress on gender, height or weight resumes at the days question; not
 
 ## Haptics and sound
 
-Restraint is the rule (18 Oct 2026, after testing on an iPhone SE). Haptics go only on beats that mean something, mostly single taps. Sound is used only where life has one, and only iOS's own sounds (`/System/Library/Audio/UISounds`, played with `AVAudioPlayer` at low volume). Nothing is synthesized, and there's no background hum. Each scene's score is in `JourneyScores.swift`; `JourneyScorePlayer` (`JourneyScore.swift`) schedules the haptics and the sound for one shared moment, ahead by the audio route's latency, and the scene starts moving on that same moment.
+Haptics land only on beats that mean something, mostly single taps. Every sound is real: iOS's own sounds (`/System/Library/Audio/UISounds`), or recorded clips bundled in `GymBlock/Resources/Sounds` (Mixkit's sad trombone and Kenney's CC0 metal and plate impacts, see CREDITS.md). Each is placed on the frame it belongs to, and nothing plays underneath as a bed. Each scene's score is in `JourneyScores.swift`. `JourneyScorePlayer` (`JourneyScore.swift`) gives each cue its own `AVAudioPlayer`, scheduled ahead by the audio route's latency, and the scene starts moving on that same moment.
 
 | Page | Haptics | Sound |
 |---|---|---|
-| Welcome | A light tap per notification, one firm hit when the kettlebell lands, one tap on the flex's peak | The Messages ding per notification; the iPhone's lock click on the landing |
+| Welcome | A light tap per notification, one firm hit when the kettlebell lands, one tap on the flex's peak | The Messages ding per notification, the lock click on the landing, a plate on the flex |
 | Phone between sets | One light tap per card, a little stronger each time | None |
-| Ring / hours a year | One soft tap when the red count lands and one when the green does / one tap on the total | None |
-| Mind A / B | One tap per signal: weaker each time (70, 45, 25, 10%) / the same three times (60%) | None |
-| Pump A / B (unchanged; the user's favourite pages) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests / stronger every set, a second tap when full | None |
-| Memory / log | A fainter tap as each number fades / a light tap when the line reaches each dot, a firmer one on +5 kg | None |
-| Blocking | One crisp tap as the shield locks | The iPhone's lock click |
+| Ring | One soft tap when the red count lands, one when the green does | A clock tock ticking the phone time away (following the eased count); a light clink as the green lands |
+| Hours a year | A run of light taps that follows the dots as they light, each a touch firmer, then one heavy hit | Tocks with the taps, then a heavy plate drop on the total |
+| Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | A sad trombone (sped up 25%), its notes on the fading signals |
+| Mind B | The same tap three times (60%) | A clink on each squeeze, heavier each time; the last over an iron plate |
+| Pump A / B (the user's favourite; haptics unchanged) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests / stronger every set, a second tap when full | The same dull clank every set / plates getting heavier every set, a clink when full |
+| Memory / log | A fainter tap as each number fades / a light tap as the line reaches each dot, a firmer one on +5 kg | None / a key click per logged week, a clink on +5 kg |
+| Blocking | One crisp tap as the shield locks | The lock click |
 | Rest alerts | The real double buzz on 0:00 | The tri-tone on 0:00 |
-| Hold to commit | A buzz that climbs while held; one firm tap when committed | None |
+| Hold to commit | A buzz that climbs while held; one firm tap when committed | A plate going back on the rack |
+| Start workout (last page) | One tap | The lock click, as the apps lock |
 
 Page changes have no haptic. Haptic feel needs a real iPhone; the simulator has no Taptic Engine.
 
