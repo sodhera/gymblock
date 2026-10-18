@@ -33,7 +33,6 @@
 		3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */; };
 		3BE12AD83FCF3CAF6E0D8BDE /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A0E88CE0E1647679F6856C /* Analytics.swift */; };
 		3D60B472AB2234257F47D5FE /* WorkoutShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F18599E2CD2FD02DB528BE8 /* WorkoutShield.swift */; };
-		3DF0E74D0D29580CCAD50DC4 /* gb-clink-3.caf in Resources */ = {isa = PBXBuildFile; fileRef = E944765E1325D2E22603E3A5 /* gb-clink-3.caf */; };
 		3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */; };
 		41D1A27CDD3EB2CF558F5AC4 /* BenefitScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */; };
 		4577463A5F691225005491A0 /* WorkoutStepIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDB647737C5A706E73A728E /* WorkoutStepIntent.swift */; };
@@ -56,7 +55,6 @@
 		5E2928709668F8C4CE67BBAC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C28E7CD6C2C5F8C3D6EC7128 /* Assets.xcassets */; };
 		5FE2F7B3A55F57D6F9324C66 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FF7BCF129AACBD72EDC2DFA9 /* Localizable.strings */; };
 		62CBE6773A80A3BF81C2A9EB /* WidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AF874D37EAE2CE9D131821 /* WidgetSync.swift */; };
-		64AD4C8E03F0A91E7A40EDA9 /* gb-womp-1.caf in Resources */ = {isa = PBXBuildFile; fileRef = 8666601CD42D3D5925F0A85B /* gb-womp-1.caf */; };
 		666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D599A2899F5D63D89F8AEF /* Navigation.swift */; };
 		68D56E6C4D6BF0A849BA9EA1 /* HomeScoreboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */; };
 		6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */; };
@@ -96,7 +94,6 @@
 		AD3188785DA17FDE84DB65B0 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08DD8CF995195334FE9F09B1 /* AppRouter.swift */; };
 		ADEE00A09171DF2F53347808 /* Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6817695A3563DA20102935E /* Summary.swift */; };
 		B06081B6488E4110109E6259 /* GymBlockWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E284951026C66EE16AB43906 /* GymBlockWidgets.swift */; };
-		B3625FD1FB180C9D11E4FA29 /* gb-womp-2.caf in Resources */ = {isa = PBXBuildFile; fileRef = CBF928ECB98B2629C3EF2803 /* gb-womp-2.caf */; };
 		B7549632CF495C5EF9F838EA /* History.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C68A7495A1C719F65837674 /* History.swift */; };
 		B76AC3F7F3702E0216056EA5 /* ProgressAndSplitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */; };
 		B87E74B7C17DE2913C32D114 /* StoreShots.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2AADA0F5079411E82C77E97 /* StoreShots.xcassets */; };
@@ -111,19 +108,15 @@
 		CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 555664B1919E662754553AF5 /* Supabase */; };
 		CCDA787E895E557D4DE31B7E /* OnboardingPremium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 008F01AA301B4482E1045797 /* OnboardingPremium.swift */; };
 		CE2F3617C1B8E08733D970D1 /* GymBlockShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AAD0535255FB7A0DBAB3743 /* GymBlockShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		CE6C16A4E3FB7A189221C6E8 /* gb-plate-light.caf in Resources */ = {isa = PBXBuildFile; fileRef = DBB8C6C89EDB20622CE7030A /* gb-plate-light.caf */; };
 		D01C42A5DCD9D577C3320ABB /* BlockingPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05B2B7905EC084D2E5BDBAD /* BlockingPass.swift */; };
 		D194B8D30A3E5782E8679ABC /* WorkoutFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11589EBCA36DC3039523368 /* WorkoutFlowTests.swift */; };
-		D608BFCF2287D0D4DB4C35C0 /* gb-clink-2.caf in Resources */ = {isa = PBXBuildFile; fileRef = D625DFDDFF63165BD9F6604A /* gb-clink-2.caf */; };
 		D68017EB2285D62A3727D63C /* WidgetPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDB2A515DD0E67D74DA268D6 /* WidgetPreview.swift */; };
-		D78602D867ED4ED5872A94EB /* gb-clank-dull.caf in Resources */ = {isa = PBXBuildFile; fileRef = 2D4CCDF2D82813C220676946 /* gb-clank-dull.caf */; };
 		D79CA6E735B6B2BEFD2AF71F /* JourneyScores.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA16493F6FC82E097EA5393 /* JourneyScores.swift */; };
 		DA3D7A4D0931D249D1882331 /* AppFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13708927DF8625DAA082C6E0 /* AppFont.swift */; };
 		DCA31BBA1CD8FCF6EF1202FD /* StartControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5463E74AB6FCEB2EB5587EDD /* StartControl.swift */; };
 		DD6C2BE3C8D9F2B69C502F06 /* Workout.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD0907ACAE7805F4E98EAD57 /* Workout.swift */; };
 		E0231BAA2EA6559E0130A6C8 /* BlockingPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05B2B7905EC084D2E5BDBAD /* BlockingPass.swift */; };
 		E11E5692300CFD5FB5AFE928 /* GymBlockShield.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6DBCF67E32FD7B7E541E7F55 /* GymBlockShield.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E1AED0A6565F9A12C6317419 /* gb-womp-3.caf in Resources */ = {isa = PBXBuildFile; fileRef = 52B93A73DEC1931C21D7AEC6 /* gb-womp-3.caf */; };
 		E3DB674D779595FBDB4E4893 /* GymBlockLive.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA5869602EE8AF452D4A2F4F /* GymBlockLive.swift */; };
 		E8AD2D368E149D3D084E3B1A /* JourneyV2UITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 238EA8ACA13F757D4010AA57 /* JourneyV2UITests.swift */; };
 		E917A985EAF4D2A7FFDD60D1 /* RoutineBaseline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A01D877EF5C7AF8164CD758 /* RoutineBaseline.swift */; };
@@ -230,7 +223,6 @@
 		2AB514BE747F607CA6E12C00 /* WorkoutShieldAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutShieldAction.swift; sourceTree = "<group>"; };
 		2B1F47BAD59FB5F3B4443457 /* Splits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Splits.swift; sourceTree = "<group>"; };
 		2D3906A6BC255DCB1E84CD32 /* RestAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestAlert.swift; sourceTree = "<group>"; };
-		2D4CCDF2D82813C220676946 /* gb-clank-dull.caf */ = {isa = PBXFileReference; path = "gb-clank-dull.caf"; sourceTree = "<group>"; };
 		2FF972289110ABA1C5C23767 /* OnboardingJourney.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourney.swift; sourceTree = "<group>"; };
 		32478B7576E0A99D82534393 /* Subscriptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscriptions.swift; sourceTree = "<group>"; };
 		371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressData.swift; sourceTree = "<group>"; };
@@ -242,7 +234,6 @@
 		46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScoreboard.swift; sourceTree = "<group>"; };
 		4E9C0A335AAD010DBB031589 /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		4F60F86A83F2D70198BDC549 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
-		52B93A73DEC1931C21D7AEC6 /* gb-womp-3.caf */ = {isa = PBXFileReference; path = "gb-womp-3.caf"; sourceTree = "<group>"; };
 		542B989D575193E1A499079C /* KettlebellShape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KettlebellShape.swift; sourceTree = "<group>"; };
 		5463E74AB6FCEB2EB5587EDD /* StartControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartControl.swift; sourceTree = "<group>"; };
 		5AD5009E70EBA3A94854B117 /* JourneyArt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyArt.swift; sourceTree = "<group>"; };
@@ -278,7 +269,6 @@
 		82B7E85B9438B5E3D328F181 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGymBlockIntent.swift; sourceTree = "<group>"; };
 		854264B8D10EA53FE36D44B2 /* HomeStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStats.swift; sourceTree = "<group>"; };
-		8666601CD42D3D5925F0A85B /* gb-womp-1.caf */ = {isa = PBXFileReference; path = "gb-womp-1.caf"; sourceTree = "<group>"; };
 		8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8F4562DF53998B70DF9E5B51 /* BenefitLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitLayoutUITests.swift; sourceTree = "<group>"; };
 		9055691AD841483990A9C0A7 /* WidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTests.swift; sourceTree = "<group>"; };
@@ -306,14 +296,11 @@
 		C28E7CD6C2C5F8C3D6EC7128 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C6299BDCE650025D0151AA37 /* HeroFit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeroFit.swift; sourceTree = "<group>"; };
 		C6C9B258DE9BB7778EE64837 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		CBF928ECB98B2629C3EF2803 /* gb-womp-2.caf */ = {isa = PBXFileReference; path = "gb-womp-2.caf"; sourceTree = "<group>"; };
 		D03A4EE233E30C2F7BB27758 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D0FE9C655734B74C61322E33 /* WorkoutActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivity.swift; sourceTree = "<group>"; };
 		D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourneyTests.swift; sourceTree = "<group>"; };
 		D412D86E746B7AEB2DCFDCED /* AppControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppControls.swift; sourceTree = "<group>"; };
-		D625DFDDFF63165BD9F6604A /* gb-clink-2.caf */ = {isa = PBXFileReference; path = "gb-clink-2.caf"; sourceTree = "<group>"; };
 		D7EFFA2ABC73524792609214 /* complete.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = complete.wav; sourceTree = "<group>"; };
-		DBB8C6C89EDB20622CE7030A /* gb-plate-light.caf */ = {isa = PBXFileReference; path = "gb-plate-light.caf"; sourceTree = "<group>"; };
 		DDB2A515DD0E67D74DA268D6 /* WidgetPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPreview.swift; sourceTree = "<group>"; };
 		DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFeedback.swift; sourceTree = "<group>"; };
 		DFF3242CC4AB02EB7BA6AEE3 /* StoreScreenshotsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotsUITests.swift; sourceTree = "<group>"; };
@@ -321,7 +308,6 @@
 		E2528ACFD31D70E2DEAC5D7E /* gb-plate-heavy.caf */ = {isa = PBXFileReference; path = "gb-plate-heavy.caf"; sourceTree = "<group>"; };
 		E284951026C66EE16AB43906 /* GymBlockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockWidgets.swift; sourceTree = "<group>"; };
 		E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressAndSplitTests.swift; sourceTree = "<group>"; };
-		E944765E1325D2E22603E3A5 /* gb-clink-3.caf */ = {isa = PBXFileReference; path = "gb-clink-3.caf"; sourceTree = "<group>"; };
 		ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitScenes.swift; sourceTree = "<group>"; };
 		EFE37AE609926AAAA2F6258E /* AccountSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettings.swift; sourceTree = "<group>"; };
 		F11589EBCA36DC3039523368 /* WorkoutFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFlowTests.swift; sourceTree = "<group>"; };
@@ -540,17 +526,10 @@
 			children = (
 				6C25C3FE16037D11BD08D732 /* advance.wav */,
 				D7EFFA2ABC73524792609214 /* complete.wav */,
-				2D4CCDF2D82813C220676946 /* gb-clank-dull.caf */,
 				7CD9DA57D33DDFAF2C5DEF22 /* gb-clink-1.caf */,
-				D625DFDDFF63165BD9F6604A /* gb-clink-2.caf */,
-				E944765E1325D2E22603E3A5 /* gb-clink-3.caf */,
 				A10D2BB59DFBE6963E3865A3 /* gb-plate-drop.caf */,
 				E2528ACFD31D70E2DEAC5D7E /* gb-plate-heavy.caf */,
-				DBB8C6C89EDB20622CE7030A /* gb-plate-light.caf */,
 				7B4E14CDE73C4C011540AEF6 /* gb-plate-medium.caf */,
-				8666601CD42D3D5925F0A85B /* gb-womp-1.caf */,
-				CBF928ECB98B2629C3EF2803 /* gb-womp-2.caf */,
-				52B93A73DEC1931C21D7AEC6 /* gb-womp-3.caf */,
 			);
 			path = Sounds;
 			sourceTree = "<group>";
@@ -817,17 +796,10 @@
 				B87E74B7C17DE2913C32D114 /* StoreShots.xcassets in Resources */,
 				5344BF389B159F48B1698803 /* advance.wav in Resources */,
 				8B1A2887B864CD5D8FE3AEEF /* complete.wav in Resources */,
-				D78602D867ED4ED5872A94EB /* gb-clank-dull.caf in Resources */,
 				EA1BAD39BBA2562E4DB3E68F /* gb-clink-1.caf in Resources */,
-				D608BFCF2287D0D4DB4C35C0 /* gb-clink-2.caf in Resources */,
-				3DF0E74D0D29580CCAD50DC4 /* gb-clink-3.caf in Resources */,
 				8569A76C96532865A31967BC /* gb-plate-drop.caf in Resources */,
 				723592FAC308A1F09C4B5806 /* gb-plate-heavy.caf in Resources */,
-				CE6C16A4E3FB7A189221C6E8 /* gb-plate-light.caf in Resources */,
 				568A0F4C4DBC449F40D8D809 /* gb-plate-medium.caf in Resources */,
-				64AD4C8E03F0A91E7A40EDA9 /* gb-womp-1.caf in Resources */,
-				B3625FD1FB180C9D11E4FA29 /* gb-womp-2.caf in Resources */,
-				E1AED0A6565F9A12C6317419 /* gb-womp-3.caf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

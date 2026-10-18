@@ -3,9 +3,9 @@ import AVFoundation
 import CoreHaptics
 
 /// One onboarding scene's haptics and sounds on a single clock (docs/ONBOARDING-V7-PLAN.md).
-/// Strength follows the story: focus that fades gets weaker taps, a pump that builds gets stronger
-/// ones, a long phone rest gets nothing. Sound is rare and real: iOS's own sounds, for the three
-/// moments that are sounds in life (a notification arriving, the phone locking, rest's up).
+/// Strength follows the story: focus that fades gets weaker, a pump that builds gets stronger, a
+/// long phone rest gets nothing. Sound is real: iOS's own sounds and a few recorded plates and a
+/// clink, each on its frame.
 struct JourneyScore {
   enum Haptic {
     /// A single tap: strength and crispness, 0–1.
@@ -22,19 +22,12 @@ struct JourneyScore {
     case lock
     /// The tri-tone: rest's up.
     case alert
-    /// The keyboard's tock: a clock ticking away the phone time.
+    /// The keyboard's tock: a clock ticking away the phone time, the same set again.
     case tock
-    /// A key press: a set being logged.
-    case typing
-    /// Mixkit's "Trombone disappoint", cut into its three notes (womp, womp, wommmp) so each lands
-    /// on its own beat. Every clip reaches half its loudness `wompAttack` seconds in.
-    case womp1, womp2, womp3
-    /// Recorded metal clinks, brightest and lightest first (Kenney Impact Sounds, CC0).
-    case clink1, clink2, clink3
-    /// Recorded iron-plate hits, light to heavy, and a deep drop.
-    case plateLight, plateMedium, plateHeavy, plateDrop
-    /// A short, dull metal clank: the same set again.
-    case clankDull
+    /// A recorded metal clink (Kenney Impact Sounds, CC0): the green time landing.
+    case clink1
+    /// Recorded iron-plate hits (Kenney, CC0): the flex, committing, and a deep drop on the year's total.
+    case plateMedium, plateHeavy, plateDrop
     /// iOS's keyboard tick: a set logged, a pump building.
     case tink
     /// The Health app's "reading failed": focus slipping.
@@ -47,18 +40,10 @@ struct JourneyScore {
       case .lock: return "lock"
       case .alert: return "sms-received1"
       case .tock: return "Tock"
-      case .typing: return "key_press_click"
-      case .womp1: return "gb-womp-1"
-      case .womp2: return "gb-womp-2"
-      case .womp3: return "gb-womp-3"
       case .clink1: return "gb-clink-1"
-      case .clink2: return "gb-clink-2"
-      case .clink3: return "gb-clink-3"
-      case .plateLight: return "gb-plate-light"
       case .plateMedium: return "gb-plate-medium"
       case .plateHeavy: return "gb-plate-heavy"
       case .plateDrop: return "gb-plate-drop"
-      case .clankDull: return "gb-clank-dull"
       case .tink: return "Tink"
       case .readingFail: return "nano/HealthReadingFail_Haptic"
       case .goalAttained: return "nano/Alert_ActivityGoalAttained_Haptic"
@@ -76,14 +61,11 @@ struct JourneyScore {
       case .lock: return 1100
       case .alert: return 1007
       case .tock: return 1104
-      case .typing: return 1306
       case .tink: return 1103
       default: return nil
       }
     }
   }
-  /// How far into a womp clip its note is heard (half its peak loudness): cue it this much early.
-  static let wompAttack = 0.04
   struct Cue {
     let at: Double
     let sound: Sound
