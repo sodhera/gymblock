@@ -27,6 +27,9 @@ enum AppConfig {
       let args = ProcessInfo.processInfo.arguments
       // `--online` keeps the account, purchases and analytics live even on a page jump, for checking them by hand.
       if args.contains("--online") { return false }
+      // A personal-team copy for trying the app on a phone without the Sodhera team (bundle id
+      // `….devtest`, no Screen Time, Sign in with Apple or widgets) always runs offline.
+      if Bundle.main.bundleIdentifier?.hasSuffix(".devtest") == true { return true }
       return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") }
     #else
       return false
