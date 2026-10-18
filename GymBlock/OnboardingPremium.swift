@@ -414,6 +414,7 @@ struct JourneyBackButton: View {
   let label: String
   let action: () -> Void
   var body: some View {
+    let action = { JourneyHaptic.pressLight(); self.action() }
     let icon = Image(systemName: "chevron.left").font(.system(.footnote, weight: .bold)).foregroundStyle(JourneyColor.text)
       .frame(width: 36, height: 36)
     Group {

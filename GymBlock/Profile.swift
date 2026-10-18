@@ -457,6 +457,7 @@ struct RoundGlassButton: View {
   let label: String
   let action: () -> Void
   var body: some View {
+    let action = { JourneyHaptic.pressLight(); self.action() }
     let icon = Image(systemName: symbol).font(.system(size: 17, weight: .medium)).foregroundStyle(JourneyColor.text)
     Group {
       if #available(iOS 26.0, *) {
