@@ -26,7 +26,7 @@ Full spec: docs/ONBOARDING-V7-PLAN.md. Twenty-one pages (nineteen for Rarely), o
 
 **Illustration.** The approved arm artwork (pre-rendered poses) and the brain-and-nerve scene carry the story pages. Blocked apps are the real icons and names iOS draws from the Screen Time choice, on glass tiles; empty tiles (the first with a plus) before anything is chosen.
 
-**Voice.** Qualifiers stay, written as a person would say them: "Stays on this iPhone. Never shared.", "Illustrative, not a measurement.", "An example log, not your data.", "Uses Apple’s Screen Time. Pausing your workout lifts it.", "Subscriptions aren’t switched on in this build yet."
+**Voice.** Qualifiers stay, written as a person would say them: "Stays on this iPhone. Never shared.", "An example log, not your data.", "Uses Apple’s Screen Time. Pausing your workout lifts it.", "Subscriptions aren’t switched on in this build yet."
 
 ## Training and navigation
 

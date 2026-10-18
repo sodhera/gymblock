@@ -270,7 +270,6 @@ struct OnboardingView: View {
     case .days: return "Your own numbers, multiplied out."
     case .commit: return "Hold the button until it fills."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
-    case .mindA, .mindB, .restA, .restB: return "Illustrative, not a measurement."
     case .logA, .logB: return "An example log, not your data."
     case .shield: return "It lifts the moment you finish."
     case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
