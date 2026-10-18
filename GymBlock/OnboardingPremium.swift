@@ -168,6 +168,12 @@ enum JourneyMotion {
     default: let g = impact(style(kind)); g.impactOccurred(intensity: CGFloat(boost(Double(intensity)))); g.prepare()
     }
   }
+  /// A primary button pressed (18 Oct 2026, at the user's request): a firm tap. Played through UIKit, not
+  /// `JourneyScorePlayer`, whose page change stops everything it started, so the tap used to be cut
+  /// before it could be felt.
+  static func press() { let g = impact(.medium); g.impactOccurred(intensity: CGFloat(boost(0.7))); g.prepare() }
+  /// A text button pressed: the same tap, lighter.
+  static func pressLight() { let g = impact(.light); g.impactOccurred(intensity: CGFloat(boost(0.7))); g.prepare() }
   /// Wakes the Taptic Engine ahead of a beat that must land with what's on screen; an idle one
   /// starts late. It stays ready for a few seconds.
   static func prepare(_ kind: Self) {
@@ -331,7 +337,6 @@ extension EnvironmentValues {
 }
 
 struct JourneyButton: View {
-  @Environment(\.journeyPress) private var pressFeel
   let title: String
   var symbol: String? = nil
   var id = ""
@@ -347,7 +352,7 @@ struct JourneyButton: View {
       }.opacity(loading ? 0 : 1)
       if loading { ProgressView().tint(JourneyColor.onButton) }
     }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
-    let tapped = { if pressFeel { JourneyScorePlayer.shared.press() }; Analytics.tap(id); action() }
+    let tapped = { JourneyHaptic.press(); Analytics.tap(id); action() }
     Group {
       if #available(iOS 26.0, *) {
         Button(action: tapped) { label }.buttonStyle(.glassProminent).tint(JourneyColor.button)
@@ -366,7 +371,7 @@ struct JourneyTextButton: View {
   var id = ""
   let action: () -> Void
   var body: some View {
-    Button(action: { Analytics.tap(id); action() }) {
+    Button(action: { JourneyHaptic.pressLight(); Analytics.tap(id); action() }) {
       Text(title).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
         .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
     }.buttonStyle(.plain).accessibilityIdentifier(id)

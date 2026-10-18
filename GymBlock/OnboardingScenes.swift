@@ -901,7 +901,6 @@ struct AccountButtons: View {
   }
   private func run(_ provider: Account.Provider) {
     guard !account.busy else { return }
-    JourneyHaptic.play(.medium, store.profile)
     Task { @MainActor in
       if let found = await account.signIn(provider, intent: intent) { signedIn(found) }
     }
@@ -917,6 +916,7 @@ struct AccountButtons: View {
       if loading { ProgressView().tint(JourneyColor.text) }
     }.foregroundStyle(JourneyColor.text).frame(maxWidth: .infinity, minHeight: 22)
     let tapped = {
+      JourneyHaptic.press()
       Analytics.tap("account.google")
       run(.google)
     }
