@@ -270,7 +270,7 @@ struct OnboardingView: View {
     case .logA, .logB: return "An example log, not your data."
     case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
-    case .splits: return "Change them anytime."
+    case .splits: return (JourneyLayout.compact ? SplitTemplateStage.summary(template, store: store) : nil) ?? "Change them anytime."
     default: return nil
     }
   }

@@ -10,7 +10,7 @@ bottom edge, cut above each screen's bottom button.
     python3 scripts/frame-store-screenshots.py
     python3 scripts/frame-store-screenshots.py --custom-pages
 
-Reads screenshots/store-2026-10-13/, writes screenshots/store-final/6.9/ and store-final/6.3/.
+Reads screenshots/store-2026-10-18/, writes screenshots/store-final/6.9/ and store-final/6.3/.
 Both slots have the same shape, so the 6.3-inch set is the 6.9-inch frame scaled down.
 --custom-pages writes the custom product pages (docs/listing.md#custom-product-pages) instead: one
 folder per page under screenshots/store-cpp/, numbered in upload order, with an overview strip.
@@ -22,7 +22,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "screenshots", "store-2026-10-13")
+SRC = os.path.join(ROOT, "screenshots", "store-2026-10-18")
 OUT = os.path.join(ROOT, "screenshots", "store-final")
 
 W, H = 1320, 2868
@@ -41,11 +41,11 @@ SLIDES = [
     ("Stop scrolling in the gym", "scrolling", "Block apps", "1-blocking-apps.png"),
     ("Track your workouts", "workouts", "Time your rests", "2-workout-rest.png"),
     ("Plan your progress", "progress", "Stay motivated", "3-home.png"),
-    ("Beat your record", "record", None, "4-squat-record.png"),
+    ("Beat your record", "record", None, "4-bench-record.png"),
     ("Keep your streak alive", "streak", None, "5-profile-month.png"),
 ]
 
-# The custom product pages' own first cards. A capture outside store-2026-10-13 is given as its path
+# The custom product pages' own first cards. A capture outside store-2026-10-18 is given as its path
 # from screenshots/. `phone` and `popout` are frame()'s: the Lock Screen puts the Live Activity at its
 # foot, below the usual cut, so those cards' phone sits 110 px higher and 7% smaller, cut just under
 # the activity's Start set button; the two Profile cards lift a different part of the screen.
@@ -58,7 +58,7 @@ NEW_SLIDES = {
     "gym-log": dict(headline="Log every set in one tap", accent="set", sub="Last time already filled in",
                     capture="2-workout-rest.png"),
     "pr": dict(headline="Track every PR", accent="PR", sub="Same reps, more weight",
-               capture="4-squat-record.png"),
+               capture="4-bench-record.png"),
     "doomscrolling": dict(headline="Quit doomscrolling", accent="doomscrolling", sub="Apps locked until Finish",
                           capture="1-blocking-apps.png"),
     "social": dict(headline="Social media off at the gym", accent="Social", sub="Back on when you finish",
@@ -273,16 +273,18 @@ def main():
         name = f"{i}-{slug(headline)}.png"
         save(frame(headline, accent, sub, capture), OUT, name)
         print(name)
+    overview(OUT, os.path.join(ROOT, "screenshots", "store-final-overview.png"))
 
 
-def overview(folder):
-    """One strip per page, the way the set reads left to right, as in store-final-overview.png."""
+def overview(folder, out=None):
+    """One strip per page, the way the set reads left to right: store-final-overview.png for the
+    default set, <page>-overview.png for each custom product page."""
     shots = [Image.open(os.path.join(folder, "6.9", n)) for n in sorted(os.listdir(os.path.join(folder, "6.9")))]
     w, h, gap = 446, round(446 * H / W), 24
     strip = Image.new("RGB", (len(shots) * (w + gap) + gap, h + 2 * gap), (242, 242, 244))
     for i, im in enumerate(shots):
         strip.paste(im.resize((w, h), Image.LANCZOS), (gap + i * (w + gap), gap))
-    strip.save(os.path.join(CPP_OUT, f"{os.path.basename(folder)}-overview.png"))
+    strip.save(out or os.path.join(CPP_OUT, f"{os.path.basename(folder)}-overview.png"))
 
 
 def custom_pages():

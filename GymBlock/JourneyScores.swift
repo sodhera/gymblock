@@ -48,13 +48,16 @@ enum JourneyScores {
   }
 
   /// Scrolling weakens it: one tap per signal where it lands on the arm's twitch (or dies), each
-  /// weaker than the last (70%, 45%, 25%, 10%), and the womp-womp-wommmp (Mixkit's "Trombone
-  /// disappoint") as the verdict: its long last note lands at 2.75 s, as the brain's face finishes
-  /// falling and the third signal fizzles (MindState.fading).
+  /// weaker than the last (70%, 45%, 25%, 10%). The trombone's three notes (Mixkit's "Trombone
+  /// disappoint") are heard on the first three twitches, the contraction and the two half ones, with
+  /// the tap: womp, womp, and the long wommmp as the last one fades and the fourth signal fizzles
+  /// (MindState.fading: twitch peaks at 1.12, 1.935 and 2.75 s).
   static let mindFading: JourneyScore = {
     let beats = [0.25 + 0.62 + 0.25, 1.05 + 0.66 + 0.225, 1.85 + 0.7 + 0.2, 2.65 + 0.62]
     let strength = [0.7, 0.45, 0.25, 0.1], sharp = [0.55, 0.45, 0.3, 0.2]
-    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) }, sounds: [cue(beats[2] - 1.0, .trombone, 0.45)])
+    let notes: [JourneyScore.Sound] = [.womp1, .womp2, .womp3]
+    return JourneyScore(haptics: (0..<4).map { .tap(beats[$0], strength[$0], sharp[$0]) },
+                        sounds: (0..<3).map { cue(beats[$0] - JourneyScore.wompAttack, notes[$0], 0.45) })
   }()
 
   /// Put it away: three identical taps on the arm's squeeze (0.235 s after each signal arrives),
@@ -67,10 +70,10 @@ enum JourneyScores {
       sounds: [cue(beats[0], .clink1, 0.3), cue(beats[1], .clink2, 0.45), cue(beats[2], .clink3, 0.55), cue(beats[2], .plateHeavy, 0.5)])
   }()
 
-  /// The pump (the user's favourite pages; their haptics unchanged): each set swells to its peak and
-  /// lands as the arm's contraction peaks, with a plate sound on the peak. Scrolling: the same dull
-  /// clank every set and nothing in the long rests. Timed: plates getting heavier every set, and a
-  /// bright clink over the heaviest when it's full.
+  /// The pump (the user's favourite pages): each set swells to its peak and lands as the arm's
+  /// contraction peaks, with a plate sound on the peak. Scrolling: the same dull clank every set and
+  /// nothing in the long rests or after the last one. Timed: plates getting heavier every set; when
+  /// it's full, the bright clink, the heaviest plate and the strongest tap are one beat.
   static func pump(_ points: [CGPoint], timed: Bool, durations: [Double]) -> JourneyScore {
     var h: [H] = [], s: [JourneyScore.Cue] = []
     var t = 0.0, rise = 0
@@ -79,11 +82,11 @@ enum JourneyScores {
       let d = durations[i - 1]
       if points[i].y > points[i - 1].y + 0.001 {
         if timed {
-          let level = min(1, 0.35 + 0.16 * Double(rise))
-          h += [.swell(t, d, max(0.1, level - 0.3), level, 0.5), .tap(t + d, level, 0.4 + 0.08 * Double(rise))]
+          let level = min(1, 0.35 + 0.16 * Double(rise)), full = points[i].y >= 0.999
+          h += [.swell(t, d, max(0.1, level - 0.3), level, 0.5), .tap(t + d, full ? 1 : level, full ? 0.7 : 0.4 + 0.08 * Double(rise))]
           let plate = plates[min(plates.count - 1, rise)]
           s.append(cue(t + d, plate.0, plate.1))
-          if points[i].y >= 0.999 { h.append(.tap(t + d + 0.12, 0.7, 0.6)); s.append(cue(t + d + 0.12, .clink2, 0.35)) }
+          if full { s.append(cue(t + d, .clink2, 0.35)) }
         } else {
           h += [.swell(t, d, 0.25, 0.5, 0.4), .tap(t + d, 0.5, 0.5)]
           s.append(cue(t + d, .clankDull, 0.35))
@@ -92,7 +95,6 @@ enum JourneyScores {
       }
       t += d
     }
-    if !timed { h.append(.tap(t + 0.05, 0.25, 0.2)) }
     return JourneyScore(haptics: h, sounds: s)
   }
 
@@ -112,12 +114,14 @@ enum JourneyScores {
   /// The lock screen locks: the iPhone's lock click and one crisp tap, on the kettlebell's squeeze (1.07 s).
   static let shield = JourneyScore(haptics: [.tap(1.07, 0.75, 0.9)], sounds: [cue(1.07, .lock, 0.45)])
 
-  /// Rest alerts: the Live Activity's digits change every `countdownStep` from 0:05, silently; on
-  /// 0:00 the real thing: the double buzz and the tri-tone (LockScreenRest).
+  /// Rest alerts: the Live Activity's digits change every `countdownStep` from 0:05, each second a
+  /// light, crisp tick like a watch's, silently; on 0:00 the real thing: the double buzz and the
+  /// tri-tone (LockScreenRest).
   static let countdownStep = 0.4
   static let restUp: JourneyScore = {
     let zero = 5 * countdownStep
-    return JourneyScore(haptics: [.tap(zero, 0.9, 0.6), .tap(zero + 0.13, 0.7, 0.6)], sounds: [cue(zero, .alert, 0.35)])
+    let ticks: [H] = (1...4).map { .tap(Double($0) * countdownStep, 0.4, 0.85) }
+    return JourneyScore(haptics: ticks + [.tap(zero, 0.9, 0.6), .tap(zero + 0.13, 0.7, 0.6)], sounds: [cue(zero, .alert, 0.35)])
   }()
 
   /// Committed: one firm tap and the clank of a plate going back on the rack.

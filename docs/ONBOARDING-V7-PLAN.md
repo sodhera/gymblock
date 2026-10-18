@@ -57,12 +57,12 @@ Haptics land only on beats that mean something, mostly single taps. Every sound 
 | Phone between sets | One light tap per card, a little stronger each time | None |
 | Ring | One soft tap when the red count lands, one when the green does | A clock tock ticking the phone time away (following the eased count); a light clink as the green lands |
 | Hours a year | A run of light taps that follows the dots as they light, each a touch firmer, then one heavy hit | Tocks with the taps, then a heavy plate drop on the total |
-| Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | The womp-womp-wommmp (Mixkit's "Trombone disappoint"), its long last note on the third fading beat, as the brain's face finishes falling |
+| Mind A | One tap per signal, weaker each time (70, 45, 25, 10%) | Mixkit's "Trombone disappoint", cut into its three notes. Each note is heard on a twitch, with its tap: womp on the contraction, womp on the half contraction, then the long wommmp on the last small twitch, carrying through as the fourth signal fizzles |
 | Mind B | The same tap three times (60%) | A clink on each squeeze, heavier each time; the last over an iron plate |
-| Pump A / B (the user's favourite; haptics unchanged) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests / stronger every set, a second tap when full | The same dull clank every set / plates getting heavier every set, a clink when full |
+| Pump A / B (the user's favourite) | Each set swells and lands as the arm peaks: the same middle strength, nothing in the long rests or after the last set / stronger every set, the strongest tap when full | The same dull clank every set / plates getting heavier every set; when full, a bright clink on the same instant as the plate and the tap |
 | Memory / log | A fainter tap as each number fades / a light tap as the line reaches each dot, a firmer one on +5 kg | None / a key click per logged week, a clink on +5 kg |
 | Blocking | One crisp tap as the shield locks | The lock click |
-| Rest alerts | The real double buzz on 0:00 | The tri-tone on 0:00 |
+| Rest alerts | A light, crisp tick each second as the Live Activity counts down, then the real double buzz on 0:00 | The tri-tone on 0:00 |
 | Hold to commit | A buzz that climbs while held; one firm tap when committed | A plate going back on the rack |
 | Start workout (last page) | One tap | The lock click, as the apps lock |
 
@@ -80,8 +80,9 @@ Page changes have no haptic. Haptic feel needs a real iPhone; the simulator has 
   - a shorter pump chart and smaller arm;
   - tighter plan rows;
   - a smaller offer headline;
-  - five exercises (plus "+ N more") on the first-workout card.
-- **Fit to the space:** the phone-habit notifications, the blocking page and Sulav's note scale to fit what's left.
+  - five exercises (plus "+ N more") on the first-workout card;
+  - on the split page, no preview card: the line above Continue says what we'll set up ("We'll set up Push, Pull and Legs: 6 exercises each."). With six options (when you already have splits) the card pushed the page past the screen.
+- **Fit to the space:** the phone-habit notifications, the blocking page and Sulav's note scale to fit what's left. The split page scrolls if it still runs over (large text, longer Spanish).
 
 ## Motion
 

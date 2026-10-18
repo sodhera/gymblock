@@ -437,7 +437,7 @@ struct LockScreenRest: View {
   @EnvironmentObject private var store: GymStore
   var body: some View {
     SceneClock(duration: 2.75, score: JourneyScores.restUp, done: done) { t in
-      // One digit every 0.4 s from 0:05; 0:00 is the buzz (JourneyScores.restUp ticks on each change).
+      // One digit every 0.4 s from 0:05, each with a tick; 0:00 is the buzz (JourneyScores.restUp).
       let remaining = max(0, 5 - Int((t / JourneyScores.countdownStep).rounded(.down)))
       let over = remaining == 0
       VStack(spacing: JourneyLayout.compact ? 12 : 16) {
@@ -561,7 +561,9 @@ enum SplitTemplate: String, CaseIterable, Identifiable {
 }
 
 /// One tap on the split most people run, or build your own in the split editor (name, exercises,
-/// order). Splits you build are kept and selected; build as many as you like.
+/// order). Splits you build are kept and selected; build as many as you like. On small screens the
+/// preview card doesn't fit beside the options, so the line above Continue says what we'll set up
+/// (`summary`); if the page still runs over (large text, longer Spanish), it scrolls.
 struct SplitTemplateStage: View {
   @Binding var choice: SplitTemplate?
   @EnvironmentObject private var store: GymStore
@@ -571,9 +573,25 @@ struct SplitTemplateStage: View {
     (store.data.workouts.isEmpty ? [] : [.keep]) + [.pushPullLegs, .upperLower, .fullBody, .bodyPart, .none]
   }
   var body: some View {
+    ViewThatFits(in: .vertical) {
+      list
+      ScrollView { list.padding(.vertical, 2) }.scrollIndicators(.hidden)
+    }
+    .sheet(isPresented: $building) {
+      NavigationStack {
+        SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
+          store.updateProfile { if $0.preferredSplitID == nil { $0.preferredSplitID = split.id } }
+          withAnimation(JourneyMotion.gentle) { choice = .keep }
+          JourneyHaptic.play(.success, store.profile)
+          building = false
+        }
+      }.presentationDetents([.large]).tint(JourneyColor.text)
+    }
+  }
+  private var list: some View {
     VStack(spacing: compact ? 10 : 14) {
       Spacer(minLength: 0)
-      preview.animation(JourneyMotion.gentle, value: choice)
+      if !compact { preview.animation(JourneyMotion.gentle, value: choice) }
       JourneyGlassGroup(spacing: compact ? 8 : 10) {
         VStack(spacing: compact ? 8 : 10) {
           ForEach(options) { option in
@@ -594,15 +612,23 @@ struct SplitTemplateStage: View {
             .strokeBorder(JourneyColor.ink(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
       }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("splits.build")
     }
-    .sheet(isPresented: $building) {
-      NavigationStack {
-        SplitEditorContent(workout: Workout(name: "", exercises: [])) { split in
-          store.updateProfile { if $0.preferredSplitID == nil { $0.preferredSplitID = split.id } }
-          withAnimation(JourneyMotion.gentle) { choice = .keep }
-          JourneyHaptic.play(.success, store.profile)
-          building = false
-        }
-      }.presentationDetents([.large]).tint(JourneyColor.text)
+  }
+  /// What we'll set up, in one or two lines: the compact page's caption in place of the card.
+  static func summary(_ choice: SplitTemplate?, store: GymStore) -> String? {
+    func list(_ names: [String]) -> String {
+      guard let last = names.last, names.count > 1 else { return names.first ?? "" }
+      return names.dropLast().joined(separator: ", ") + " " + store.t("and") + " " + last
+    }
+    switch choice {
+    case nil: return nil
+    case .keep?:
+      let names = store.data.workouts.map(\.name)
+      return String(format: store.t(names.count == 1 ? "Your split: %@." : "Your splits: %@."), list(names))
+    case .some(.none): return store.t("Every workout starts free: pick exercises as you go.")
+    case let template?:
+      let names = list(template.splits.map { store.t($0.0) }), counts = Set(template.splits.map(\.1.count))
+      guard counts.count == 1, let n = counts.first else { return String(format: store.t("We’ll set up %@."), names) }
+      return String(format: store.t(template.splits.count == 1 ? "We’ll set up %@: %@ exercises." : "We’ll set up %@: %@ exercises each."), names, "\(n)")
     }
   }
   private var keepTitle: String {

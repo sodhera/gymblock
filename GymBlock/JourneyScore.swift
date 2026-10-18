@@ -26,8 +26,9 @@ struct JourneyScore {
     case tock
     /// A key press: a set being logged.
     case typing
-    /// Mixkit's "Trombone disappoint": womp, womp, wommmp.
-    case trombone
+    /// Mixkit's "Trombone disappoint", cut into its three notes (womp, womp, wommmp) so each lands
+    /// on its own beat. Every clip reaches half its loudness `wompAttack` seconds in.
+    case womp1, womp2, womp3
     /// Recorded metal clinks, brightest and lightest first (Kenney Impact Sounds, CC0).
     case clink1, clink2, clink3
     /// Recorded iron-plate hits, light to heavy, and a deep drop.
@@ -41,7 +42,9 @@ struct JourneyScore {
       case .alert: return "sms-received1"
       case .tock: return "Tock"
       case .typing: return "key_press_click"
-      case .trombone: return "gb-trombone"
+      case .womp1: return "gb-womp-1"
+      case .womp2: return "gb-womp-2"
+      case .womp3: return "gb-womp-3"
       case .clink1: return "gb-clink-1"
       case .clink2: return "gb-clink-2"
       case .clink3: return "gb-clink-3"
@@ -66,6 +69,8 @@ struct JourneyScore {
       }
     }
   }
+  /// How far into a womp clip its note is heard (half its peak loudness): cue it this much early.
+  static let wompAttack = 0.04
   struct Cue {
     let at: Double
     let sound: Sound

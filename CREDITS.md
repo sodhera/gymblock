@@ -5,5 +5,5 @@ GymBlock uses Apple's SF Pro system font with Dynamic Type. DM Sans, bundled in 
 ## Sounds (onboarding)
 
 - **iOS system sounds:** the Messages ding, the lock click, the tri-tone, the keyboard tock and the key click are played from iOS's own `/System/Library/Audio/UISounds` at run time. They aren't bundled.
-- **`gb-trombone.caf`:** "Trombone disappoint" from Mixkit (https://mixkit.co, item 744), under the Mixkit Sound Effects Free License. It is trimmed and level-matched.
+- **`gb-womp-1…3.caf`:** "Trombone disappoint" from Mixkit (https://mixkit.co, item 744), under the Mixkit Sound Effects Free License. It is level-matched and cut into its three notes, so each can land on its own beat.
 - **`gb-clink-1…3.caf`, `gb-plate-light/medium/heavy/drop.caf`, `gb-clank-dull.caf`:** from Kenney's "Impact Sounds" (www.kenney.nl), CC0 1.0, so attribution is appreciated but not required. The metal and plate impacts are converted and level-matched.

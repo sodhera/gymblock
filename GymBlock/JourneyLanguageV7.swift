@@ -88,6 +88,13 @@ extension Spanish {
     "No fixed plan": "Sin plan fijo",
     "Your splits": "Tus rutinas",
     "We’ll set up": "Prepararemos",
+    "We’ll set up %@.": "Prepararemos %@.",
+    "We’ll set up %@: %@ exercises.": "Prepararemos %@: %@ ejercicios.",
+    "We’ll set up %@: %@ exercises each.": "Prepararemos %@: %@ ejercicios cada una.",
+    "Your split: %@.": "Tu rutina: %@.",
+    "Your splits: %@.": "Tus rutinas: %@.",
+    "and": "y",
+    "Every workout starts free: pick exercises as you go.": "Cada entrenamiento empieza libre: elige ejercicios sobre la marcha.",
     "Every workout starts free: pick exercises as you go. You can save one as a split later.":
       "Cada entrenamiento empieza libre: elige ejercicios sobre la marcha. Puedes guardarlo como rutina después.",
     "Push": "Empuje", "Pull": "Tirón", "Legs": "Pierna", "Upper": "Torso", "Lower": "Tren inferior",
