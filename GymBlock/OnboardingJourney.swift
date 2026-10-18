@@ -562,7 +562,8 @@ struct OnboardingView: View {
     moving = true
     JourneyScorePlayer.shared.stop()
     JourneyHaptic.play(.soft, store.profile, intensity: 0.55)
-    let out = reduceMotion ? 0.1 : 0.18
+    // Quick: out in 0.12 s, in with a 0.3 s spring (they read as slow at 0.18 + 0.5 s).
+    let out = reduceMotion ? 0.08 : 0.12
     stageLeaving = next.stage != step.stage
     let all = [OnboardingStep.welcome] + route
     let forward = (all.firstIndex(of: next) ?? 0) >= (all.firstIndex(of: step) ?? 0)
@@ -582,7 +583,7 @@ struct OnboardingView: View {
         prepare()
         slide = forward ? travel : -travel
       }
-      withAnimation(.spring(duration: reduceMotion ? 0.15 : 0.5, bounce: 0.1)) { shown = true; slide = 0 }
+      withAnimation(.spring(duration: reduceMotion ? 0.12 : 0.3, bounce: 0.08)) { shown = true; slide = 0 }
       moving = false
     }
   }

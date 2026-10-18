@@ -36,10 +36,12 @@ struct JourneyScore {
   private var loading = false
   private let format = AVAudioFormat(standardFormatWithSampleRate: 32000, channels: 1)!
 
-  /// Wakes the Taptic Engine and loads every cue, so the first scene doesn't start late.
+  /// Wakes the Taptic Engine, starts the audio engine and loads every cue, so the first scene's
+  /// sounds don't pay the engine's start-up time.
   func prepare() {
     setUpHaptics()
     setUpAudio()
+    startAudio()
     guard buffers.isEmpty, !loading else { return }
     loading = true
     Task.detached(priority: .userInitiated) {
@@ -48,11 +50,23 @@ struct JourneyScore {
     }
   }
 
-  /// Plays a whole score from now. Sound is on in onboarding unless the person has turned it off.
-  func play(_ score: JourneyScore, profile: Profile) {
-    let lead = 0.03
+  /// How long the audio path takes to reach the ear: the hardware buffer plus the route's own delay
+  /// (much longer over Bluetooth).
+  private var audioLatency: Double {
+    let session = AVAudioSession.sharedInstance()
+    return max(0, session.outputLatency) + max(0, session.ioBufferDuration)
+  }
+  /// Plays a whole score and returns the moment its t = 0 lands. Sound is scheduled that much
+  /// earlier than its latency, the Taptic Engine for the same moment, and the scene starts moving
+  /// then too, so a ding, its tap and the card arriving are one event. Sound is on in onboarding
+  /// unless the person has turned it off.
+  @discardableResult func play(_ score: JourneyScore, profile: Profile) -> Date {
+    let sound = (profile.soundEnabled ?? true) && !score.sounds.isEmpty
+    let latency = sound ? audioLatency : 0
+    let lead = max(0.05, latency + 0.02)
     playHaptics(score.haptics, lead: lead)
-    if profile.soundEnabled ?? true { playSounds(score.sounds, lead: lead) }
+    if sound { playSounds(score.sounds, lead: lead - latency) }
+    return Date().addingTimeInterval(lead)
   }
   /// One designed moment, now.
   func tap(_ intensity: Double, _ sharpness: Double) { playHaptics([.tap(0, intensity, sharpness)], lead: 0) }
@@ -156,13 +170,17 @@ struct JourneyScore {
     buffers[name] = b
     return b
   }
+  private func startAudio() {
+    guard !audio.isRunning else { return }
+    try? AVAudioSession.sharedInstance().setActive(true, options: [])
+    try? audio.start()
+    if audio.isRunning { for n in nodes where !n.isPlaying { n.play() } }
+  }
   private func playSounds(_ list: [JourneyScore.Cue], lead: Double) {
     setUpAudio()
-    if !audio.isRunning {
-      try? AVAudioSession.sharedInstance().setActive(true, options: [])
-      try? audio.start()
-    }
+    startAudio()
     guard audio.isRunning, !list.isEmpty else { return }
+    let lead = max(0, lead)
     let now = mach_absolute_time()
     for cue in list.sorted(by: { $0.at < $1.at }) {
       guard let b = buffer(cue.name), b.format == format else { continue }

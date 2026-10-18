@@ -122,10 +122,12 @@ struct NotificationStage: View {
       if reduced { shown = 3; done(); return }
       for i in 0..<3 {
         guard await pause(i == 0 ? JourneyMotion.settle : 1.1) else { return }
-        withAnimation(JourneyMotion.gentle) { shown = i + 1 }
-        // A double tap per app, a little stronger each time, like they're creeping closer. No sound here.
+        // A double tap per app, a little stronger each time, like they're creeping closer. No sound
+        // here. The card arrives on the tap's moment.
         var buzz = JourneyScores.notification(Ping.all[i].app, strength: 0.5 + 0.11 * Double(i)); buzz.sounds = []
-        JourneyScorePlayer.shared.play(buzz, profile: store.profile)
+        let begin = JourneyScorePlayer.shared.play(buzz, profile: store.profile)
+        guard await pause(until: 0, from: begin) else { return }
+        withAnimation(JourneyMotion.gentle) { shown = i + 1 }
       }
       // The last card's spring settles, then Continue.
       guard await pause(0.85) else { return }
@@ -230,7 +232,8 @@ struct RevealStage: View {
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let fill = 1.6 * max(0.3, p)
     // Ticks climb with the red count; the green lands with a light shimmer, no bass (JourneyScores.reveal).
-    JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill, total: estimate.phoneMinutes), profile: store.profile)
+    let begin = JourneyScorePlayer.shared.play(JourneyScores.reveal(fill: fill, total: estimate.phoneMinutes), profile: store.profile)
+    guard await pause(until: 0, from: begin) else { return }
     withAnimation(.easeInOut(duration: fill)) { phone = p; counted = estimate.phoneMinutes }
     guard await pause(fill + 0.25) else { return }
     withAnimation(.easeOut(duration: 0.7)) { training = t }
@@ -295,7 +298,8 @@ struct DaysStage: View {
     if JourneyMotion.reduced(systemReduceMotion) { lit = Double(dots); meaning = true; done(); return }
     guard await pause(JourneyMotion.settle + 0.1) else { return }
     let duration = 1.8
-    JourneyScorePlayer.shared.play(JourneyScores.year(fill: duration), profile: store.profile)
+    let begin = JourneyScorePlayer.shared.play(JourneyScores.year(fill: duration), profile: store.profile)
+    guard await pause(until: 0, from: begin) else { return }
     withAnimation(.easeInOut(duration: duration)) { lit = Double(dots) }
     guard await pause(duration) else { return }
     withAnimation(JourneyMotion.gentle) { meaning = true }
@@ -491,8 +495,8 @@ struct RestStage: View {
     }
     // Scrolling: every set swells to the same middle strength, the rests get nothing. Timed: each
     // set lands stronger (JourneyScores.pump).
-    JourneyScorePlayer.shared.play(JourneyScores.pump(pts, timed: timed, durations: durations), profile: store.profile)
-    let start = Date()
+    let start = JourneyScorePlayer.shared.play(JourneyScores.pump(pts, timed: timed, durations: durations), profile: store.profile)
+    guard await pause(until: 0, from: start) else { return }
     var at = 0.0
     for i in 1..<pts.count {
       let rising = pts[i].y > pts[i - 1].y + 0.001
@@ -616,8 +620,7 @@ struct LogStage: View {
       guard await pause(JourneyMotion.settle + 0.1) else { return }
       // Each number fades with a fainter tap and a falling, out-of-tune note (JourneyScores.forgetting),
       // on the same clock as the fades.
-      JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile)
-      let start = Date()
+      let start = JourneyScorePlayer.shared.play(JourneyScores.forgetting(period: 0.69, fade: 0.45), profile: store.profile)
       for i in 0..<5 {
         guard await pause(until: Double(i) * 0.69, from: start) else { return }
         withAnimation(.smooth(duration: 0.25)) { revealed = i + 1 }
@@ -633,8 +636,8 @@ struct LogStage: View {
       // The line draws at a constant speed; each week's dot pops, with its tap, the moment the line
       // reaches it, then a double hit on the gain.
       let hits = LogLine.hits.map { $0 * Self.draw }
-      JourneyScorePlayer.shared.play(JourneyScores.remembering(hits: hits, best: Self.draw + 0.05), profile: store.profile)
-      let start = Date()
+      let start = JourneyScorePlayer.shared.play(JourneyScores.remembering(hits: hits, best: Self.draw + 0.05), profile: store.profile)
+      guard await pause(until: 0, from: start) else { return }
       withAnimation(.linear(duration: Self.draw)) { line = 1 }
       for (i, hit) in hits.enumerated() {
         guard await pause(until: hit, from: start) else { return }

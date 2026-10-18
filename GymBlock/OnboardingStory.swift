@@ -35,7 +35,7 @@ struct SceneClock<Content: View>: View {
   @State private var finished = false
   var body: some View {
     TimelineView(.animation(paused: start == nil || finished)) { context in
-      content(finished ? duration : start.map { min(duration, context.date.timeIntervalSince($0)) } ?? 0)
+      content(finished ? duration : start.map { max(0, min(duration, context.date.timeIntervalSince($0))) } ?? 0)
     }
     .task { await run() }
   }
@@ -43,9 +43,10 @@ struct SceneClock<Content: View>: View {
     if JourneyMotion.reduced(systemReduceMotion) { finished = true; done(); return }
     try? await Task.sleep(for: .seconds(JourneyMotion.settle))
     guard !Task.isCancelled else { return }
-    if let score { JourneyScorePlayer.shared.play(score, profile: store.profile) }
-    start = Date()
-    try? await Task.sleep(for: .seconds(duration))
+    // The picture starts on the moment the score lands (sound latency included), not before it.
+    let begin = score.map { JourneyScorePlayer.shared.play($0, profile: store.profile) } ?? Date()
+    start = begin
+    try? await Task.sleep(for: .seconds(max(0, begin.timeIntervalSinceNow) + duration))
     guard !Task.isCancelled else { return }
     finished = true
     done()

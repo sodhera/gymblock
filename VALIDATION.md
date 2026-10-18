@@ -23,6 +23,11 @@ Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboa
   - **Scenes:** step sequences keep time against one clock, so they don't drift from the score.
   - **Continue:** hidden until the last spring settles.
   - **Checked:** the log and Lock Screen pages as bursts of frames. Sound alignment needs ears.
+- **Transitions and sound timing (fifth follow-up).**
+  - **Transitions:** a page change now fades out in 0.12 s and springs in over 0.3 s, and its scene starts at 0.22 s. Before, it was 0.18 s, 0.5 s and 0.4 s, which read as slow.
+  - **Sound and picture on one moment:** the audio engine now starts when onboarding opens, instead of at the first ding. Each score returns the moment its t = 0 lands, scheduled ahead by the audio route's own latency (hardware buffer plus output delay, which is long over Bluetooth). Haptics and the scene's motion start on that same moment.
+  - **Phone-between-sets page:** each card now arrives on its tap.
+  - **Checked:** tapping from the minutes page to the time ring, the ring fills at once and Continue follows when it ends. How in time the dings sound still needs ears.
 - **Continue, the real cause (fourth follow-up).** On every page reached by tapping Continue, the button was there from the start.
   - **Cause:** leaving a page cancels the page's 20-second fallback timer. Its `try? await Task.sleep` swallowed the cancellation and called `markReady` at once, on the page just opened. Opening pages directly with `-journeyStep` never hit it, which is why the earlier measurements missed it.
   - **Fix:** the fallback now checks for cancellation, and every scene's end signal is bound to its own page.

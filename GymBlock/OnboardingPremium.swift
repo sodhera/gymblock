@@ -125,7 +125,7 @@ enum JourneyMotion {
     #endif
   }
   static let page = Animation.smooth(duration: 0.6)
-  static let settle = 0.4  // Scenes start once the page has faded in (0.35 s).
+  static let settle = 0.22  // Scenes start once the page has faded in (a 0.3 s spring, mostly there by 0.2 s).
   static let gentle = Animation.spring(duration: 0.55, bounce: 0.12)
 }
 
