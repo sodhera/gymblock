@@ -279,26 +279,49 @@ struct FounderStage: View {
 
 // MARK: - Days a week
 
-/// One tap: how many days a week they lift. It sets Home's weekly goal and the yearly estimate.
+/// How many days a week they lift, on a slider from once a week to every day (18 Oct 2026, at the
+/// user's request, replacing five tap rows): the number large, what it means under it, the slider, and
+/// its two ends named. It sets Home's weekly goal and the yearly estimate.
 struct TrainingDaysStage: View {
   @Binding var days: Int?
   let choose: (Int) -> Void
   @EnvironmentObject private var store: GymStore
+  /// Where the slider starts before it's touched: the middle of the week.
+  static let start = 4
   var body: some View {
-    // The same glass rows as every other question, so answers look the same everywhere.
+    let n = days ?? Self.start
+    let value = Binding<Double>(get: { Double(days ?? Self.start) }, set: { new in
+      let step = Int(new.rounded())
+      if step != days { choose(step) }
+    })
     VStack(spacing: 0) {
       Spacer(minLength: 0)
-      JourneyGlassGroup(spacing: JourneyLayout.compact ? 8 : 10) {
-        VStack(spacing: JourneyLayout.compact ? 8 : 10) {
-          ForEach([2, 3, 4, 5, 6], id: \.self) { n in
-            JourneyOption(title: n == 6 ? store.t("6 or more") : String(format: store.t("%@ days"), "\(n)"),
-                          selected: days == n, id: "days.\(n)") { choose(n) }
-              .accessibilityLabel(String(format: store.t("%@ days a week"), n == 6 ? "6+" : "\(n)"))
-          }
-        }
+      VStack(spacing: 4) {
+        Text("\(n)").font(.app(size: JourneyLayout.compact ? 72 : 88, weight: .semibold)).monospacedDigit().tracking(-2)
+          .foregroundStyle(JourneyColor.text).contentTransition(.numericText(value: Double(n)))
+        Text(store.t(n == 7 ? "Every day" : n == 1 ? "day a week" : "days a week"))
+          .font(.app(.title3, weight: .medium)).foregroundStyle(JourneyColor.secondary)
       }
+      .animation(JourneyMotion.gentle, value: n)
+      .accessibilityHidden(true)
+      Spacer(minLength: 0).frame(maxHeight: 56)
+      VStack(spacing: 10) {
+        Slider(value: value, in: 1...7, step: 1)
+          .tint(JourneyColor.signal)
+          .accessibilityLabel(store.t("Days a week"))
+          .accessibilityValue(String(format: store.t("%@ days a week"), "\(n)"))
+          .accessibilityIdentifier("days.slider")
+        HStack {
+          Text(store.t("Once a week"))
+          Spacer()
+          Text(store.t("Every day"))
+        }.font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
+      }
+      .padding(.horizontal, 4)
       Spacer(minLength: 0)
     }
+    // The page opens on a value, so Continue works without touching the slider.
+    .onAppear { if days == nil { days = Self.start } }
   }
 }
 

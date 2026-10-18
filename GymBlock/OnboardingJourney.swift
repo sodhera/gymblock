@@ -472,7 +472,7 @@ struct OnboardingView: View {
   private func prepare() {
     switch step {
     case .name: nameDraft = store.profile.name
-    case .trainingDays: trainingDays = baseline.trainingDays.map { min(6, max(2, $0)) }
+    case .trainingDays: trainingDays = baseline.trainingDays.map { min(7, max(1, $0)) }
     case .splits: template = store.data.workouts.isEmpty ? nil : .keep
     case .gender: gender = store.profile.gender
     case .height: heightCM = store.profile.heightCM ?? bodyDefaults(store.profile.gender).height
