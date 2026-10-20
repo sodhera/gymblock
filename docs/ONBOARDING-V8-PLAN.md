@@ -15,15 +15,15 @@ The person should leave thinking: *"My phone turns my rests into extra time at t
 - **Their numbers only.** Every number comes from their answers (`TimeBack` in `JourneyMetrics.swift`), with a one-line qualifier ("From your answers: 14 rests × 2½ minutes.", "Your numbers, multiplied out.").
 - **Rest they need is never lost.** Only the scrolling past the rest they need counts: 4 minutes of scrolling against a 1½-minute rest is 2½ minutes lost. That was Sulav's objection to the V7 ring.
 - **No graph while they answer.** The question pages show something they recognise that answers back. The first graph comes on page 8, once both rest answers are in.
-- **Round down, never guess.** Lost minutes round down to 5, years down to 10 hours, extra workouts down to 5; their workout with rests on time rounds up to 5. If their sets and the rest they need alone don't fit their gym time, there is no workout total, only the per-rest number.
+- **Round down, never guess.** Lost minutes round down to 5 (to the whole minute under 10), years down to 10 hours, extra workouts down to 5; their workout with rests on time rounds up to 5. Every later number (the year, the extra workouts, the hours back a month, the workout) is multiplied from the minutes as shown, so the pages agree. If their sets and the rest they need alone don't fit their gym time, there is no workout total, only the per-rest number.
 - **No body claims.** "A better workout" means only what GymBlock does: every rest on time, every set saved.
 
 ## Pages (22; 15 for Rarely)
 
 | # | Headline | Stage | Action |
 |---|---|---|---|
-| 1–3 | Welcome ("Focused workouts." under the locking phone and the arm), name, days a week (Sulav's note removed 20 Oct 2026) | | |
-| 5 | Be honest. Does your phone suck you in between sets? (20 Oct 2026: checking is fine, getting sucked in is the problem) | A phone scrolling its feed pulls the kit around it in, piece by piece, each on a soft tap, a faint red growing behind it; then it loops. No words (`SuckedInStage`); caption "No judgement. We did too." | Every rest · Sometimes · Rarely |
+| 1–4 | Welcome ("Focused workouts." under the locking phone and the arm), Sulav's note, name, days a week | | |
+| 5 | Be honest. Do you check your phone between sets? | A phone scrolling its feed pulls the kit around it in, piece by piece, each on a soft tap, a faint red growing behind it; then it loops. No words (`SuckedInStage`); caption "No judgement. We did too." | Every rest · Sometimes · Rarely |
 | 6 | How long do you need to rest between sets? | A stopwatch on a five-minute dial winds to the answer (`RestWatchStage`). The answer is also their rest timer. "Not sure" counts as 2 minutes. | 1 min · 1½ · 2 · 3 · Not sure |
 | 7 | Once you start scrolling, how many minutes go by? | A phone scrolling a feed above a wheel (1 to 15+ minutes, starting at 1); a pill shows the answer (`ScrollMinutesStage`) | Continue |
 | 8 | That's 2½ minutes lost. Every rest. | The first graph: "Rest you need" against "Scrolling" on one axis. The part under the rest is light red, the part past it red and counted up (`PerRestStage`) | Continue |
@@ -37,7 +37,7 @@ The person should leave thinking: *"My phone turns my rests into extra time at t
 | 17 | We'll buzz you when your 1:30 is up. | Unchanged scene, their rest in the headline | Continue → iOS prompt |
 | 18 | {Name}, here's your plan. | Adds "Each workout: About 55 min" in the signal colour | Hold to commit |
 | 19 | Account | Unchanged | |
-| 20 | (offer) {Name}, get your 35 minutes back. | "Your time at the gym: 1½ hours". Today: the workout in green, then "35 min scrolling" in red. With GymBlock: the green alone, "About 55 min". "From your answers. About 10 hours back a month." Promises, trial timeline and plans unchanged | Start 7-day free trial |
+| 20 | (offer) {Name}, get your 35 minutes back. | "Your time at the gym: 1½ hours". Today: the workout in green, then the red with a phone and "35 min" inside it (the phone alone when the red is too short; no line of its own under the bar). With GymBlock: the green alone, "About 55 min". "From your answers. About 10 hours back a month." Promises, trial timeline and plans unchanged | Start 7-day free trial |
 | 21–22 | Splits; first workout | Unchanged | |
 
 From 55 to 65 minutes, the words are "about an hour": "about an hour of your 2 hours goes to scrolling", "We'll give you that hour back.", "get your hour back."
@@ -47,7 +47,7 @@ From 55 to 65 minutes, the words are "about an hour": "about an hour of your 2 h
 - **Rarely:** 6, then "Then you're already ahead." (the same stopwatch with "Rests on time"), then 15. The plan has no workout line; the offer reads "{Name}, keep every rest on time." with no bars.
 - **Scrolling that fits inside the rest:** page 8 reads "Then your scrolling fits inside your rest.", then 15; the offer is Rarely's.
 - **Sometimes:** half the rests count ("That's 2½ minutes lost each time you scroll."; "about half of 14 rests × 2½ minutes").
-- **Under 5 minutes a workout:** page 12 says it as it is, then 15; the offer is Rarely's.
+- **Under 10 minutes a workout:** page 12 says it as it is, then 15; the plan has no workout line and the offer is Rarely's ("keep every rest on time"). A 5-minute "we'll give you those back" rang hollow, and its labels were slivers (inspection, 20 Oct 2026).
 - **Answers that don't fit their gym time:** if the sets and the rest they need alone run past it, pages 12–13 are skipped and page 14 gives back the per-rest number ("We'll give you those 4 minutes back. Every rest.", page 8's bars with the red sliding away); the offer says "get 4 minutes back every rest". If only the scrolling runs over, it's cut to fit ("From your answers, fitted into your 1 hour.").
 
 Old saved progress on V7's removed pages (phone minutes, ring, hours, mind-muscle, pump, memory) resumes at the rest question; nothing stored is discarded.
@@ -73,3 +73,26 @@ Stored on `RoutineBaseline` (synced as part of the profile's answers): `restNeed
 ## Removed
 
 The V7 ring, the mind-muscle pages (and the brain-and-nerve art), the pump pages, the memory and log pages, and the 6 × 3 assumed workout (`GymTimeEstimate`). The arm stays on the welcome.
+
+## After the inspection (20 Oct 2026)
+
+Every page was inspected on an iPhone SE (the user's phone) and the iPhone 18 Pro Max, at the largest text sizes, in Spanish, with Reduce Motion, frame by frame, with Apple's accessibility audit and a code review ([screenshots/2026-10-20-inspection](../screenshots/2026-10-20-inspection/index.html)). What changed:
+
+- **Large text.** At accessibility sizes the page scrolls and the scene keeps a 300-pt floor; headlines, captions and rows wrap instead of truncating; the two-bar labels stack above their values when they don't fit; axis ticks that would collide are left out. The app's font now follows the text size live (`Font.custom(relativeTo:)`), hero numbers included.
+- **Rarely.** "Then you're already ahead." reports its scene done at once (it shared the stopwatch with the rest question and used to wait 20 s for Continue).
+- **Spanish.** The language comes from the phone's preferred languages (a phone set to Spanish got English). VoiceOver's Back is "Volver", not "Espalda".
+- **Contrast.** Small emerald and red text use darker shades (`JourneyColor.signalText`, `dangerText`: 4.8:1 and 5.1:1); the offer's bars use them as fills under white labels. The bars' grey is ink at 50% (3.4:1 on the paper). Scrolling inside the rest they need is the rest's grey, not light red: it isn't lost.
+- **Notes outside slivers.** "+35 min" and "35 min back" sit under the bar, centred on their part and kept inside the width; the offer's red label moves under its bar when the bar is too narrow. No "About 0 hours back a month".
+- **VoiceOver.** Each page change moves focus to the question; Continue is there at once for VoiceOver; the wheel is "Minutes you scroll"; the stopwatch, workout and promise bars say what they show; decorative scenes are hidden; the progress line is a full-height element; the hold says how to commit.
+- **Motion.** The workout and per-rest counts stay hidden until they start (no "+0 min"); the promise's hero swaps one after the other, not as a cross-fade; under Reduce Motion the rack's pieces fade in place. The feed steps on a timer and only the clock's second hand turns, instead of redrawing every frame.
+- **Taps.** Restore, Terms, Privacy and Edit are 44 pt; a second tap on Continue while the page leaves does nothing; Back waits while an account is signing in.
+
+
+## Picks from the side-by-side (20 Oct 2026)
+
+Both versions were installed side by side ("GB Sirish", "GB Sulav") and compared page by page on an iPhone SE; the user picked per page.
+
+- Sulav's: the welcome, the phone picture (with our question, "Be honest. Do you check your phone between sets?"), the shorter headlines (minutes scrolling, exercises, sets, gym, year, shield, choose apps, account, splits), the rack built to the count with a plain kettlebell, the straight log, the shield played on a phone, the commit page's spacing.
+- Ours: Sulav's note (kept second), the per-rest, workout and promise pages, the offer.
+- The four number questions answer on rows again (Sulav's), not tiles. The stopwatch and the gym clock lost the time under them and grew into that room.
+- The offer's red part says it inside itself: a phone and "35 min", not "35 min scrolling" on a line under the bar.

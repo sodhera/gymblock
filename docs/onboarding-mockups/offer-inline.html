@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offer Inline Label</title>
+<style>
+/* Offer page mockup (20 Oct 2026): ours, with the red part's words inside the bar instead of on a
+   line of their own. iPhone SE size (375 × 667 pt), same answers as the side-by-side board. */
+@font-face { font-family: "GB Sans"; src: url("../../GymBlock/Fonts/DMSans.ttf") format("truetype"); font-weight: 100 1000; }
+:root {
+  --bg: #ECE9E3; --text: #141417; --muted: #5F5D58; --line: rgba(20,20,23,.12);
+  --paper: #F5F3EF; --ink: #16161A; --secondary: #6B6A66; --green: #087A54; --red: #C22E26; --emerald: #0F9A6B;
+  --sans: "GB Sans", "DM Sans", ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141518; --text: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.14) } }
+:root[data-theme="dark"] { --bg: #141518; --text: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.14) }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased }
+main { max-width: 900px; margin: 0 auto; padding: 32px 16px 64px }
+h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: -0.03em; line-height: 1.1 }
+.lede { margin: 0 0 26px; color: var(--muted); max-width: 64ch }
+.pair { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; align-items: flex-start }
+.col { display: grid; gap: 10px; justify-items: center }
+.col h2 { margin: 0; font-size: 15px; font-weight: 700 }
+.col h2 span { color: var(--muted); font-weight: 500 }
+.shot { width: 375px; max-width: 100%; border-radius: 34px; box-shadow: 0 0 0 1px var(--line), 0 18px 40px rgba(0,0,0,.12); display: block }
+
+/* The phone: an iPhone SE screen, drawn at 1 pt = 1 px. */
+.phone { width: 375px; height: 667px; border-radius: 34px; overflow: hidden; position: relative; color: var(--ink);
+  background: radial-gradient(circle at 50% 42%, #FBF3E6 0, var(--paper) 55%);
+  box-shadow: 0 0 0 1px var(--line), 0 18px 40px rgba(0,0,0,.12) }
+.phone::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(22,22,26,.07) 1px, transparent 1.2px); background-size: 22px 22px }
+.status { position: relative; height: 20px; display: flex; justify-content: center; align-items: center; font: 600 15px -apple-system, system-ui, sans-serif }
+.status .l { position: absolute; left: 8px; font-size: 12px; font-weight: 500 }
+.status .bat { position: absolute; right: 8px; width: 24px; height: 11px; border: 1.5px solid #3FB24F; border-radius: 3px }
+.page { position: relative; padding: 36px 28px 0 }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600 }
+.brand img { width: 17px; height: 17px }
+.headline { margin: 10px 0 0; font-size: 27px; line-height: 1.17; font-weight: 700; letter-spacing: -0.6px }
+.two { margin-top: 22px; display: grid; gap: 9px }
+.foot { font-size: 13px; color: var(--secondary) }
+.row { display: flex; align-items: center; gap: 10px }
+.row .lab { width: 102px; flex: none; font-size: 14px; font-weight: 600; white-space: nowrap; letter-spacing: -0.2px }
+.row .lab.today { color: var(--secondary) }
+.strip { flex: 1; height: 28px; display: flex; gap: 2px; border-radius: 9px; overflow: hidden }
+.seg { height: 100%; display: flex; align-items: center; padding-left: 8px; gap: 4px; color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden }
+.seg svg { flex: none }
+.g { background: var(--green) } .r { background: var(--red) } .clear { background: transparent }
+.cap { font-size: 12px; color: var(--secondary); margin-top: 2px }
+.benefits { margin-top: 22px; display: grid; gap: 11px }
+.benefit { display: flex; gap: 10px; align-items: baseline; font-size: 17px; line-height: 1.32 }
+.benefit i { flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--emerald); position: relative; top: 3px }
+.benefit i::after { content: ""; position: absolute; left: 6px; top: 3.5px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) }
+.plans { margin-top: 26px; border-radius: 20px; background: rgba(255,255,255,.62); box-shadow: 0 0 0 1px rgba(20,20,23,.06), 0 8px 24px rgba(0,0,0,.06); padding: 18px; text-align: center; font-size: 13px; color: var(--secondary) }
+.footer { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 24px 6px; background: linear-gradient(to bottom, rgba(245,243,239,0), var(--paper) 28px) }
+.btn { height: 50px; border-radius: 25px; background: rgba(255,255,255,.5); box-shadow: 0 0 0 1px rgba(20,20,23,.06); color: rgba(22,22,26,.12); display: grid; place-items: center; font-size: 17px; font-weight: 600 }
+.links { display: flex; justify-content: center; gap: 4px; font-size: 13px; color: var(--secondary) }
+.links span { min-width: 44px; height: 44px; display: grid; place-items: center; padding: 0 6px }
+
+.notes { margin: 30px auto 0; max-width: 640px; display: grid; gap: 14px }
+.close { border-radius: 16px; box-shadow: 0 0 0 1px var(--line); padding: 16px; background: var(--paper); color: var(--ink); display: grid; gap: 8px }
+.close h3, .notes h3 { margin: 0; font-size: 13px; color: var(--secondary); font-weight: 600 }
+.notes h3 { color: var(--muted) }
+.notes ul { margin: 0; padding-left: 20px; display: grid; gap: 6px }
+@media (max-width: 420px) { .phone, .shot { transform-origin: top left } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Offer page: ours, minus the extra line</h1>
+  <p class="lede">The red part of the Today bar says it inside itself: a phone and “35 min”. The line under the bar is gone, so everything below moves up. Nothing else changes. iPhone SE, same answers as the board: 1½ hours at the gym, 35 minutes scrolling.</p>
+
+  <div class="pair">
+    <div class="col">
+      <h2>Now <span>· ours, from the simulator</span></h2>
+      <img class="shot" src="../../screenshots/2026-10-20-compare/sirish/subscription.jpg" alt="Our offer page now, with 35 min scrolling on its own line under the Today bar">
+    </div>
+
+    <div class="col">
+      <h2>Mockup <span>· label inside the bar</span></h2>
+      <div class="phone" role="img" aria-label="Mockup of the offer page with 35 min inside the red part of the Today bar">
+        <div class="status"><span class="l">▂▄▆ Carrier</span>09:41<span class="bat"></span></div>
+        <div class="page">
+          <div class="brand"><img src="img/kb.png" alt="">GymBlock Pro</div>
+          <p class="headline">Sirish, get your 35 minutes back.</p>
+          <div class="two">
+            <div class="foot">Your time at the gym: 1½ hours</div>
+            <div class="row">
+              <div class="lab today">Today</div>
+              <div class="strip">
+                <div class="seg g" style="flex: 55"></div>
+                <div class="seg r" style="flex: 35">
+                  <svg width="8" height="12" viewBox="0 0 8 12" aria-hidden="true"><rect x=".75" y=".75" width="6.5" height="10.5" rx="1.6" fill="none" stroke="#fff" stroke-width="1.5"/><rect x="3" y="2.2" width="2" height="1" rx=".5" fill="#fff"/></svg>
+                  35 min
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="lab">With GymBlock</div>
+              <div class="strip">
+                <div class="seg g" style="flex: 55">About 55 min</div>
+                <div class="seg clear" style="flex: 35"></div>
+              </div>
+            </div>
+            <div class="cap">From your answers. About 10 hours back a month.</div>
+          </div>
+          <div class="benefits">
+            <div class="benefit"><i></i>Apps locked from your first set to your last</div>
+            <div class="benefit"><i></i>A buzz the moment rest is up</div>
+            <div class="benefit"><i></i>Every set saved, and what to beat next time</div>
+          </div>
+          <div class="plans">Subscriptions aren’t switched on in this build yet.</div>
+        </div>
+        <div class="footer">
+          <div class="btn">Continue</div>
+          <div class="links"><span>Restore</span><span>Terms</span><span>Privacy</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="close">
+      <h3>Close up, the two bars</h3>
+      <div class="two" style="margin: 0">
+        <div class="row">
+          <div class="lab today">Today</div>
+          <div class="strip">
+            <div class="seg g" style="flex: 55"></div>
+            <div class="seg r" style="flex: 35"><svg width="8" height="12" viewBox="0 0 8 12" aria-hidden="true"><rect x=".75" y=".75" width="6.5" height="10.5" rx="1.6" fill="none" stroke="#fff" stroke-width="1.5"/><rect x="3" y="2.2" width="2" height="1" rx=".5" fill="#fff"/></svg>35 min</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="lab">With GymBlock</div>
+          <div class="strip">
+            <div class="seg g" style="flex: 55">About 55 min</div>
+            <div class="seg clear" style="flex: 35"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h3>How it holds up</h3>
+    <ul>
+      <li>The phone icon says “scrolling”, and the headline already says “get your 35 minutes back”, so the word isn’t needed.</li>
+      <li>On the SE the red part is about 80 pt wide; the phone and “35 min” need about 60. Bigger iPhones have more room.</li>
+      <li>If someone scrolls so little that even that doesn’t fit, the red part shows the phone alone.</li>
+      <li>VoiceOver still reads it in full: “Today: 35 minutes scrolling.”</li>
+    </ul>
+  </div>
+</main>
+</body>
+</html>

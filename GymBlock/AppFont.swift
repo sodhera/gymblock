@@ -45,6 +45,9 @@ enum AppFont {
   /// DM Sans at this size and weight, its optical size matched to the size; nil if the font didn't
   /// register, so callers fall back to SF Pro rather than to nothing. The PostScript name carries the
   /// default optical size ("DMSans-9ptRegular"), not "DM Sans".
+  /// The variable font's PostScript name (its default instance).
+  static let postScriptName = "DMSans-9ptRegular"
+
   static func uiFont(size: CGFloat, weight: Font.Weight) -> UIFont? {
     let descriptor = UIFontDescriptor(fontAttributes: [
       .name: "DMSans-9ptRegular",
@@ -67,18 +70,25 @@ enum AppFont {
 
 extension Font {
   /// A text style in the app's typeface, scaled for Dynamic Type. Same arguments as `Font.system`.
+  /// Relative to the text style, so it follows the text size live, not only at launch (inspection,
+  /// 20 Oct 2026: a fixed UIFont froze the size and Apple's audit flagged every label). Core Text
+  /// sets the optical size from the point size, and the weight picks the variable font's instance.
   static func app(_ style: Font.TextStyle, design: Font.Design? = nil, weight: Font.Weight? = nil) -> Font {
     let base = AppFont.base(style)
-    guard AppFont.dmSans, design == nil || design == .default,
-          let font = AppFont.uiFont(size: UIFontMetrics(forTextStyle: base.ui).scaledValue(for: base.size), weight: weight ?? base.weight)
+    guard AppFont.dmSans, design == nil || design == .default, AppFont.uiFont(size: base.size, weight: .regular) != nil
     else { return .system(style, design: design, weight: weight) }
-    return Font(font)
+    return Font.custom(AppFont.postScriptName, size: base.size, relativeTo: style).weight(weight ?? base.weight)
   }
 
-  /// A fixed size in the app's typeface. Same arguments as `Font.system(size:)`.
-  static func app(size: CGFloat, weight: Font.Weight? = nil, design: Font.Design? = nil) -> Font {
+  /// A size in the app's typeface. With `relativeTo`, it grows with the text size from that style;
+  /// without, it's fixed (art drawn at a set size). Same arguments as `Font.system(size:)`.
+  static func app(size: CGFloat, weight: Font.Weight? = nil, design: Font.Design? = nil, relativeTo style: Font.TextStyle? = nil) -> Font {
     guard AppFont.dmSans, design == nil || design == .default, let font = AppFont.uiFont(size: size, weight: weight ?? .regular)
-    else { return .system(size: size, weight: weight, design: design) }
+    else {
+      if let style { return .system(style, design: design, weight: weight) }
+      return .system(size: size, weight: weight, design: design)
+    }
+    if let style { return Font.custom(AppFont.postScriptName, size: size, relativeTo: style).weight(weight ?? .regular) }
     return Font(font)
   }
 }

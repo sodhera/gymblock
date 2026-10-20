@@ -23,8 +23,6 @@ enum OnboardingStep: String, CaseIterable {
   var current: Self {
     switch self {
     case .body, .gender, .height, .weight: return .trainingDays
-    // Sulav's note was the second page until 20 Oct 2026; saved progress on it resumes at the name.
-    case .founder: return .name
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
     case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
          .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
@@ -52,7 +50,7 @@ enum OnboardingRoute {
   /// inside the rest, goes straight to how GymBlock works; answers that don't fit their gym time get
   /// the per-rest promise only; under five minutes a workout gets the number and nothing more.
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed]
+    var steps: [OnboardingStep] = [.founder, .name, .trainingDays, .scrolling, .restNeed]
     let time = TimeBack(baseline)
     if baseline.scrollFrequency == .no {
       steps.append(.ahead)
@@ -111,6 +109,10 @@ struct OnboardingView: View {
   @State private var shown = true
   @State private var stageLeaving = false
   @State private var moving = false
+  @State private var finished = false
+  @Environment(\.dynamicTypeSize) private var typeSize
+  /// VoiceOver lands on the new question after each page change.
+  @AccessibilityFocusState private var questionFocused: Bool
   /// Pages slide a little in the direction of travel as they fade, so Back feels like going back.
   @State private var slide: CGFloat = 0
   @State private var pledged = 0
@@ -126,25 +128,16 @@ struct OnboardingView: View {
       DotGrid()
       VStack(spacing: 0) {
         topBar.frame(height: 44).padding(.horizontal, 12)
-        // The welcome scene carries its own words; every other page has the headline box.
-        if step != .welcome {
-          headline.padding(.horizontal, JourneyLayout.compact ? 24 : 28).padding(.top, JourneyLayout.compact ? 6 : 14)
-            .opacity(shown ? 1 : 0).offset(x: slide)
+        if scrolls {
+          // Accessibility text sizes: the page scrolls and its scene keeps a usable height, instead of
+          // squeezing the scene to nothing and pushing the top into the status bar (inspection, 20 Oct 2026).
+          ScrollView { VStack(spacing: 0) { page(fixed: false) } }.scrollIndicators(.hidden).scrollBounceBehavior(.basedOnSize)
+        } else {
+          page(fixed: true)
         }
-        ZStack {
-          stage.id(step.stage).transition(.identity)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
-          // Small screens keep a margin around every scene instead of filling the screen edge to edge.
-          .padding(.horizontal, JourneyLayout.compact ? 32 : 24)
-          .padding(.vertical, JourneyLayout.compact ? 14 : 12)
-          // A stage shared by two pages stays put; only a new stage fades and slides.
-          .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
-        Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
-          .multilineTextAlignment(.center).lineLimit(2).frame(minHeight: 20).padding(.horizontal, 32)
-          .opacity(shown ? 1 : 0).offset(x: slide)
-        actions.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
-          .opacity(shown ? 1 : 0).offset(x: slide * 0.5)
       }
+      // Nothing on a page that's leaving can be tapped (a second tap used to change a saved answer).
+      .allowsHitTesting(!moving)
       // The launch screen is the same dark stage: the first page simply rises into it.
       .opacity(covered ? 0 : 1).offset(y: covered && !reduceMotion ? 10 : 0)
     }
@@ -184,7 +177,9 @@ struct OnboardingView: View {
         $0.onboardingVersion = 11
         if $0.focusEnabled == nil { $0.focusEnabled = false }
         if $0.language.isEmpty {
-          $0.language = Locale.current.language.languageCode?.identifier == "es" ? "es" : "en"
+          // The phone's preferred language: Locale.current says English here, because the app doesn't
+          // declare a Spanish localization (a phone set to Spanish got English; inspection, 20 Oct 2026).
+          $0.language = Locale.preferredLanguages.first?.hasPrefix("es") == true ? "es" : "en"
         }
       }
     }
@@ -192,13 +187,44 @@ struct OnboardingView: View {
 
   // MARK: Grid
 
+  /// Pages that scroll: at accessibility text sizes, and on a small phone from the second-largest
+  /// standard size up, where the workout and plan pages ran into the status bar (the welcome, Sulav's
+  /// note and the splits page fit or scroll on their own).
+  private var scrolls: Bool {
+    (typeSize.isAccessibilitySize || (JourneyLayout.compact && typeSize >= .xxLarge)) && ![.welcome, .founder, .splits].contains(step)
+  }
+  @ViewBuilder private func page(fixed: Bool) -> some View {
+    // The welcome scene carries its own words; every other page has the headline box.
+    if step != .welcome {
+      headline.padding(.horizontal, JourneyLayout.compact ? 24 : 28).padding(.top, JourneyLayout.compact ? 6 : 14)
+        .opacity(shown ? 1 : 0).offset(x: slide)
+    }
+    ZStack {
+      stage.id(step.stage).transition(.identity)
+    }.frame(maxWidth: .infinity, minHeight: fixed ? nil : 300, maxHeight: fixed ? .infinity : nil)
+      // Small screens keep a margin around every scene instead of filling the screen edge to edge.
+      // (Sulav's note is text, so it keeps the usual margin.)
+      .padding(.horizontal, JourneyLayout.compact && step != .founder ? 32 : (JourneyLayout.compact ? 18 : 24))
+      .padding(.vertical, JourneyLayout.compact ? 14 : 12)
+      // A stage shared by two pages stays put; only a new stage fades and slides.
+      .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
+    Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
+      .multilineTextAlignment(.center).lineLimit(typeSize.isAccessibilitySize ? nil : 2).fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
+      .frame(minHeight: 20).padding(.horizontal, 32)
+      .opacity(shown ? 1 : 0).offset(x: slide)
+      .accessibilityHidden(caption == nil)
+    // The hold is taller than Continue; on a phone with no home indicator it keeps the same air below.
+    actions.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
+      .opacity(shown ? 1 : 0).offset(x: slide * 0.5)
+  }
+
   private var topBar: some View {
     ZStack {
       HStack(spacing: 8) {
         // Past the offer there is no going back to it.
-        JourneyBackButton(label: store.t("Back"), action: back).disabled(locking)
+        JourneyBackButton(label: store.t("Go back"), action: back).disabled(locking || account.busy)
           .opacity(step == .splits || step == .firstWorkout ? 0 : 1).allowsHitTesting(step != .splits && step != .firstWorkout)
-        JourneyProgress(value: progress).padding(.horizontal, 8)
+        JourneyProgress(value: progress, label: store.t("Progress")).padding(.horizontal, 8)
         Color.clear.frame(width: 36, height: 36).accessibilityHidden(true)
       }.opacity(step == .welcome ? 0 : 1).allowsHitTesting(step != .welcome)
       Wordmark().opacity(step == .welcome ? 1 : 0)
@@ -220,14 +246,18 @@ struct OnboardingView: View {
   }
   private var headlineText: some View {
     Group {
-      if let personal {
+      if step == .founder {
+        Text(store.t("“Perfection is lots of little things done right.”")).italic()
+      } else if let personal {
         Text(personal)
       } else {
         Text(store.t(headlineCopy))
       }
     }.font(headlineFont).tracking(-0.3).multilineTextAlignment(.center)
-      .lineLimit([.scrollMinutes, .workoutTime, .promise].contains(step) ? 3 : 2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
+      .lineLimit(typeSize.isAccessibilitySize ? nil : [.scrollMinutes, .workoutTime, .promise].contains(step) ? 3 : 2)
+      .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
+      .accessibilityFocused($questionFocused)
   }
   /// The large title, one step smaller on small screens.
   private var headlineFont: Font { JourneyLayout.compact ? Font.app(.title2, design: .default, weight: .bold) : JourneyType.headline }
@@ -238,7 +268,7 @@ struct OnboardingView: View {
     case .height: return "How tall are you?"
     case .weight: return "How much do you weigh?"
     case .alerts: return "We’ll buzz you\nwhen rest is up."
-    case .scrolling: return "Be honest. Does your phone suck you in between sets?"
+    case .scrolling: return "Be honest. Do you check your phone between sets?"
     case .restNeed: return "How long do you need to rest between sets?"
     case .scrollMinutes: return "Once you start scrolling, how many minutes go by?"
     case .ahead: return "Then you’re already ahead."
@@ -272,12 +302,13 @@ struct OnboardingView: View {
         return name.isEmpty ? String(format: store.t("Scrolling takes about %@ of your workout."), words)
           : String(format: store.t("%@, scrolling takes about %@ of your workout."), name, words)
       }
-      let gym = store.gymWords(time.gym ?? 60)
-      if name.isEmpty {
-        let lost = store.lostWords(time)
-        return String(format: store.t("%@ of your %@ goes to scrolling."), lost.prefix(1).uppercased() + lost.dropFirst(), gym)
+      let gym = store.gymWords(time.gym ?? 60), lost = "\(time.shownLost)"
+      if time.lostIsAnHour {
+        return name.isEmpty ? String(format: store.t("About an hour of your %@ goes to scrolling."), gym)
+          : String(format: store.t("%@, about an hour of your %@ goes to scrolling."), name, gym)
       }
-      return String(format: store.t("%@, %@ of your %@ goes to scrolling."), name, store.lostWords(time), gym)
+      return name.isEmpty ? String(format: store.t("%@ minutes of your %@ goes to scrolling."), lost, gym)
+        : String(format: store.t("%@, %@ minutes of your %@ goes to scrolling."), name, lost, gym)
     case .yearTime:
       // The number keeps its unit on the same line ("120 hours", never "120 / hours").
       let hours = "\(time.shownYear)"
@@ -343,6 +374,7 @@ struct OnboardingView: View {
       withAnimation(JourneyMotion.gentle) { trainingDays = n }
       JourneyHaptic.play(.selection, store.profile)
     }
+    case .founder: FounderStage()
     case .scrolling: SuckedInStage(done: sceneDone)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
     case .gender: GenderStage(gender: gender) { value in
@@ -428,7 +460,7 @@ struct OnboardingView: View {
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
       case .welcome:
-        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.name) })
+        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.founder) })
         JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn", action: onSignIn)
           .opacity(ready ? 1 : 0).allowsHitTesting(ready).accessibilityHidden(!ready)
       case .account:
@@ -443,7 +475,7 @@ struct OnboardingView: View {
                      let next = min(3, Int(p * 3 + 0.001))
                      if next != pledged { withAnimation(.spring(duration: 0.3)) { pledged = next } }
                    },
-                   onComplete: commit))
+                   onComplete: commit, hint: store.t("Double-tap to commit.")))
       case .blocking:
         // App Review 5.1.1(iv) (17 Oct 2026): until iOS has asked for Screen Time access, Choose apps
         // (which asks first) is the only way on. Once it has asked, choosing apps can wait; a refusal
@@ -484,9 +516,11 @@ struct OnboardingView: View {
   }
   /// Continue holds its place and fades in once the page's scene has played.
   private func gated<Button: View>(_ button: Button) -> some View {
-    // Hidden means hidden for VoiceOver too, so nothing can be activated before the scene ends.
-    button.opacity(ready ? 1 : 0).offset(y: ready ? 0 : 8).allowsHitTesting(ready).accessibilityHidden(!ready)
-      .animation(.smooth(duration: 0.3), value: ready)
+    // VoiceOver users get it straight away: the scene is described, and a button that appears
+    // silently after it was never found (inspection, 20 Oct 2026).
+    let on = ready || UIAccessibility.isVoiceOverRunning
+    return button.opacity(on ? 1 : 0).offset(y: on ? 0 : 8).allowsHitTesting(on).accessibilityHidden(!on)
+      .animation(.smooth(duration: 0.3), value: on)
   }
   /// A scene has finished. Continue still waits a beat after it, and until the page has been up a
   /// minimum time, so nobody taps through before the point lands.
@@ -589,6 +623,8 @@ struct OnboardingView: View {
     }
   }
   private func advance() {
+    // A second tap while the page is leaving would save and log the answer twice.
+    guard !moving else { return }
     if step == .name {
       guard canSaveName else { return }
       let name = String(nameDraft.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
@@ -644,7 +680,7 @@ struct OnboardingView: View {
   }
   private func back() {
     guard !locking else { return }
-    if step == .name { dismissKeyboard(); move(.welcome); return }
+    if step == .founder { move(.welcome); return }
     if step == .name { dismissKeyboard() }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
@@ -712,6 +748,8 @@ struct OnboardingView: View {
       }
       withAnimation(.spring(duration: reduceMotion ? 0.12 : 0.3, bounce: 0.08)) { shown = true; slide = 0 }
       moving = false
+      // VoiceOver reads the new question, rather than staying on a button that's gone.
+      if UIAccessibility.isVoiceOverRunning { questionFocused = true }
     }
   }
   private func update(_ body: (inout RoutineBaseline) -> Void) {
@@ -723,6 +761,7 @@ struct OnboardingView: View {
   }
   /// After the offer: the chosen template becomes splits (existing ones are kept), then the first workout.
   private func applyTemplate() {
+    guard !moving else { return }
     guard let template else { return }
     if template != .keep {
       for (name, ids) in template.splits {
@@ -739,6 +778,8 @@ struct OnboardingView: View {
   /// The end of onboarding: into the app, with the first split (if any) lined up on Home, or
   /// straight into it.
   private func finish(skipped: Bool, start: Bool = false) {
+    guard !moving, !finished else { return }
+    finished = true
     // Starting the workout has its own beat (the lock); otherwise a success tap.
     if !start { JourneyHaptic.play(.success, store.profile) }
     let p = store.profile

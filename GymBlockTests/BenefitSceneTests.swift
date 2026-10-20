@@ -14,14 +14,14 @@ import XCTest
       var b = example(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
       XCTAssertEqual(Array(route.suffix(8)), tail)
-      XCTAssertEqual(Array(route.prefix(4)), [.name, .trainingDays, .scrolling, .restNeed])  // One question a page.
+      XCTAssertEqual(Array(route.prefix(5)), [.founder, .name, .trainingDays, .scrolling, .restNeed])  // Sulav's note, then one question a page.
       XCTAssertEqual(route.contains(.scrollMinutes), answer != .no)
       XCTAssertEqual(route.contains(.ahead), answer == .no)
       XCTAssertEqual(route.count, answer == .no ? 14 : 21)  // 22 and 15 pages with the welcome.
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
-    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(7)), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.founder, .name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .shield])
     // Sets and the rest they need alone don't fit the gym time: only the per-rest promise.
     var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
     XCTAssertEqual(Array(OnboardingRoute.steps(unfit).dropFirst(10).prefix(2)), [.promise, .shield])
@@ -149,9 +149,20 @@ import XCTest
     // Sets and needed rest alone past the gym time: no total, never a guess.
     var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
     XCTAssertNil(TimeBack(unfit).lost); XCTAssertEqual(TimeBack(unfit).outcome, .unfit)
-    // Under five minutes: small (5 rests × ½ min = 2.5, shown as 3).
+    // Under ten minutes: small, rounded down (5 rests × ½ min = 2.5, shown as 2).
     var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2; small.duration = 45
-    XCTAssertEqual(TimeBack(small).outcome, .small); XCTAssertEqual(TimeBack(small).shownLost, 3)
+    XCTAssertEqual(TimeBack(small).outcome, .small); XCTAssertEqual(TimeBack(small).shownLost, 2)
+    // 5 to 10 minutes is small too now (14 rests × ½ min = 7): no "we'll give you those 5 minutes back".
+    var seven = example(); seven.scrollingMinutes = 2
+    XCTAssertEqual(TimeBack(seven).outcome, .small); XCTAssertEqual(TimeBack(seven).shownLost, 7)
+    // Every later number comes from the minutes as shown, so the pages agree: 37.8 lost shows 35, and
+    // the year is 35 × 4 × 52, not 37.8 × 4 × 52.
+    var odd = example(); odd.scrollingMinutes = 4.2; odd.restNeedSeconds = 90
+    let o2 = TimeBack(odd)
+    XCTAssertEqual(o2.shownLost, 35); XCTAssertEqual(o2.yearHours, 35.0 * 4 * 52 / 60, accuracy: 0.001); XCTAssertEqual(o2.workout, 55)
+    // Under an hour a month, nothing to round to.
+    var once = example(); once.scrollingMinutes = 2.5; once.trainingDays = 1
+    XCTAssertEqual(TimeBack(once).shownLost, 10); XCTAssertEqual(TimeBack(once).monthHours, 0)
     // Unanswered: open.
     XCTAssertEqual(TimeBack(RoutineBaseline()).outcome, .open)
   }

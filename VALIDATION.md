@@ -1,5 +1,39 @@
 # Validation — 8 October 2026
 
+## Onboarding picks: ours and Sulav's, merged (20 October 2026)
+
+- Sulav's commit (ef8a800) merged with the inspection fixes, then the user's page-by-page picks applied (docs/ONBOARDING-V8-PLAN.md, "Picks from the side-by-side"). Side-by-side board of both versions: `screenshots/2026-10-20-compare/` (iPhone SE, iOS 26.5, same answers). Offer mockup: `docs/onboarding-mockups/offer-inline.html`.
+- Installed on the user's iPhone as "GB Picks" (personal-team copy, offline) beside "GB Sulav"; checked on the SE simulator: rest and gym pages on rows with the larger stopwatch and clock, Sulav's rack and log, the commit page, the offer's "35 min" inside the red bar, the founder's note second, our phone question.
+- Unit tests: 101, 0 failures, 1 skipped (one simulator). Captures of every page: `screenshots/2026-10-20-picks/`.
+
+## Onboarding inspection and fixes (20 October 2026)
+
+The whole onboarding was inspected from every angle, then the must-fix and should-fix findings were fixed. The board, with before and after captures, is [screenshots/2026-10-20-inspection/index.html](screenshots/2026-10-20-inspection/index.html); the spec's new section is "After the inspection" in [docs/ONBOARDING-V8-PLAN.md](docs/ONBOARDING-V8-PLAN.md).
+
+- **How it was inspected.** Every page and path was checked on a new `GymBlock SE` simulator (iPhone SE 3rd gen, iOS 26.5, like the user's phone) and on `GymBlock Store CPP` (iPhone 18 Pro Max, iOS 27.0). The SE was also run at Accessibility Large and XXXL text, in Spanish (system language), dark with Increase Contrast, and with Reduce Motion. Page changes were recorded and read frame by frame. Apple's accessibility audit ran on all 23 page states (`GymBlockUITests/OnboardingAccessibilityAuditUITests.swift`, new). Every colour pair's contrast was measured, and a code review covered VoiceOver, Dynamic Type, targets, translation, edge cases and battery.
+- **Must-fix, fixed and checked.**
+  - **Rarely:** Continue on "Then you're already ahead." now appears with the scene, at 3 s, where it used to take 20. Checked by tapping through on the SE.
+  - **Large text:** pages scroll at accessibility sizes, and on small phones from XXL up. Nothing collides with the status bar; every scene stays visible; labels stack; colliding axis ticks drop out. Checked at Accessibility Large and XXXL.
+  - **Spanish:** a phone set to Spanish gets Spanish, checked on every new page. VoiceOver's Back is "Volver".
+  - **iPhone SE:** the time-back answers are one row of tiles, so the scenes get about 330 pt instead of 130. Every scene reads at the default size.
+- **Should-fix, fixed and checked.**
+  - Losses under 10 minutes take the "keep every rest on time" path.
+  - Every number is multiplied from the minutes as shown.
+  - AA text shades: `signalText` 4.8:1 and `dangerText` 5.1:1; the bar grey is 3.4:1.
+  - Notes sit outside narrow bars.
+  - VoiceOver: focus moves to each question, and every scene has a sentence.
+  - The app font follows text size live.
+  - Motion: no "+0 min", and the promise hero swaps without overlapping (both checked in frame-by-frame recordings). Under Reduce Motion the rack fades in place.
+  - 44-pt links; double taps are ignored; Back waits during sign-in.
+  - The feed and the clock no longer redraw every frame.
+- **Apple's audit, before and after:** 487 issues, now 231.
+  - Dynamic Type: 256 → 26 (the welcome's fixed-size art and the splits rows).
+  - Hit region: 24 → 0.
+  - Contrast: 168 → 162. The remaining flags are headlines and labels in ink and secondary grey that measure 5.2 to 16.5:1; the audit flags them because of the glow and dot grid behind. None of the recoloured small text is flagged.
+  - Text clipped: 38 → 39, nearly all the welcome scene's artwork and decorative previews.
+- **Tests.** The unit suite passes on the SE with parallel testing off: 101 tests, 0 failures, 1 skipped. The audit test passes and logs its findings. The onboarding UI journeys (`JourneyV2UITests`, `BenefitLayoutUITests`) keep their tap identifiers but weren't run.
+- **Not checked.** How the haptics feel and whether the sounds land (needs a phone). The offer page in Spanish: a development jump straight to the offer skips the page that sets the language. The splits page's preview column still truncates long Spanish split names.
+
 ## Onboarding V8: time back (20 October 2026)
 
 Built from the approved mockups ([docs/onboarding-mockups/time-back.html](docs/onboarding-mockups/time-back.html), round 2), spec [docs/ONBOARDING-V8-PLAN.md](docs/ONBOARDING-V8-PLAN.md). Pages 5–14 are new or rewritten; the offer's headline and bars, the plan's last line and the rest-alert headline changed; the ring, mind-muscle, pump and log pages and their scenes and scores are gone.

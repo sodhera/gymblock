@@ -311,6 +311,8 @@ struct FingerprintHold: View {
   let committed: Bool
   let onProgress: (Double) -> Void
   let onComplete: () -> Void
+  /// What VoiceOver says a double tap does.
+  var hint = "Double-tap to commit."
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.scenePhase) private var scenePhase
   @State private var fill = 0.0
@@ -367,7 +369,8 @@ struct FingerprintHold: View {
         .contentTransition(.opacity).animation(.easeInOut(duration: 0.2), value: committed)
     }
     .frame(maxWidth: .infinity)
-    .accessibilityElement().accessibilityLabel(title).accessibilityAddTraits(.isButton)
+    .accessibilityElement().accessibilityLabel(committed ? doneTitle : title).accessibilityAddTraits(.isButton)
+    .accessibilityHint(committed ? "" : hint)
     .accessibilityIdentifier("commit.hold")
     // VoiceOver can't express a press and hold, so it gets a plain action.
     .accessibilityAction { finish() }
@@ -536,7 +539,7 @@ struct NameStage: View {
   var body: some View {
     VStack(spacing: 10) {
       Spacer(minLength: 0)
-      TextField("", text: $name, prompt: Text(store.t("Your name")).foregroundColor(JourneyColor.tertiary))
+      TextField("", text: $name, prompt: Text(store.t("Your name")).foregroundColor(JourneyColor.secondary))
         .font(.app(.title, weight: .semibold)).multilineTextAlignment(.center).foregroundStyle(JourneyColor.text)
         .textContentType(.givenName).textInputAutocapitalization(.words).autocorrectionDisabled()
         .submitLabel(.continue).focused($focused).onSubmit(submit).tint(JourneyColor.accent)

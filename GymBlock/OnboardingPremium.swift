@@ -70,6 +70,11 @@ enum JourneyColor {
   static var signal: Color { theme.signal }
   /// Time lost to the phone: the only warm colour in the app.
   static var danger: Color { theme.danger }
+  /// The signal and the red as small text, or as a fill under small white text: a shade darker so
+  /// they pass WCAG AA on the paper (4.8:1 and 5.1:1; white on them 5.3:1 and 5.7:1). The plain
+  /// colours stay for large numbers, marks and bars (inspection, 20 Oct 2026).
+  static var signalText: Color { .dynamic(UIColor(red: 0.03, green: 0.48, blue: 0.33, alpha: 1), UIColor(red: 0.30, green: 0.80, blue: 0.60, alpha: 1)) }
+  static var dangerText: Color { .dynamic(UIColor(red: 0.76, green: 0.18, blue: 0.15, alpha: 1), UIColor(red: 0.97, green: 0.48, blue: 0.43, alpha: 1)) }
   static var text: Color { theme.text }
   static var secondary: Color { theme.secondary }
   static var tertiary: Color { theme.tertiary }
@@ -386,25 +391,29 @@ struct JourneyOption: View {
   let id: String
   var detail: String? = nil
   let action: () -> Void
+  @Environment(\.dynamicTypeSize) private var typeSize
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   var body: some View {
     Button(action: { Analytics.tap(id); action() }) {
       HStack(spacing: 12) {
         VStack(alignment: .leading, spacing: 3) {
-          Text(title).font(JourneyType.option).foregroundStyle(JourneyColor.text).lineLimit(1)
-          if let detail { Text(detail).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(1) }
+          // Large text wraps instead of truncating ("2½ hours or m…").
+          Text(title).font(JourneyType.option).foregroundStyle(JourneyColor.text).lineLimit(typeSize.isAccessibilitySize ? 3 : 1)
+          if let detail { Text(detail).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).lineLimit(typeSize.isAccessibilitySize ? 3 : 1) }
         }
         Spacer(minLength: 8)
         Image(systemName: "checkmark.circle.fill").font(.system(.body, weight: .semibold))
           .symbolRenderingMode(.palette).foregroundStyle(JourneyColor.onAccent, JourneyColor.accent)
           .opacity(selected ? 1 : 0).scaleEffect(selected ? 1 : 0.6).accessibilityHidden(true)
-      }.padding(.horizontal, 18).frame(maxWidth: .infinity, minHeight: JourneyLayout.compact ? 44 : 52)
+      }.padding(.horizontal, 18).padding(.vertical, typeSize.isAccessibilitySize ? 8 : 0)
+        .frame(maxWidth: .infinity, minHeight: JourneyLayout.compact ? 44 : 52)
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous),
                       tint: selected ? JourneyColor.ink(0.12) : nil, interactive: true)
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
           .strokeBorder(JourneyColor.ink(selected ? 0.5 : 0), lineWidth: 1.5))
     }.buttonStyle(JourneyPressStyle())
-      .animation(JourneyMotion.gentle, value: selected)
+      .animation(reduceMotion ? nil : JourneyMotion.gentle, value: selected)
       .accessibilityIdentifier(id).accessibilityAddTraits(selected ? .isSelected : [])
   }
 }
@@ -430,6 +439,7 @@ struct JourneyBackButton: View {
 
 struct JourneyProgress: View {
   let value: Double
+  var label = "Progress"
   var body: some View {
     GeometryReader { g in
       ZStack(alignment: .leading) {
@@ -437,7 +447,9 @@ struct JourneyProgress: View {
         Capsule().fill(JourneyColor.ink(0.9)).frame(width: max(3, g.size.width * value))
       }
     }.frame(height: 3).animation(.smooth(duration: 0.7), value: value)
-      .accessibilityElement().accessibilityValue(Text("\(Int(value * 100))%"))
+      // The 3-pt line sits in a full-height row, so it isn't a 3-pt element to VoiceOver.
+      .frame(maxHeight: .infinity).contentShape(Rectangle())
+      .accessibilityElement().accessibilityLabel(Text(label)).accessibilityValue(Text("\(Int(value * 100))%"))
   }
 }
 

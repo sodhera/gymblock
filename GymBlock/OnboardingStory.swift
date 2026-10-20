@@ -199,6 +199,56 @@ struct LockPhone: View {
   }
 }
 
+// MARK: - Founder's note
+
+/// Sulav's note: the voice for everything after it. Set on the paper like a letter, no card, no
+/// animation, no sound. Short enough to read in ten seconds.
+struct FounderStage: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
+  var body: some View {
+    // The larger setting where it fits, the body size on small screens, scrolling only as a last
+    // resort (the largest accessibility sizes).
+    ViewThatFits(in: .vertical) {
+      letter(.app(.title3), spacing: 16)
+      // Between title 3 and body: on the largest phones the body size left an empty band under the note.
+      letter(.app(size: 18.5, relativeTo: .body), spacing: 14)
+      letter(.app(.body), spacing: 12)
+      letter(.app(.callout), spacing: 9, signature: 26)
+      // Small screens: the callout setting, scaled down just enough to fit. Accessibility sizes scroll
+      // instead, so their text stays large.
+      if typeSize.isAccessibilitySize {
+        ScrollView { letter(.app(.body), spacing: 12) }.scrollIndicators(.hidden)
+      } else {
+        ScaleToFit { letter(.app(.callout), spacing: 9, signature: 26) }
+      }
+    }
+    .accessibilityElement(children: .combine).accessibilityIdentifier("founder.note")
+  }
+  private func letter(_ font: Font, spacing: CGFloat, signature: CGFloat = 32) -> some View {
+    VStack(alignment: .leading, spacing: spacing) {
+      Text(store.t("Hey friend,"))
+      Text(store.t("In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them."))
+      Text(store.t("Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone."))
+      Text(store.t("GymBlock is how I took those minutes back. It locks the apps that pull you away while you train, and keeps an honest record of every set, so you always know what you did last time and what to beat today."))
+      Text(store.t("Little things, done right, every session."))
+      VStack(alignment: .leading, spacing: 2) {
+        Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
+        // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in
+        // light and dark; about as tall as the typed name it replaced was large.
+        Image("FounderSignature").renderingMode(.template).resizable().scaledToFit()
+          .frame(height: signature * 1.5).foregroundStyle(JourneyColor.text)
+          .accessibilityLabel("Sulav")
+        Text(store.t("Founder, GymBlock")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
+      }.padding(.top, 2)
+    }
+    .font(font).foregroundStyle(JourneyColor.text.opacity(0.86)).lineSpacing(3)
+    .fixedSize(horizontal: false, vertical: true)
+    .padding(.horizontal, 6)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+  }
+}
+
 // MARK: - Days a week
 
 /// How many days a week they lift, on a slider from once a week to every day (18 Oct 2026, at the
@@ -237,7 +287,7 @@ struct TrainingDaysStage: View {
           Text(store.t("Once a week"))
           Spacer()
           Text(store.t("Every day"))
-        }.font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
+        }.font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).accessibilityHidden(true)
       }
       .padding(.horizontal, 4)
       Spacer(minLength: 0)
@@ -453,7 +503,9 @@ struct LockScreenRest: View {
         Spacer(minLength: 0)
       }
     }
-    .accessibilityElement(children: .combine).accessibilityIdentifier("alerts.preview")
+    // A picture of the Lock Screen: one still sentence, not a live countdown and a "Start set" that isn't a button.
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("alerts.preview")
+    .accessibilityLabel(store.t("On your Lock Screen") + ": " + store.t("Rest’s up. Time for your next set."))
   }
 }
 
@@ -477,7 +529,7 @@ struct PlanStage: View {
               Text(row.0).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
               // Their workout with rests on time is the one thing in the plan that's new: the signal.
               Text(row.1).font(.app(JourneyLayout.compact ? .title3 : .title2, weight: .semibold))
-                .foregroundStyle(i == 3 ? JourneyColor.accent : JourneyColor.text).tracking(-0.3)
+                .foregroundStyle(i == 3 ? JourneyColor.signalText : JourneyColor.text).tracking(-0.3)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, JourneyLayout.compact ? 10 : 15)
               .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
               .opacity(k).offset(y: (1 - k) * 12)
@@ -498,7 +550,7 @@ struct PlanStage: View {
       (store.t("Training"), String(format: store.t("%@ days a week"), "\(days)")),
       (store.t("While you train"), locked ? String(format: store.t("%@ locked"), blocking.summary(store.t)) : store.t("Rest timer and log")),
       (store.t("Between sets"), String(format: store.t(store.profile.restAlerts == true ? "%@ rests, then a buzz" : "%@ rests"), rest)),
-    ] + (time.outcome == .full ? [(store.t("Each workout"), store.aboutWords(time.workout).prefix(1).uppercased() + store.aboutWords(time.workout).dropFirst())] : [])
+    ] + (time.outcome == .full ? [(store.t("Each workout"), store.aboutLine(time.workout))] : [])
   }
 }
 
@@ -628,7 +680,7 @@ struct SplitTemplateStage: View {
             Text(row.0).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text).frame(width: 74, alignment: .leading).lineLimit(1)
             Text(row.1).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
             Spacer(minLength: 4)
-            Text("\(row.2)").font(.app(.footnote)).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
+            Text("\(row.2)").font(.app(.footnote)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
           }.padding(.vertical, 6)
         }
       }.padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
@@ -655,7 +707,10 @@ struct FirstWorkoutStage: View {
             Text(split.name + " · " + String(format: store.t("%@ exercises"), "\(split.exercises.count)"))
               .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
             Spacer()
-            Button(store.t("Edit")) { editing = split }.font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
+            Button { editing = split } label: {
+              // A full 44-pt target (the word alone was about 20 pt tall).
+              Text(store.t("Edit")).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+            }.font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
               .accessibilityIdentifier("first.edit")
           }.padding(.horizontal, 16).padding(.vertical, 12)
           ForEach(split.exercises.prefix(JourneyLayout.compact ? 5 : 7)) { e in

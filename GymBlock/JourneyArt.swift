@@ -16,6 +16,8 @@ struct JourneyWheel: UIViewRepresentable {
   let id: String
   @Binding var value: Double
   var format: ((Double) -> String)? = nil
+  /// What VoiceOver calls the wheel ("Minutes you scroll"); the unit when there's nothing better.
+  var label: String? = nil
   func text(_ v: Double) -> String { format?(v) ?? JourneyFormat.number(v) + " " + unit }
   func makeCoordinator() -> Coordinator { Coordinator(self) }
   func makeUIView(context: Context) -> UIPickerView {
@@ -33,7 +35,7 @@ struct JourneyWheel: UIViewRepresentable {
     if changed { picker.reloadAllComponents() }
     let index = values.firstIndex(of: value) ?? 0
     if picker.selectedRow(inComponent: 0) != index { picker.selectRow(index, inComponent: 0, animated: false) }
-    picker.accessibilityLabel = unit
+    picker.accessibilityLabel = label ?? unit
   }
   final class Coordinator: NSObject, UIPickerViewDataSource, UIPickerViewDelegate {
     var parent: JourneyWheel

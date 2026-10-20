@@ -121,7 +121,7 @@ struct PaywallView: View {
                 Text("GymBlock Pro").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
               }.accessibilityElement(children: .combine)
               Text(headline)
-                .font(.app(size: JourneyLayout.compact ? 27 : 33, weight: .bold)).tracking(-0.6).foregroundStyle(JourneyColor.text)
+                .font(.app(size: JourneyLayout.compact ? 27 : 33, weight: .bold, relativeTo: .largeTitle)).tracking(-0.6).foregroundStyle(JourneyColor.text)
                 .fixedSize(horizontal: false, vertical: true).padding(.top, 10)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
               Spacer(minLength: 18).frame(maxHeight: 26)
@@ -163,6 +163,9 @@ struct PaywallView: View {
   // MARK: Sections
 
   private var time: TimeBack { TimeBack(store.profile.baseline ?? RoutineBaseline(), restSeconds: store.profile.restSeconds) }
+  private func footerLink(_ title: String) -> some View {
+    Text(title).padding(.horizontal, 6).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+  }
   /// The change, sold in their own numbers (docs/ONBOARDING-V8-PLAN.md): the minutes back, never a
   /// body prediction. Rarely, or a scroll that fits the rest: every rest on time.
   private var headline: String {
@@ -245,17 +248,17 @@ struct PaywallView: View {
       }
       // Price and period are on the cards; Restore and working Terms/Privacy links are required
       // on a subscription paywall (App Review 3.1.1, 3.1.2).
-      HStack(spacing: 16) {
-        Button(store.t("Restore")) { Task { await subscription.restore() } }.accessibilityIdentifier("subscription.restore")
-        Link(store.t("Terms"), destination: AppConfig.termsURL)
-        Link(store.t("Privacy"), destination: AppConfig.privacyURL)
+      // Each link is a full 44-pt target, not just its words (they were about 18 pt tall).
+      HStack(spacing: 4) {
+        Button { Task { await subscription.restore() } } label: { footerLink(store.t("Restore")) }.accessibilityIdentifier("subscription.restore")
+        Link(destination: AppConfig.termsURL) { footerLink(store.t("Terms")) }
+        Link(destination: AppConfig.privacyURL) { footerLink(store.t("Privacy")) }
         // The only way off a wall when signed in with the wrong account.
         if account.user != nil {
-          Button(store.t("Sign out")) { signOut() }.accessibilityIdentifier("subscription.signOut")
+          Button { signOut() } label: { footerLink(store.t("Sign out")) }.accessibilityIdentifier("subscription.signOut")
         }
       }
       .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).buttonStyle(.plain)
-      .frame(minHeight: 44)
     }
     .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
     .background(alignment: .top) {
@@ -309,42 +312,84 @@ private struct Benefit: View {
 private struct TwoWays: View {
   let time: TimeBack
   @EnvironmentObject private var store: GymStore
+  @Environment(\.dynamicTypeSize) private var typeSize
   var body: some View {
-    let gym = time.gym ?? 60, lost = time.lost ?? 0
+    let gym = time.gym ?? 60, lost = Double(time.shownLost)
     VStack(alignment: .leading, spacing: 9) {
       Text(String(format: store.t("Your time at the gym: %@"), store.gymWords(gym)))
         .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
+      // The darker shades keep the white labels at AA (5.3:1 and 5.7:1; the plain ones were 3.6 and 4.4).
       bar(store.t("Today"), JourneyColor.secondary, [
-        (gym - lost, JourneyColor.signal, ""),
-        (lost, JourneyColor.danger, String(format: store.t("%@ min scrolling"), "\(time.shownLost)")),
+        (gym - lost, JourneyColor.signalText, "", false),
+        (lost, JourneyColor.dangerText, String(format: store.t("%@ min"), "\(time.shownLost)"), true),
       ])
       bar(store.t("With GymBlock"), JourneyColor.text, [
-        (gym - lost, JourneyColor.signal, store.aboutWords(time.workout).prefix(1).uppercased() + store.aboutWords(time.workout).dropFirst()),
-        (lost, Color.clear, ""),
+        (gym - lost, JourneyColor.signalText, store.aboutLine(time.workout), false),
+        (lost, Color.clear, "", false),
       ])
-      Text(String(format: store.t("From your answers. About %@ hours back a month."), "\(time.monthHours)"))
-        .font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
-    }.accessibilityElement(children: .combine).accessibilityIdentifier("paywall.twoWays")
+      // Under an hour a month there's nothing honest to round to, so the line stays out.
+      if time.monthHours >= 1 {
+        Text(String(format: store.t("From your answers. About %@ hours back a month."), "\(time.monthHours)"))
+          .font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
+      } else {
+        Text(store.t("From your answers.")).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
+      }
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("paywall.twoWays")
+    .accessibilityLabel([String(format: store.t("Your time at the gym: %@"), store.gymWords(gym)),
+                         store.t("Today") + ": " + String(format: store.t("%@ min scrolling"), "\(time.shownLost)"),
+                         store.t("With GymBlock") + ": " + store.aboutLine(time.workout)].joined(separator: ". "))
   }
-  private func bar(_ label: String, _ color: Color, _ parts: [(Double, Color, String)]) -> some View {
-    HStack(spacing: 10) {
-      Text(label).font(.app(.subheadline, weight: .semibold)).foregroundStyle(color).frame(width: 102, alignment: .leading)
-        .lineLimit(1).minimumScaleFactor(0.7)
-      GeometryReader { g in
-        let total = max(1, parts.reduce(0) { $0 + max(0, $1.0) })
-        HStack(spacing: 2) {
-          ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
-            if part.0 > 0 {
-              ZStack(alignment: .leading) {
-                part.1
-                Text(part.2).font(.app(.caption2, weight: .semibold)).lineLimit(1)
-                  .foregroundStyle(part.1 == JourneyColor.danger || part.1 == JourneyColor.signal ? Color.white : JourneyColor.text.opacity(0.8)).padding(.leading, 8)
-              }.frame(width: max(2, (g.size.width - 2 * CGFloat(parts.count - 1)) * part.0 / total))
-            }
+  /// A labelled bar of parts: minutes, fill, the words inside, and whether it's the red one. The red
+  /// part says it inside itself, a phone and the minutes (20 Oct 2026, at the user's request: no line
+  /// of its own under the bar); at large text the label sits above the bar instead of in a 102-pt column.
+  @ViewBuilder private func bar(_ label: String, _ color: Color, _ parts: [(Double, Color, String, Bool)]) -> some View {
+    let total = max(1, parts.reduce(0) { $0 + max(0, $1.0) })
+    let title = Text(label).font(.app(.subheadline, weight: .semibold)).foregroundStyle(color)
+    if typeSize >= .xxLarge {
+      VStack(alignment: .leading, spacing: 4) { title; strip(parts, total: total) }
+    } else {
+      HStack(spacing: 10) {
+        title.frame(width: 102, alignment: .leading).lineLimit(1).minimumScaleFactor(0.7)
+        strip(parts, total: total)
+      }
+    }
+  }
+  private func strip(_ parts: [(Double, Color, String, Bool)], total: Double) -> some View {
+    GeometryReader { g in
+      let usable = g.size.width - 2 * CGFloat(parts.count - 1)
+      HStack(spacing: 2) {
+        ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+          if part.0 > 0 {
+            let width = max(2, usable * part.0 / total)
+            ZStack(alignment: .leading) {
+              part.1
+              // Words only where they fit. The red part: a phone and the minutes, the phone alone when
+              // that's too wide, nothing when even the phone isn't.
+              if part.3 {
+                let words = Self.fits(part.2, in: width - Self.phone)
+                if words || width >= Self.phone + 14 {
+                  HStack(spacing: 4) {
+                    Image(systemName: "iphone").font(.system(size: 11, weight: .semibold))
+                    if words { Text(part.2).font(.app(.caption2, weight: .semibold)).lineLimit(1) }
+                  }.foregroundStyle(Color.white).padding(.leading, 7)
+                }
+              } else if Self.fits(part.2, in: width) {
+                Text(part.2).font(.app(.caption2, weight: .semibold)).lineLimit(1).foregroundStyle(Color.white).padding(.leading, 8)
+              }
+            }.frame(width: width)
           }
         }
-      }.frame(height: 28).clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-    }
+      }
+    }.frame(height: 28).clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+  }
+  /// The phone glyph and its gap, beside the red part's minutes.
+  private static let phone: CGFloat = 14
+  /// Whether a bar label fits in a part this wide, with its padding.
+  private static func fits(_ text: String, in width: CGFloat) -> Bool {
+    guard !text.isEmpty else { return true }
+    let font = AppFont.uiFont(size: UIFontMetrics(forTextStyle: .caption2).scaledValue(for: 11), weight: .semibold) ?? .preferredFont(forTextStyle: .caption2)
+    return (text as NSString).size(withAttributes: [.font: font]).width + 16 <= width
   }
 }
 
@@ -391,7 +436,7 @@ private struct PricingCard: View {
       VStack(alignment: .leading, spacing: 4) {
         Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(.app(.subheadline, weight: .semibold))
           .foregroundStyle(selected ? JourneyColor.text : JourneyColor.secondary)
-        (Text(plan.perMonth ?? plan.price).font(.app(size: 26, weight: .bold))
+        (Text(plan.perMonth ?? plan.price).font(.app(size: 26, weight: .bold, relativeTo: .title))
          + Text("/" + store.t("mo")).font(.app(.subheadline)).foregroundColor(JourneyColor.secondary))
           .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5).padding(.top, 2)
         Text(footnote).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).lineLimit(2).fixedSize(horizontal: false, vertical: true)

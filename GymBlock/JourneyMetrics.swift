@@ -121,7 +121,8 @@ struct TimeBack: Equatable {
     /// Their sets and the rest they need alone run past their gym time: no workout total, only the
     /// per-rest number (never a guess).
     case unfit
-    /// Under five minutes a workout: shown as it is, with no year or promise.
+    /// Under ten minutes a workout: shown as it is, then every rest on time, with no year or
+    /// promise (a 5-minute "we'll give you those back" rang hollow; inspection, 20 Oct 2026).
     case small
     /// The whole pitch: per rest, per workout, per year, given back.
     case full
@@ -155,22 +156,24 @@ struct TimeBack: Equatable {
     if share == 0 || lostPerRest == 0 { return .ahead }
     guard lostPerRest != nil, gym != nil, sets != nil else { return .open }
     guard let lost else { return .unfit }
-    return lost < 5 ? .small : .full
+    return lost < Self.smallLoss ? .small : .full
   }
+  static let smallLoss = 10.0
 
-  /// The lost minutes as shown: down to the nearest 5 (whole minutes under 5).
+  /// The lost minutes as shown: down to the nearest 5, or down to the whole minute (at least 1)
+  /// under 10. Every later number is multiplied from this one, so the pages agree.
   var shownLost: Int {
     guard let lost else { return 0 }
-    return lost < 5 ? Int(lost.rounded()) : Int(lost / 5) * 5
+    return lost < Self.smallLoss ? max(1, Int(lost)) : Int(lost / 5) * 5
   }
   /// "about an hour" reads truer than 55 or 65.
   var lostIsAnHour: Bool { (55...65).contains(shownLost) }
   /// Their workout with rests on time: the gym time less the lost minutes, up to the nearest 5.
   var workout: Int {
-    guard let gym, let lost else { return Int(gym ?? 0) }
-    return Int(((gym - lost) / 5 - 1e-9).rounded(.up)) * 5
+    guard let gym, lost != nil else { return Int(gym ?? 0) }
+    return Int(((gym - Double(shownLost)) / 5 - 1e-9).rounded(.up)) * 5
   }
-  var yearHours: Double { (lost ?? 0) * Double(days) * 52 / 60 }
+  var yearHours: Double { lost == nil ? 0 : Double(shownLost) * Double(days) * 52 / 60 }
   /// Down to the nearest 10 hours from 20 up.
   var shownYear: Int { yearHours >= 20 ? Int(yearHours / 10) * 10 : Int(yearHours.rounded(.down)) }
   /// The year's lost hours as workouts of their own length, down to the nearest 5 from 20 up.
@@ -179,7 +182,8 @@ struct TimeBack: Equatable {
     let n = Int(yearHours * 60 / gym)
     return n >= 20 ? n / 5 * 5 : n
   }
-  var monthHours: Int { Int((lost ?? 0) * Double(days) * 52 / 12 / 60) }
+  /// Hours back a month, down to the hour (0 says nothing: the offer leaves the line out).
+  var monthHours: Int { lost == nil ? 0 : Int(Double(shownLost) * Double(days) * 52 / 12 / 60) }
 }
 
 /// Minutes as people say them: "1½ minutes", "2 hours", "45 minutes", "1 h 5 min".

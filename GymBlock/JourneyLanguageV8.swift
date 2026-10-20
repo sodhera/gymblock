@@ -89,5 +89,23 @@ extension Spanish {
     "Your time at the gym: %@": "Tu tiempo en el gimnasio: %@",
     "%@ min scrolling": "%@ min con el móvil",
     "From your answers. About %@ hours back a month.": "Según tus respuestas. Unas %@ horas de vuelta al mes.",
+    // Inspection fixes (20 Oct 2026)
+    "Go back": "Volver",
+    "Progress": "Progreso",
+    "Your numbers, multiplied out.": "Tus números, multiplicados.",
+    "From your answers.": "Según tus respuestas.",
+    "About %@": "Unos %@",
+    "Rest, %@": "Descanso, %@",
+    "Minutes you scroll": "Minutos con el móvil",
+    "or fewer": "o menos",
+    "or more": "o más",
+    "hour": "hora",
+    "hours": "horas",
+    "= %@ extra workout": "= %@ entrenamiento más",
+    "Double-tap to commit.": "Toca dos veces para comprometerte.",
+    "About an hour of your %@ goes to scrolling.": "De tu tiempo en el gimnasio (%@), cerca de una hora se va en el móvil.",
+    "%@, about an hour of your %@ goes to scrolling.": "%1$@, de tu tiempo en el gimnasio (%2$@), cerca de una hora se va en el móvil.",
+    "%@ minutes of your %@ goes to scrolling.": "De tu tiempo en el gimnasio (%2$@), %1$@ minutos se van en el móvil.",
+    "%@, %@ minutes of your %@ goes to scrolling.": "%1$@, de tu tiempo en el gimnasio (%3$@), %2$@ minutos se van en el móvil.",
   ]
 }
