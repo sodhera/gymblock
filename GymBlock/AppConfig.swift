@@ -9,8 +9,15 @@ enum AppConfig {
   /// Where the Google sign-in sheet returns to (registered in Supabase → Authentication → URL configuration).
   static let authCallback = URL(string: "gymblock://auth/callback")!
   /// RevenueCat's public SDK key, injected from Secrets.xcconfig; empty until the app is created there.
-  static let revenueCatKey = (Bundle.main.object(forInfoDictionaryKey: "RevenueCatAPIKey") as? String ?? "")
-    .trimmingCharacters(in: .whitespacesAndNewlines)
+  static let revenueCatKey = infoString("RevenueCatAPIKey")
+  /// PostHog's project key and host (Secrets.xcconfig); empty key, nothing sent. The host comes without
+  /// its scheme (xcconfig reads "//" as a comment) and defaults to PostHog's US cloud.
+  static let postHogKey = infoString("PostHogAPIKey")
+  static let postHogHost: String = {
+    let host = infoString("PostHogHost")
+    if host.isEmpty { return "https://us.i.posthog.com" }
+    return host.contains("://") ? host : "https://" + host
+  }()
   static let entitlement = "pro"
   static let monthlyProductID = "com.sodhera.gymblock.pro.monthly"
   static let yearlyProductID = "com.sodhera.gymblock.pro.yearly"
@@ -21,7 +28,11 @@ enum AppConfig {
   static let deletionURL = URL(string: "https://www.orecci.com/gymblock/user-data-deletion.html")!
   static let supportEmail = "admin@sodhera.com"
 
-  /// Development runs (UI tests, `--demo`, page jumps) stay offline: no account, no analytics.
+  private static func infoString(_ key: String) -> String {
+    (Bundle.main.object(forInfoDictionaryKey: key) as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+
+  /// Development runs (UI tests, `--demo`, page jumps) stay offline: no account, no analytics, no PostHog, no TikTok.
   static var offline: Bool {
     #if DEBUG
       let args = ProcessInfo.processInfo.arguments

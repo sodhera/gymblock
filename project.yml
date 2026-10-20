@@ -16,6 +16,14 @@ packages:
   RevenueCat:
     url: https://github.com/RevenueCat/purchases-ios-spm
     majorVersion: 5.0.0
+  # Product analytics (GymPostHog.swift): the same events as gb_events, forwarded.
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    majorVersion: 3.0.0
+  # TikTok ad attribution (GymTikTok.swift): SKAdNetwork only, never an ATT prompt.
+  TikTokBusinessSDK:
+    url: https://github.com/tiktok/tiktok-business-ios-sdk
+    majorVersion: 1.7.0
 targets:
   GymBlock:
     type: application
@@ -38,6 +46,14 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         RevenueCatAPIKey: $(REVENUECAT_API_KEY)
+        PostHogAPIKey: $(POSTHOG_API_KEY)
+        PostHogHost: $(POSTHOG_HOST)
+        AppleAppID: $(APPLE_APP_ID)
+        TikTokAppID: $(TIKTOK_APP_ID)
+        TikTokAccessToken: $(TIKTOK_ACCESS_TOKEN)
+        # TikTok's SKAdNetwork id: install attribution with no tracking permission.
+        SKAdNetworkItems:
+          - SKAdNetworkIdentifier: mj797d8u6f.skadnetwork
         GymBlockPrivacyURL: https://www.orecci.com/gymblock/privacy-policy.html
         GymBlockTermsURL: https://www.orecci.com/gymblock/terms-of-service.html
         CFBundleURLTypes:
@@ -67,6 +83,10 @@ targets:
         product: Supabase
       - package: RevenueCat
         product: RevenueCat
+      - package: PostHog
+        product: PostHog
+      - package: TikTokBusinessSDK
+        product: TikTokBusinessSDK
   # The Live Activity, the Up next / This month / This week widgets and the Start workout control.
   # It reads the app's widget snapshot from the App Group; never the store, Supabase or RevenueCat.
   GymBlockLive:

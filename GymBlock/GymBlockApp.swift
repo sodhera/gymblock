@@ -7,6 +7,8 @@ import SwiftUI
   @StateObject private var subscription = GymSubscription()
   @Environment(\.scenePhase) private var scenePhase
   init() {
+    // First: TikTok times its install and launch events off this (a no-op without keys or offline).
+    GymTikTok.start()
     // No navigation bar appearance override beyond the typeface: iOS 26 draws its own Liquid Glass bar.
     AppFont.styleBars()
     #if DEBUG

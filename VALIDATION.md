@@ -1,5 +1,10 @@
 # Validation — 8 October 2026
 
+## PostHog and TikTok SDKs (20 October 2026)
+
+- At the user's request, two SDKs through Swift Package Manager in `project.yml`: posthog-ios 3.92.0 (`GymPostHog.swift`) and tiktok-business-ios-sdk 1.7.2 (`GymTikTok.swift`, after SleepBlock's `SleepTikTok.swift`). PostHog gets every `Analytics` event as it is (screens as screen views, the rest by name, plus `install_id` and `gb_session_id`), identified by the Supabase user id and reset on sign-out; autocapture, screen swizzling, lifecycle events, session replay, surveys, push hooks, flag preloading and GeoIP are off. TikTok reports Registration (sign-up or Settings' link into an account with no GymBlock profile), StartTrial and Subscribe (value and currency) from RevenueCat's answer, with SKAdNetwork on, no ATT prompt and no `identify`; its own purchase observer and its "enhanced data postback" page and click events (which read on-screen text) are off. `purchase_completed` now carries `trial`. Both are no-ops without keys (Info.plist `PostHogAPIKey`, `PostHogHost`, `AppleAppID`, `TikTokAppID`, `TikTokAccessToken` from Secrets.xcconfig and the gitignored Secrets.local.xcconfig) and in development runs. `PrivacyInfo.xcprivacy` now declares device id, user id, product interaction, purchase history and diagnostics, not tracking.
+- Checked: Debug builds for the simulator and for device (`generic/platform=iOS`, automatic signing) succeed; the device app's entitlements are unchanged (Sign in with Apple, Family Controls, the App Group) and both SDKs link statically. Launched `--offline` on a throwaway iPhone 17 simulator (iOS 26.5): it opens on the welcome page. **Not verified:** any event reaching PostHog or TikTok, because no keys are set yet.
+
 ## Onboarding picks: ours and Sulav's, merged (20 October 2026)
 
 - Sulav's commit (ef8a800) merged with the inspection fixes, then the user's page-by-page picks applied (docs/ONBOARDING-V8-PLAN.md, "Picks from the side-by-side"). Side-by-side board of both versions: `screenshots/2026-10-20-compare/` (iPhone SE, iOS 26.5, same answers). Offer mockup: `docs/onboarding-mockups/offer-inline.html`.

@@ -1,6 +1,15 @@
 {
-  "originHash" : "bf2660af3ee13caf35122b1560f595fb84190e369815976b4719f3dbad96dd6d",
+  "originHash" : "bdd04a2e759e0dbbcddc2dd4c5b3f985ddcfb3bad595a63a92e16f42a1df4cb6",
   "pins" : [
+    {
+      "identity" : "posthog-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PostHog/posthog-ios",
+      "state" : {
+        "revision" : "835f624c2618d72d73650d0ed0029325232f5b0a",
+        "version" : "3.92.0"
+      }
+    },
     {
       "identity" : "purchases-ios-spm",
       "kind" : "remoteSourceControl",
@@ -65,12 +74,12 @@
       }
     },
     {
-      "identity" : "swift-issue-reporting",
+      "identity" : "tiktok-business-ios-sdk",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
+      "location" : "https://github.com/tiktok/tiktok-business-ios-sdk",
       "state" : {
-        "revision" : "75b000cea2ca6d7527a57e1b9cc0bdf21a9abe9f",
-        "version" : "2.1.1"
+        "revision" : "2a3a35560c2c0547f74869c58160946e29c0932c",
+        "version" : "1.7.2"
       }
     },
     {

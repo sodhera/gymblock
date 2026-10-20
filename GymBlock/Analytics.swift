@@ -7,7 +7,8 @@ import UserNotifications
 /// First-party product analytics into Supabase (`gb_events`): every screen and how long it was
 /// open, every tap and choice, every workout step with its timing, purchases, sign-ins and errors.
 /// Properties are fixed keys with bounded values: ids, enum raw values, numbers and flags. Never a
-/// name, a free-text answer or an email. Development runs stay out of the real data.
+/// name, a free-text answer or an email. Development runs stay out of the real data. Every event
+/// also goes to PostHog as it is (`GymPostHog`).
 @MainActor enum Analytics {
   // MARK: Identity and context
 
@@ -74,6 +75,7 @@ import UserNotifications
       app_version: appVersion, build: build, os_version: osVersion, device_model: deviceModel, locale: locale,
       occurred_at: Date())
     pending.append(row)
+    GymPostHog.capture(row.name, screen: row.screen, properties: row.properties, duration: row.duration_ms)
     if pending.count > limit { pending.removeFirst(pending.count - limit) }
     scheduleFlush(soon: pending.count >= 20)
   }
@@ -135,6 +137,7 @@ import UserNotifications
   static func identify(_ id: UUID?) {
     userID = id
     guard enabled else { return }
+    GymPostHog.identify(id)
     Task { await registerDevice() }
   }
 

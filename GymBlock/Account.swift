@@ -120,6 +120,8 @@ enum AuthFailure: LocalizedError, Equatable {
       default: break
       }
       Analytics.track("sign_in", ["provider": provider.rawValue, "intent": intent.rawValue, "found": found.label])
+      // No GymBlock profile yet: a new account (the standalone sign-in into one is signed out by its notice).
+      if found == .none, intent != .signIn { GymTikTok.reportRegistration() }
       return found
     } catch {
       fail(error, provider: provider.rawValue)

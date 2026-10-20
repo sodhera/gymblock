@@ -66,8 +66,10 @@
 		723592FAC308A1F09C4B5806 /* gb-plate-heavy.caf in Resources */ = {isa = PBXBuildFile; fileRef = E2528ACFD31D70E2DEAC5D7E /* gb-plate-heavy.caf */; };
 		74D2E8D1E74DC6C7071658E1 /* GymStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BD74A4F712847C40F46201 /* GymStoreTests.swift */; };
 		759B615EBC3B5A70E5D828B3 /* HomeStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 854264B8D10EA53FE36D44B2 /* HomeStats.swift */; };
+		76ABAE6ED1815FC1EC449BE1 /* GymTikTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = D895630CACC99C3E69FB9E04 /* GymTikTok.swift */; };
 		78A8AB1188CDF53BBEBD5BDC /* KettlebellShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542B989D575193E1A499079C /* KettlebellShape.swift */; };
 		78E4F549B07E1041367B45B6 /* PassMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FC5D30A2F43C1253BB9C4A /* PassMonitor.swift */; };
+		7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */; };
 		7A8EE23A965C7414FAE60F22 /* AppFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13708927DF8625DAA082C6E0 /* AppFont.swift */; };
 		7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD5009E70EBA3A94854B117 /* JourneyArt.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
@@ -85,6 +87,7 @@
 		903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */; };
 		9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */; };
 		9794E2815C8B3767516E32C3 /* HeroFit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6299BDCE650025D0151AA37 /* HeroFit.swift */; };
+		9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 6E814F0487D730E22574775B /* PostHog */; };
 		9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */; };
 		A5175DB659262FC118796C43 /* StoreShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2130D53C7B23982C9EB33C3 /* StoreShots.swift */; };
 		A6457A9FEE6986E494012874 /* OnboardingJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */; };
@@ -105,6 +108,7 @@
 		BDF13E619E1E9B1972D35490 /* AccountSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFE37AE609926AAAA2F6258E /* AccountSettings.swift */; };
 		C1482DA19EAF76DB7DDD790A /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4230C67E8D5558BD5157EF27 /* WidgetViews.swift */; };
 		C15DEF32F96E362DC22D20DA /* WorkoutStepIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDB647737C5A706E73A728E /* WorkoutStepIntent.swift */; };
+		C583421E9AA5778429A9B768 /* GymPostHog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D068C60FD1802769E384B6C /* GymPostHog.swift */; };
 		C6D4040CE436591D59D0B1A8 /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7FF985920923737A724E8B /* AppRoute.swift */; };
 		C7CE0DCE83D73AF2A9288DAF /* WorkoutShieldAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB514BE747F607CA6E12C00 /* WorkoutShieldAction.swift */; };
 		CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 555664B1919E662754553AF5 /* Supabase */; };
@@ -255,10 +259,12 @@
 		6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingStory.swift; sourceTree = "<group>"; };
 		6C25C3FE16037D11BD08D732 /* advance.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = advance.wav; sourceTree = "<group>"; };
 		6C68A7495A1C719F65837674 /* History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = History.swift; sourceTree = "<group>"; };
+		6D068C60FD1802769E384B6C /* GymPostHog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymPostHog.swift; sourceTree = "<group>"; };
 		6DBCF67E32FD7B7E541E7F55 /* GymBlockShield.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GymBlockShield.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		6E7FF985920923737A724E8B /* AppRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoute.swift; sourceTree = "<group>"; };
 		71D249BEACC2D4D01A2851C6 /* PaperPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperPalette.swift; sourceTree = "<group>"; };
 		7315D2C38D55280BA06B5B1B /* WorkoutActionsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActionsUITests.swift; sourceTree = "<group>"; };
+		74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		7576AF5B4BE365CAF8006511 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		75F70F4B27F004B995455CBB /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockedApps.swift; sourceTree = "<group>"; };
@@ -274,7 +280,6 @@
 		84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGymBlockIntent.swift; sourceTree = "<group>"; };
 		854264B8D10EA53FE36D44B2 /* HomeStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStats.swift; sourceTree = "<group>"; };
 		892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTimeBack.swift; sourceTree = "<group>"; };
-		8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8F4562DF53998B70DF9E5B51 /* BenefitLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitLayoutUITests.swift; sourceTree = "<group>"; };
 		9055691AD841483990A9C0A7 /* WidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTests.swift; sourceTree = "<group>"; };
 		91D599A2899F5D63D89F8AEF /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
@@ -306,6 +311,7 @@
 		D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingJourneyTests.swift; sourceTree = "<group>"; };
 		D412D86E746B7AEB2DCFDCED /* AppControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppControls.swift; sourceTree = "<group>"; };
 		D7EFFA2ABC73524792609214 /* complete.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = complete.wav; sourceTree = "<group>"; };
+		D895630CACC99C3E69FB9E04 /* GymTikTok.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymTikTok.swift; sourceTree = "<group>"; };
 		DDB2A515DD0E67D74DA268D6 /* WidgetPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPreview.swift; sourceTree = "<group>"; };
 		DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFeedback.swift; sourceTree = "<group>"; };
 		DFF3242CC4AB02EB7BA6AEE3 /* StoreScreenshotsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreScreenshotsUITests.swift; sourceTree = "<group>"; };
@@ -330,6 +336,8 @@
 			files = (
 				CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */,
 				A882C6D05F1882A29FC8F39E /* RevenueCat in Frameworks */,
+				9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */,
+				7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -364,7 +372,7 @@
 			isa = PBXGroup;
 			children = (
 				61B3E35BE7BD60F8E6487626 /* GymBlock */,
-				E1EA912447F60D09109C4063 /* GymBlock */,
+				EF8C297EB6B9290718C9281C /* gymblock */,
 				3B17A4900E23F40F368BC8CD /* GymBlockLive */,
 				3B904BAF48EE2E4E339FBA6D /* GymBlockMonitor */,
 				29F6943ABD0070B93745F414 /* GymBlockShield */,
@@ -436,6 +444,8 @@
 				777BA2A5696BA38746AE2AF3 /* DemoData.swift */,
 				1C7F43B605AA518679094848 /* Design.swift */,
 				95245B0AE197664243A1DF54 /* GymBlockApp.swift */,
+				6D068C60FD1802769E384B6C /* GymPostHog.swift */,
+				D895630CACC99C3E69FB9E04 /* GymTikTok.swift */,
 				6C68A7495A1C719F65837674 /* History.swift */,
 				A84AD10ED062C64A13487708 /* Home.swift */,
 				46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */,
@@ -566,12 +576,12 @@
 			path = GymBlockTests;
 			sourceTree = "<group>";
 		};
-		E1EA912447F60D09109C4063 /* GymBlock */ = {
+		EF8C297EB6B9290718C9281C /* gymblock */ = {
 			isa = PBXGroup;
 			children = (
-				8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */,
+				74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */,
 			);
-			name = GymBlock;
+			name = gymblock;
 			path = .;
 			sourceTree = "<group>";
 		};
@@ -707,6 +717,8 @@
 			packageProductDependencies = (
 				555664B1919E662754553AF5 /* Supabase */,
 				95E41EDD1C17E277943D7AA0 /* RevenueCat */,
+				6E814F0487D730E22574775B /* PostHog */,
+				D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */,
 			);
 			productName = GymBlock;
 			productReference = 035738BD5F0A726CE372A9EE /* GymBlock.app */;
@@ -763,8 +775,10 @@
 			mainGroup = 3A09FAD567F336A09752DCAD;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				6A2B56E3872209F6E70650DE /* XCRemoteSwiftPackageReference "posthog-ios" */,
 				F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				3401EFDF2BDF96EE27C127EF /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				DECEB750C3C5900BED74B2C8 /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9AEF8AC6176636FB88F477DB /* Products */;
@@ -940,6 +954,8 @@
 				BB3D6624D0A7D9FDDB187F22 /* DemoData.swift in Sources */,
 				473052F91B312391B79100D6 /* Design.swift in Sources */,
 				2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */,
+				C583421E9AA5778429A9B768 /* GymPostHog.swift in Sources */,
+				76ABAE6ED1815FC1EC449BE1 /* GymTikTok.swift in Sources */,
 				2D09659903930D73A573D8C0 /* HeroFit.swift in Sources */,
 				B7549632CF495C5EF9F838EA /* History.swift in Sources */,
 				F8278DB2F4F20B209F198AF3 /* Home.swift in Sources */,
@@ -1127,7 +1143,7 @@
 		};
 		1F7D946BD1E7EBE47CAB49AC /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */;
+			baseConfigurationReference = 74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;
@@ -1190,7 +1206,7 @@
 		};
 		4C9A7A7F1D472D58188873C1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */;
+			baseConfigurationReference = 74DC8AD2882C4DCAE4E5C569 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;
@@ -1520,6 +1536,22 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		6A2B56E3872209F6E70650DE /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
+			};
+		};
+		DECEB750C3C5900BED74B2C8 /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/tiktok/tiktok-business-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.0;
+			};
+		};
 		F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
@@ -1536,10 +1568,20 @@
 			package = 3401EFDF2BDF96EE27C127EF /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
 		};
+		6E814F0487D730E22574775B /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A2B56E3872209F6E70650DE /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
 		95E41EDD1C17E277943D7AA0 /* RevenueCat */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DECEB750C3C5900BED74B2C8 /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */;
+			productName = TikTokBusinessSDK;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
