@@ -22,16 +22,16 @@ The person should leave thinking: *"My phone turns my rests into extra time at t
 
 | # | Headline | Stage | Action |
 |---|---|---|---|
-| 1–4 | Welcome, Sulav's note, name, days a week | Unchanged | |
-| 5 | Be honest. Do you check your phone between sets? | Notifications, unchanged; caption now "No judgement. We did too." | Every rest · Sometimes · Rarely |
+| 1–3 | Welcome ("Focused workouts." under the locking phone and the arm), name, days a week (Sulav's note removed 20 Oct 2026) | | |
+| 5 | Be honest. Does your phone suck you in between sets? (20 Oct 2026: checking is fine, getting sucked in is the problem) | A phone scrolling its feed pulls the kit around it in, piece by piece, each on a soft tap, a faint red growing behind it; then it loops. No words (`SuckedInStage`); caption "No judgement. We did too." | Every rest · Sometimes · Rarely |
 | 6 | How long do you need to rest between sets? | A stopwatch on a five-minute dial winds to the answer (`RestWatchStage`). The answer is also their rest timer. "Not sure" counts as 2 minutes. | 1 min · 1½ · 2 · 3 · Not sure |
-| 7 | When you start scrolling between sets, how many minutes do you scroll? | A phone scrolling a feed above a wheel (1 to 15+ minutes, starting at 1); a pill shows the answer (`ScrollMinutesStage`) | Continue |
+| 7 | Once you start scrolling, how many minutes go by? | A phone scrolling a feed above a wheel (1 to 15+ minutes, starting at 1); a pill shows the answer (`ScrollMinutesStage`) | Continue |
 | 8 | That's 2½ minutes lost. Every rest. | The first graph: "Rest you need" against "Scrolling" on one axis. The part under the rest is light red, the part past it red and counted up (`PerRestStage`) | Continue |
-| 9 | How many exercises do you usually do every workout? | A rack fills with one piece of kit per exercise; each lands with a plate's clank (`RackStage`) | 3 or fewer · 4 · 5 · 6 · 7 or more |
-| 10 | And how many sets of each exercise? | Today's log, a tally mark per set ("15 sets, so 14 rests.") (`LogTallyStage`) | 2 · 3 · 4 · 5 or more |
-| 11 | How long are you usually at the gym? | The gym clock's hands run from six for that long (`GymClockStage`); "From walking in to walking out." | 45 min · 1 hour · 1½ · 2 · 2½ hours or more |
+| 9 | How many exercises per workout? | A rack fills with one piece of kit per exercise; each lands with a plate's clank (`RackStage`) | 3 or fewer · 4 · 5 · 6 · 7 or more |
+| 10 | And how many sets of each? | Today's log, a tally mark per set ("15 sets, so 14 rests.") (`LogTallyStage`) | 2 · 3 · 4 · 5 or more |
+| 11 | How long are you at the gym? | The gym clock's hands run from six for that long (`GymClockStage`); "From walking in to walking out." | 45 min · 1 hour · 1½ · 2 · 2½ hours or more |
 | 12 | {Name}, 35 minutes of your 1½ hours goes to scrolling. | Page 8's bars at workout size: "Your workout, rests on time", against "Your time at the gym" with the red past it (`WorkTimeStage`) | Continue |
-| 13 | At 4 workouts a week, that's about 120 hours a year. | A dot per extra workout of their own length, "= 80 extra workouts" (`ExtraWorkoutsStage`) | Continue |
+| 13 | That's about 120 hours a year. (caption: "At 4 workouts a week.") | A dot per extra workout of their own length, "= 80 extra workouts" (`ExtraWorkoutsStage`) | Continue |
 | 14 | We'll give you those 35 minutes back. And a better workout. | Page 12's last frame, then the red slides away and the gym bar closes onto the workout: "about 55 min, with GymBlock", "35 min back" | Continue |
 | 15–16 | The shield; which apps to lock | Unchanged | |
 | 17 | We'll buzz you when your 1:30 is up. | Unchanged scene, their rest in the headline | Continue → iOS prompt |

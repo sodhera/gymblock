@@ -68,14 +68,14 @@ final class JourneyV5UITests: XCTestCase {
   /// sets and time at the gym.
   private func timeBack(rest: String = "rest.1.5", scroll: String = "4 min", exercises: Int = 5, sets: Int = 3, gym: Int = 90, perRest: String) {
     choose(rest, on: "How long do you need to rest between sets?")
-    page("When you start scrolling between sets, how many minutes do you scroll?")
+    page("Once you start scrolling, how many minutes go by?")
     XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 6))
     app.pickerWheels.firstMatch.adjust(toPickerWheelValue: scroll); snap("07-scroll"); next()
     page(perRest)
     next()
-    choose("exercises.\(exercises)", on: "How many exercises do you usually do every workout?")
-    choose("sets.\(sets)", on: "And how many sets of each exercise?")
-    choose("gym.\(gym)", on: "How long are you usually at the gym?")
+    choose("exercises.\(exercises)", on: "How many exercises per workout?")
+    choose("sets.\(sets)", on: "And how many sets of each?")
+    choose("gym.\(gym)", on: "How long are you at the gym?")
   }
 
   func testFullJourneyShowsTimeBackSetsUpBlockingAndEndsOnOffer() {
@@ -87,12 +87,12 @@ final class JourneyV5UITests: XCTestCase {
     page("Sirish, 35 minutes of your 1½ hours goes to scrolling."); snap("12-workout")
     let lost = expectation(for: NSPredicate(format: "label == %@", "+35 min"), evaluatedWith: any("workout.lost"))
     wait(for: [lost], timeout: 6)
-    next(); page("At 4 workouts a week, that’s about 120\u{00A0}hours a year.")  // 35 min × 4 × 52, down to 10.
+    next(); page("That’s about 120\u{00A0}hours a year.")  // 35 min × 4 × 52, down to 10.
     XCTAssertTrue(app.staticTexts["year.workouts"].waitForExistence(timeout: 4))
     XCTAssertEqual(app.staticTexts["year.workouts"].label, "= 80 extra workouts"); snap("13-year")  // Of their 1½ hours.
     next(); page("We’ll give you those 35 minutes back.\nAnd a better workout."); snap("14-promise")
-    next(); page("Open a locked app while you train, and you’ll see this."); settle(2); snap("15-shield")
-    next(); page("Which apps should we lock while you train?")
+    next(); page("Open a locked app mid-workout and you’ll see this."); settle(2); snap("15-shield")
+    next(); page("Which apps should we lock?")
     // Apps come from Screen Time's own picker, which needs the iPhone passcode: not reachable from a UI test.
     XCTAssertEqual(app.staticTexts["blocking.summary"].label, "Choose the apps that pull you in.")
     XCTAssertTrue(app.buttons["blocking.choose"].exists); XCTAssertTrue(app.buttons["block.add"].exists); snap("16-blocking")
@@ -101,7 +101,7 @@ final class JourneyV5UITests: XCTestCase {
     app.buttons["commit.hold"].press(forDuration: 0.4)  // Releasing early does not commit.
     XCTAssertTrue(app.buttons["commit.hold"].exists); page("Sirish, here’s your plan.")
     app.buttons["commit.hold"].press(forDuration: 2.2)
-    page("Let’s save your plan to your account."); snap("19-account")
+    page("Let’s save your plan."); snap("19-account")
     XCTAssertEqual(app.buttons["account.apple"].label, "Sign up with Apple")  // Sign-up's own words.
     tap("account.debugSkip")
     page("Sirish, get your 35 minutes back.")
@@ -117,7 +117,7 @@ final class JourneyV5UITests: XCTestCase {
     choose("rest.0.0", on: "How long do you need to rest between sets?")  // Not sure: 2 minutes.
     page("Then you’re already ahead.")
     XCTAssertFalse(app.pickerWheels.firstMatch.exists)  // Rarely: no scrolling minutes, nothing to add up.
-    next(); page("Open a locked app while you train, and you’ll see this.")
+    next(); page("Open a locked app mid-workout and you’ll see this.")
     tap("onboarding.back"); page("Then you’re already ahead.")
     tap("onboarding.back"); page("How long do you need to rest between sets?")
     XCTAssertTrue(app.buttons["rest.0.0"].isSelected)
@@ -142,10 +142,10 @@ final class JourneyV5UITests: XCTestCase {
     timeBack(perRest: "That’s 2½ minutes lost each time you scroll.")
     page("Ana, 15 minutes of your 1½ hours goes to scrolling.")  // Half of 14 rests × 2½, down to 5.
     next(); next(); page("We’ll give you those 15 minutes back.\nAnd a better workout.")
-    next(); next(); page("Which apps should we lock while you train?"); tap("blocking.later")
+    next(); next(); page("Which apps should we lock?"); tap("blocking.later")
     allowAlerts()
     page("Ana, here’s your plan."); app.buttons["commit.hold"].press(forDuration: 2.2)
-    page("Let’s save your plan to your account."); tap("account.debugSkip")
+    page("Let’s save your plan."); tap("account.debugSkip")
     page("Ana, get your 15 minutes back.")
     XCTAssertTrue(any("journey.recap").waitForExistence(timeout: 5))
     app.terminate(); app.launchArguments = ["--offline"]; app.launch()  // No reset, no skip: the offer is where it resumes.
@@ -153,7 +153,7 @@ final class JourneyV5UITests: XCTestCase {
     // The offer is a wall, as in SleepBlock: no way back into the questions, none into the app.
     XCTAssertFalse(app.buttons["onboarding.back"].exists)
     XCTAssertFalse(app.buttons["home.start"].exists)
-    tap("subscription.debugSkip"); page("You’re in. How do you usually split your training?")
+    tap("subscription.debugSkip"); page("You’re in. How do you split your training?")
     XCTAssertFalse(app.buttons["onboarding.back"].isHittable)  // Past the offer there is no going back to it.
   }
 
@@ -165,11 +165,11 @@ final class JourneyV5UITests: XCTestCase {
     timeBack(perRest: "That’s 2½ minutes lost. Every rest.")
     page("Sam, 35 minutes of your 1½ hours goes to scrolling."); snap("large-workout")
     for name in ["year", "promise", "shield"] { next(); snap("large-" + name) }
-    next(); page("Which apps should we lock while you train?"); snap("large-blocking")
+    next(); page("Which apps should we lock?"); snap("large-blocking")
     tap("blocking.later"); allowAlerts(); snap("large-alerts")
     page("Sam, here’s your plan."); snap("large-commit")
     app.buttons["commit.hold"].press(forDuration: 2.2)
-    page("Let’s save your plan to your account."); tap("account.debugSkip")
+    page("Let’s save your plan."); tap("account.debugSkip")
     page("Sam, get your 35 minutes back."); snap("large-offer")
   }
 }

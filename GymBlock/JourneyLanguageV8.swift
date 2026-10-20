@@ -5,6 +5,11 @@ import Foundation
 extension Spanish {
   static let v8: [String: String] = [
     "No judgement. We did too.": "Sin juzgar. A nosotros también nos pasaba.",
+    "Focused workouts.": "Entrenamientos con foco.",
+    "Be honest. Does your phone suck you in between sets?": "Sé sincero. ¿El móvil te atrapa entre series?",
+    "Illustration: a phone pulling your workout into it.": "Ilustración: un móvil que se traga tu entrenamiento.",
+    "Focused workouts. Your apps lock while you train.": "Entrenamientos con foco. Tus apps se bloquean mientras entrenas.",
+    "Illustration: TikTok is tapped mid-workout and GymBlock’s lock screen covers it.": "Ilustración: alguien toca TikTok a mitad del entrenamiento y la pantalla de bloqueo de GymBlock lo cubre.",
     // Rest
     "How long do you need to rest between sets?": "¿Cuánto necesitas descansar entre series?",
     "1 min": "1 min", "1½ min": "1½ min", "2 min": "2 min", "3 min": "3 min", "Not sure": "No lo sé",
@@ -14,7 +19,7 @@ extension Spanish {
     "Then you’re already ahead.": "Entonces ya vas por delante.",
     "We’ll help you keep it that way.": "Te ayudaremos a que siga así.",
     // Scrolling
-    "When you start scrolling between sets, how many minutes do you scroll?": "Cuando empiezas a mirar el móvil entre series, ¿cuántos minutos sigues?",
+    "Once you start scrolling, how many minutes go by?": "Cuando empiezas a mirar el móvil, ¿cuántos minutos se van?",
     "POV: just one more video": "POV: solo un vídeo más",
     "Rate this pump 1–10": "Puntúa esta congestión del 1 al 10",
     "3 mistakes on bench": "3 errores en press banca",
@@ -31,12 +36,12 @@ extension Spanish {
     "every rest": "en cada descanso", "each time you scroll": "cada vez que miras el móvil",
     "Rest you need": "Descanso que necesitas", "Scrolling": "Con el móvil",
     // Exercises, sets, gym time
-    "How many exercises do you usually do every workout?": "¿Cuántos ejercicios sueles hacer en cada entrenamiento?",
+    "How many exercises per workout?": "¿Cuántos ejercicios por entrenamiento?",
     "3 or fewer": "3 o menos", "7 or more": "7 o más", "5 or more": "5 o más",
-    "And how many sets of each exercise?": "¿Y cuántas series de cada ejercicio?",
+    "And how many sets of each?": "¿Y cuántas series de cada uno?",
     "Today’s log": "Registro de hoy",
     "%@ sets, so %@ rests.": "%@ series, así que %@ descansos.",
-    "How long are you usually at the gym?": "¿Cuánto tiempo sueles estar en el gimnasio?",
+    "How long are you at the gym?": "¿Cuánto tiempo estás en el gimnasio?",
     "45 min": "45 min", "1 hour": "1 hora", "1½ hours": "1½ horas", "2 hours": "2 horas", "2½ hours or more": "2½ horas o más",
     "45 minutes": "45 minutos", "2½ hours": "2½ horas",
     "From walking in to walking out.": "Desde que entras hasta que sales.",
@@ -54,7 +59,9 @@ extension Spanish {
     "Your time at the gym": "Tu tiempo en el gimnasio",
     "about %@": "unos %@",
     // The year
-    "At %@ workouts a week, that’s about %@ hours a year.": "Con %@ entrenamientos a la semana, son unas %@ horas al año.",
+    "That’s about %@ hours a year.": "Son unas %@ horas al año.",
+    "At %@ workout a week.": "Con %@ entrenamiento a la semana.",
+    "At %@ workouts a week.": "Con %@ entrenamientos a la semana.",
     "= %@ extra workouts": "= %@ entrenamientos más",
     "Each dot is one workout of %@.": "Cada punto es un entrenamiento de %@.",
     "Each dot is %@ workouts of %@.": "Cada punto son %@ entrenamientos de %@.",

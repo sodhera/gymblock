@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Onboarding V7 scenes (docs/ONBOARDING-V7-PLAN.md): the welcome, Sulav's note, the days
+// Onboarding V7 scenes (docs/ONBOARDING-V7-PLAN.md): the welcome, the days
 // question, the time-driven mind-muscle stage, the shield and Lock Screen previews, the plan,
 // and the two pages after the offer (split templates, first workout).
 
@@ -70,53 +70,39 @@ struct DesignFit<Content: View>: View {
 
 // MARK: - Welcome
 
-/// What you do, what you get: apps pile onto a lock screen, the kettlebell falls and locks it, the
-/// arm flexes and turns green. Everything moves from one clock (JourneyScores.welcome).
+/// One message under the old story (20 Oct 2026, at the user's request): notifications pile onto a lock
+/// screen, the kettlebell falls and locks it, the arm flexes and turns green, then "Focused workouts."
+/// The words that used to frame it ("Stop scrolling → Stay focused", "Record everything → Get
+/// jacked") are gone. Everything moves from one clock (JourneyScores.welcome).
 struct WelcomeScene: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  /// One thing moves at a time, so the eye is never in two places: the phone fills and locks, then
-  /// "Stay focused"; then "Record everything" and "Get jacked"; only then does the arm flex (its
-  /// spring peaks 0.315 s after it starts).
-  static let jacked = 3.6, flex = jacked + 0.4, peak = flex + 0.315
-  static let duration = 5.0
+  /// One thing moves at a time: the phone fills and locks, the arm flexes (its spring peaks 0.315 s
+  /// after it starts), then the words.
+  static let flex = LockPhone.land + 0.42, peak = flex + 0.315
+  static let words = peak + 0.1
+  static let duration = words + 0.6
   var body: some View {
     SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
-      // Small screens keep air around it rather than filling edge to edge.
-      DesignFit(size: CGSize(width: 388, height: 560), maxScale: JourneyLayout.compact ? 0.74 : 1.15) { frame(t) }
+      let words = Ease.out(Ease.seg(t, Self.words, Self.words + 0.45))
+      VStack(spacing: JourneyLayout.compact ? 18 : 28) {
+        Spacer(minLength: 0)
+        // Small screens keep air around it rather than filling edge to edge.
+        DesignFit(size: CGSize(width: 388, height: 360), maxScale: JourneyLayout.compact ? 0.74 : 1.1) {
+          HStack(spacing: 0) {
+            LockPhone(t: t)
+            Spacer(minLength: 0)
+            arm(t)
+          }
+        }.frame(maxHeight: 400)
+        Text(store.t("Focused workouts.")).font(.app(size: JourneyLayout.compact ? 34 : 40, weight: .bold)).tracking(-1)
+          .foregroundStyle(JourneyColor.text).multilineTextAlignment(.center).lineLimit(1).minimumScaleFactor(0.7)
+          .opacity(words).offset(y: (1 - words) * 10)
+        Spacer(minLength: 0)
+      }.frame(maxWidth: .infinity)
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
-    .accessibilityLabel(store.t("Stop scrolling, stay focused. Record everything, get jacked. Your apps lock while you train."))
-  }
-  private func frame(_ t: Double) -> some View {
-    VStack(spacing: 0) {
-      row(store.t("Stop\nscrolling"), store.t("Stay\nfocused"), t: t, left: 0.1, arrow: 2.35, right: 2.5, pop: false)
-      Spacer(minLength: 0)
-      HStack(spacing: 0) {
-        LockPhone(t: t)
-        Spacer(minLength: 0)
-        arm(t)
-      }.frame(height: 360)
-      Spacer(minLength: 0)
-      row(store.t("Record\neverything"), store.t("Get\njacked"), t: t, left: 3.1, arrow: Self.jacked - 0.25, right: Self.jacked, pop: true)
-    }
-  }
-  private func row(_ a: String, _ b: String, t: Double, left: Double, arrow: Double, right: Double, pop: Bool) -> some View {
-    let l = Ease.out(Ease.seg(t, left, left + 0.4))
-    let r = pop ? Ease.seg(t, right, right + 0.16) : Ease.out(Ease.seg(t, right, right + 0.4))
-    let scale = pop ? (t < right ? 0.85 : 0.85 + 0.15 * Ease.spring(t - right, 14, 0.45)) : 1
-    return HStack(spacing: 0) {
-      Text(a).font(.app(size: 31, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
-        .multilineTextAlignment(.leading).lineSpacing(-4).fixedSize()
-        .opacity(l).offset(y: (1 - l) * 12)
-      Spacer(minLength: 6)
-      WelcomeArrow(line: Ease.out(Ease.seg(t, arrow, arrow + 0.28)), head: Ease.out(Ease.seg(t, arrow + 0.2, arrow + 0.38)))
-        .frame(width: 58, height: 22)
-      Spacer(minLength: 6)
-      Text(b).font(.app(size: 31, weight: .bold)).foregroundStyle(JourneyColor.text)
-        .multilineTextAlignment(.trailing).lineSpacing(-4).fixedSize()
-        .opacity(r).offset(x: pop ? 0 : (1 - r) * -16).scaleEffect(scale, anchor: .trailing)
-    }.tracking(-0.8)
+    .accessibilityLabel(store.t("Focused workouts. Your apps lock while you train."))
   }
   private func arm(_ t: Double) -> some View {
     let flex = t < Self.flex ? 0 : Ease.spring(t - Self.flex, 11, 0.42)
@@ -128,20 +114,6 @@ struct WelcomeScene: View {
         .frame(width: 250, height: 250).scaleEffect(0.75 + 0.25 * glow).opacity(Ease.out(Ease.seg(t, Self.flex + 0.15, Self.flex + 0.65)))
       ArmView(curl: curl, warmth: Ease.inOut(Ease.seg(t, Self.flex, Self.flex + 0.6))).frame(width: 206, height: 206)
     }.frame(width: 206)
-  }
-}
-
-/// An ink arrow that draws itself: the shaft, then the head.
-struct WelcomeArrow: View {
-  let line: Double
-  let head: Double
-  var body: some View {
-    ZStack {
-      Path { p in p.move(to: CGPoint(x: 8, y: 11)); p.addLine(to: CGPoint(x: 50, y: 11)) }
-        .trim(from: 0, to: line).stroke(JourneyColor.text, style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
-      Path { p in p.move(to: CGPoint(x: 42, y: 3.5)); p.addLine(to: CGPoint(x: 50.5, y: 11)); p.addLine(to: CGPoint(x: 42, y: 18.5)) }
-        .trim(from: 0, to: head).stroke(JourneyColor.text, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round))
-    }.frame(width: 58, height: 22)
   }
 }
 
@@ -227,56 +199,6 @@ struct LockPhone: View {
   }
 }
 
-// MARK: - Founder's note
-
-/// Sulav's note: the voice for everything after it. Set on the paper like a letter, no card, no
-/// animation, no sound. Short enough to read in ten seconds.
-struct FounderStage: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dynamicTypeSize) private var typeSize
-  var body: some View {
-    // The larger setting where it fits, the body size on small screens, scrolling only as a last
-    // resort (the largest accessibility sizes).
-    ViewThatFits(in: .vertical) {
-      letter(.app(.title3), spacing: 16)
-      // Between title 3 and body: on the largest phones the body size left an empty band under the note.
-      letter(.app(size: UIFontMetrics(forTextStyle: .body).scaledValue(for: 18.5)), spacing: 14)
-      letter(.app(.body), spacing: 12)
-      letter(.app(.callout), spacing: 9, signature: 26)
-      // Small screens: the callout setting, scaled down just enough to fit. Accessibility sizes scroll
-      // instead, so their text stays large.
-      if typeSize.isAccessibilitySize {
-        ScrollView { letter(.app(.body), spacing: 12) }.scrollIndicators(.hidden)
-      } else {
-        ScaleToFit { letter(.app(.callout), spacing: 9, signature: 26) }
-      }
-    }
-    .accessibilityElement(children: .combine).accessibilityIdentifier("founder.note")
-  }
-  private func letter(_ font: Font, spacing: CGFloat, signature: CGFloat = 32) -> some View {
-    VStack(alignment: .leading, spacing: spacing) {
-      Text(store.t("Hey friend,"))
-      Text(store.t("In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them."))
-      Text(store.t("Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone."))
-      Text(store.t("GymBlock is how I took those minutes back. It locks the apps that pull you away while you train, and keeps an honest record of every set, so you always know what you did last time and what to beat today."))
-      Text(store.t("Little things, done right, every session."))
-      VStack(alignment: .leading, spacing: 2) {
-        Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
-        // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in
-        // light and dark; about as tall as the typed name it replaced was large.
-        Image("FounderSignature").renderingMode(.template).resizable().scaledToFit()
-          .frame(height: signature * 1.5).foregroundStyle(JourneyColor.text)
-          .accessibilityLabel("Sulav")
-        Text(store.t("Founder, GymBlock")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-      }.padding(.top, 2)
-    }
-    .font(font).foregroundStyle(JourneyColor.text.opacity(0.86)).lineSpacing(3)
-    .fixedSize(horizontal: false, vertical: true)
-    .padding(.horizontal, 6)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-  }
-}
-
 // MARK: - Days a week
 
 /// How many days a week they lift, on a slider from once a week to every day (18 Oct 2026, at the
@@ -325,42 +247,157 @@ struct TrainingDaysStage: View {
   }
 }
 
-// MARK: - The shield, as people will meet it
+// MARK: - The shield, in action
 
-/// The real lock screen's words (GymBlockShield), for an example app; it slides up and locks.
-struct OnboardingShield: View {
-  var done: () -> Void = {}
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    // Its clock runs to the kettlebell's rebound (1.42 s), then the page's button appears.
-    SceneClock(duration: 1.45, score: JourneyScores.shield, done: done) { t in
-      let rise = Ease.out(Ease.seg(t, 0.3, 0.9))
-      let click = t < 0.98 ? 1 : 1 - 0.14 * Ease.bump(t, 0.98, 0.18) + 0.08 * Ease.bump(t, 1.12, 0.2)
-      VStack(spacing: 10) {
-        BrandMark(size: 46).scaleEffect(click)
-        Text(store.t("You’re mid-workout.")).font(.app(.title3, weight: .bold)).foregroundStyle(JourneyColor.text).padding(.top, 4)
-        Text(String(format: store.t("%@ opens when you finish your workout in GymBlock."), "Instagram"))
-          .font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
-          .fixedSize(horizontal: false, vertical: true)
-        Text(store.t("Back to training")).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.onButton)
-          .frame(maxWidth: .infinity, minHeight: 40).background(Capsule().fill(JourneyColor.button)).padding(.top, 6)
-      }
-      .padding(.horizontal, 22).padding(.top, 24).padding(.bottom, 16)
-      .frame(maxWidth: 300)
-      .journeySurface()
-      .opacity(rise).offset(y: (1 - rise) * 60)
-    }
-    .accessibilityElement(children: .combine).accessibilityIdentifier("blocking.shieldPreview")
-  }
-}
-
-/// What a locked app shows mid-workout, on its own page before the apps are chosen: one idea a page.
+/// What a locked app does mid-workout, played on a phone as in SleepBlock (20 Oct 2026, at the user's
+/// request, replacing the shield card on its own): the home screen, a tap on TikTok, the app opening,
+/// then GymBlock's shield over it with the real shield's words (GymBlockShield). It loops; the lock
+/// click and Continue come once, on the first landing. An illustration, drawn rather than recorded:
+/// blocking only runs on a real iPhone.
 struct ShieldStage: View {
   let done: () -> Void
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+  @State private var start: Date?
+  @State private var still = false
+  /// The tap, the app open and the shield landing; the loop's length.
+  static let press = 1.0, open = 1.2, lands = 2.25, period = 6.4
+  static let screen = CGSize(width: 300, height: 650)
+  /// TikTok's icon on the home screen (third row, second column).
+  static let icon = CGPoint(x: 114, y: 292)
   var body: some View {
-    DesignFit(size: CGSize(width: 320, height: 330), maxScale: JourneyLayout.compact ? 1 : 1.15) {
-      OnboardingShield(done: done)
+    DesignFit(size: CGSize(width: Self.screen.width + 16, height: Self.screen.height + 16), maxScale: 1) {
+      TimelineView(.animation(paused: start == nil || still)) { context in
+        let t = still ? Self.lands + 1 : start.map { max(0, context.date.timeIntervalSince($0) + JourneyScores.displayLead).truncatingRemainder(dividingBy: Self.period) } ?? 0
+        phone(t)
+      }
     }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("blocking.shieldPreview")
+    .accessibilityLabel(store.t("Illustration: TikTok is tapped mid-workout and GymBlock’s lock screen covers it."))
+    .task { await run() }
+  }
+  private func run() async {
+    if JourneyMotion.reduced(systemReduceMotion) { still = true; done(); return }
+    try? await Task.sleep(for: .seconds(JourneyMotion.settle))
+    guard !Task.isCancelled else { return }
+    let begin = JourneyScorePlayer.shared.play(JourneyScores.shield, profile: store.profile)
+    start = begin
+    // A beat to read the shield before Continue.
+    try? await Task.sleep(for: .seconds(max(0, begin.timeIntervalSinceNow) + Self.lands + 1))
+    guard !Task.isCancelled else { return }
+    done()
+  }
+
+  private func phone(_ t: Double) -> some View {
+    let open = Ease.out(Ease.seg(t, Self.open, Self.open + 0.35))
+    let shield = Ease.out(Ease.seg(t, Self.lands - 0.22, Self.lands))
+    let away = Ease.inOut(Ease.seg(t, Self.period - 0.7, Self.period - 0.15))
+    let anchor = UnitPoint(x: Self.icon.x / Self.screen.width, y: Self.icon.y / Self.screen.height)
+    return ZStack {
+      home(t)
+      app.clipShape(RoundedRectangle(cornerRadius: 72 - 28 * open, style: .continuous))
+        .scaleEffect(0.17 + 0.83 * open, anchor: anchor).opacity(t < Self.open ? 0 : min(1, open * 3) * (1 - away))
+      shieldScreen(t).scaleEffect(1.03 - 0.03 * shield).opacity(shield * (1 - away))
+      statusBar(ink: shield > 0.5 && away < 0.5)
+      Capsule().fill(.black).frame(width: 86, height: 25).frame(maxHeight: .infinity, alignment: .top).padding(.top, 9)
+    }
+    .frame(width: Self.screen.width, height: Self.screen.height)
+    .clipShape(RoundedRectangle(cornerRadius: 44, style: .continuous))
+    .padding(8)
+    .background(RoundedRectangle(cornerRadius: 52, style: .continuous).fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
+    .shadow(color: .black.opacity(0.18), radius: 18, y: 12)
+  }
+
+  private static let apps: [(name: String, symbol: String, color: Color)] = [
+    ("Messages", "message.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("Photos", "camera.macro", Color(red: 0.9, green: 0.42, blue: 0.54)),
+    ("Camera", "camera.fill", Color(white: 0.45)), ("Mail", "envelope.fill", Color(red: 0.2, green: 0.5, blue: 0.95)),
+    ("Clock", "clock.fill", Color(white: 0.12)), ("Maps", "map.fill", Color(red: 0.3, green: 0.7, blue: 0.45)),
+    ("Notes", "note.text", Color(red: 0.95, green: 0.75, blue: 0.2)), ("Settings", "gear", Color(white: 0.55)),
+    ("Instagram", "camera", Color(red: 0.84, green: 0.36, blue: 0.55)), ("TikTok", "", .black),
+    ("YouTube", "play.fill", Color(red: 0.9, green: 0.28, blue: 0.23)), ("GymBlock", "", Color(red: 0.961, green: 0.953, blue: 0.937)),
+  ]
+  private func home(_ t: Double) -> some View {
+    let press = Ease.bump(t, Self.press - 0.12, 0.3)
+    let finger = Ease.seg(t, Self.press - 0.45, Self.press - 0.2) * (1 - Ease.seg(t, Self.press + 0.15, Self.press + 0.35))
+    return ZStack(alignment: .topLeading) {
+      LinearGradient(colors: [Color(red: 0.85, green: 0.81, blue: 0.77), Color(red: 0.73, green: 0.69, blue: 0.65), Color(red: 0.56, green: 0.55, blue: 0.56)],
+                     startPoint: .topLeading, endPoint: .bottom)
+      ForEach(Array(Self.apps.enumerated()), id: \.offset) { i, app in
+        VStack(spacing: 5) {
+          tile(app).scaleEffect(app.name == "TikTok" ? 1 - 0.12 * press : 1)
+          Text(app.name).font(.system(size: 9.5, weight: .medium)).foregroundStyle(.white).lineLimit(1).fixedSize()
+        }
+        .position(x: 42 + Double(i % 4) * 72, y: 108 + Double(i / 4) * 96)
+      }
+      HStack(spacing: 22) {
+        ForEach([("phone.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("safari", Color(red: 0.2, green: 0.5, blue: 0.95)),
+                 ("message.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("music.note", Color(red: 0.95, green: 0.3, blue: 0.4))], id: \.0) { symbol, color in
+          tile((name: "", symbol: symbol, color: color))
+        }
+      }
+      .padding(12).background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(.white.opacity(0.28)))
+      .position(x: Self.screen.width / 2, y: Self.screen.height - 62)
+      Circle().fill(.white.opacity(0.35)).overlay(Circle().strokeBorder(.white.opacity(0.85), lineWidth: 2))
+        .frame(width: 36, height: 36).scaleEffect(1 - 0.15 * press).opacity(finger)
+        .position(x: Self.icon.x + 8, y: Self.icon.y + 10)
+    }
+    .frame(width: Self.screen.width, height: Self.screen.height)
+  }
+  private func tile(_ app: (name: String, symbol: String, color: Color)) -> some View {
+    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(app.color).frame(width: 52, height: 52)
+      .overlay {
+        switch app.name {
+        case "TikTok": note(size: 26)
+        case "GymBlock": BrandMark(size: 34)
+        default: Image(systemName: app.symbol).font(.system(size: 23, weight: .medium)).foregroundStyle(.white)
+        }
+      }
+  }
+  /// A stand-in for TikTok's note, as in SleepBlock: a white note with its cyan and pink edges.
+  private func note(size: CGFloat) -> some View {
+    Text("♪").font(.system(size: size, weight: .bold)).foregroundStyle(.white)
+      .shadow(color: .cyan, radius: 0, x: -size / 14, y: -size / 28)
+      .shadow(color: .pink, radius: 0, x: size / 14, y: size / 18)
+  }
+  private var app: some View {
+    ZStack {
+      Color.black
+      VStack(spacing: 14) {
+        note(size: 64)
+        Text("TikTok").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
+      }
+    }.frame(width: Self.screen.width, height: Self.screen.height)
+  }
+  /// The real shield's layout: the mark and words above the middle, the ink button near the bottom.
+  private func shieldScreen(_ t: Double) -> some View {
+    let click = t < Self.lands ? 1 : 1 - 0.14 * Ease.bump(t, Self.lands, 0.18) + 0.08 * Ease.bump(t, Self.lands + 0.14, 0.2)
+    return ZStack {
+      Color(red: 0.961, green: 0.953, blue: 0.937)
+      VStack(spacing: 10) {
+        Spacer().frame(height: 170)
+        BrandMark(size: 62).scaleEffect(click)
+        Text(store.t("You’re mid-workout.")).font(.system(size: 22, weight: .bold)).foregroundStyle(JourneyColor.text).padding(.top, 8)
+        Text(String(format: store.t("%@ opens when you finish your workout in GymBlock."), "TikTok"))
+          .font(.system(size: 14)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+          .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 30)
+        Spacer()
+        Text(store.t("Back to training")).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
+          .frame(maxWidth: .infinity, minHeight: 46).background(Capsule().fill(JourneyColor.button)).padding(.horizontal, 22)
+        Spacer().frame(height: 52)
+      }
+    }.frame(width: Self.screen.width, height: Self.screen.height)
+  }
+  private func statusBar(ink: Bool) -> some View {
+    VStack {
+      HStack {
+        Text("9:41").font(.system(size: 13, weight: .semibold))
+        Spacer()
+        HStack(spacing: 4) { Image(systemName: "cellularbars"); Image(systemName: "wifi"); Image(systemName: "battery.100percent") }
+          .font(.system(size: 11))
+      }.padding(.horizontal, 26).padding(.top, 15)
+      Spacer()
+      Capsule().frame(width: 104, height: 4).padding(.bottom, 7)
+    }.foregroundStyle(ink ? JourneyColor.text : .white)
   }
 }
 

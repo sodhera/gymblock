@@ -23,6 +23,8 @@ enum OnboardingStep: String, CaseIterable {
   var current: Self {
     switch self {
     case .body, .gender, .height, .weight: return .trainingDays
+    // Sulav's note was the second page until 20 Oct 2026; saved progress on it resumes at the name.
+    case .founder: return .name
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
     case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
          .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
@@ -50,7 +52,7 @@ enum OnboardingRoute {
   /// inside the rest, goes straight to how GymBlock works; answers that don't fit their gym time get
   /// the per-rest promise only; under five minutes a workout gets the number and nothing more.
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.founder, .name, .trainingDays, .scrolling, .restNeed]
+    var steps: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed]
     let time = TimeBack(baseline)
     if baseline.scrollFrequency == .no {
       steps.append(.ahead)
@@ -133,8 +135,7 @@ struct OnboardingView: View {
           stage.id(step.stage).transition(.identity)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
           // Small screens keep a margin around every scene instead of filling the screen edge to edge.
-          // (Sulav's note is text, so it keeps the usual margin.)
-          .padding(.horizontal, JourneyLayout.compact && step != .founder ? 32 : (JourneyLayout.compact ? 18 : 24))
+          .padding(.horizontal, JourneyLayout.compact ? 32 : 24)
           .padding(.vertical, JourneyLayout.compact ? 14 : 12)
           // A stage shared by two pages stays put; only a new stage fades and slides.
           .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
@@ -219,9 +220,7 @@ struct OnboardingView: View {
   }
   private var headlineText: some View {
     Group {
-      if step == .founder {
-        Text(store.t("“Perfection is lots of little things done right.”")).italic()
-      } else if let personal {
+      if let personal {
         Text(personal)
       } else {
         Text(store.t(headlineCopy))
@@ -239,18 +238,18 @@ struct OnboardingView: View {
     case .height: return "How tall are you?"
     case .weight: return "How much do you weigh?"
     case .alerts: return "We’ll buzz you\nwhen rest is up."
-    case .scrolling: return "Be honest. Do you check your phone between sets?"
+    case .scrolling: return "Be honest. Does your phone suck you in between sets?"
     case .restNeed: return "How long do you need to rest between sets?"
-    case .scrollMinutes: return "When you start scrolling between sets, how many minutes do you scroll?"
+    case .scrollMinutes: return "Once you start scrolling, how many minutes go by?"
     case .ahead: return "Then you’re already ahead."
-    case .exerciseCount: return "How many exercises do you usually do every workout?"
-    case .setCount: return "And how many sets of each exercise?"
-    case .gymTime: return "How long are you usually at the gym?"
+    case .exerciseCount: return "How many exercises per workout?"
+    case .setCount: return "And how many sets of each?"
+    case .gymTime: return "How long are you at the gym?"
     case .commit: return "Here’s your plan."
-    case .shield: return "Open a locked app while you train, and you’ll see this."
-    case .blocking: return "Which apps should we lock while you train?"
-    case .account: return "Let’s save your plan to your account."
-    case .splits: return "You’re in. How do you usually split your training?"
+    case .shield: return "Open a locked app mid-workout and you’ll see this."
+    case .blocking: return "Which apps should we lock?"
+    case .account: return "Let’s save your plan."
+    case .splits: return "You’re in. How do you split your training?"
     case .trainingDays: return "How many days a week do you work out?"
     case .firstWorkout: return firstWorkoutHeadline
     default: return "Stay focused with GymBlock."
@@ -282,7 +281,7 @@ struct OnboardingView: View {
     case .yearTime:
       // The number keeps its unit on the same line ("120 hours", never "120 / hours").
       let hours = "\(time.shownYear)"
-      return String(format: store.t("At %@ workouts a week, that’s about %@ hours a year."), "\(time.days)", hours)
+      return String(format: store.t("That’s about %@ hours a year."), hours)
         .replacingOccurrences(of: hours + " ", with: hours + "\u{00A0}")
     case .promise:
       if time.outcome == .unfit {
@@ -325,7 +324,7 @@ struct OnboardingView: View {
       if time.fitted { return String(format: store.t("From your answers, fitted into your %@."), store.gymWords(time.gym ?? 60)) }
       let per = store.minutesWords(time.lostPerRest ?? 0)
       return String(format: store.t(time.share < 1 ? "From your answers: about half of %@ rests × %@." : "From your answers: %@ rests × %@."), "\(time.rests ?? 0)", per)
-    case .yearTime: return "Your numbers, multiplied out."
+    case .yearTime: return String(format: store.t(time.days == 1 ? "At %@ workout a week." : "At %@ workouts a week."), "\(time.days)")
     case .promise: return "Every rest on time. Every set saved."
     case .alerts: return "One buzz, right when it’s time. Change it anytime."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
@@ -340,12 +339,11 @@ struct OnboardingView: View {
   @ViewBuilder private var stage: some View {
     switch step {
     case .welcome: WelcomeScene(done: sceneDone)
-    case .founder: FounderStage()
     case .trainingDays: TrainingDaysStage(days: $trainingDays) { n in
       withAnimation(JourneyMotion.gentle) { trainingDays = n }
       JourneyHaptic.play(.selection, store.profile)
     }
-    case .scrolling: NotificationStage(awake: true, done: sceneDone)
+    case .scrolling: SuckedInStage(done: sceneDone)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
     case .gender: GenderStage(gender: gender) { value in
       withAnimation(JourneyMotion.gentle) { gender = value }
@@ -430,7 +428,7 @@ struct OnboardingView: View {
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
       case .welcome:
-        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.founder) })
+        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.name) })
         JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn", action: onSignIn)
           .opacity(ready ? 1 : 0).allowsHitTesting(ready).accessibilityHidden(!ready)
       case .account:
@@ -646,7 +644,7 @@ struct OnboardingView: View {
   }
   private func back() {
     guard !locking else { return }
-    if step == .founder { move(.welcome); return }
+    if step == .name { dismissKeyboard(); move(.welcome); return }
     if step == .name { dismissKeyboard() }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }

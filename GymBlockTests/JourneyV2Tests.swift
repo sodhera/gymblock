@@ -175,14 +175,14 @@ import XCTest
   func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
     var b = RoutineBaseline()
     b.scrollFrequency = .sometimes; b.restNeedSeconds = 90; b.scrollingMinutes = 4; b.exercises = 5; b.sets = 3; b.duration = 90
-    XCTAssertEqual(OnboardingRoute.steps(b), [.founder, .name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
+    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
                                               .exerciseCount, .setCount, .gymTime, .workoutTime, .yearTime, .promise,
                                               .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false
     let noScroll = OnboardingRoute.steps(b)
     XCTAssertFalse(noScroll.contains(.scrollMinutes))
-    XCTAssertEqual(Array(noScroll.prefix(7)), [.founder, .name, .trainingDays, .scrolling, .restNeed, .ahead, .shield])
+    XCTAssertEqual(Array(noScroll.prefix(6)), [.name, .trainingDays, .scrolling, .restNeed, .ahead, .shield])
     XCTAssertEqual(Array(noScroll.suffix(7)), [.blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
   }
   func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {

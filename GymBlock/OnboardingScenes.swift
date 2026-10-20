@@ -26,86 +26,99 @@ private func pause(until t: Double, from start: Date) async -> Bool {
   return !Task.isCancelled
 }
 
-// MARK: - Notifications (welcome, first question)
+// MARK: - Sucked in (the first question)
 
-struct Ping: Identifiable {
-  let id: Int
-  let app: String
-  let symbol: String
-  let text: String
-  static let all: [Ping] = [
-    // The last one in ends on top of the locked stack, so it's a feed, not a friend's message.
-    Ping(id: 0, app: "Messages", symbol: "message.fill", text: "You coming to the gym?"),
-    Ping(id: 1, app: "TikTok", symbol: "music.note", text: "Videos you might like"),
-    Ping(id: 2, app: "YouTube", symbol: "play.rectangle.fill", text: "New: 10 min ab burner"),
-    Ping(id: 3, app: "Instagram", symbol: "camera", text: "maya.lifts liked your photo"),
-  ]
-}
-
-struct PingCard: View {
-  let ping: Ping
-  var compact = false
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    HStack(spacing: 12) {
-      Image(systemName: ping.symbol).font(.system(size: 17, weight: .semibold)).foregroundStyle(JourneyColor.text)
-        .frame(width: 38, height: 38)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.ink(0.14)))
-      VStack(alignment: .leading, spacing: 2) {
-        HStack {
-          Text(ping.app).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
-          Spacer(minLength: 4)
-          Text(store.t("now")).font(.app(.caption)).foregroundStyle(JourneyColor.secondary)
-        }
-        Text(store.t(ping.text)).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
-      }
-    }.padding(.horizontal, 14).padding(.vertical, 12)
-      .journeyGlass(RoundedRectangle(cornerRadius: 24, style: .continuous))
-  }
-}
-
-/// The phone question's notifications: three cards land one after another, newest on top, each
-/// on its own light tap. The stack keeps its full size from the start (no jump as cards arrive) and
-/// scales down to fit the space the page leaves it, so small screens and large text never overlap
-/// the headline or the answers.
-struct NotificationStage: View {
-  let awake: Bool
+/// Your workout pulled into your phone (20 Oct 2026, at the user's request, replacing three
+/// notifications: checking the phone is fine; getting sucked into it is the problem). A phone
+/// scrolls its feed while the kit around it (dumbbell, kettlebell, plate, barbell) is pulled in one
+/// piece at a time, spiralling, shrinking and vanishing into the screen, each on a soft tap; a faint
+/// red, the colour of time on the phone, grows behind it. Then the kit is back and it goes again.
+/// No words: the page has enough.
+struct SuckedInStage: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
-  @State private var shown = 0
-  /// Top to bottom: the newest (YouTube) sits on top, the first to arrive (Messages) at the bottom.
-  private var slots: [Ping] { Array(Ping.all.prefix(3).reversed()) }
+  @State private var start: Date?
+  @State private var still = false
+  /// Kit (KitPiece kinds) and where each starts around the phone, in degrees (0 = right, y down).
+  static let pieces: [(kind: Int, angle: Double)] = [(0, -150), (1, -30), (4, 150), (2, 30)]
+  static let first = 0.45, gap = 0.6, pull = 1.4
+  /// When piece `i` disappears into the screen.
+  static func swallowed(_ i: Int) -> Double { first + gap * Double(i) + pull }
+  static let respawn = 0.6
+  static let period = swallowed(pieces.count - 1) + 1.5 + respawn
+  static let size = CGSize(width: 360, height: 330)
   var body: some View {
-    ScaleToFit {
-      VStack(spacing: 10) {
-        ForEach(Array(slots.enumerated()), id: \.element.id) { k, ping in
-          // Slot k is the (3 - k)th to arrive.
-          let on = shown >= 3 - k
-          PingCard(ping: ping)
-            .opacity(on ? 1 : 0).offset(y: on ? 0 : -14).scaleEffect(on ? 1 : 0.96)
-            .animation(.spring(duration: 0.38, bounce: 0.2), value: on)
-        }
-      }.frame(maxWidth: 360)
+    DesignFit(size: Self.size, maxScale: JourneyLayout.compact ? 0.9 : 1.1) {
+      TimelineView(.animation(paused: start == nil || still)) { context in
+        let elapsed = start.map { max(0, context.date.timeIntervalSince($0) + JourneyScores.displayLead) } ?? 0
+        scene(still ? Self.swallowed(Self.pieces.count - 1) + 0.6 : elapsed.truncatingRemainder(dividingBy: Self.period), feed: elapsed)
+      }
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
-    .accessibilityLabel(store.t("Notifications arriving."))
-    .task { await play() }
+    .accessibilityLabel(store.t("Illustration: a phone pulling your workout into it."))
+    .task { await run() }
   }
-  private func play() async {
-    if JourneyMotion.reduced(systemReduceMotion) { shown = 3; done(); return }
-    shown = 0
-    for i in 0..<3 {
-      guard await pause(i == 0 ? JourneyMotion.settle : 0.45) else { return }
-      // One light tap per card, a little stronger each time, like they're creeping closer; no
-      // sound. The card arrives on the tap's moment.
-      let begin = JourneyScorePlayer.shared.play(JourneyScores.notification(strength: 0.3 + 0.08 * Double(i)), profile: store.profile)
-      guard await pause(until: 0, from: begin) else { return }
-      shown = i + 1
-    }
-    // The last card's spring settles, then Continue.
-    guard await pause(0.45) else { return }
+  private func run() async {
+    if JourneyMotion.reduced(systemReduceMotion) { still = true; done(); return }
+    try? await Task.sleep(for: .seconds(JourneyMotion.settle))
+    guard !Task.isCancelled else { return }
+    // The taps play on the first pass only; the loop is silent.
+    let begin = JourneyScorePlayer.shared.play(JourneyScores.suckedIn, profile: store.profile)
+    start = begin
+    try? await Task.sleep(for: .seconds(max(0, begin.timeIntervalSinceNow) + Self.swallowed(Self.pieces.count - 1) + 0.4))
+    guard !Task.isCancelled else { return }
     done()
+  }
+
+  private func scene(_ t: Double, feed: Double) -> some View {
+    let back = Ease.out(Ease.seg(t, Self.period - Self.respawn, Self.period))
+    let eaten = Self.pieces.indices.reduce(0.0) { $0 + Ease.out(Ease.seg(t, Self.swallowed($1) - 0.15, Self.swallowed($1) + 0.4)) } / Double(Self.pieces.count) * (1 - back)
+    let gulp = Self.pieces.indices.reduce(0.0) { $0 + Ease.bump(t, Self.swallowed($1), 0.22) }
+    return ZStack {
+      Circle().fill(RadialGradient(colors: [JourneyColor.danger.opacity(0.26), .clear], center: .center, startRadius: 0, endRadius: 160))
+        .frame(width: 320, height: 320).scaleEffect(0.7 + 0.3 * eaten).opacity(eaten)
+      phone(feed: feed).scaleEffect(1 + 0.035 * gulp)
+      ForEach(Array(Self.pieces.enumerated()), id: \.offset) { i, piece in
+        kit(i, piece, t: t, back: back)
+      }
+    }.frame(width: Self.size.width, height: Self.size.height)
+  }
+  private func kit(_ i: Int, _ piece: (kind: Int, angle: Double), t: Double, back: Double) -> some View {
+    let begin = Self.first + Self.gap * Double(i)
+    let p = Ease.seg(t, begin, begin + Self.pull)
+    // Slow at first, then faster and faster: a pull, not a slide.
+    let k = t >= Self.period - Self.respawn ? 0 : p * p
+    let theta = (piece.angle + 210 * k) * .pi / 180
+    let reach = 1 - k
+    let bob = sin(t * 2.2 + Double(i) * 1.7) * 3 * reach
+    let x = cos(theta) * 132 * reach, y = sin(theta) * 108 * reach + bob
+    let visible = t >= Self.period - Self.respawn ? back : 1 - Ease.seg(k, 0.82, 1)
+    return KitPiece(kind: piece.kind).frame(width: 80, height: 72)
+      .scaleEffect(0.92 * (1 - 0.85 * k) * (t >= Self.period - Self.respawn ? 0.85 + 0.15 * back : 1))
+      .rotationEffect(.degrees(240 * k))
+      .opacity(visible)
+      .offset(x: x, y: y)
+  }
+  /// A phone scrolling an endless feed: cards in the reels' muted colours sliding up.
+  private func phone(feed: Double) -> some View {
+    let card = 62.0, spacing = 6.0, colors = FeedPhone.reels.map(\.bottom)
+    let cycle = (card + spacing) * Double(colors.count)
+    let y = -(feed * 34).truncatingRemainder(dividingBy: cycle)
+    return VStack(spacing: spacing) {
+      ForEach(0..<(colors.count * 2), id: \.self) { i in
+        RoundedRectangle(cornerRadius: 9, style: .continuous).fill(colors[i % colors.count]).frame(height: card)
+      }
+    }
+    .padding(.horizontal, 7)
+    .offset(y: y)
+    .frame(width: 108, height: 226, alignment: .top)
+    .background(Color(red: 0.13, green: 0.13, blue: 0.14))
+    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+    .padding(5)
+    .background(RoundedRectangle(cornerRadius: 25, style: .continuous).fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
+    .overlay(alignment: .top) { Capsule().fill(Color(red: 0.04, green: 0.04, blue: 0.05)).frame(width: 34, height: 10).padding(.top, 11) }
+    .shadow(color: .black.opacity(0.18), radius: 14, y: 10)
   }
 }
 

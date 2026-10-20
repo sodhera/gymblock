@@ -14,14 +14,14 @@ import XCTest
       var b = example(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
       XCTAssertEqual(Array(route.suffix(8)), tail)
-      XCTAssertEqual(Array(route.prefix(5)), [.founder, .name, .trainingDays, .scrolling, .restNeed])  // Sulav's note, then one question a page.
+      XCTAssertEqual(Array(route.prefix(4)), [.name, .trainingDays, .scrolling, .restNeed])  // One question a page.
       XCTAssertEqual(route.contains(.scrollMinutes), answer != .no)
       XCTAssertEqual(route.contains(.ahead), answer == .no)
       XCTAssertEqual(route.count, answer == .no ? 14 : 21)  // 22 and 15 pages with the welcome.
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
-    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.founder, .name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(7)), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .shield])
     // Sets and the rest they need alone don't fit the gym time: only the per-rest promise.
     var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
     XCTAssertEqual(Array(OnboardingRoute.steps(unfit).dropFirst(10).prefix(2)), [.promise, .shield])

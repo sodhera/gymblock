@@ -343,6 +343,7 @@ struct KitPiece: View {
       switch kind {
       case 0:  // Dumbbell.
         c.fill(r(-30, -36, 15, 36, 4), with: ink); c.fill(r(15, -36, 15, 36, 4), with: ink); c.fill(r(-16, -22, 32, 8, 3), with: ink)
+      case 1: break  // The kettlebell, drawn over the canvas below.
       case 2:  // A plate on its edge.
         c.fill(circle(0, -31, 31), with: ink)
         c.stroke(circle(0, -31, 22), with: .color(JourneyColor.stage.opacity(0.28)), lineWidth: 2 * s)
@@ -369,35 +370,42 @@ struct KitPiece: View {
       }
     }
     .overlay(alignment: .bottom) {
-      // The kettlebell is the brand mark itself.
-      if kind == 1 { BrandMark(size: 66) }
+      // The mark's kettlebell without its keyhole: plain kit, not the logo (20 Oct 2026, at the user's request).
+      if kind == 1 { KettlebellShape(part: .iron).fill(JourneyColor.text, style: FillStyle(eoFill: true)).frame(width: 66, height: 66).accessibilityHidden(true) }
     }
   }
 }
 
-/// The rack fills with one piece of kit per exercise; each new one drops onto its shelf with a
-/// plate's clank. Four on the top shelf, three below.
+/// A rack built to fit their workout: one piece of kit per exercise, each dropping onto its shelf
+/// with a plate's clank. The rack is only as wide as the kit on it (half below, the rest above), so it
+/// is full whatever the answer; "3 or fewer" never looks like an empty rack (20 Oct 2026, at the
+/// user's request, replacing seven fixed slots).
 struct RackStage: View {
   let count: Int?
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var shown = 0
   static let size = CGSize(width: 360, height: 240)
-  static let slots: [CGPoint] = [.init(x: 60, y: 100), .init(x: 140, y: 100), .init(x: 220, y: 100), .init(x: 300, y: 100),
-                                 .init(x: 100, y: 214), .init(x: 180, y: 214), .init(x: 260, y: 214)]
+  static let cell = 80.0, shelves = (top: 100.0, bottom: 214.0), floor = 236.0
   static let gap = 0.11
   var body: some View {
+    // Before an answer the rack is the smallest one: two below, one above.
+    let n = max(3, shown)
+    let width = Double((n + 1) / 2) * Self.cell + 16
+    let x = Self.size.width / 2 - width / 2
     DesignFit(size: Self.size, maxScale: 1) {
       ZStack(alignment: .topLeading) {
-        ForEach([8.0, 345.0], id: \.self) { x in
-          RoundedRectangle(cornerRadius: 3.5).fill(JourneyColor.text).frame(width: 7, height: 224).offset(x: x, y: 12)
-        }
-        ForEach([100.0, 214.0], id: \.self) { y in
-          RoundedRectangle(cornerRadius: 3.5).fill(JourneyColor.text).frame(width: 344, height: 7).offset(x: 8, y: y)
-        }
+        Group {
+          ForEach([x, x + width - 7], id: \.self) { postX in
+            RoundedRectangle(cornerRadius: 3.5).fill(JourneyColor.text).frame(width: 7, height: Self.floor - Self.shelves.top).offset(x: postX, y: Self.shelves.top)
+          }
+          ForEach([Self.shelves.top, Self.shelves.bottom], id: \.self) { y in
+            RoundedRectangle(cornerRadius: 3.5).fill(JourneyColor.text).frame(width: width, height: 7).offset(x: x, y: y)
+          }
+        }.animation(.spring(response: 0.42, dampingFraction: 0.8), value: n)
         ForEach(0..<shown, id: \.self) { i in
           KitPiece(kind: i).frame(width: 80, height: 72)
-            .offset(x: Self.slots[i].x - 40, y: Self.slots[i].y - 72)
+            .offset(x: Self.slot(i, n: n).x - 40, y: Self.slot(i, n: n).y - 72)
             .transition(.asymmetric(insertion: .offset(y: -120).combined(with: .opacity), removal: .opacity))
         }
       }.frame(width: Self.size.width, height: Self.size.height, alignment: .topLeading)
@@ -405,6 +413,13 @@ struct RackStage: View {
     .accessibilityElement(children: .ignore).accessibilityIdentifier("rack")
     .accessibilityLabel("\(count ?? 0)")
     .task(id: count) { await fill() }
+  }
+  /// Kit alternates shelves (bottom, top, bottom…), so a piece keeps its shelf as the rack grows;
+  /// each shelf's pieces sit centred, so an odd count leaves the top row one short, in the middle.
+  static func slot(_ i: Int, n: Int) -> CGPoint {
+    let onShelf = i % 2 == 0 ? (n + 1) / 2 : n / 2
+    let x = size.width / 2 + (Double(i / 2) - Double(onShelf - 1) / 2) * cell
+    return CGPoint(x: x, y: i % 2 == 0 ? shelves.bottom : shelves.top)
   }
   private func fill() async {
     let target = min(7, max(0, count ?? 0))
@@ -479,7 +494,6 @@ struct LogTallyStage: View {
       }
       .padding(.horizontal, 18).padding(.top, 12).padding(.bottom, 4)
       .journeySurface(cornerRadius: 20)
-      .rotationEffect(.degrees(-1.2))
       .frame(width: 316)
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("log.tally")

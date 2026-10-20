@@ -61,17 +61,20 @@ enum JourneyScores {
     [.tap(t, 0.55, 0.5), .tap(t + 0.12, 0.75, 0.6), .tap(t + 0.25, 1, 0.75), .swell(t + 0.25, 0.4, 0.4, 0, 0.7)]
   }
 
+  /// The phone-habit page: a soft, low tap as each piece of kit disappears into the phone, each a
+  /// little stronger (SuckedInStage). No sound.
+  static let suckedIn = JourneyScore(haptics: SuckedInStage.pieces.indices.map { .tap(SuckedInStage.swallowed($0), 0.3 + 0.12 * Double($0), 0.25) })
+
   /// A notification arriving on the phone-habit page: the message double tap, no sound.
   static func notification(strength: Double) -> JourneyScore { JourneyScore(haptics: ping(0, strength)) }
 
   /// Welcome: four notifications land, each with the Messages ding and the message double tap; the
-  /// kettlebell lands on the phone with a thud and the iPhone's lock click; once "Get jacked" has
-  /// landed, the arm flexes on a rising buzz and peaks with a firm hit (WelcomeScene).
+  /// kettlebell lands on the phone with a thud and the iPhone's lock click; then the arm flexes on a
+  /// rising buzz and peaks with a firm hit (WelcomeScene).
   static let welcome = JourneyScore(
-    haptics: [0.35, 0.75, 1.1, 1.4].flatMap { ping($0, 0.4) } + thud(2.13, 1) + [.tap(2.16, 0.5, 0.95)]
+    haptics: LockPhone.arrivals.flatMap { ping($0, 0.4) } + thud(LockPhone.land, 1) + [.tap(LockPhone.land + 0.03, 0.5, 0.95)]
       + [.swell(WelcomeScene.flex, WelcomeScene.peak - WelcomeScene.flex, 0.1, 0.55, 0.4), .tap(WelcomeScene.peak, 0.8, 0.5)],
-    sounds: [cue(0.35, .notification, 0.28), cue(0.75, .notification, 0.28), cue(1.1, .notification, 0.28), cue(1.4, .notification, 0.28),
-             cue(2.13, .lock, 0.5), cue(WelcomeScene.peak, .plateMedium, 0.4)])
+    sounds: LockPhone.arrivals.map { cue($0, .notification, 0.28) } + [cue(LockPhone.land, .lock, 0.5), cue(WelcomeScene.peak, .plateMedium, 0.4)])
 
   /// The year in extra workouts: crisp ticks that follow the dots as they light (eased, like the
   /// fill), each a touch firmer, then a heavy thud and plate drop as the last dot lights
@@ -132,8 +135,8 @@ enum JourneyScores {
     return JourneyScore(haptics: times.flatMap { tick($0, 0.18) } + tick(duration, 0.45), sounds: times.map { cue($0, .tock, 0.26) } + [cue(duration, .tink, 0.5)])
   }
 
-  /// The shield locks: a latch and the iPhone's lock click, on the kettlebell's squeeze (1.07 s).
-  static let shield = JourneyScore(haptics: latch(1.07, 0.8), sounds: [cue(1.07, .lock, 0.45)])
+  /// The shield locks: a latch and the iPhone's lock click as it covers the app (ShieldStage).
+  static let shield = JourneyScore(haptics: latch(ShieldStage.lands, 0.8), sounds: [cue(ShieldStage.lands, .lock, 0.45)])
 
   /// Rest alerts: the Live Activity's digits change every `countdownStep` from 0:05, each second a
   /// light, crisp tick like a watch's, silently; on 0:00 the real thing: the double buzz and the
