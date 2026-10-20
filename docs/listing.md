@@ -95,7 +95,7 @@ Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setg
 
 | # | Headline | Second line | Screen |
 |---|---|---|---|
-| 1 | Stop **scrolling** in the gym | Block apps | Onboarding's apps page: "Which apps should we lock while you train?" with six locked sample apps (TikTok, Instagram, Snapchat, +3 more) (`--ui-reset -storeShots YES -journeyStep blocking`) |
+| 1 | Stop **scrolling** in the gym | Block apps | Onboarding's apps page: "Which apps should we lock?" (since 20 Oct) with six locked sample apps (TikTok, Instagram, Snapchat, +3 more) (`--ui-reset -storeShots YES -journeyStep blocking`) |
 | 2 | Track your **workouts** | Time your rests | Arms mid-rest after set 1 (`-workoutStage rest -storeShots YES`) |
 | 3 | Plan your **progress** | Stay motivated | Home: the week dots in each split's colour, 6 week streak, Bench press +25 kg, Up next Push (after the workout below) |
 | 4 | Beat your **record** | | Bench press before/after, 60 → 85 kg × 5, +25 kg (Home → tap the chart) |

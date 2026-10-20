@@ -5,6 +5,7 @@
 - Sulav's commit (ef8a800) merged with the inspection fixes, then the user's page-by-page picks applied (docs/ONBOARDING-V8-PLAN.md, "Picks from the side-by-side"). Side-by-side board of both versions: `screenshots/2026-10-20-compare/` (iPhone SE, iOS 26.5, same answers). Offer mockup: `docs/onboarding-mockups/offer-inline.html`.
 - Installed on the user's iPhone as "GB Picks" (personal-team copy, offline) beside "GB Sulav"; checked on the SE simulator: rest and gym pages on rows with the larger stopwatch and clock, Sulav's rack and log, the commit page, the offer's "35 min" inside the red bar, the founder's note second, our phone question.
 - Unit tests: 101, 0 failures, 1 skipped (one simulator). Captures of every page: `screenshots/2026-10-20-picks/`.
+- **App Store slides.** Slide 1's capture showed the old headline, "Which apps should we lock while you train?". `screenshots/store-2026-10-18/1-blocking-apps.png` was retaken on `GymBlock Store CPP` (iPhone 18 Pro Max, iOS 27.0, status bar 09:41) from a Debug build of main (`--ui-reset -storeShots YES -journeyStep blocking`): "Which apps should we lock?" over the same six sample apps. Reframed the default set and `--custom-pages`: the capture, slide 1 at 6.9 and 6.3 inches, the default overview, and the blocking slide plus the overview of the 10 custom pages that use it (34 files; Splits unchanged). Checked by eye. Nothing was uploaded to App Store Connect.
 
 ## Onboarding inspection and fixes (20 October 2026)
 
