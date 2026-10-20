@@ -1,32 +1,39 @@
-# App Store listing — Gym Block
+# App Store listing — GymBlock
 
-Drafted 10 Oct 2026; search fields reworked 17 Oct 2026 from Apple's own autocomplete and the apps that rank for each search (see [Search demand](#search-demand)). Every field is within Apple's limit (name 30, subtitle 30, keywords 100, promotional text 170), and no word repeats across the name, subtitle and keywords. Apple combines words from the name, subtitle and keywords of the same language into search phrases, so a word only needs to appear once. The Apple Ads plan that uses these fields is [docs/strategy/apple-ads-us-campaign.md](strategy/apple-ads-us-campaign.md).
+Drafted 10 Oct 2026; search fields reworked 17 Oct 2026, and on 20 Oct 2026 for the one-word name, from Apple's own autocomplete and the apps that rank for each search (see [Search demand](#search-demand)). Every field is within Apple's limit (name 30, subtitle 30, keywords 100, promotional text 170), and no word repeats across the name, subtitle and keywords. Apple combines words from the name, subtitle and keywords of the same language into search phrases, so a word only needs to appear once. The Apple Ads plan that uses these fields is [docs/strategy/apple-ads-us-campaign.md](strategy/apple-ads-us-campaign.md).
 
-**What's live (17 Oct 2026).** Nothing: version 1.0 (build 4) is with App Review, carrying the 10 Oct fields. Name and keyword changes only go live with a new version, and App Store Connect locks them while a version is in review. If build 4 is approved, ship the new keyword field with 1.0.1; if it's rejected, change the field before resubmitting. The name and subtitle don't change.
+**What's live (20 Oct 2026).** Version 1.0, with the 10 Oct fields: name `Gym Block: Stop Scrolling`. The fields below go with the next version (the one carrying the time-back onboarding): name and keyword changes only go live with a new version, and App Store Connect locks them while a version is in review.
 
 ## Search fields
 
 | Field | Text | Length |
 | --- | --- | --- |
-| Name | Gym Block: Stop Scrolling | 25 / 30 |
+| Name | GymBlock: Gym App Blocker | 25 / 30 |
 | Subtitle | Workout Tracker & Rest Timer | 28 / 30 |
-| Keywords | `blocker,app,reels,shorts,scroll,doomscrolling,doom,no,social,media,phone,focus,log,lifting,pr,set` | 97 / 100 |
+| Keywords | `block,stop,scrolling,scroll,doomscrolling,doom,no,reels,shorts,social,media,phone,log,lifting,pr,set` | 100 / 100 |
 
-The 10 Oct keyword field was `blocker,apps,reels,shorts,scroll,no,lock,doom,social,media,phone,addiction,log,lifting,pr,set,split` (99).
+Earlier fields: 17 Oct, name `Gym Block: Stop Scrolling` with keywords `blocker,app,reels,shorts,scroll,doomscrolling,doom,no,social,media,phone,focus,log,lifting,pr,set` (97, never shipped); 10 Oct (shipped in 1.0), the same name with `blocker,apps,reels,shorts,scroll,no,lock,doom,social,media,phone,addiction,log,lifting,pr,set,split` (99).
 
 Searches these cover together:
 
-- **Scrolling:** stop scrolling, no scroll, doom scrolling, doomscrolling, stop doomscrolling, scroll blocker, reels blocker, shorts blocker, social media blocker, phone blocker, app blocker, app block, block app, gym focus
+- **Brand:** gymblock, gym block
+- **Blocking and scrolling:** app blocker, gym app blocker, block apps, app block, scroll blocker, reels blocker, shorts blocker, social media blocker, phone blocker, workout blocker, gym blocker, stop scrolling, stop doomscrolling, doomscrolling, doom scrolling, no scroll
 - **Gym:** workout tracker, gym tracker, gym app, gym workout tracker, rest timer, gym rest timer, gym timer, workout timer, gym log, workout log, lifting tracker, lifting log, PR tracker, set tracker
 
-**Why the name and subtitle stay.** The name carries "stop scrolling", the reason to pick Gym Block over a plain tracker, and a search a new app can win: four of its top 10 apps have 3 ratings or fewer. The subtitle carries the gym side. "Workout tracker" and "gym tracker" are the biggest searches here (Apple suggests them after 3–4 letters), but Strong and Hevy hold them with about 100,000 ratings each, so they're for Apple Ads, not organic rank, for months. "Rest timer" and "gym rest timer" are the gym searches a new app can win: Apple suggests "rest timer" after 6 letters, and the apps ranking for it have a median of 79 ratings. Putting "Workout Tracker" in the name instead was considered and rejected: it can't rank there yet and would hide the hook.
+**Why the name changed (20 Oct 2026).** With 1.0 live, searching "gymblock" found nothing and "gym block" showed other apps: the App Store matches whole words, "Gym Block" is two everyday words that thousands of apps share, and nothing in the listing was the single word "gymblock". SleepBlock comes first for its name because "sleepblock" is one word no other app has. So the brand is now one word in the name, and every other word in the name is one people search:
+- `GymBlock` makes the one-word search an exact match only this app has.
+- `Gym` keeps every gym search ("gym rest timer": top-10 median 61 ratings; "gym log": 784).
+- `App Blocker` is the most-searched blocking phrase (Apple suggests it first after 5 letters). Its top 10 has a median of 11,642 ratings, so it's for Apple Ads before organic rank. Every "… blocker" search now gets its `blocker` from the name: "scroll blocker" (top-10 median 37), "reels blocker" (1), "shorts blocker" (84), "workout blocker" (1,620).
+- "Stop Scrolling" left the name (the user, 20 Oct 2026: it doesn't say what the app is). The searches stay in the keyword field.
 
-**What changed in the keyword field, and why.**
-- Added `doomscrolling` (one word is a different search from "doom scrolling": suggested after 5 letters, and "stop doomscrolling" after 6, where the top 10 has a median of 7 ratings).
-- Added `focus` for "gym focus": the exact intent. It has no autocomplete demand yet, but every app ranking for it (GymLock, GymMonk, Lockr: Gym Focus) has 0–1 ratings. It also pairs with `app` for "focus app".
-- `apps` → `app`. "App blocker" (suggested after 5 letters, 1st) and "gym app" (6 letters, 1st) are bigger than "block apps" (7). Apple doesn't promise to match plurals, so search "gym block apps" a week after release; if Gym Block isn't there, move `apps` back in place of `no`.
-- Dropped `lock`: "lock apps" and "app lock" results are photo-vault apps, and "lock in" results are self-improvement apps.
-- Dropped `addiction` for room; "phone addiction" moves to the Arabic field below. Dropped `split`: "workout split" is suggested only after 9 letters; it moves to the Korean field.
+The subtitle is unchanged: it carries the gym side, and "rest timer" and "gym rest timer" are the gym searches a new app can win.
+
+**What changed in the keyword field, and why (20 Oct 2026).**
+- Out, now in the name: `blocker` and `app`. Out: `focus` ("gym focus" has no autocomplete demand; "focus app" belongs to big focus apps).
+- In: `block`, so "gym block", "block apps" and "app block" still match now that the brand is one word.
+- In: `stop` and `scrolling`, so "stop scrolling" (top-10 median 1,687) and "stop doomscrolling" (median 7, the most winnable search here) still match without the name.
+- Kept: `doomscrolling`, `doom` (with `scrolling`, "doom scrolling"), `scroll` and `no` ("scroll blocker", "no scroll"), and the gym words.
+- Apple doesn't promise to match plurals, so search "gym block apps" a week after release; if GymBlock isn't there, swap `doom` for `apps`.
 
 Checked and left out of this field: "rep counter" (suggested after 5 letters, but many of its results count reps with the camera; it's tested in the Chinese (Simplified) field below), "habit tracker" and "weight tracker" (other intents), "workout planner" and "strength training" (median top-10 above 60,000 ratings), and app names such as Instagram, TikTok or YouTube, which Apple rejects in keywords even though "instagram blocker" is searched.
 
@@ -43,13 +50,13 @@ Your feed stays locked from Start workout to Finish. Rest counts down on the Loc
 ```
 Stop scrolling between sets.
 
-Gym Block locks the apps that eat your rest, from the moment you tap Start workout until you tap Finish. Your rest counts down on the Lock Screen, so there's nothing to unlock and nothing to scroll. Open a locked app mid-workout and you'll see one line: "You're mid-workout."
+GymBlock locks the apps that eat your rest, from the moment you tap Start workout until you tap Finish. Your rest counts down on the Lock Screen, so there's nothing to unlock and nothing to scroll. Open a locked app mid-workout and you'll see one line: "You're mid-workout."
 
 LOCK YOUR FEED WHILE YOU TRAIN
 • Choose apps, whole categories or websites with Apple's Screen Time picker
-• They stay locked from Start workout to Finish, even if Gym Block is closed
+• They stay locked from Start workout to Finish, even if GymBlock is closed
 • Pause for a call or a break: blocking lifts, and comes back when you resume
-• Your choices stay on your iPhone. Gym Block never sees which apps you picked
+• Your choices stay on your iPhone. GymBlock never sees which apps you picked
 
 A REST TIMER ON YOUR LOCK SCREEN
 • Rest counts down in a Live Activity and the Dynamic Island
@@ -76,7 +83,7 @@ YOUR LOG, EVERYWHERE
 • Works offline in the gym
 
 GYM BLOCK PRO
-Gym Block Pro is $4.99 per month or $49.99 per year (US prices). The yearly plan starts with a 1-week free trial for new subscribers. Payment is charged to your Apple Account when you confirm. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple Account settings.
+GymBlock Pro is $4.99 per month or $49.99 per year (US prices). The yearly plan starts with a 1-week free trial for new subscribers. Payment is charged to your Apple Account when you confirm. Subscriptions renew automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple Account settings.
 
 Terms of Service: https://www.orecci.com/gymblock/terms-of-service
 Privacy Policy: https://www.orecci.com/gymblock/privacy-policy
@@ -100,28 +107,28 @@ Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screens
 
 ## Custom product pages
 
-A custom product page is another version of the App Store page with its own screenshots and promotional text; the name, subtitle and icon stay the same. Apple shows a page in search results for the keywords assigned to it (each keyword from the keyword field, each on one page only), and Apple Ads ad groups can use a page as their ad. Searches made only of name and subtitle words, such as "stop scrolling", "workout tracker" and "rest timer", can't be assigned and always get the default page. That's why the default page leads with blocking and keeps the workout in slide 2.
+A custom product page is another version of the App Store page with its own screenshots and promotional text; the name, subtitle and icon stay the same. Apple shows a page in search results for the keywords assigned to it (each keyword from the keyword field, each on one page only), and Apple Ads ad groups can use a page as their ad. Searches made only of name and subtitle words, such as "app blocker", "workout tracker" and "rest timer", can't be assigned and always get the default page. That's why the default page leads with blocking and keeps the workout in slide 2.
 
-**How many pages.** As many as are genuinely useful, and Apple allows up to 70. The rule for adding one: it opens with its own first card, whose headline uses the words people search, and its first three slides don't match another page's (search results and ads show only the first three). Each page has 5 slides; slides 2–5 reuse framed slides chosen for that page, and no page shows the same capture twice. Set the pages up once the 17 Oct keyword field is live (Workout tracker can go up as soon as 1.0 is live: it only reorders slides). Pages are reviewed separately from builds. Compare each page's conversion with the default page in App Analytics after 2–3 weeks, and drop a page that doesn't beat the default.
+**How many pages.** As many as are genuinely useful, and Apple allows up to 70. The rule for adding one: it opens with its own first card, whose headline uses the words people search, and its first three slides don't match another page's (search results and ads show only the first three). Each page has 5 slides; slides 2–5 reuse framed slides chosen for that page, and no page shows the same capture twice. Set the pages up once the 20 Oct keyword field is live (Workout tracker can go up as soon as 1.0 is live: it only reorders slides). Pages are reviewed separately from builds. Compare each page's conversion with the default page in App Analytics after 2–3 weeks, and drop a page that doesn't beat the default.
 
 **Assigning words from the extra-language fields** ([below](#us-keywords-from-other-languages)) to a page is untested: App Store Connect may offer only the localization's own keywords, or only the primary language's. Check it in App Store Connect when the localizations are added. Until then the pages fed only by those words (Splits, Progress, Streak) are for Apple Ads, and organic searches for them get the default page.
 
 | Page | Assign these keywords | Apple Ads ad group | Promotional text |
 | --- | --- | --- | --- |
-| Default | none: `app` stays unassigned (for "gym app"), and it gets every search not assigned elsewhere | Brand | The listing's promotional text |
+| Default | none: `block` stays unassigned (for "gym block", "block apps", "app block"), and it gets every search not assigned elsewhere | Brand | The listing's promotional text |
 | Workout tracker | none (its words are in the subtitle) | Workout tracker | `Every set is one tap, with last time's weight and reps already filled in. Rest counts down on the Lock Screen, and your feed stays locked until Finish.` (151) |
 | Gym log | `log`, `lifting`, `set` | Gym log | `Log a set in one tap: last time's weight and reps are already filled in. Step one plate at a time, and every set saves as it happens, even offline.` (147) |
 | PR tracker | `pr` | PR tracker | `Every exercise has its own progress page: before and after, with reps or weight held the same, so a gain is a real one. History shows time since your last PR.` (158) |
 | Rest timer | none (its words are in the subtitle) | Rest timer | `Rest counts down on your Lock Screen and in the Dynamic Island, so there's nothing to unlock between sets. An alert tells you when rest is up.` (142) |
-| Reels blocker | `reels`, `shorts`, `blocker` | Reels & app blockers | `Reels and shorts stay locked from Start workout to Finish, even with Gym Block closed. Pause for a call and they unlock; resume and they lock again.` (148) |
-| Doomscrolling | `doomscrolling`, `doom`, `scroll`, `no` | Stop scrolling | `Pick the apps you doomscroll in. From Start workout to Finish they stay locked, even with Gym Block closed. Open one and it just says “You’re mid-workout.”` (155) |
+| Reels blocker | `reels`, `shorts` | Reels & app blockers | `Reels and shorts stay locked from Start workout to Finish, even with GymBlock closed. Pause for a call and they unlock; resume and they lock again.` (148) |
+| Doomscrolling | `doomscrolling`, `doom`, `scroll`, `no`, `stop`, `scrolling` | Stop scrolling | `Pick the apps you doomscroll in. From Start workout to Finish they stay locked, even with GymBlock closed. Open one and it just says “You’re mid-workout.”` (155) |
 | Social media | `social`, `media` | Social media | `Choose social apps, whole categories or websites in Apple's Screen Time picker. They lock while you train and open again the moment you tap Finish.` (147) |
-| Phone & focus | `phone`, `focus` | Gym + phone | `Put the phone down between sets. Rest counts down on the Lock Screen, an alert tells you when it's up, and the apps you choose stay locked until Finish.` (152) |
+| Phone & focus | `phone` | Gym + phone | `Put the phone down between sets. Rest counts down on the Lock Screen, an alert tells you when it's up, and the apps you choose stay locked until Finish.` (152) |
 | Splits | none | Splits | `Set up push, pull, legs or any split you like, each in its own colour. Home shows the one that's up next, and progress is compared within the same split.` (153) |
 | Progress | none | Progress | `After every workout, see what changed: weight moved, time, sets and rest. Gains are compared like for like, against your last workout of the same split.` (152) |
 | Streak | none | Streak & motivation | `Home counts your week streak, and Profile fills each training day in its split's colour, so a missed gym day shows. Every set is one tap.` (137) |
 
-Every word of the 17 Oct keyword field is on exactly one page. "Stop scrolling" searches can't be assigned (name words), so they get the default page organically; the Stop scrolling ad group uses the Doomscrolling page.
+Every word of the 20 Oct keyword field except `block` is on exactly one page. "App blocker" searches can't be assigned (name words), so they get the default page, which leads with blocking; the Reels & app blockers ad group uses the Reels blocker page.
 
 **First cards.** Each new card is framed like the default set (white headline with one red word, a pale-blue second line, the phone running off the bottom):
 
@@ -166,13 +173,13 @@ The Lock Screen puts the Live Activity at its foot, below where the phone is usu
 
 ## US keywords from other languages
 
-The US App Store also searches the listings in nine other languages: Spanish (Mexico), French, Portuguese (Brazil), Korean, Chinese (Simplified), Chinese (Traditional), Russian, Arabic and Vietnamese. Each adds another 100-character keyword field, and the words don't have to be in that language. Gym Block is English only, so add these nine localizations in App Store Connect with the English name, subtitle, description, promotional text and screenshots, and an English keyword field from the table below. People in those countries see the same English page they see today; only the hidden keyword field differs.
+The US App Store also searches the listings in nine other languages: Spanish (Mexico), French, Portuguese (Brazil), Korean, Chinese (Simplified), Chinese (Traditional), Russian, Arabic and Vietnamese. Each adds another 100-character keyword field, and the words don't have to be in that language. GymBlock is English only, so add these nine localizations in App Store Connect with the English name, subtitle, description, promotional text and screenshots, and an English keyword field from the table below. People in those countries see the same English page they see today; only the hidden keyword field differs.
 
 Rules:
-- **Apple doesn't combine words across languages.** Each field combines only with its own localization's name and subtitle (the same English words: gym, block, stop, scrolling, workout, tracker, rest, timer), so a word from the U.S. field must be repeated when a phrase here needs it, as `blocker` is in the Chinese (Traditional) and Russian fields.
+- **Apple doesn't combine words across languages.** Each field combines only with its own localization's name and subtitle (the same English words: gymblock, gym, app, blocker, workout, tracker, rest, timer), so a word from the U.S. field must be repeated when a phrase here needs it, as `block` is in the Russian field.
 - **A small risk.** Apple doesn't require a localization's text to be in its language, and many apps use these fields this way, but a reviewer can query it. If one does, remove the extra localizations; nothing else depends on them.
 - No app names (Instagram, TikTok, YouTube, Hevy, Strong, Opal) in any field.
-- These are long-tail searches. They're cheap to add, but the U.S. fields matter far more. Search "gym block" with a phrase from each field about a week after release (for example "gym block hypertrophy") to check it's picked up.
+- These are long-tail searches. They're cheap to add, but the U.S. fields matter far more. Search "gymblock" with a phrase from each field about a week after release (for example "gymblock hypertrophy") to check it's picked up.
 
 | Language | Theme | Keywords | Example searches (autocomplete letters) |
 | --- | --- | --- | --- |
@@ -181,9 +188,9 @@ Rules:
 | Portuguese (Brazil) | Records and progress | `pr,personal,record,progress,progressive,overload,one,rep,max,gains,stronger,strength,lift` (89) | progress tracker (4), gym progress (6), one rep max (6), progressive overload (13), PR tracker (4) |
 | Korean | Splits | `split,push,pull,legs,ppl,upper,lower,body,routine,planner,plan,program,bodybuilding,hypertrophy` (95) | push pull legs (6), PPL (2), gym planner (5), gym routine (5), workout routine (9), hypertrophy (6), bodybuilding (5) |
 | Chinese (Simplified) | Sets and reps | `rep,counter,set,sets,reps,count,superset,dumbbell,barbell,powerlifting,squat,bench,press` (88) | rep counter (5), set counter (5), superset (6), powerlifting (6), bench press (7), dumbbell (5) |
-| Chinese (Traditional) | Feeds | `feed,blocker,brainrot,brain,rot,attention,span,swipe,scroller,endless,infinite,short,video,content` (98) | feed blocker (6), brainrot (3), brain rot (7), attention span (6) |
-| Russian | Screen Time | `screen,time,limit,limiter,control,usage,app,apps,blocker,lock,limits,distracting,restrict,manager` (97) | screen time (4), limit screen time (4), screen time control (4), app limit (5), block apps (7) |
-| Arabic | Phone habits | `phone,addiction,detox,dopamine,digital,distraction,blocker,habit,quit,social,media,free,mindful` (95) | dopamine detox (4), detox (4), digital detox (9), phone addiction (7), distraction blocker (5), quit social media (7) |
+| Chinese (Traditional) | Feeds | `feed,brainrot,brain,rot,attention,span,swipe,scroller,endless,infinite,short,video,content,reels` (96) | feed blocker (6), brainrot (3), brain rot (7), attention span (6) |
+| Russian | Screen Time | `screen,time,limit,limiter,control,usage,apps,block,lock,limits,distracting,restrict,manager,blocking` (100) | screen time (4), limit screen time (4), screen time control (4), app limit (5), block apps (7) |
+| Arabic | Phone habits | `phone,addiction,detox,dopamine,digital,distraction,habit,quit,social,media,free,mindful,focus` (93) | dopamine detox (4), detox (4), digital detox (9), phone addiction (7), distraction blocker (5), quit social media (7) |
 | Vietnamese | Discipline | `discipline,motivation,self,control,lock,in,locked,grind,consistency,streak,habit,accountability` (95) | discipline (5), lock in (4), gym motivation (5), workout motivation (9), self control (6), gym streak (5) |
 
 Some of these are tests with a different intent behind them: "screen time" and "dopamine detox" searchers want all-day blockers, "rep counter" searchers often want camera counting, and "interval timer" searchers often want HIIT timers. If a field brings installs that don't start a trial (App Analytics → Sources → App Store Search can't split by field, so judge by the Apple Ads search terms), swap it for more phrases from a field that converts.
@@ -257,8 +264,8 @@ The first version of Gym Block. Lock your feed while you lift, rest on the Lock 
 
 | Field | Monthly | Yearly |
 | --- | --- | --- |
-| Subscription group | Gym Block Pro | Gym Block Pro |
-| Display name (30 max) | Gym Block Pro Monthly | Gym Block Pro Yearly |
+| Subscription group | GymBlock Pro | GymBlock Pro |
+| Display name (30 max) | GymBlock Pro Monthly | GymBlock Pro Yearly |
 | Description (45 max) | Lock your feed, rest timer and gym log | Lock your feed, rest timer and gym log |
 | Price (US) | $4.99 | $49.99 |
 | Product ID | as set in App Store Connect and RevenueCat | as set in App Store Connect and RevenueCat |
@@ -279,7 +286,7 @@ The first version of Gym Block. Lock your feed while you lift, rest on the Lock 
 ## App Review notes
 
 ```
-Gym Block locks the apps a user chooses while a workout is running, using Apple's Screen Time API (FamilyControls with individual authorization, ManagedSettings, and a ShieldConfiguration extension).
+GymBlock locks the apps a user chooses while a workout is running, using Apple's Screen Time API (FamilyControls with individual authorization, ManagedSettings, and a ShieldConfiguration extension).
 
 To test blocking (it needs a physical iPhone, because Screen Time shields don't work in the simulator):
 1. Sign in with Apple or Google on the account page.
@@ -287,7 +294,7 @@ To test blocking (it needs a physical iPhone, because Screen Time shields don't 
 3. Tap Start workout, then open a chosen app. It shows "You're mid-workout."
 4. Tap the workout clock to pause: the apps unlock. Resume or Finish to see the lock return or lift.
 
-Gym Block never learns which apps were chosen. The choice is kept on the device as opaque Screen Time tokens and is never synced or sent to analytics.
+GymBlock never learns which apps were chosen. The choice is kept on the device as opaque Screen Time tokens and is never synced or sent to analytics.
 
 Subscriptions use StoreKit through RevenueCat. Use a sandbox account to buy.
 ```
