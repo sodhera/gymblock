@@ -38,7 +38,8 @@ BODY = (8, 8, 9)
 
 # Headline, the red word, second line, capture.
 SLIDES = [
-    ("Stop scrolling in the gym", "scrolling", "Block apps", "1-blocking-apps.png"),
+    # Slide 1 is onboarding's welcome (20 Oct 2026, at the user's request): the locked phone and the arm.
+    ("Stop scrolling in the gym", "scrolling", "Block apps", "0-welcome.png"),
     ("Track your workouts", "workouts", "Time your rests", "2-workout-rest.png"),
     ("Plan your progress", "progress", "Stay motivated", "3-home.png"),
     ("Beat your record", "record", None, "4-squat-record.png"),
@@ -73,20 +74,21 @@ NEW_SLIDES = {
                    capture="5-profile-month.png", popout=((48, 440, 1272, 1130), 1.1)),
 }
 
-# Upload order per page: a NEW_SLIDES key, or a slide number from SLIDES. Each page opens with its own
-# card and never shows the same capture twice.
+# Upload order per page: a NEW_SLIDES key, or a slide number from SLIDES. Most pages open with the
+# welcome (slide 1) and then their own card (20 Oct 2026, at the user's request); PR tracker, Rest
+# timer and Splits, searched for one feature, open with theirs. No page shows a capture twice.
 PAGES = {
-    "workout-tracker": [2, 4, 3, 1, 5],
-    "gym-log": ["gym-log", 4, 3, 1, 5],
+    "workout-tracker": [1, 2, 4, 3, 5],
+    "gym-log": [1, "gym-log", 4, 3, 5],
     "pr-tracker": ["pr", 3, 2, 1, 5],
     "rest-timer": ["rest", 2, 1, 4, 5],
-    "reels-blocker": ["reels", 2, 4, 3, 5],
-    "doomscrolling": ["doomscrolling", "rest", 2, 4, 5],
-    "social-media": ["social", 1, "rest", 2, 4],
-    "phone-focus": ["phone", 1, 2, 4, 5],
+    "reels-blocker": [1, "reels", 2, 4, 5],
+    "doomscrolling": [1, "doomscrolling", "rest", 2, 4],
+    "social-media": [1, "social", "rest", 2, 4],
+    "phone-focus": [1, "phone", 2, 4, 5],
     "splits": ["splits", 3, 2, 4, 5],
-    "progress": ["progress", 4, 2, 5, 1],
-    "streak": ["streak", 3, 2, 4, 1],
+    "progress": [1, "progress", 4, 2, 5],
+    "streak": [1, "streak", 3, 2, 4],
 }
 CPP_OUT = os.path.join(ROOT, "screenshots", "store-cpp")
 

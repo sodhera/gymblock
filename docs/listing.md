@@ -95,7 +95,7 @@ Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setg
 
 | # | Headline | Second line | Screen |
 |---|---|---|---|
-| 1 | Stop **scrolling** in the gym | Block apps | Onboarding's apps page: "Which apps should we lock?" (since 20 Oct) with six locked sample apps (TikTok, Instagram, Snapchat, +3 more) (`--ui-reset -storeShots YES -journeyStep blocking`) |
+| 1 | Stop **scrolling** in the gym | Block apps | Onboarding's welcome: "Focused workouts." over the locked phone and the arm (`--ui-reset -journeyStep welcome`), since 20 Oct. The apps page ("Which apps should we lock?", six sample apps, `-storeShots YES -journeyStep blocking`) is now only the Reels blocker and Doomscrolling cards. |
 | 2 | Track your **workouts** | Time your rests | Push mid-rest after set 1 (`-workoutStage rest -storeShots YES`) |
 | 3 | Plan your **progress** | Stay motivated | Home: 6 week streak, Squat +20 kg, Up next Legs (after the workout below) |
 | 4 | Beat your **record** | | Squat before/after, 80 → 100 kg × 5, +20 kg (Home → tap the chart) |
@@ -106,6 +106,8 @@ Slides 3–5 come from one seeded run on a fresh install: `--ui-reset -workoutSt
 Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screenshots. They are the user's own numbers, not a measurement.
 
 ## Custom product pages
+
+**Since 20 Oct 2026 (the user's call):** most pages open with the welcome slide, then their own card. PR tracker, Rest timer and Splits, each searched for one feature, still open with their own card. The orders are `PAGES` in `scripts/frame-store-screenshots.py`.
 
 A custom product page is another version of the App Store page with its own screenshots and promotional text; the name, subtitle and icon stay the same. Apple shows a page in search results for the keywords assigned to it (each keyword from the keyword field, each on one page only), and Apple Ads ad groups can use a page as their ad. Searches made only of name and subtitle words, such as "app blocker", "workout tracker" and "rest timer", can't be assigned and always get the default page. That's why the default page leads with blocking and keeps the workout in slide 2.
 
