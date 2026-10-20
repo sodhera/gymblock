@@ -125,8 +125,10 @@ struct PaywallView: View {
                 .fixedSize(horizontal: false, vertical: true).padding(.top, 10)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
               Spacer(minLength: 18).frame(maxHeight: 26)
-              TwoWays(estimate: GymTimeEstimate(store.profile.baseline ?? RoutineBaseline()))
-              Spacer(minLength: 18).frame(maxHeight: 24)
+              if time.outcome == .full {
+                TwoWays(time: time)
+                Spacer(minLength: 18).frame(maxHeight: 24)
+              }
               benefits
               if let plan = subscription.plan, plan.trialDays > 0 {
                 TrialTimeline(days: plan.trialDays, reminds: reminds).padding(.top, 22)
@@ -160,10 +162,24 @@ struct PaywallView: View {
 
   // MARK: Sections
 
-  /// The change, sold in their own words: the outcome first, never a body prediction.
+  private var time: TimeBack { TimeBack(store.profile.baseline ?? RoutineBaseline(), restSeconds: store.profile.restSeconds) }
+  /// The change, sold in their own numbers (docs/ONBOARDING-V8-PLAN.md): the minutes back, never a
+  /// body prediction. Rarely, or a scroll that fits the rest: every rest on time.
   private var headline: String {
     let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-    return name.isEmpty ? store.t("Your best sessions start today.") : String(format: store.t("%@, your best sessions start today."), name)
+    let time = self.time
+    func named(_ withName: String, _ without: String, _ args: CVarArg...) -> String {
+      name.isEmpty ? String(format: store.t(without), arguments: args) : String(format: store.t(withName), arguments: [name] + args)
+    }
+    switch time.outcome {
+    case .full:
+      return time.lostIsAnHour ? named("%@, get your hour back.", "Get your hour back.")
+        : named("%@, get your %@ back.", "Get your %@ back.", String(format: store.t("%@ minutes"), "\(time.shownLost)"))
+    case .unfit where (time.lostPerRest ?? 0) > 0:
+      return named("%@, get %@ back every rest.", "Get %@ back every rest.", store.minutesWords(time.lostPerRest ?? 0))
+    default:
+      return named("%@, keep every rest on time.", "Keep every rest on time.")
+    }
   }
   private var benefits: some View {
     VStack(alignment: .leading, spacing: 11) {
@@ -287,25 +303,27 @@ private struct Benefit: View {
   }
 }
 
-/// Their workout, two ways, from their own answers: today the rests go to the phone; with GymBlock
-/// the whole bar is green, the phone minutes focused ones (the user's wording, 18 Oct 2026).
+/// Their time at the gym, two ways, from their own answers (docs/ONBOARDING-V8-PLAN.md): today the
+/// workout and then the red minutes scrolling runs past their rests; with GymBlock only the workout,
+/// a shorter bar. Never a claim that the rests become lifting.
 private struct TwoWays: View {
-  let estimate: GymTimeEstimate
+  let time: TimeBack
   @EnvironmentObject private var store: GymStore
   var body: some View {
-    let phone = estimate.phoneMinutes, lifting = estimate.liftingMinutes, rest = estimate.workoutMinutes - lifting
+    let gym = time.gym ?? 60, lost = time.lost ?? 0
     VStack(alignment: .leading, spacing: 9) {
-      Text(String(format: store.t("Your %@-minute workout"), "\(Int(estimate.workoutMinutes.rounded()))"))
+      Text(String(format: store.t("Your time at the gym: %@"), store.gymWords(gym)))
         .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       bar(store.t("Today"), JourneyColor.secondary, [
-        (rest - phone, JourneyColor.ink(0.12), ""),
-        (phone, JourneyColor.danger, phone > 0 ? String(format: store.t("%@ min on your phone"), "\(Int(phone.rounded()))") : ""),
-        (lifting, JourneyColor.signal, ""),
+        (gym - lost, JourneyColor.signal, ""),
+        (lost, JourneyColor.danger, String(format: store.t("%@ min scrolling"), "\(time.shownLost)")),
       ])
-      // With GymBlock the whole bar is green: the whole workout, focused (18 Oct 2026: its full length, not the phone minutes).
       bar(store.t("With GymBlock"), JourneyColor.text, [
-        (estimate.workoutMinutes, JourneyColor.signal, String(format: store.t("%@ min focused workout"), "\(Int(estimate.workoutMinutes.rounded()))")),
+        (gym - lost, JourneyColor.signal, store.aboutWords(time.workout).prefix(1).uppercased() + store.aboutWords(time.workout).dropFirst()),
+        (lost, Color.clear, ""),
       ])
+      Text(String(format: store.t("From your answers. About %@ hours back a month."), "\(time.monthHours)"))
+        .font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
     }.accessibilityElement(children: .combine).accessibilityIdentifier("paywall.twoWays")
   }
   private func bar(_ label: String, _ color: Color, _ parts: [(Double, Color, String)]) -> some View {

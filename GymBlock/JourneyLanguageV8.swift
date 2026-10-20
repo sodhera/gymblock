@@ -1,0 +1,86 @@
+import Foundation
+
+/// Spanish for onboarding V8 (20 Oct 2026, docs/ONBOARDING-V8-PLAN.md): time back. The questions,
+/// their scenes, the reveals, the promise, the plan's new line and the offer.
+extension Spanish {
+  static let v8: [String: String] = [
+    "No judgement. We did too.": "Sin juzgar. A nosotros también nos pasaba.",
+    // Rest
+    "How long do you need to rest between sets?": "¿Cuánto necesitas descansar entre series?",
+    "1 min": "1 min", "1½ min": "1½ min", "2 min": "2 min", "3 min": "3 min", "Not sure": "No lo sé",
+    "We’ll time your rests to this.": "Mediremos tus descansos con esto.",
+    "We’ll start you at 2 minutes.": "Empezaremos con 2 minutos.",
+    "Rests on time": "Descansos a tiempo",
+    "Then you’re already ahead.": "Entonces ya vas por delante.",
+    "We’ll help you keep it that way.": "Te ayudaremos a que siga así.",
+    // Scrolling
+    "When you start scrolling between sets, how many minutes do you scroll?": "Cuando empiezas a mirar el móvil entre series, ¿cuántos minutos sigues?",
+    "POV: just one more video": "POV: solo un vídeo más",
+    "Rate this pump 1–10": "Puntúa esta congestión del 1 al 10",
+    "3 mistakes on bench": "3 errores en press banca",
+    "Wait for the end…": "Espera al final…",
+    "Gym fails, part 47": "Fallos en el gym, parte 47",
+    "This fixed my squat": "Esto arregló mi sentadilla",
+    // Per rest
+    "1 minute": "1 minuto", "half a minute": "medio minuto", "%@ minutes": "%@ minutos",
+    "That’s %@ lost. Every rest.": "Son %@ perdidos. En cada descanso.",
+    "That’s %@ lost each time you scroll.": "Son %@ perdidos cada vez que miras el móvil.",
+    "Then your scrolling fits inside your rest.": "Entonces el móvil cabe en tu descanso.",
+    "The first minute was rest you’d take anyway.": "El primer minuto lo descansarías igualmente.",
+    "The first %@ were rest you’d take anyway.": "Los primeros %@ los descansarías igualmente.",
+    "every rest": "en cada descanso", "each time you scroll": "cada vez que miras el móvil",
+    "Rest you need": "Descanso que necesitas", "Scrolling": "Con el móvil",
+    // Exercises, sets, gym time
+    "How many exercises do you usually do every workout?": "¿Cuántos ejercicios sueles hacer en cada entrenamiento?",
+    "3 or fewer": "3 o menos", "7 or more": "7 o más", "5 or more": "5 o más",
+    "And how many sets of each exercise?": "¿Y cuántas series de cada ejercicio?",
+    "Today’s log": "Registro de hoy",
+    "%@ sets, so %@ rests.": "%@ series, así que %@ descansos.",
+    "How long are you usually at the gym?": "¿Cuánto tiempo sueles estar en el gimnasio?",
+    "45 min": "45 min", "1 hour": "1 hora", "1½ hours": "1½ horas", "2 hours": "2 horas", "2½ hours or more": "2½ horas o más",
+    "45 minutes": "45 minutos", "2½ hours": "2½ horas",
+    "From walking in to walking out.": "Desde que entras hasta que sales.",
+    // The workout
+    "%@, %@ of your %@ goes to scrolling.": "%1$@, de tu tiempo en el gimnasio (%3$@), %2$@ se van en el móvil.",
+    "%@ of your %@ goes to scrolling.": "De tu tiempo en el gimnasio (%2$@), %1$@ se van en el móvil.",
+    "about an hour": "cerca de una hora",
+    "%@, scrolling takes about %@ of your workout.": "%@, el móvil se lleva unos %@ de tu entrenamiento.",
+    "Scrolling takes about %@ of your workout.": "El móvil se lleva unos %@ de tu entrenamiento.",
+    "From your answers: %@ rests × %@.": "Según tus respuestas: %@ descansos × %@.",
+    "From your answers: about half of %@ rests × %@.": "Según tus respuestas: la mitad de %@ descansos × %@.",
+    "From your answers, fitted into your %@.": "Según tus respuestas, ajustado a tus %@.",
+    "scrolling, every workout": "con el móvil, en cada entrenamiento",
+    "Your workout, rests on time": "Tu entrenamiento, descansos a tiempo",
+    "Your time at the gym": "Tu tiempo en el gimnasio",
+    "about %@": "unos %@",
+    // The year
+    "At %@ workouts a week, that’s about %@ hours a year.": "Con %@ entrenamientos a la semana, son unas %@ horas al año.",
+    "= %@ extra workouts": "= %@ entrenamientos más",
+    "Each dot is one workout of %@.": "Cada punto es un entrenamiento de %@.",
+    "Each dot is %@ workouts of %@.": "Cada punto son %@ entrenamientos de %@.",
+    // The promise
+    "We’ll give you those %@ back.\nAnd a better workout.": "Te devolvemos esos %@.\nY un entrenamiento mejor.",
+    "We’ll give you that hour back.\nAnd a better workout.": "Te devolvemos esa hora.\nY un entrenamiento mejor.",
+    "We’ll give you those %@ back. Every rest.": "Te devolvemos esos %@. En cada descanso.",
+    "We’ll give you that minute back. Every rest.": "Te devolvemos ese minuto. En cada descanso.",
+    "Every rest on time. Every set saved.": "Cada descanso a tiempo. Cada serie guardada.",
+    "at the gym today": "en el gimnasio hoy",
+    "with GymBlock": "con GymBlock",
+    "%@ min back": "%@ min de vuelta",
+    // Alerts and the plan
+    "We’ll buzz you\nwhen your %@ is up.": "Te avisaremos\ncuando acaben tus %@.",
+    "Each workout": "Cada entrenamiento",
+    // The offer
+    "%@, get your %@ back.": "%@, recupera tus %@.",
+    "Get your %@ back.": "Recupera tus %@.",
+    "%@, get your hour back.": "%@, recupera tu hora.",
+    "Get your hour back.": "Recupera tu hora.",
+    "%@, get %@ back every rest.": "%@, recupera %@ en cada descanso.",
+    "Get %@ back every rest.": "Recupera %@ en cada descanso.",
+    "%@, keep every rest on time.": "%@, mantén cada descanso a tiempo.",
+    "Keep every rest on time.": "Mantén cada descanso a tiempo.",
+    "Your time at the gym: %@": "Tu tiempo en el gimnasio: %@",
+    "%@ min scrolling": "%@ min con el móvil",
+    "From your answers. About %@ hours back a month.": "Según tus respuestas. Unas %@ horas de vuelta al mes.",
+  ]
+}

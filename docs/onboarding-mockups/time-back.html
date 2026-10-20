@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GymBlock Time Back</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400..800&display=swap">
+<style>
+/* Review board for the "time back" onboarding (18 Oct 2026). Pages 5–14 are new mockups; pages
+   that don't change are real captures of today's app (screenshots/2026-10-18-onboarding/pro-max). */
+@font-face { font-family: "GB Sans"; src: url("../../GymBlock/Fonts/DMSans.ttf") format("truetype"); font-weight: 100 1000; }
+:root {
+  --bg: #ECE9E3; --surface: #F7F5F1; --text: #141417; --muted: #5F5D58; --line: rgba(20,20,23,.12);
+  --chip: rgba(20,20,23,.06); --accent: #0F9A6B; --warn: #B9372E;
+  --sans: "GB Sans", "DM Sans", ui-sans-serif, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: "DM Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141518; --surface: #1C1D21; --text: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.12);
+  --chip: rgba(255,255,255,.08); --accent: #3CC28E; --warn: #F06A5F; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141518; --surface: #1C1D21; --text: #ECEAE5; --muted: #A3A09A; --line: rgba(255,255,255,.12);
+  --chip: rgba(255,255,255,.08); --accent: #3CC28E; --warn: #F06A5F; color-scheme: dark }
+* { box-sizing: border-box }
+html, body { margin: 0 }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px }
+header { padding: 40px 0 22px; display: grid; gap: 14px }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--muted) }
+h1 { margin: 0; font-size: clamp(30px, 4.6vw, 54px); line-height: 1.04; letter-spacing: -0.035em; font-weight: 800; max-width: 18ch; text-wrap: balance }
+.lede { margin: 0; max-width: 74ch; font-size: 16.5px }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted); font-size: 13.5px; align-items: center }
+.tag { font: 500 11px var(--mono); letter-spacing: .03em; padding: 2px 7px; border-radius: 6px; background: var(--chip); white-space: nowrap }
+.tag.new { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent) }
+.tag.changed { color: #9A6A00; background: rgba(214,160,30,.16) }
+.tag.today { color: var(--muted) }
+.bar { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line) }
+.bar .wrap { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding-top: 10px; padding-bottom: 10px }
+.seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px }
+.seg button { font: 600 13.5px var(--sans); color: var(--muted); background: none; border: 0; border-radius: 999px; padding: 7px 14px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.12) }
+.bar .hint { color: var(--muted); font-size: 13px; margin-left: auto }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+@media (max-width: 700px) { .bar .hint { display: none } }
+
+/* Click-through */
+#flow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; padding: 26px 0 60px; align-items: start }
+@media (max-width: 860px) { #flow { grid-template-columns: minmax(0, 1fr); justify-items: center } }
+.panel { display: grid; gap: 16px; max-width: 560px; min-width: 0; width: 100% }
+.pg-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap }
+.pg-head .num { font: 500 13px var(--mono); color: var(--muted) }
+.pg-head h2 { margin: 0; font-size: 26px; letter-spacing: -0.02em; font-weight: 750 }
+.panel p { margin: 0 }
+.note { color: var(--text) }
+.feel { color: var(--muted); font-size: 13.5px }
+.card { background: var(--surface); border-radius: 14px; box-shadow: 0 0 0 1px var(--line); padding: 14px 16px; display: grid; gap: 8px; min-width: 0 }
+.card h3 { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted); font-family: var(--mono); letter-spacing: .03em }
+.math { display: grid; gap: 4px; font-size: 14px; font-variant-numeric: tabular-nums }
+.math div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 4px }
+.math div:last-child { border-bottom: 0 }
+.math span { color: var(--muted) }
+.math b { font-weight: 650; text-align: right }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chips button { font: 500 12.5px var(--mono); min-width: 36px; padding: 6px 8px; border-radius: 8px; border: 0; background: var(--chip); color: var(--text); cursor: pointer }
+.chips button.new { box-shadow: inset 0 -2px 0 var(--accent) }
+.chips button.changed { box-shadow: inset 0 -2px 0 #D6A01E }
+.chips button[aria-current="true"] { background: var(--text); color: var(--bg) }
+.chips button:disabled { opacity: .35; cursor: default }
+.btns { display: flex; flex-wrap: wrap; gap: 8px }
+.btns button { font: 600 13.5px var(--sans); padding: 8px 14px; border-radius: 999px; border: 0; cursor: pointer; background: var(--chip); color: var(--text) }
+.btns button.dark { background: var(--text); color: var(--bg) }
+
+/* All pages */
+#all { padding: 26px 0 60px; display: grid; gap: 30px }
+#all h2 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.02em }
+#all .sub { margin: 0 0 14px; color: var(--muted); max-width: 72ch }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 26px 18px }
+.tile { display: grid; gap: 8px; align-content: start; cursor: pointer; border: 0; background: none; padding: 0; text-align: left; color: inherit; font: inherit }
+.tile .cap { display: flex; gap: 6px; align-items: center; font-size: 13.5px; font-weight: 650; min-width: 0 }
+.tile .cap .n { font: 500 12px var(--mono); color: var(--muted) }
+.tile .cap .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0 }
+[hidden] { display: none !important }
+
+/* ---------- The phone ---------- */
+.phone { --s: .7; width: calc(440px * var(--s)); height: calc(956px * var(--s)); border-radius: calc(62px * var(--s)); overflow: hidden; position: relative;
+  box-shadow: 0 0 0 1px rgba(20,20,23,.16), 0 18px 40px rgba(20,20,23,.16); background: #F5F3EF; flex: none }
+.grid .phone { --s: .445 }
+.screen { position: absolute; left: 0; top: 0; width: 440px; height: 956px; transform: scale(var(--s)); transform-origin: 0 0;
+  --paper: #F5F3EF; --ink: #141417; --sec: #6E6B65; --hair: rgba(20,20,23,.10); --em: #0F9A6B; --red: #DB4036;
+  background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.3; overflow: hidden; display: flex; flex-direction: column;
+  -webkit-user-select: none; user-select: none }
+.screen::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 62% 40% at 50% 44%, rgba(255,206,160,.30), rgba(255,206,160,0) 70%),
+              radial-gradient(circle, rgba(20,20,23,.075) 1px, transparent 1.4px) 0 0 / 17px 17px }
+.screen > * { position: relative }
+.screen img.cap { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1 }
+.hot { position: absolute; z-index: 2; background: transparent; border: 0; cursor: pointer; border-radius: 30px }
+.hot:hover { background: rgba(15,154,107,.10) }
+.sb { height: 54px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 34px 0 52px; font-weight: 600; font-size: 17px }
+.sb svg { height: 13px }
+.top { height: 44px; flex: none; margin-top: 6px; display: flex; align-items: center; gap: 16px; padding: 0 12px }
+.back { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center; border: 0; padding: 0; cursor: pointer; color: var(--ink);
+  background: rgba(255,255,255,.66); box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(20,20,23,.08), 0 2px 8px rgba(20,20,23,.07) }
+.prog { flex: 1; height: 3px; border-radius: 2px; background: rgba(20,20,23,.10); overflow: hidden }
+.prog i { display: block; height: 100%; background: var(--ink); border-radius: 2px; transition: width .4s ease }
+.top .gap { width: 44px; flex: none }
+.content { flex: 1; display: flex; flex-direction: column; min-height: 0 }
+.content.out { opacity: 0; transform: translateX(var(--dx, -18px)); transition: opacity .18s ease, transform .18s ease }
+.content.in { animation: pagein .35s ease both }
+@keyframes pagein { from { opacity: 0; transform: translateX(var(--dx2, 18px)) } to { opacity: 1; transform: none } }
+.hl { padding: 14px 28px 0; font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -0.3px; text-align: center; min-height: calc(14px + 2.4em); display: flex; align-items: center; justify-content: center; text-wrap: balance; white-space: pre-line }
+.stage { flex: 1; min-height: 0; padding: 12px 24px; display: flex; flex-direction: column; justify-content: center; align-items: stretch }
+.capt { min-height: 20px; padding: 0 32px; text-align: center; font-size: 12.5px; color: var(--sec); line-height: 1.35 }
+.acts { padding: 12px 24px 6px; display: flex; flex-direction: column; gap: 10px; flex: none }
+.slot { height: 34px; display: grid; place-items: center; font-size: 15px; color: var(--sec) }
+.home { height: 34px; flex: none; display: grid; place-items: end center; padding-bottom: 8px }
+.home i { width: 140px; height: 5px; border-radius: 3px; background: var(--ink) }
+.primary { height: 50px; border-radius: 25px; border: 0; background: var(--ink); color: #fff; font: 600 17px var(--sans); cursor: pointer; position: relative; overflow: hidden; width: 100% }
+.primary:disabled { background: rgba(20,20,23,.14); color: rgba(20,20,23,.35); cursor: default }
+.primary .fill { position: absolute; inset: 0; width: 0; background: var(--em) }
+.primary span { position: relative }
+.opts { display: flex; flex-direction: column; gap: 10px }
+.opt { height: 52px; border-radius: 18px; padding: 0 16px 0 18px; display: flex; align-items: center; justify-content: space-between; font: 400 17px var(--sans); color: var(--ink); cursor: pointer; text-align: left;
+  border: 1px solid rgba(255,255,255,.95); background: rgba(255,255,255,.58); box-shadow: 0 0 0 .5px rgba(20,20,23,.07), 0 1px 3px rgba(20,20,23,.05) }
+.opt .chk { opacity: 0; transform: scale(.6); transition: opacity .2s, transform .25s cubic-bezier(.3,1.4,.6,1) }
+.opt.on { background: rgba(20,20,23,.085); border-color: rgba(20,20,23,.16); box-shadow: inset 0 1px 0 rgba(255,255,255,.6) }
+.opt.on .chk { opacity: 1; transform: none }
+.chk svg { width: 20px; height: 20px; display: block }
+.mono { font-family: var(--sans); font-variant-numeric: tabular-nums }
+.glass { background: rgba(255,255,255,.62); border: 1px solid rgba(255,255,255,.95); box-shadow: 0 0 0 .5px rgba(20,20,23,.07), 0 6px 20px rgba(20,20,23,.06); border-radius: 20px }
+
+/* Notifications (page 5) */
+.notes { display: flex; flex-direction: column; gap: 10px; padding: 0 2px }
+.ntf { display: flex; gap: 12px; align-items: center; padding: 13px 14px; border-radius: 20px }
+.ntf .ic { width: 36px; height: 36px; border-radius: 9px; background: rgba(20,20,23,.08); display: grid; place-items: center; flex: none }
+.ntf .ic svg { width: 18px; height: 18px }
+.ntf .tx { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3 }
+.ntf .tx b { font-weight: 650 }
+.ntf .tx div:last-child { color: var(--sec) }
+.ntf .now { align-self: flex-start; font-size: 13px; color: var(--sec) }
+.drop { animation: drop .5s cubic-bezier(.2,1.2,.4,1) both }
+@keyframes drop { from { opacity: 0; transform: translateY(-16px) scale(.96) } to { opacity: 1; transform: none } }
+
+/* Rest lanes (pages 6–8) */
+.lanes { display: grid; gap: 6px }
+.hero { text-align: center; display: grid; gap: 2px; margin-bottom: 14px }
+.hero .big { font-size: 46px; font-weight: 700; letter-spacing: -1px; line-height: 1.05; font-variant-numeric: tabular-nums }
+.hero .small { font-size: 14px; color: var(--sec) }
+.lbody { position: relative; display: grid; gap: 16px; padding-bottom: 4px }
+.lane .ln { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--sec); margin-bottom: 6px }
+.lane .ln b { color: var(--ink); font-weight: 650; font-size: 15px; font-variant-numeric: tabular-nums }
+.track { position: relative; height: 24px; border-radius: 12px; background: rgba(20,20,23,.06) }
+.track .f { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 12px; transition: width .45s cubic-bezier(.3,.9,.3,1), left .45s cubic-bezier(.3,.9,.3,1) }
+.f.need { background: rgba(20,20,23,.24) }
+.f.over { background: rgba(219,64,54,.24); border-radius: 12px 0 0 12px }
+.f.lost { background: var(--red); border-radius: 0 12px 12px 0 }
+.lane.b { transition: opacity .35s }
+.marker { position: absolute; top: 18px; bottom: -6px; width: 0; border-left: 1.5px dashed rgba(20,20,23,.35); transition: left .45s cubic-bezier(.3,.9,.3,1) }
+.lostlbl { position: absolute; margin-top: 6px; transform: translateX(-50%); color: var(--red); font-weight: 700; font-size: 15px; white-space: nowrap; transition: left .45s cubic-bezier(.3,.9,.3,1), opacity .3s; font-variant-numeric: tabular-nums }
+.axis { position: relative; height: 18px; margin-top: 24px; font-size: 11.5px; color: var(--sec) }
+.axis span { position: absolute; transform: translateX(-50%); font-variant-numeric: tabular-nums; white-space: nowrap }
+.axis span:last-child { transform: translateX(-100%) }
+.axis span:first-child { transform: none }
+.ontime { display: inline-flex; align-items: center; gap: 6px; color: var(--em); font-weight: 650; font-size: 15px; margin-top: 10px; justify-content: center }
+.ontime svg { width: 18px; height: 18px }
+
+/* Wheel (page 7) */
+.wheel { position: relative; height: 216px; margin-top: 18px }
+.wheel .band { position: absolute; left: 40px; right: 40px; top: 86px; height: 44px; border-radius: 13px; background: rgba(20,20,23,.07); pointer-events: none }
+.wheel .list { position: relative; height: 216px; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; padding: 86px 0; cursor: ns-resize;
+  -webkit-mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent); mask-image: linear-gradient(transparent, #000 32%, #000 68%, transparent) }
+.wheel .list::-webkit-scrollbar { display: none }
+.wheel .it { height: 44px; scroll-snap-align: center; display: grid; place-items: center; font-size: 22px; color: rgba(20,20,23,.38); font-weight: 500; font-variant-numeric: tabular-nums; transition: color .15s }
+.wheel .it.on { color: var(--ink); font-weight: 650 }
+
+/* Workout grid (pages 9–10) */
+.wgrid { display: grid; gap: 10px; align-content: center; padding: 0 4px }
+.gr { display: flex; align-items: center; gap: 12px; height: 22px; animation: drop .4s cubic-bezier(.2,1.2,.4,1) both }
+.gr .gi { width: 18px; font-size: 13px; color: var(--sec); text-align: right; font-variant-numeric: tabular-nums }
+.gl { flex: 1; display: flex; align-items: center; gap: 6px; height: 22px; border-radius: 11px }
+.gl.empty { background: rgba(20,20,23,.06) }
+.dot { width: 18px; height: 18px; border-radius: 50%; background: var(--em); flex: none; animation: pop .35s cubic-bezier(.3,1.5,.5,1) both }
+.rest { width: 22px; height: 4px; border-radius: 2px; background: rgba(20,20,23,.22); flex: none; animation: pop .35s ease both }
+@keyframes pop { from { opacity: 0; transform: scale(.4) } to { opacity: 1; transform: none } }
+.wlegend { display: flex; gap: 16px; justify-content: center; font-size: 13px; color: var(--sec); margin-top: 14px }
+.wlegend i { display: inline-block; vertical-align: middle; margin-right: 6px }
+
+/* Session timeline (pages 11, 12, 14) */
+.tl { position: relative }
+.tl-bar { height: 34px; border-radius: 10px; overflow: hidden; display: flex; background: rgba(20,20,23,.06); position: relative }
+.tl-bar .s { flex: none; height: 100% }
+.s.set { background: var(--em) }
+.s.need { background: rgba(20,20,23,.22) }
+.s.scroll { background: var(--red); transition: width .9s cubic-bezier(.6,0,.2,1) }
+.s.else { background: rgba(20,20,23,.08) }
+.tl-ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--sec); margin-top: 7px }
+.tl-reveal { clip-path: inset(0 100% 0 0); animation: wipe 1.5s cubic-bezier(.45,0,.2,1) .25s forwards }
+@keyframes wipe { to { clip-path: inset(0 0 0 0) } }
+.tl-back { position: absolute; top: -4px; height: 42px; right: 0; border: 1.5px dashed var(--em); border-radius: 12px; display: grid; place-items: center; color: var(--em); font-weight: 700; font-size: 15px; opacity: 0; transition: opacity .5s ease .2s; white-space: nowrap }
+.tl.closed .tl-back { opacity: 1 }
+.legend4 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; padding: 16px 18px; margin-top: 22px }
+.legend4 div { display: grid; gap: 1px }
+.legend4 .k { font-size: 13px; color: var(--sec); display: flex; align-items: center; gap: 7px }
+.legend4 .k i { width: 9px; height: 9px; border-radius: 50%; flex: none }
+.legend4 .v { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums }
+.legend4 .v small { font-size: 12px; font-weight: 400; color: var(--sec) }
+.gymlbl { text-align: center; font-size: 40px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: 18px; font-variant-numeric: tabular-nums }
+.was { text-align: center; color: var(--sec); font-size: 20px; text-decoration: line-through; text-decoration-thickness: 1.5px; transition: opacity .4s }
+
+/* Year dots (page 13) */
+.dots { display: grid; grid-template-columns: repeat(14, 12px); gap: 8px; justify-content: center }
+.dots i { width: 12px; height: 12px; border-radius: 50%; background: rgba(20,20,23,.09); transition: background .12s }
+.dots i.lit { background: var(--red) }
+.equals { text-align: center; margin-top: 22px; font-size: 22px; font-weight: 700; letter-spacing: -0.3px }
+.equals + div { text-align: center; font-size: 12.5px; color: var(--sec); margin-top: 2px }
+
+/* Rest alerts (page 17) */
+.lock-eb { text-align: center; font-size: 13px; color: var(--sec); margin-bottom: 10px }
+.la { background: #1B1B1D; color: #fff; border-radius: 24px; padding: 14px 18px 14px; display: grid; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.18) }
+.la .r1 { display: flex; justify-content: space-between; align-items: center }
+.la .r1 span { font-size: 13px; color: rgba(255,255,255,.62) }
+.la .r1 b { font: 500 32px var(--mono); letter-spacing: -0.5px }
+.la .pbar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.14); overflow: hidden }
+.la .pbar i { display: block; height: 100%; background: var(--em); width: 90%; transition: width 1s linear }
+.la .r2 { display: flex; justify-content: space-between; align-items: center; font-size: 14px }
+.la .r2 em { font-style: normal; font-weight: 650; font-size: 13px; padding: 5px 12px; border-radius: 14px; background: rgba(255,255,255,.18) }
+.nt2 { display: flex; gap: 12px; align-items: center; padding: 12px 14px; margin-top: 12px; border-radius: 20px }
+.nt2 .ic { width: 36px; height: 36px; border-radius: 9px; background: var(--em); display: grid; place-items: center; flex: none }
+.nt2 .tx { flex: 1; font-size: 15px; line-height: 1.3 }
+.nt2 .tx b { font-weight: 650 }
+.nt2 .tx div:last-child { color: var(--sec) }
+.nt2 .now { align-self: flex-start; font-size: 13px; color: var(--sec) }
+
+/* Plan (page 18) */
+.plan { display: grid }
+.plan .row { padding: 15px 4px; border-top: 1px solid var(--hair); display: grid; gap: 2px; animation: drop .45s ease both }
+.plan .row:last-child { border-bottom: 1px solid var(--hair) }
+.plan .row span { font-size: 13px; color: var(--sec) }
+.plan .row b { font-size: 18px; font-weight: 600 }
+.plan .row b.em { color: var(--em) }
+
+/* Offer (page 20) */
+.offer { flex: 1; display: flex; flex-direction: column; padding: 14px 24px 0 }
+.of-eb { display: flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 600 }
+.of-eb img { height: 18px }
+.of-hl { font-size: 30px; line-height: 1.16; font-weight: 700; letter-spacing: -0.6px; margin: 10px 0 14px; text-wrap: balance }
+.of-sub { font-size: 13px; color: var(--sec); margin-bottom: 6px }
+.of-bars { display: grid; gap: 7px }
+.of-row { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px }
+.of-row > span { font-size: 15px; color: var(--sec) }
+.of-row > span.b { font-size: 12.5px; font-weight: 650; color: var(--ink) }
+.of-bar { height: 26px; display: flex; gap: 2px }
+.of-bar div { border-radius: 6px; color: #fff; font-size: 11.5px; font-weight: 650; display: flex; align-items: center; padding: 0 8px; white-space: nowrap; overflow: hidden }
+.of-note { font-size: 12.5px; color: var(--sec); margin-top: 8px }
+.of-list { display: grid; gap: 9px; margin: 16px 0 16px; font-size: 16px; line-height: 1.3 }
+.of-list div { display: flex; gap: 10px; align-items: flex-start }
+.of-list svg { width: 21px; height: 21px; flex: none; margin-top: -1px }
+.tline { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin: 2px 0 18px }
+.tline.two { grid-template-columns: 1fr 1fr }
+.tline::before { content: ""; position: absolute; left: 6px; right: 6px; top: 5px; height: 2px; background: rgba(20,20,23,.12) }
+.tline::after { content: ""; position: absolute; left: 6px; width: 10%; top: 5px; height: 2px; background: var(--em) }
+.tline div { position: relative; display: grid; gap: 1px; font-size: 12.5px; color: var(--sec) }
+.tline div::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(20,20,23,.28); background: var(--paper); margin-bottom: 6px }
+.tline div:first-child::before { background: var(--em); border-color: var(--em) }
+.tline div b { font-size: 14px; color: var(--ink); font-weight: 650 }
+.tline div:nth-child(2) { justify-items: center; text-align: center }
+.tline div:last-child { justify-items: end; text-align: right }
+.tline.two div:nth-child(2) { justify-items: end; text-align: right }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px }
+.pl { border-radius: 20px; padding: 16px 16px 14px; position: relative; display: grid; gap: 2px }
+.pl.sel { background: #fff; border: 2px solid var(--ink) }
+.pl .nm { font-size: 15px; font-weight: 600 }
+.pl .pr { font-size: 26px; font-weight: 700; letter-spacing: -0.5px }
+.pl .pr small { font-size: 15px; font-weight: 400; color: var(--sec) }
+.pl .bl { font-size: 12px; color: var(--sec) }
+.pl .badge { position: absolute; top: -11px; right: 12px; background: var(--em); color: #fff; font-size: 12px; font-weight: 650; padding: 3px 10px; border-radius: 12px }
+.legal { text-align: center; font-size: 12.5px; color: var(--sec); display: grid; gap: 6px; margin-bottom: 14px }
+.links { display: flex; justify-content: center; gap: 18px; font-size: 13.5px; color: var(--sec); padding: 12px 0 0 }
+
+/* Round 2 scenes */
+.scene { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px }
+.scene-lbl { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; line-height: 1.1 }
+.fall { animation: fall .62s cubic-bezier(.3,.6,.4,1) both }
+@keyframes fall { 0% { transform: translateY(-110px); opacity: 0 } 45% { opacity: 1 } 62% { transform: translateY(0) } 78% { transform: translateY(-9px) } 100% { transform: translateY(0) } }
+.sweep { transform-box: view-box; transform-origin: 110px 110px; animation: spin 6s linear infinite }
+@keyframes spin { to { transform: rotate(360deg) } }
+.feedscene { gap: 10px }
+.pill { display: inline-flex; gap: 6px; align-items: center; background: var(--ink); color: #fff; border-radius: 16px; padding: 5px 12px 5px 10px; font-size: 15px }
+.pill b { font-weight: 650; font-variant-numeric: tabular-nums }
+.pill svg { width: 16px; height: 16px }
+.fphone { width: 146px; height: 262px; border-radius: 30px; background: var(--ink); padding: 6px; box-shadow: 0 12px 30px rgba(20,20,23,.18) }
+.fscreen { width: 100%; height: 100%; border-radius: 25px; overflow: hidden; position: relative }
+.fscreen::after { content: ""; position: absolute; top: 7px; left: 50%; width: 40px; height: 12px; margin-left: -20px; border-radius: 6px; background: var(--ink) }
+.feed { position: absolute; left: 0; right: 0; top: 0 }
+.reel { height: 250px; position: relative }
+.reel-tx { position: absolute; left: 11px; right: 38px; bottom: 15px; color: #fff; display: grid; gap: 2px }
+.reel-tx b { font-size: 12.5px; line-height: 1.2 }
+.reel-tx span { font-size: 10px; opacity: .8 }
+.reel-ic { position: absolute; right: 9px; bottom: 15px; display: grid; gap: 11px }
+.reel-ic svg { width: 19px; height: 19px; display: block }
+.screen .wheel { margin-top: 8px }
+.logcard { width: 316px; padding: 12px 18px 6px; transform: rotate(-1.2deg) }
+.loghead { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--sec); padding-bottom: 7px; border-bottom: 1px solid var(--hair) }
+.logrow { display: flex; justify-content: space-between; align-items: center; height: 33px; border-bottom: 1px solid var(--hair); font-size: 15.5px }
+.logrow:last-child { border-bottom: 0 }
+.tally path { fill: none; stroke: #141417; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .2s ease-out forwards }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+.backbox { position: absolute; top: -4px; height: 32px; border: 1.5px dashed var(--em); border-radius: 12px; display: grid; place-items: center; color: var(--em); font-weight: 700; font-size: 13.5px; white-space: nowrap; opacity: 0; transition: opacity .5s ease .7s }
+.backbox.on { opacity: 1 }
+.static .fall, .static .sweep, .static .tally path { animation: none !important }
+.static .tally path { stroke-dashoffset: 0 }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="eyebrow">GymBlock · onboarding review · round 2 · 20 Oct 2026 · mockups, not the app</div>
+  <h1>Time back, not the pump.</h1>
+  <p class="lede">Pages 5 to 14 are new. They ask how long you need to rest and how long you scroll, then show the minutes lost per rest, per workout and per year, and promise them back. Pages that don't change are real captures of today's app. Example answers are filled in: tap any answer in the phone to change it and the numbers follow.</p>
+  <p class="lede"><b>Round 2:</b> the question pages (6, 7, 9, 10, 11) show a scene instead of a graph. Page 8 is the first graph. Page 12 uses page 8’s two bars, page 13 counts extra workouts, and page 14 animates page 12. Round 1 is in <a href="time-back-round1.html">time-back-round1.html</a>.</p>
+  <div class="legend"><span><span class="tag new">New</span> new page</span><span><span class="tag changed">Changed</span> new words on today's page</span><span><span class="tag today">Today</span> today's app, unchanged</span></div>
+</header>
+<div class="bar"><div class="wrap">
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" data-view="flow" aria-pressed="true">Click through</button>
+    <button type="button" data-view="all" aria-pressed="false">All pages</button>
+  </div>
+  <span class="hint">← → to move · tap answers to change them</span>
+</div></div>
+
+<main class="wrap">
+  <section id="flow">
+    <div class="phone" id="live"><div class="screen" id="liveScreen"></div></div>
+    <div class="panel">
+      <div class="pg-head"><span class="num" id="pNum"></span><h2 id="pTitle"></h2><span class="tag" id="pTag"></span></div>
+      <p class="note" id="pNote"></p>
+      <p class="feel" id="pFeel"></p>
+      <div class="card"><h3>Their numbers</h3><div class="math" id="pMath"></div></div>
+      <div class="btns">
+        <button type="button" class="dark" id="bNext">Next page →</button>
+        <button type="button" id="bBack">← Back</button>
+        <button type="button" id="bExample">Example answers</button>
+        <button type="button" id="bFresh">Start fresh</button>
+      </div>
+      <div class="card"><h3>Pages on this path</h3><div class="chips" id="pChips"></div></div>
+    </div>
+  </section>
+  <section id="all" hidden>
+    <div><h2>The 22 pages</h2><p class="sub">With the example answers: every rest, needs 1½ min, scrolls 4 min, 5 exercises × 3 sets, 1½ hours at the gym, 4 days a week. Tap a page to open it in the click-through.</p><div class="grid" id="gMain"></div></div>
+    <div><h2>Other paths</h2><p class="sub">The pages that change with the answers. Every number rounds down, and nothing is guessed when the answers don't fit.</p><div class="grid" id="gAlt"></div></div>
+  </section>
+</main>
+
+<script>
+const CAP = "../../screenshots/2026-10-18-onboarding/pro-max/";
+const EXAMPLE = { name: "Sirish", days: 4, freq: "every", need: 1.5, scroll: 4, ex: 5, sets: 3, gym: 90 };
+let st = { ...EXAMPLE };
+let cur = "welcome";
+
+const META = {
+  welcome:   { t: "Welcome", tag: "today", note: "Unchanged (today’s capture).", img: "01-welcome.jpg", hot: "Get started" },
+  founder:   { t: "Sulav’s note", tag: "today", note: "Unchanged.", img: "02-founder.jpg" },
+  name:      { t: "Name", tag: "today", note: "Unchanged." },
+  days:      { t: "Days a week", tag: "today", note: "Unchanged. It now also multiplies the yearly number." },
+  phone:     { t: "Phone between sets", tag: "changed", note: "Only the caption changes: “No judgement. We did too.” keeps the “we” voice after Sulav’s note (it was “Mine was every rest.”). Rarely skips the time pages." },
+  need:      { t: "Rest you need", tag: "new", note: "Round 2: a stopwatch winds to their answer. No graph while they answer. The answer also sets their rest timer, so page 17 can say it. Not sure counts as 2 minutes.", feel: "A light tick per second as the stopwatch winds." },
+  scroll:    { t: "Minutes scrolling", tag: "new", note: "Round 2: a phone keeps scrolling a feed, and the pill shows the minutes they pick. The graph waits for page 8.", feel: "A soft flick as each video goes by, a tick per minute on the wheel." },
+  perRest:   { t: "Lost per rest", tag: "new", note: "The first graph, kept as you approved it: the rest they need against how long they scroll. Only the part past the rest is lost (Sulav’s point about the old ring).", feel: "The ring page’s clock tock as the red counts up, a soft hit when it lands." },
+  ahead:     { t: "Already ahead", tag: "new", note: "Only for Rarely. The stopwatch from page 6, with their rest. Then straight to the shield." },
+  exercises: { t: "Exercises", tag: "new", note: "Round 2: the rack fills with one piece of kit per exercise.", feel: "A plate clank as each piece lands." },
+  sets:      { t: "Sets of each", tag: "new", note: "Round 2: today’s log fills with a tally mark per set. The caption does the sum: rests = sets − 1.", feel: "A pen scratch per tally mark." },
+  gym:       { t: "Time at the gym", tag: "new", note: "Round 2: the gym clock runs for as long as they’re there. The lost minutes come out of this number, so we never guess warm-up or walking.", feel: "The clock’s tick as the hands run." },
+  workout:   { t: "Lost per workout", tag: "new", note: "Round 2: page 8’s two bars at workout size. Their workout with rests on time, against their time at the gym; the red is the extra.", feel: "Tocks as the red counts up, a thud when it lands." },
+  year:      { t: "Lost per year", tag: "changed", note: "Round 2: the hours become extra workouts of their own length, one dot each, instead of whole days.", feel: "Ticks as the dots light, a plate drop on the last one (as today)." },
+  promise:   { t: "We give it back", tag: "new", note: "Round 2: page 12’s bars, animated. The red slides away and their gym time shrinks to the workout. “A better workout” only means what we do: rests on time, every set saved.", feel: "A rising shimmer as the red slides away, a latch as the bar closes." },
+  shield:    { t: "What a locked app shows", tag: "today", note: "Unchanged.", img: "15-shield.jpg" },
+  apps:      { t: "Which apps", tag: "today", note: "Unchanged. (Mocked with no apps chosen, as in today’s capture.)", img: "16-blocking.jpg" },
+  buzz:      { t: "Rest alerts", tag: "changed", note: "Says their own rest length from page 6." },
+  plan:      { t: "Your plan", tag: "changed", note: "Adds “Each workout: about 55 min”. Press and hold the button to commit." },
+  account:   { t: "Account", tag: "today", note: "Unchanged.", img: "19-account.jpg" },
+  offer:     { t: "Offer", tag: "changed", note: "Headline and bars now show time saved. Prices are from RevenueCat’s test store, as in today’s capture." },
+  splits:    { t: "Splits", tag: "today", note: "Unchanged.", img: "21-splits.jpg" },
+  first:     { t: "First workout", tag: "today", note: "Unchanged. Start workout ends the mockup.", img: "22-firstWorkout.jpg" },
+};
+
+// ---------- Numbers ----------
+const half = v => { const w = Math.floor(v); return v - w >= .5 ? (w ? w + "½" : "½") : String(w); };
+const clock = m => { const t = Math.round(m * 60); return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0"); };
+const mins = m => m === 1 ? "1 minute" : m === .5 ? "half a minute" : half(m) + " minutes";
+const gymLabel = g => ({ 45: "45 minutes", 60: "1 hour", 90: "1½ hours", 120: "2 hours", 150: "2½ hours" })[g];
+const gymShort = g => ({ 45: "45 min", 60: "1 h", 90: "1½ h", 120: "2 h", 150: "2½ h" })[g];
+const gymAdj = g => ({ 45: "45-minute", 60: "1-hour", 90: "1½-hour", 120: "2-hour", 150: "2½-hour" })[g];
+const dur = m => m < 60 ? `${m} min` : (m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} hour${m > 60 ? "s" : ""}`);
+const hourish = m => m >= 55 && m <= 65;
+const lostWords = m => hourish(m) ? "about an hour" : `${m} minutes`;
+
+function calc(s) {
+  const P = s.need === "unsure" ? 2 : s.need;
+  if (P == null) return null;
+  const c = { P, f: s.freq === "sometimes" ? .5 : 1 };
+  if (s.scroll == null) return c;
+  c.L = Math.max(0, s.scroll - P);
+  if (s.ex == null || s.sets == null || s.gym == null) return c;
+  const N = s.ex * s.sets, R = N - 1, G = s.gym, lift = N * 40 / 60, needT = R * P;
+  const raw = R * c.L * c.f, room = G - lift - needT;
+  Object.assign(c, { full: true, N, R, G, lift, needT, raw, room, fits: room > 0 });
+  if (!c.fits) return c;
+  c.scrollT = Math.min(raw, room); c.clamped = raw > room + 1e-9; c.tiny = c.scrollT < 5;
+  c.shown = c.tiny ? Math.round(c.scrollT) : Math.floor(c.scrollT / 5) * 5;
+  c.liftR = Math.round(lift); c.needR = Math.round(needT); c.elseR = Math.max(0, G - c.liftR - c.needR - c.shown);
+  c.newT = Math.ceil((G - c.scrollT) / 5) * 5;
+  const yr = c.scrollT * s.days * 52 / 60; c.yearRaw = yr;
+  c.year = yr >= 20 ? Math.floor(yr / 10) * 10 : Math.round(yr);
+  const w = Math.floor(yr * 60 / G); c.workouts = w >= 20 ? Math.floor(w / 5) * 5 : w;
+  c.month = Math.floor(c.scrollT * s.days * 52 / 12 / 60);
+  return c;
+}
+// The time pitch only runs when the answers give a real number to sell.
+const pitch = (c, s) => s.freq !== "rarely" && c && c.full && c.fits && !c.tiny && c.L > 0;
+
+function route(s) {
+  const r = ["welcome", "founder", "name", "days", "phone", "need"];
+  const c = calc(s);
+  if (s.freq === "rarely") r.push("ahead");
+  else {
+    r.push("scroll", "perRest");
+    if (!(c && c.L === 0)) {
+      r.push("exercises", "sets", "gym");
+      if (!c || !c.full || (c.fits && !c.tiny)) r.push("workout", "year", "promise");
+      else if (!c.fits) r.push("promise");
+      else r.push("workout");
+    }
+  }
+  return r.concat(["shield", "apps", "buzz", "plan", "account", "offer", "splits", "first"]);
+}
+const answered = { name: s => s.name, days: s => s.days, phone: s => s.freq, need: s => s.need, scroll: s => s.scroll, exercises: s => s.ex, sets: s => s.sets, gym: s => s.gym };
+
+// ---------- Small pieces ----------
+const CHECK = `<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#0F9A6B"/><path d="M5.8 10.4l2.7 2.7 5.7-5.9" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SB = `<div class="sb"><span>09:41</span><svg viewBox="0 0 78 13" fill="#141417"><rect x="0" y="8" width="3.2" height="5" rx="1"/><rect x="5" y="5.5" width="3.2" height="7.5" rx="1"/><rect x="10" y="3" width="3.2" height="10" rx="1"/><rect x="15" y=".5" width="3.2" height="12.5" rx="1"/><path d="M31 3.2a10 10 0 0 1 13.4 0l-1.5 1.6a7.8 7.8 0 0 0-10.4 0zM33.4 5.8a6.4 6.4 0 0 1 8.6 0l-1.5 1.6a4.2 4.2 0 0 0-5.6 0zM35.8 8.4a2.8 2.8 0 0 1 3.8 0l-1.9 2z"/><rect x="50" y=".5" width="24" height="12" rx="3.6" fill="none" stroke="#141417" stroke-opacity=".4"/><rect x="52" y="2.5" width="20" height="8" rx="2"/><rect x="75.5" y="4.3" width="1.6" height="4.4" rx=".8" fill-opacity=".45"/></svg></div>`;
+const BACK = `<svg width="11" height="18" viewBox="0 0 11 18"><path d="M9 2L2 9l7 7" fill="none" stroke="#141417" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const primary = (label, act = "next", on = true) => `<button class="primary" data-act="${act}" ${on ? "" : "disabled"}><i class="fill"></i><span>${label}</span></button>`;
+const slot = (t = "") => `<div class="slot">${t}</div>`;
+function rows(key, opts, s) {
+  return `<div class="opts">${opts.map(([v, l]) => `<button class="opt ${s[key] === v ? "on" : ""}" data-k="${key}" data-v='${JSON.stringify(v)}'><span>${l}</span><span class="chk">${CHECK}</span></button>`).join("")}</div>`;
+}
+const OPT = {
+  days: [[2, "2 days"], [3, "3 days"], [4, "4 days"], [5, "5 days"], [6, "6 or more"]],
+  freq: [["every", "Every rest"], ["sometimes", "Sometimes"], ["rarely", "Rarely"]],
+  need: [[1, "1 min"], [1.5, "1½ min"], [2, "2 min"], [3, "3 min"], ["unsure", "Not sure"]],
+  ex: [[3, "3 or fewer"], [4, "4"], [5, "5"], [6, "6"], [7, "7 or more"]],
+  sets: [[2, "2"], [3, "3"], [4, "4"], [5, "5 or more"]],
+  gym: [[45, "45 min"], [60, "1 hour"], [90, "1½ hours"], [120, "2 hours"], [150, "2½ hours or more"]],
+};
+const ICONS = {
+  yt: `<svg viewBox="0 0 18 18"><rect x="1" y="3.5" width="16" height="11" rx="3" fill="#141417"/><path d="M7.5 6.6v4.8L11.6 9z" fill="#F5F3EF"/></svg>`,
+  tt: `<svg viewBox="0 0 18 18"><path d="M10.5 2v9.2a2.8 2.8 0 1 1-2-2.7V6.3A4.9 4.9 0 1 0 12.6 11V6.6a5 5 0 0 0 3 1V5.5a3 3 0 0 1-3-3.5z" fill="#141417"/></svg>`,
+  msg: `<svg viewBox="0 0 18 18"><path d="M9 2.5c4.1 0 7.3 2.7 7.3 6s-3.2 6-7.3 6c-.9 0-1.7-.1-2.5-.3L3 15.6l.9-3.1A5.6 5.6 0 0 1 1.7 8.5c0-3.3 3.2-6 7.3-6z" fill="#141417"/></svg>`,
+  heart: `<svg viewBox="0 0 20 20"><path d="M10 17s-6.5-4-6.5-8.6A3.6 3.6 0 0 1 10 6.3a3.6 3.6 0 0 1 6.5 2.1C16.5 13 10 17 10 17z" fill="#fff"/></svg>`,
+  chat: `<svg viewBox="0 0 20 20"><path d="M10 3.5c3.9 0 7 2.6 7 5.9s-3.1 5.9-7 5.9c-.8 0-1.6-.1-2.3-.3L4 16.5l1-3.1A5.6 5.6 0 0 1 3 9.4c0-3.3 3.1-5.9 7-5.9z" fill="#fff"/></svg>`,
+  share: `<svg viewBox="0 0 20 20"><path d="M17 3L3 9l5.5 2L17 3zM8.5 11l2 6L17 3" fill="#fff" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+  timer: `<svg viewBox="0 0 18 18"><circle cx="9" cy="10" r="6.5" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M9 10V6.5M7 1.8h4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  bell: `<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 2a4.5 4.5 0 0 0-4.5 4.5v3L3 12.2h12L13.5 9.5v-3A4.5 4.5 0 0 0 9 2zM7.2 13.6a1.8 1.8 0 0 0 3.6 0z" fill="#fff"/></svg>`,
+};
+
+// ---------- Rest lanes (pages 6, 7, 8 and "already ahead") ----------
+function lanesHTML(mode) {
+  return `<div class="lanes" data-mode="${mode}">
+    ${mode === "per" ? `<div class="hero"><div class="big" style="color:var(--red)" data-hero>+0:00</div><div class="small" data-herosub></div></div>` : ""}
+    <div class="lbody">
+      <div class="lane a"><div class="ln"><span>Rest you need</span><b data-va></b></div><div class="track"><div class="f need" data-need style="width:0"></div></div></div>
+      <div class="lane b" style="${mode === "need" || mode === "ahead" ? "display:none" : ""}"><div class="ln"><span>Scrolling</span><b data-vb></b></div>
+        <div class="track"><div class="f over" data-over style="width:0"></div><div class="f lost" data-lost style="width:0"></div></div>
+        <div class="lostlbl" data-lostlbl></div></div>
+      <div class="marker" data-marker style="left:0"></div>
+    </div>
+    <div class="axis" data-axis></div>
+    ${mode === "ahead" ? `<div class="ontime">${CHECK.replace('viewBox', 'width="18" height="18" viewBox')} Rests on time</div>` : ""}
+  </div>`;
+}
+function setLanes(el, s, mode, opts = {}) {
+  const c = calc(s); if (!c) return;
+  const P = c.P, C = mode === "need" || mode === "ahead" ? P : (s.scroll ?? P);
+  const top = mode === "need" || mode === "ahead" ? Math.max(P, 3) : Math.max(P, C);
+  const M = Math.max(4, Math.ceil(top) + 1);
+  const pct = v => (v / M * 100) + "%";
+  const q = sel => el.querySelector(sel);
+  q("[data-va]").textContent = clock(P);
+  q("[data-need]").style.width = pct(P);
+  q("[data-marker]").style.left = pct(P);
+  q("[data-marker]").style.opacity = mode === "need" || mode === "ahead" ? 0 : 1;
+  q("[data-vb]").textContent = clock(C);
+  q("[data-over]").style.width = pct(Math.min(P, C));
+  const lost = Math.max(0, C - P);
+  const lostEl = q("[data-lost]");
+  lostEl.style.left = pct(P);
+  if (!opts.growLost) lostEl.style.width = pct(lost);
+  q("[data-over]").style.borderRadius = lost > 0 ? "12px 0 0 12px" : "12px";
+  const lbl = q("[data-lostlbl]");
+  lbl.textContent = lost > 0 ? "+" + clock(lost) : "";
+  lbl.style.left = pct(P + lost / 2);
+  lbl.style.opacity = mode === "scroll" && lost > 0 ? 1 : 0;
+  const step = M <= 6 ? 1 : M <= 12 ? 2 : 5;
+  let ax = ""; for (let m = 0; m <= M; m += step) ax += `<span style="left:${pct(m)}">${m}${m === 0 ? "" : " min"}</span>`;
+  q("[data-axis]").innerHTML = ax;
+  const sub = q("[data-herosub]");
+  if (sub) sub.textContent = lost > 0 ? (s.freq === "sometimes" ? "each time you scroll" : "every rest") : "inside your rest";
+}
+
+// ---------- Scenes for the question pages: things they know, not charts ----------
+const polar = (cx, cy, r, a) => [cx + r * Math.sin(a * Math.PI / 180), cy - r * Math.cos(a * Math.PI / 180)];
+function sectorFrom(cx, cy, r, a0, a1) {
+  if (a1 - a0 <= .01) return "";
+  if (a1 - a0 >= 359.99) return `M${cx} ${cy - r}A${r} ${r} 0 1 1 ${cx - .01} ${cy - r}Z`;
+  const [x0, y0] = polar(cx, cy, r, a0), [x1, y1] = polar(cx, cy, r, a1);
+  return `M${cx} ${cy}L${x0} ${y0}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}Z`;
+}
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const easeInOut = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+function tween(from, to, ms, fn, ease = easeOut) {
+  const t0 = performance.now();
+  const f = now => { const k = Math.min(1, (now - t0) / ms); fn(from + (to - from) * ease(k)); if (k < 1) requestAnimationFrame(f); };
+  requestAnimationFrame(f);
+}
+
+// Page 6 (and Rarely's "already ahead"): a stopwatch wound to the rest they need, on a 5-minute dial.
+function watchHTML(extra = "") {
+  let ticks = "";
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6, long = i % 12 === 0;
+    const [x1, y1] = polar(120, 150, 86, a), [x2, y2] = polar(120, 150, long ? 72 : 80, a);
+    ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#141417" stroke-opacity="${long ? .8 : .22}" stroke-width="${long ? 3 : 1.5}" stroke-linecap="round"/>`;
+    if (long) { const [tx, ty] = polar(120, 150, 57, a); ticks += `<text x="${tx}" y="${ty + 6}" text-anchor="middle" font-size="17" font-weight="600" fill="#141417" fill-opacity=".5">${i / 12}</text>`; }
+  }
+  return `<div class="scene"><svg viewBox="0 0 240 262" width="206" height="225">
+    <rect x="102" y="4" width="36" height="15" rx="5" fill="#141417"/><rect x="113" y="17" width="14" height="18" fill="#141417"/>
+    <g transform="rotate(40 120 150)"><rect x="111" y="28" width="18" height="18" rx="4" fill="#141417"/></g>
+    <circle cx="120" cy="150" r="106" fill="#141417"/><circle cx="120" cy="150" r="93" fill="#FBFAF7"/>
+    <path data-sector fill="#0F9A6B" fill-opacity=".18"/>${ticks}
+    <g data-hand><line x1="120" y1="164" x2="120" y2="70" stroke="#0F9A6B" stroke-width="4" stroke-linecap="round"/></g>
+    <circle cx="120" cy="150" r="8" fill="#141417"/><circle cx="120" cy="150" r="3" fill="#0F9A6B"/></svg>
+    <div class="scene-lbl" data-t></div>${extra}</div>`;
+}
+function setWatch(el, s, o = {}) {
+  const c = calc(s); if (!c) return;
+  const sec = el.querySelector("[data-sector]"), hand = el.querySelector("[data-hand]"), t = el.querySelector("[data-t]");
+  const to = c.P / 5 * 360, from = +(el.dataset.watch || 0);
+  const paint = a => { sec.setAttribute("d", sectorFrom(120, 150, 93, 0, a)); hand.setAttribute("transform", `rotate(${a} 120 150)`); t.textContent = clock(a / 360 * 5); };
+  el.dataset.watch = to;
+  if (o.static) return paint(to);
+  tween(from, to, 750, paint);
+}
+
+// Page 7: a phone scrolling a feed, with the minutes they say they keep going.
+const FEED = [["POV: just one more video", "#C9B8A6", "#8C7B6B"], ["Rate this pump 1–10", "#A9B49C", "#64765F"], ["3 mistakes on bench", "#D2A79A", "#966A60"],
+  ["Wait for the end…", "#B8B2CC", "#77729A"], ["Gym fails, part 47", "#C7C1B5", "#857E70"], ["This fixed my squat", "#9FB3B8", "#5B7379"]];
+function feedHTML() {
+  const card = ([t, a, b]) => `<div class="reel" style="background:linear-gradient(165deg,${a},${b})">
+    <div class="reel-ic">${ICONS.heart}${ICONS.chat}${ICONS.share}</div><div class="reel-tx"><b>${t}</b><span>@gym.daily</span></div></div>`;
+  return `<div class="scene feedscene"><div class="pill">${ICONS.timer}<b data-pill></b></div>
+    <div class="fphone"><div class="fscreen"><div class="feed" data-feed>${FEED.map(card).join("")}${card(FEED[0])}</div></div></div></div>`;
+}
+function runFeed(el, o) {
+  const feed = el.querySelector("[data-feed]"); if (!feed || o.static) return;
+  let i = 0; const n = FEED.length, h = 100 / (n + 1);
+  const t = setInterval(() => {
+    if (!feed.isConnected) return clearInterval(t);
+    i++; feed.style.transition = "transform .5s cubic-bezier(.3,.7,.2,1)"; feed.style.transform = `translateY(-${i * h}%)`;
+    if (i === n) setTimeout(() => { feed.style.transition = "none"; feed.style.transform = "none"; i = 0; }, 560);
+  }, 1250);
+}
+const pillText = s => `${s.scroll >= 15 ? "15+" : s.scroll} min`;
+
+// Page 9: the rack fills with one piece of kit per exercise.
+const KIT = [
+  `<rect x="-30" y="-36" width="15" height="36" rx="4"/><rect x="15" y="-36" width="15" height="36" rx="4"/><rect x="-16" y="-22" width="32" height="8" rx="3"/>`,
+  `<image href="img/kb.png" x="-26" y="-67" width="52" height="67"/>`,
+  `<circle cx="0" cy="-31" r="31"/><circle cx="0" cy="-31" r="22" fill="none" stroke="#F5F3EF" stroke-opacity=".28" stroke-width="2"/><circle cx="0" cy="-31" r="6" fill="#F5F3EF"/><text x="0" y="-44" text-anchor="middle" font-size="9" font-weight="700" fill="#F5F3EF" fill-opacity=".8">20</text>`,
+  `<circle cx="0" cy="-26" r="26"/><path d="M-26 -26 Q0 -12 26 -26M0 -52 Q-11 -26 0 0" fill="none" stroke="#F5F3EF" stroke-opacity=".35" stroke-width="2.5"/>`,
+  `<rect x="-40" y="-18" width="80" height="5" rx="2.5"/><rect x="-33" y="-34" width="9" height="34" rx="3"/><rect x="24" y="-34" width="9" height="34" rx="3"/><rect x="-23" y="-28" width="6" height="22" rx="2"/><rect x="17" y="-28" width="6" height="22" rx="2"/>`,
+  `<path d="M-19 -11 L0 -48 L19 -11" fill="none" stroke="#141417" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/><rect x="-24" y="-14" width="48" height="12" rx="6"/><circle cx="0" cy="-53" r="5" fill="none" stroke="#141417" stroke-width="3"/>`,
+  `<rect x="-24" y="-28" width="11" height="28" rx="3"/><rect x="13" y="-28" width="11" height="28" rx="3"/><rect x="-14" y="-18" width="28" height="7" rx="3"/>`,
+];
+function rackHTML(n, prev = 0) {
+  const slots = [[60, 100], [140, 100], [220, 100], [300, 100], [100, 214], [180, 214], [260, 214]];
+  const items = KIT.slice(0, n).map((k, i) => `<g transform="translate(${slots[i][0]} ${slots[i][1]})"><g class="${i >= prev ? "fall" : ""}" style="animation-delay:${Math.max(0, i - prev) * 110}ms" fill="#141417">${k}</g></g>`).join("");
+  return `<svg viewBox="0 0 360 240" width="330" height="220" class="rack">
+    <rect x="8" y="12" width="7" height="224" rx="3.5" fill="#141417"/><rect x="345" y="12" width="7" height="224" rx="3.5" fill="#141417"/>
+    <rect x="8" y="100" width="344" height="7" rx="3.5" fill="#141417"/><rect x="8" y="214" width="344" height="7" rx="3.5" fill="#141417"/>${items}</svg>`;
+}
+
+// Page 10: today's log, a tally mark for every set.
+const LIFTS = ["Bench press", "Squat", "Row", "Shoulder press", "Pull-up", "Curl", "Triceps pushdown"];
+function tally(S, d) {
+  let p = "";
+  for (let k = 0; k < Math.min(S, 4); k++) { const x = 9 + k * 12; p += `<path d="M${x} 4 l1.6 19" pathLength="1" style="animation-delay:${d}ms"/>`; d += 70; }
+  if (S >= 5) p += `<path d="M2 19 q22 -5 48 -14" pathLength="1" style="animation-delay:${d}ms"/>`;
+  return p;
+}
+function logHTML(s) {
+  const E = s.ex ?? 0, S = s.sets ?? 0;
+  return `<div class="scene"><div class="logcard glass"><div class="loghead"><span>Today’s log</span><span>${S ? E * S + " sets" : ""}</span></div>
+    ${LIFTS.slice(0, E).map((n, i) => `<div class="logrow"><span>${n}</span><svg viewBox="0 0 56 26" width="56" height="26" class="tally">${S ? tally(S, 150 + i * 240) : ""}</svg></div>`).join("")}</div></div>`;
+}
+
+// Page 11: the gym's clock runs for as long as they're usually there.
+function clockHTML() {
+  let ticks = "";
+  for (let i = 0; i < 60; i++) {
+    const a = i * 6, big = i % 5 === 0, q = i % 15 === 0;
+    const [x1, y1] = polar(110, 110, 88, a), [x2, y2] = polar(110, 110, q ? 73 : big ? 78 : 84, a);
+    ticks += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#141417" stroke-opacity="${big ? .85 : .22}" stroke-width="${q ? 4 : big ? 2.5 : 1.2}" stroke-linecap="round"/>`;
+  }
+  return `<div class="scene"><svg viewBox="0 0 220 220" width="196" height="196">
+    <circle cx="110" cy="110" r="104" fill="#141417"/><circle cx="110" cy="110" r="95" fill="#FBFAF7"/>
+    <path data-trail fill="#0F9A6B" fill-opacity=".14"/>${ticks}
+    <g data-hh><line x1="110" y1="120" x2="110" y2="62" stroke="#141417" stroke-width="7" stroke-linecap="round"/></g>
+    <g data-mh><line x1="110" y1="124" x2="110" y2="32" stroke="#141417" stroke-width="4.5" stroke-linecap="round"/></g>
+    <g class="sweep"><line x1="110" y1="130" x2="110" y2="28" stroke="#0F9A6B" stroke-width="1.8" stroke-linecap="round"/></g>
+    <circle cx="110" cy="110" r="6" fill="#141417"/><circle cx="110" cy="110" r="2.4" fill="#0F9A6B"/></svg>
+    <div class="scene-lbl" data-gl></div></div>`;
+}
+function setClock(el, s, o = {}) {
+  const G = s.gym; if (!G) return;
+  const hh = el.querySelector("[data-hh]"), mh = el.querySelector("[data-mh]"), tr = el.querySelector("[data-trail]");
+  el.querySelector("[data-gl]").textContent = gymLabel(G);
+  // Walks in at six; the hour hand's wedge is the time spent.
+  const paint = m => { hh.setAttribute("transform", `rotate(${180 + m / 2} 110 110)`); mh.setAttribute("transform", `rotate(${m * 6} 110 110)`); tr.setAttribute("d", sectorFrom(110, 110, 95, 180, 180 + m / 2)); };
+  if (o.static) return paint(G);
+  tween(0, G, 1600, paint, easeInOut);
+}
+
+// Pages 12 and 14: page 8's two bars at workout size. The red is the time past the workout they need.
+function workHTML(c, mode) {
+  const A = c.G - c.scrollT, pct = v => (v / c.G * 100) + "%", step = c.G <= 60 ? 15 : 30;
+  let ax = ""; for (let m = 0; m <= c.G + .01; m += step) ax += `<span style="left:${pct(m)}">${m === 0 ? "0" : m < 60 ? m + " min" : (gymShort(m) || dur(m))}</span>`;
+  const hero = mode === "work"
+    ? `<div class="hero"><div class="big" style="color:var(--red)">+<span data-hero>0</span> min</div><div class="small">scrolling, every workout</div></div>`
+    : `<div class="hero"><div class="big" data-pb>${gymShort(c.G)}</div><div class="small" data-ps>at the gym today</div></div>`;
+  return `<div class="lanes" data-work>${hero}
+    <div class="lbody">
+      <div class="lane a"><div class="ln"><span>Your workout, rests on time</span><b>about ${dur(c.newT)}</b></div><div class="track"><div class="f need" data-a style="width:0"></div></div></div>
+      <div class="lane b"><div class="ln"><span>Your time at the gym</span><b data-vb>${gymShort(c.G)}</b></div>
+        <div class="track"><div class="f need" data-b style="width:0;border-radius:12px 0 0 12px"></div><div class="f lost" data-r style="left:${pct(A)};width:0"></div>
+          <div class="backbox" data-back style="left:${pct(A)};width:${pct(c.scrollT)}">${c.shown} min back</div></div>
+        <div class="lostlbl" data-rl style="left:${pct(A + c.scrollT / 2)};opacity:0">+${c.shown} min</div></div>
+      <div class="marker" style="left:${pct(A)}"></div>
+    </div><div class="axis">${ax}</div></div>`;
+}
+function workMount(el, o, c, mode) {
+  const A = c.G - c.scrollT, q = sel => el.querySelector(sel), pct = v => (v / c.G * 100) + "%";
+  const a = q("[data-a]"), b = q("[data-b]"), r = q("[data-r]"), rl = q("[data-rl]"), back = q("[data-back]"), vb = q("[data-vb]");
+  const full = () => { [a, b, r].forEach(x => x.style.transition = "none"); a.style.width = pct(A); b.style.width = pct(A); r.style.width = pct(c.scrollT); rl.style.opacity = 1; };
+  if (mode === "work") {
+    if (o.static) { full(); q("[data-hero]").textContent = c.shown; return; }
+    r.style.transition = "width 1.2s cubic-bezier(.4,0,.2,1) .6s";
+    after(o, () => { a.style.width = pct(A); b.style.width = pct(A); r.style.width = pct(c.scrollT); });
+    setTimeout(() => { rl.style.opacity = 1; }, 1700);
+    count(q("[data-hero]"), 0, c.shown, 1200, 650, v => Math.round(v));
+    return;
+  }
+  // The promise starts on page 12's last frame, then the red goes.
+  full();
+  const take = () => {
+    r.style.transition = "width 1.1s cubic-bezier(.6,0,.2,1)"; r.style.width = 0; rl.style.opacity = 0; b.style.borderRadius = "12px";
+    vb.textContent = "about " + dur(c.newT); back.classList.add("on");
+    q("[data-pb]").textContent = "about " + dur(c.newT); q("[data-ps]").textContent = "with GymBlock"; q("[data-ps]").style.color = "var(--em)";
+  };
+  if (o.static) { take(); r.style.transition = back.style.transition = "none"; return; }
+  setTimeout(() => el.isConnected && take(), 800);
+}
+
+// ---------- Pages ----------
+// Each returns { hl, cap, stage, acts, mount(el, o), update(el) }.
+const P = {
+  name: s => ({
+    hl: "First, what should we call you?", cap: "It’s how we’ll greet you in the app.",
+    stage: `<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding-top:40px"><input class="glass" data-k="name" value="${s.name ?? ""}" placeholder="Your name" style="height:56px;text-align:center;font:600 20px var(--sans);color:var(--ink);outline:none;width:100%"></div>`,
+    acts: primary("Continue", "next", !!s.name) + slot(),
+  }),
+  days: s => ({
+    hl: `Nice to meet you, ${s.name || "friend"}. How many days a week do you work out?`, cap: "We’ll set your weekly goal from this.",
+    stage: rows("days", OPT.days, s), acts: primary("Continue", "next", s.days != null) + slot(),
+  }),
+  phone: s => ({
+    hl: "Be honest. Do you check your phone between sets?", cap: "No judgement. We did too.",
+    stage: `<div class="notes">${[["yt", "YouTube", "New: 10 min ab burner"], ["tt", "TikTok", "Videos you might like"], ["msg", "Messages", "You coming to the gym?"]].map(([i, a, b], k) =>
+      `<div class="ntf glass drop" style="animation-delay:${.2 + k * .45}s"><div class="ic">${ICONS[i]}</div><div class="tx"><div><b>${a}</b></div><div>${b}</div></div><span class="now">now</span></div>`).join("")}</div>`,
+    acts: rows("freq", OPT.freq, s) + primary("Continue", "next", s.freq != null) + slot(),
+  }),
+  need: s => ({
+    hl: "How long do you need to rest between sets?",
+    cap: s.need === "unsure" ? "We’ll start you at 2 minutes." : "We’ll time your rests to this.",
+    stage: watchHTML(), acts: rows("need", OPT.need, s) + primary("Continue", "next", s.need != null) + slot(),
+    mount(el, o) { if (s.need != null) setWatch(el, s, o); },
+    update(el) { setWatch(el, s); },
+  }),
+  scroll: s => {
+    const vals = Array.from({ length: 15 }, (_, i) => i + 1);
+    return {
+      hl: "When you start scrolling between sets, how many minutes do you scroll?", cap: "Your best guess is fine.",
+      stage: feedHTML() + `<div class="wheel"><div class="band"></div><div class="list" data-wheel>${vals.map(v => `<div class="it" data-v="${v}">${v === 15 ? "15+ min" : v + " min"}</div>`).join("")}</div></div>`,
+      acts: primary("Continue") + slot(),
+      mount(el, o) {
+        if (s.scroll == null) s.scroll = 1;
+        const list = el.querySelector("[data-wheel]"), items = [...list.children], pill = el.querySelector("[data-pill]");
+        pill.textContent = pillText(s);
+        const paint = () => {
+          const i = Math.max(0, Math.min(items.length - 1, Math.round(list.scrollTop / 44)));
+          items.forEach((it, k) => it.classList.toggle("on", k === i));
+          if (s.scroll !== i + 1) { s.scroll = i + 1; pill.textContent = pillText(s); if (s === st) refreshPanel(); }
+        };
+        list.scrollTop = (s.scroll - 1) * 44;
+        items.forEach((it, k) => it.classList.toggle("on", k === s.scroll - 1));
+        let raf; list.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(paint); });
+        items.forEach((it, k) => it.addEventListener("click", () => list.scrollTo({ top: k * 44, behavior: "smooth" })));
+        runFeed(el, o);
+      },
+    };
+  },
+  // The first graph: the rest they need against how long they scroll.
+  perRest: s => {
+    const c = calc(s);
+    if (c.L === 0) return {
+      hl: "Then your scrolling fits inside your rest.", cap: "We’ll help you keep it that way.",
+      stage: lanesHTML("scroll"), acts: primary("Continue") + slot(),
+      mount(el, o) { after(o, () => setLanes(el, s, "scroll")); },
+    };
+    return {
+      hl: s.freq === "sometimes" ? `That’s ${mins(c.L)} lost each time you scroll.` : `That’s ${mins(c.L)} lost. Every rest.`,
+      cap: c.P === 1 ? "The first minute was rest you’d take anyway." : `The first ${mins(c.P)} were rest you’d take anyway.`,
+      stage: lanesHTML("per"), acts: primary("Continue") + slot(),
+      mount(el, o) {
+        const lostEl = el.querySelector("[data-lost]"), hero = el.querySelector("[data-hero]");
+        const M = Math.max(4, Math.ceil(Math.max(c.P, s.scroll)) + 1);
+        if (o.static) { setLanes(el, s, "per"); hero.textContent = "+" + clock(c.L); return; }
+        after(o, () => setLanes(el, s, "per", { growLost: true }));
+        lostEl.style.transition = "width 1.3s cubic-bezier(.4,0,.2,1) .6s";
+        setTimeout(() => { lostEl.style.width = (c.L / M * 100) + "%"; }, 60);
+        count(hero, 0, c.L * 60, 1300, 650, v => "+" + clock(Math.round(v) / 60));
+      },
+    };
+  },
+  ahead: s => ({
+    hl: "Then you’re already ahead.", cap: "We’ll help you keep it that way.",
+    stage: watchHTML(`<div class="ontime">${CHECK.replace("viewBox", 'width="18" height="18" viewBox')} Rests on time</div>`), acts: primary("Continue") + slot(),
+    mount(el, o) { setWatch(el, s, o); },
+  }),
+  exercises: s => ({
+    hl: "How many exercises do you usually do every workout?", cap: "",
+    stage: `<div class="scene" data-rack data-n="${s.ex ?? 0}">${rackHTML(s.ex ?? 0)}</div>`,
+    acts: rows("ex", OPT.ex, s) + primary("Continue", "next", s.ex != null) + slot(),
+    update(el) { const box = el.querySelector("[data-rack]"), prev = +box.dataset.n; box.innerHTML = rackHTML(s.ex, s.ex > prev ? prev : s.ex); box.dataset.n = s.ex; },
+  }),
+  sets: s => {
+    const capText = s2 => s2.sets ? `${s2.ex * s2.sets} sets, so ${s2.ex * s2.sets - 1} rests.` : "";
+    return {
+      hl: "And how many sets of each exercise?", cap: capText(s),
+      stage: `<div data-log>${logHTML(s)}</div>`, acts: rows("sets", OPT.sets, s) + primary("Continue", "next", s.sets != null) + slot(),
+      update(el) { el.querySelector("[data-log]").innerHTML = logHTML(s); el.querySelector(".capt").textContent = capText(s); },
+    };
+  },
+  gym: s => ({
+    hl: "How long are you usually at the gym?", cap: "From walking in to walking out.",
+    stage: clockHTML(), acts: rows("gym", OPT.gym, s) + primary("Continue", "next", s.gym != null) + slot(),
+    mount(el, o) { setClock(el, s, o); },
+    update(el) { setClock(el, s); },
+  }),
+  workout: s => {
+    const c = calc(s);
+    const why = c.tiny ? "We’ll help you keep it that way." : c.clamped ? `From your answers, fitted into your ${gymLabel(c.G)}.`
+      : s.freq === "sometimes" ? `From your answers: about half of ${c.R} rests × ${mins(c.L)}.` : `From your answers: ${c.R} rests × ${mins(c.L)}.`;
+    return {
+      hl: c.tiny ? `${s.name}, scrolling takes about ${Math.max(1, c.shown)} minute${c.shown === 1 ? "" : "s"} of your workout.` : `${s.name}, ${lostWords(c.shown)} of your ${gymLabel(c.G)} goes to scrolling.`,
+      cap: why, stage: workHTML(c, "work"), acts: primary("Continue") + slot(), mount: (el, o) => workMount(el, o, c, "work"),
+    };
+  },
+  year: s => {
+    const c = calc(s), n = Math.min(c.workouts, 200), small = n > 120;
+    return {
+      hl: `At ${s.days} workouts a week, that’s about ${c.year} hours a year.`, cap: "Your numbers, multiplied out.",
+      stage: `<div><div class="dots" data-dots style="grid-template-columns:repeat(${small ? 15 : 10},${small ? 11 : 15}px);gap:${small ? 7 : 9}px">${`<i style="width:${small ? 11 : 15}px;height:${small ? 11 : 15}px"></i>`.repeat(n)}</div>
+        <div class="equals">= ${c.workouts} extra workouts</div><div>Each dot is one of your ${gymAdj(c.G)} workouts.</div></div>`,
+      acts: primary("Continue") + slot(),
+      mount(el, o) {
+        const dots = [...el.querySelectorAll("[data-dots] i")];
+        if (o.static) { dots.forEach(d => d.classList.add("lit")); return; }
+        const total = 1600, t0 = performance.now() + 300;
+        const tick = now => { const k = Math.max(0, Math.min(1, (now - t0) / total)); const lit = Math.round(dots.length * (1 - Math.pow(1 - k, 1.6)));
+          for (let i = 0; i < lit; i++) dots[i].classList.add("lit"); if (k < 1 && el.isConnected) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      },
+    };
+  },
+  promise: s => {
+    const c = calc(s);
+    if (!c.fits) return {
+      hl: c.L === 1 ? "We’ll give you that minute back. Every rest." : `We’ll give you those ${mins(c.L)} back. Every rest.`, cap: "Every rest on time. Every set saved.",
+      stage: lanesHTML("per").replace('<div class="hero">', '<div class="hero" style="display:none">'), acts: primary("Continue") + slot(),
+      mount(el, o) {
+        setLanes(el, s, "per");
+        const lost = el.querySelector("[data-lost]"), vb = el.querySelector("[data-vb]"), done = () => { vb.textContent = clock(c.P); };
+        if (o.static) { lost.style.width = 0; done(); return; }
+        lost.style.transition = "width 1s cubic-bezier(.6,0,.2,1) .7s";
+        requestAnimationFrame(() => requestAnimationFrame(() => { lost.style.width = 0; }));
+        setTimeout(done, 1500);
+      },
+    };
+    const back = hourish(c.shown) ? "that hour" : `those ${c.shown} minutes`;
+    return {
+      hl: `We’ll give you ${back} back.\nAnd a better workout.`, cap: "Every rest on time. Every set saved.",
+      stage: workHTML(c, "promise"), acts: primary("Continue") + slot(), mount: (el, o) => workMount(el, o, c, "promise"),
+    };
+  },
+  buzz: s => {
+    const c = calc(s);
+    return {
+      hl: `We’ll buzz you\nwhen your ${clock(c.P)} is up.`, cap: "One buzz, right when it’s time. Change it anytime.",
+      stage: `<div><div class="lock-eb">On your Lock Screen</div>
+        <div class="la"><div class="r1"><span>Rest · Push</span><b data-cd>0:03</b></div><div class="pbar"><i data-pb></i></div>
+        <div class="r2"><span>Next: Bench press · set 3 of 3</span><em>Start set</em></div></div>
+        <div class="nt2 glass" data-nt style="opacity:0"><div class="ic">${ICONS.bell}</div><div class="tx"><div><b>GymBlock</b></div><div>Rest’s up. Time for your next set.</div></div><span class="now">now</span></div></div>`,
+      acts: primary("Continue") + slot(),
+      mount(el, o) {
+        const cd = el.querySelector("[data-cd]"), pb = el.querySelector("[data-pb]"), nt = el.querySelector("[data-nt]");
+        const end = () => { cd.textContent = "0:00"; pb.style.width = "100%"; nt.style.opacity = 1; nt.classList.add("drop"); };
+        if (o.static) { pb.style.transition = "none"; end(); return; }
+        let n = 3; const t = setInterval(() => { if (!el.isConnected) return clearInterval(t); n--; cd.textContent = "0:0" + n; pb.style.width = (90 + (3 - n) * 3.4) + "%"; if (n === 0) { clearInterval(t); end(); } }, 900);
+      },
+    };
+  },
+  plan: s => {
+    const c = calc(s), rowsP = [["Training", `${s.days} days a week`], ["While you train", "Instagram, TikTok + 2 locked"], ["Between sets", `${clock(c.P)} rests, then a buzz`]];
+    if (pitch(c, s)) rowsP.push(["Each workout", `About ${dur(c.newT)}`, true]);
+    return {
+      hl: `${s.name}, here’s your plan.`, cap: "Hold the button until it fills.",
+      stage: `<div class="plan">${rowsP.map(([a, b, em], i) => `<div class="row" style="animation-delay:${.15 + i * .18}s"><span>${a}</span><b class="${em ? "em" : ""}">${b}</b></div>`).join("")}</div>`,
+      acts: primary("Hold to commit", "hold") + slot(),
+    };
+  },
+};
+
+// Pages that are captures of today's app: hotspots over its real buttons.
+function capturePage(id) {
+  const m = META[id];
+  return `<img class="cap" src="${CAP + m.img}" alt="${m.t}, today’s app">
+    <button class="hot" data-act="${id === "first" ? "end" : "next"}" title="${m.hot || "Continue"}" style="left:22px;right:22px;top:812px;height:56px"></button>
+    ${id !== "welcome" ? `<button class="hot" data-act="back" title="Back" style="left:10px;top:58px;width:50px;height:50px"></button>` : ""}`;
+}
+
+function offerPage(s) {
+  const c = calc(s), sell = pitch(c, s), nofit = s.freq !== "rarely" && c && c.full && !c.fits && c.L > 0;
+  const hl = sell ? `${s.name}, get ${hourish(c.shown) ? "your hour" : `your ${c.shown} minutes`} back.`
+    : nofit ? `${s.name}, get ${mins(c.L)} back every rest.` : `${s.name}, keep every rest on time.`;
+  const bars = sell ? `<div class="of-sub">Your ${gymAdj(c.G)} workout</div>
+    <div class="of-bars">
+      <div class="of-row"><span>Today</span><div class="of-bar"><div style="background:var(--em);flex:${c.G - c.scrollT}"></div><div style="background:var(--red);flex:${c.scrollT}">${c.shown} min scrolling</div></div></div>
+      <div class="of-row"><span class="b">With GymBlock</span><div class="of-bar"><div style="background:var(--em);flex:${c.G - c.scrollT}">About ${dur(c.newT)}</div><div style="flex:${c.scrollT};background:transparent"></div></div></div>
+    </div><div class="of-note">From your answers. About ${c.month} hours back a month.</div>` : "";
+  return `${SB}<div class="offer">
+    <div class="of-eb"><img src="img/kb.png" alt="">GymBlock Pro</div>
+    <div class="of-hl">${hl}</div>
+    ${bars}
+    <div class="of-list">${["Apps locked from your first set to your last", "A buzz the moment rest is up", "Every set saved, and what to beat next time"].map(t => `<div>${CHECK}<span>${t}</span></div>`).join("")}</div>
+    <div class="tline"><div><b>Today</b>Full access, $0</div><div><b>Day 5</b>We remind you</div><div><b>Day 7</b>Plan starts</div></div>
+    <div class="plans"><div class="pl sel"><span class="badge">7 days free</span><span class="nm">Yearly</span><span class="pr">$4.16<small>/mo</small></span><span class="bl">$49.99 billed yearly</span></div>
+      <div class="pl glass"><span class="nm" style="color:var(--sec)">Monthly</span><span class="pr">$4.99<small>/mo</small></span><span class="bl">Billed monthly</span></div></div>
+    <div class="legal"><span>7 days free, then $49.99/year, charged automatically.</span><span>No payment due today. Cancel anytime.</span></div>
+    <div style="margin-top:auto">${primary("Start 7-day free trial")}</div>
+    <div class="links"><span>Restore</span><span>Terms</span><span>Privacy</span></div>
+  </div><div class="home"><i></i></div>`;
+}
+
+// ---------- Rendering ----------
+const after = (o, fn) => o.static ? fn() : requestAnimationFrame(() => requestAnimationFrame(fn));
+function count(el, a, b, ms, delay, fmt) {
+  const t0 = performance.now() + delay;
+  const f = now => { const k = Math.max(0, Math.min(1, (now - t0) / ms)); const e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(a + (b - a) * e); if (k < 1 && el.isConnected) requestAnimationFrame(f); };
+  el.textContent = fmt(a); requestAnimationFrame(f);
+}
+
+function render(screen, id, s, o = {}) {
+  const r = route(s), idx = r.indexOf(id);
+  if (META[id].img) { screen.innerHTML = capturePage(id); return; }
+  if (id === "offer") { screen.innerHTML = offerPage(s); return; }
+  const p = P[id](s);
+  screen.innerHTML = `${SB}<div class="top"><button class="back" data-act="back" aria-label="Back">${BACK}</button><div class="prog"><i style="width:${Math.max(0, idx) / (r.length - 1) * 100}%"></i></div><span class="gap"></span></div>
+    <div class="content"><div class="hl">${p.hl}</div><div class="stage">${p.stage}</div><div class="capt">${p.cap || ""}</div><div class="acts">${p.acts}</div></div><div class="home"><i></i></div>`;
+  screen.classList.toggle("static", !!o.static);
+  if (o.static) screen.querySelectorAll(".drop,.row").forEach(n => n.style.animation = "none");
+  p.mount?.(screen, o);
+  screen._page = p;
+}
+
+// ---------- Click-through ----------
+const live = document.getElementById("liveScreen");
+function go(id, dir = 1) {
+  const content = live.querySelector(".content, img.cap, .offer");
+  const swap = () => { cur = id; render(live, id, st); const c = live.querySelector(".content"); if (c) { c.style.setProperty("--dx2", dir > 0 ? "18px" : "-18px"); c.classList.add("in"); } refreshPanel(); };
+  if (content && content.classList.contains("content")) { content.style.setProperty("--dx", dir > 0 ? "-18px" : "18px"); content.classList.add("out"); setTimeout(swap, 180); }
+  else swap();
+}
+function next() { const r = route(st), i = r.indexOf(cur); if (i < r.length - 1) go(r[i + 1], 1); }
+function back() { const r = route(st), i = r.indexOf(cur); if (i > 0) go(r[i - 1], -1); }
+
+live.addEventListener("click", e => {
+  const b = e.target.closest("[data-act], .opt"); if (!b || b.disabled) return;
+  if (b.classList.contains("opt")) {
+    const k = b.dataset.k, v = JSON.parse(b.dataset.v);
+    st[k] = v;
+    live.querySelectorAll(`.opt[data-k="${k}"]`).forEach(x => x.classList.toggle("on", x === b));
+    const pr = live.querySelector(".primary"); if (pr) pr.disabled = false;
+    const p = P[cur](st);
+    live.querySelector(".capt").textContent = p.cap || "";
+    live.querySelector(".hl").textContent = p.hl;
+    live._page?.update?.(live);
+    const r = route(st), pi = live.querySelector(".prog i"); if (pi) pi.style.width = (r.indexOf(cur) / (r.length - 1) * 100) + "%";
+    refreshPanel();
+    return;
+  }
+  const a = b.dataset.act;
+  if (a === "next") next();
+  else if (a === "back") back();
+  else if (a === "end") { b.blur(); alert("End of onboarding. Start workout opens the first exercise and locks the apps."); }
+});
+live.addEventListener("input", e => {
+  if (e.target.dataset.k === "name") { st.name = e.target.value.trim(); const pr = live.querySelector(".primary"); if (pr) pr.disabled = !st.name; refreshPanel(); }
+});
+// Hold to commit
+live.addEventListener("pointerdown", e => {
+  const b = e.target.closest('[data-act="hold"]'); if (!b) return;
+  const fill = b.querySelector(".fill"), label = b.querySelector("span");
+  fill.style.transition = "width 1.6s linear"; fill.style.width = "100%";
+  const done = setTimeout(() => { label.textContent = "Committed"; setTimeout(() => cur === "plan" && next(), 600); }, 1600);
+  const stop = () => { clearTimeout(done); if (label.textContent !== "Committed") { fill.style.transition = "width .3s ease"; fill.style.width = 0; } window.removeEventListener("pointerup", stop); };
+  window.addEventListener("pointerup", stop);
+});
+
+function refreshPanel() {
+  const r = route(st), i = r.indexOf(cur), m = META[cur];
+  document.getElementById("pNum").textContent = `Page ${i + 1} of ${r.length}`;
+  document.getElementById("pTitle").textContent = m.t;
+  const tag = document.getElementById("pTag"); tag.className = "tag " + m.tag; tag.textContent = { new: "New", changed: "Changed", today: "Today" }[m.tag];
+  document.getElementById("pNote").textContent = m.note;
+  document.getElementById("pFeel").textContent = m.feel ? "Planned feel (not in this mockup): " + m.feel : "";
+  document.getElementById("pMath").innerHTML = mathRows();
+  // Pages after the first unanswered question can't be opened yet.
+  let open = true;
+  document.getElementById("pChips").innerHTML = r.map((id, k) => {
+    const html = `<button type="button" class="${META[id].tag}" data-go="${id}" ${open ? "" : "disabled"} ${id === cur ? 'aria-current="true"' : ""} title="${META[id].t}">${k + 1}</button>`;
+    if (answered[id] && answered[id](st) == null) open = false;
+    return html;
+  }).join("");
+}
+function mathRows() {
+  const c = calc(st), out = [];
+  const add = (a, b) => out.push(`<div><span>${a}</span><b>${b}</b></div>`);
+  add("Days a week", st.days ?? "–");
+  add("Checks the phone", { every: "every rest", sometimes: "sometimes (half the rests)", rarely: "rarely: no time pages" }[st.freq] ?? "–");
+  if (!c) return out.join("");
+  add("Rest they need", clock(c.P) + (st.need === "unsure" ? " (not sure)" : ""));
+  if (st.freq === "rarely") return out.join("");
+  if (c.L == null) return out.join("");
+  add("Scrolling per rest", clock(st.scroll));
+  add("Lost per rest", c.L > 0 ? `${clock(st.scroll)} − ${clock(c.P)} = ${clock(c.L)}` : "0: it fits inside the rest");
+  if (!c.full) return out.join("");
+  add("Sets", `${st.ex} × ${st.sets} = ${c.N}, so ${c.R} rests`);
+  add("Time at the gym", gymLabel(c.G));
+  if (!c.fits) { add("Sets + rest they need", `${Math.round(c.lift + c.needT)} min: more than the gym time`); add("So", "no workout total; we sell the per-rest number"); return out.join(""); }
+  add("Lost per workout", `${c.R} × ${clock(c.L)}${c.f < 1 ? " × ½" : ""} = ${Math.round(c.raw * 10) / 10} min${c.clamped ? `, fitted to ${Math.round(c.scrollT)}` : ""} → shown “${c.tiny ? c.shown : lostWords(c.shown)}”`);
+  add("Inside their gym time", `sets ${c.liftR} · rest they need ${c.needR} · other ${c.elseR} · scrolling ${c.shown} min`);
+  if (c.tiny) { add("So", "under 5 min: no year or promise page"); return out.join(""); }
+  add("Done in", `${c.G} − ${Math.round(c.scrollT)} → about ${dur(c.newT)} (rounded up)`);
+  add("Per year", `${Math.round(c.yearRaw)} h → “about ${c.year} hours”`);
+  add("As workouts", `${Math.round(c.yearRaw)} h ÷ ${gymLabel(c.G)} → “${c.workouts} extra workouts”`);
+  add("Back per month", `about ${c.month} hours`);
+  return out.join("");
+}
+document.getElementById("pChips").addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b && !b.disabled) { const r = route(st); go(b.dataset.go, r.indexOf(b.dataset.go) >= r.indexOf(cur) ? 1 : -1); } });
+document.getElementById("bNext").onclick = next;
+document.getElementById("bBack").onclick = back;
+document.getElementById("bExample").onclick = () => { st = { ...EXAMPLE }; go(cur, 1); };
+document.getElementById("bFresh").onclick = () => { st = { name: null, days: null, freq: null, need: null, scroll: null, ex: null, sets: null, gym: null }; go("welcome", -1); };
+document.addEventListener("keydown", e => { if (e.target.tagName === "INPUT") return; if (e.key === "ArrowRight") next(); if (e.key === "ArrowLeft") back(); });
+
+// Fit the phone to the window.
+function fit() { const h = window.innerHeight - 90, s = Math.max(.5, Math.min(.86, h / 956)); document.getElementById("live").style.setProperty("--s", s); }
+window.addEventListener("resize", fit); fit();
+
+// ---------- All pages ----------
+function tile(id, s, label, numText) {
+  const t = document.createElement("button"); t.type = "button"; t.className = "tile";
+  const m = META[id];
+  t.innerHTML = `<div class="cap"><span class="n">${numText}</span><span class="t">${label || m.t}</span><span class="tag ${m.tag}">${{ new: "New", changed: "Changed", today: "Today" }[m.tag]}</span></div><div class="phone"><div class="screen"></div></div>`;
+  render(t.querySelector(".screen"), id, s, { static: true });
+  t.querySelectorAll("input,button.opt,button.primary,button.back,.hot").forEach(n => n.tabIndex = -1);
+  t.addEventListener("click", () => { st = { ...s }; showView("flow"); go(id, 1); window.scrollTo({ top: 0, behavior: "smooth" }); });
+  return t;
+}
+let built = false;
+function buildAll() {
+  if (built) return; built = true;
+  const g = document.getElementById("gMain");
+  route(EXAMPLE).forEach((id, i) => g.appendChild(tile(id, EXAMPLE, null, i + 1)));
+  const alt = document.getElementById("gAlt");
+  const V = [
+    [{ ...EXAMPLE, freq: "rarely" }, "ahead", "Rarely: already ahead", "R·7"],
+    [{ ...EXAMPLE, freq: "rarely" }, "offer", "Rarely: the offer", "R·15"],
+    [{ ...EXAMPLE, freq: "sometimes" }, "perRest", "Sometimes: per scroll", "S·8"],
+    [{ ...EXAMPLE, freq: "sometimes" }, "workout", "Sometimes: half the rests", "S·12"],
+    [{ ...EXAMPLE, scroll: 1 }, "perRest", "Scrolling fits in the rest", "8"],
+    [{ ...EXAMPLE, name: "Sulav", ex: 6, sets: 4, gym: 120 }, "workout", "Sulav’s case: 6 × 4 in 2 hours", "12"],
+    [{ ...EXAMPLE, name: "Sulav", ex: 6, sets: 4, gym: 120 }, "promise", "Sulav’s case: the hour back", "14"],
+    [{ ...EXAMPLE, name: "Sulav", ex: 6, sets: 4, gym: 120 }, "offer", "Sulav’s case: the offer", "20"],
+    [{ ...EXAMPLE, ex: 7, sets: 5, need: 2, scroll: 6, gym: 60 }, "promise", "Answers don’t fit the gym time", "12"],
+  ];
+  V.forEach(([s, id, label, n]) => alt.appendChild(tile(id, s, label, n)));
+}
+function showView(v) {
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
+  document.getElementById("flow").hidden = v !== "flow";
+  document.getElementById("all").hidden = v !== "all";
+  if (v === "all") buildAll();
+}
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => showView(b.dataset.view));
+
+// ?solo=<page>&<answer>=<value>: one page at full size, final frame (for captures).
+const qs = new URLSearchParams(location.search);
+if (qs.has("solo")) {
+  const s = { ...EXAMPLE };
+  for (const [k, v] of qs) if (k !== "solo") s[k] = isNaN(+v) ? v : +v;
+  document.body.innerHTML = `<div class="screen" id="solo" style="transform:none"></div>`;
+  document.body.style.background = "#F5F3EF";
+  render(document.getElementById("solo"), qs.get("solo"), s, { static: true });
+} else { render(live, cur, st); refreshPanel(); }
+</script>
+</body>
+</html>

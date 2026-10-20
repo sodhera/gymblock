@@ -54,9 +54,9 @@ import XCTest
     profile.onboardingStepID = "routine"
     XCTAssertEqual(OnboardingStep.restored(profile), .scrolling)
     profile.onboardingStepID = "loggingHabits"
-    XCTAssertEqual(OnboardingStep.restored(profile), .reveal)
+    XCTAssertEqual(OnboardingStep.restored(profile), .restNeed)
     profile.onboardingStepID = "mindMuscle"
-    XCTAssertEqual(OnboardingStep.restored(profile), .mindA)
+    XCTAssertEqual(OnboardingStep.restored(profile), .restNeed)
     let encoded = try JSONEncoder().encode(baseline())
     var object = try JSONSerialization.jsonObject(with: encoded) as! [String: Any]
     for key in ["trainingDays", "scrollingMinutes", "scrollFrequency", "visitsPerTrainingDay"] {
@@ -173,15 +173,16 @@ import XCTest
   }
 
   func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
-    var b = baseline()
-    b.scrollFrequency = .sometimes
-    XCTAssertEqual(OnboardingRoute.steps(b), [.founder, .name, .trainingDays, .scrolling, .phoneMinutes, .reveal, .days, .mindA, .mindB,
-                                              .restA, .restB, .logA, .logB, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
+    var b = RoutineBaseline()
+    b.scrollFrequency = .sometimes; b.restNeedSeconds = 90; b.scrollingMinutes = 4; b.exercises = 5; b.sets = 3; b.duration = 90
+    XCTAssertEqual(OnboardingRoute.steps(b), [.founder, .name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
+                                              .exerciseCount, .setCount, .gymTime, .workoutTime, .yearTime, .promise,
+                                              .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false
     let noScroll = OnboardingRoute.steps(b)
-    XCTAssertFalse(noScroll.contains(.phoneMinutes))
-    XCTAssertTrue(noScroll.contains(.reveal))
+    XCTAssertFalse(noScroll.contains(.scrollMinutes))
+    XCTAssertEqual(Array(noScroll.prefix(7)), [.founder, .name, .trainingDays, .scrolling, .restNeed, .ahead, .shield])
     XCTAssertEqual(Array(noScroll.suffix(7)), [.blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
   }
   func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {

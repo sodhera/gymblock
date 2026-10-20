@@ -325,107 +325,6 @@ struct TrainingDaysStage: View {
   }
 }
 
-// MARK: - Mind-muscle connection, from a clock
-
-private let mindStageRef = CGSize(width: 300, height: 360)
-
-/// Where everything is at one moment of the mind-muscle scene.
-struct MindState {
-  var focus = 1.0, mood = 1.0, warmth = 1.0, curl = 1.0, lit = 0.0, glow = 0.0, attention = 0.0, flow = 0.0
-  var pulses: [(head: Double, alpha: Double)] = []
-  var pings: [(x: Double, alpha: Double, scale: Double)] = []
-
-  /// Scrolling weakens it: four signals, each shorter and duller; the brain's face drops, the arm drains to grey.
-  static func fading(_ t: Double) -> MindState {
-    let focus = 1 - Ease.inOut(Ease.seg(t, 0.3, 3.0))
-    let starts = [0.25, 1.05, 1.85, 2.65], reach = [1, 0.72, 0.48, 0.28], alpha = [1, 0.8, 0.6, 0.42]
-    var s = MindState()
-    s.focus = focus; s.mood = Ease.lerp(-0.8, 0.6, focus); s.warmth = 0.55 * focus
-    s.curl = 0.15 + 0.45 * Ease.bump(t, starts[0] + 0.62, 0.5) + 0.16 * Ease.bump(t, starts[1] + 0.66, 0.45) + 0.05 * Ease.bump(t, starts[2] + 0.7, 0.4)
-    s.glow = 0.5 * focus * (1 - Ease.seg(t, 0, 1.2))
-    s.pulses = starts.indices.map { i in (reach[i] * Ease.out(Ease.seg(t, starts[i], starts[i] + 0.8)), alpha[i] * (1 - Ease.seg(t, starts[i] + 0.62, starts[i] + 0.95))) }
-    s.attention = Ease.seg(t, 0.5, 0.9); s.flow = -t * 11
-    s.pings = [0.4, 1.2].map { p in (Ease.lerp(-70, 0, Ease.spring(t - p, 14, 0.6)), Ease.seg(t, p, p + 0.18), t < p ? 0.8 : 0.8 + 0.2 * Ease.spring(t - p, 16, 0.5)) }
-    return s
-  }
-  /// Put it away: three identical signals; the arm flexes on each and warms to green.
-  static func steady(_ t: Double) -> MindState {
-    let starts = [0.35, 1.2, 2.05], arrive = starts.map { $0 + 0.63 }
-    var s = MindState()
-    var curl = 0.15
-    for (k, a) in arrive.enumerated() {
-      if t >= a { curl = Ease.lerp(curl, 1, Ease.spring(t - a, 16, 0.55)) }
-      if k < 2 && t >= a + 0.3 { curl = Ease.lerp(curl, 0.35, Ease.inOut(Ease.seg(t, a + 0.3, a + 0.75))) }
-    }
-    s.curl = curl
-    s.warmth = zip([0.4, 0.3, 0.3], arrive).reduce(0) { $0 + $1.0 * Ease.out(Ease.seg(t, $1.1, $1.1 + 0.35)) }
-    s.lit = Ease.inOut(Ease.seg(t, 2.8, 3.5)); s.glow = s.lit
-    s.focus = 1; s.mood = Ease.lerp(-0.8, 1, Ease.inOut(Ease.seg(t, 0.3, 1.5)))
-    s.pulses = starts.map { (1.22 * pow(Ease.seg(t, $0, $0 + 0.7), 2), 1 - Ease.seg(t, $0 + 0.65, $0 + 0.8)) }
-    s.attention = 1 - Ease.seg(t, 0, 0.3); s.flow = -t * 11
-    s.pings = [0, 1].map { i in (Ease.lerp(0, -80, Ease.inOut(Ease.seg(t, 0.02 * Double(i), 0.5 + 0.02 * Double(i)))), 1 - Ease.seg(t, 0.05, 0.45), 1) }
-    return s
-  }
-}
-
-/// The approved brain, nerve and arm, drawn from a `MindState`.
-struct MindFrame: View {
-  let state: MindState
-  var body: some View {
-    GeometryReader { g in
-      let b = StageBox(size: g.size, ref: mindStageRef)
-      let s = state
-      ZStack {
-        Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.22), .clear], center: .center, startRadius: 0, endRadius: b.len(120)))
-          .frame(width: b.len(240), height: b.len(240)).position(b.p(150, 80)).opacity(s.glow)
-        NervePath().stroke(JourneyColor.ink(0.12), style: StrokeStyle(lineWidth: b.len(2), lineCap: .round))
-        NervePath().stroke(JourneyColor.accent.opacity(0.75), style: StrokeStyle(lineWidth: b.len(2), lineCap: .round)).opacity(s.lit)
-        ForEach(s.pulses.indices, id: \.self) { i in
-          let p = s.pulses[i]
-          ZStack {
-            NervePulse(head: p.head).stroke(JourneyColor.accent.opacity(0.3 * s.focus), style: StrokeStyle(lineWidth: b.len(9), lineCap: .round))
-            NervePulse(head: p.head).stroke(JourneyColor.ink(0.1 * (1 - s.focus)), style: StrokeStyle(lineWidth: b.len(9), lineCap: .round))
-            NervePulse(head: p.head).stroke(JourneyColor.ink(0.45), style: StrokeStyle(lineWidth: b.len(3), lineCap: .round))
-            NervePulse(head: p.head).stroke(JourneyColor.accent, style: StrokeStyle(lineWidth: b.len(3), lineCap: .round)).opacity(s.focus)
-          }.opacity(p.alpha)
-        }
-        AttentionPath().stroke(JourneyColor.ink(0.35), style: StrokeStyle(lineWidth: b.len(1.6), lineCap: .round, dash: [2, 7], dashPhase: s.flow))
-          .opacity(s.attention)
-        ForEach(s.pings.indices, id: \.self) { i in ping(i, b).opacity(s.pings[i].alpha) }
-        brain(b)
-        ArmView(curl: s.curl, warmth: s.warmth).frame(width: b.len(168), height: b.len(168)).position(b.p(150, 276))
-      }
-    }
-  }
-  private func brain(_ b: StageBox) -> some View {
-    let k = Ease.clamp((state.mood + 0.8) / 1.8)
-    let tone = JourneyColor.text.opacity(0.55 + 0.45 * k)
-    return ZStack {
-      BrainOutline().fill(JourneyColor.stage)
-      BrainFolds().stroke(tone.opacity(0.45), style: StrokeStyle(lineWidth: b.len(1.4), lineCap: .round))
-      BrainOutline().stroke(tone, style: StrokeStyle(lineWidth: b.len(1.8), lineCap: .round))
-      BrainEyes(mood: state.mood).fill(tone)
-      BrainMouth(mood: state.mood).stroke(tone, style: StrokeStyle(lineWidth: b.len(2.6), lineCap: .round))
-    }.frame(width: b.len(132), height: b.len(121)).position(b.p(150, 78))
-  }
-  private func ping(_ i: Int, _ b: StageBox) -> some View {
-    let p = state.pings[i]
-    return HStack(spacing: b.len(5)) {
-      Image(systemName: ["camera", "music.note"][i]).font(.system(size: b.len(11), weight: .bold)).foregroundStyle(JourneyColor.text)
-        .frame(width: b.len(22), height: b.len(22))
-        .background(RoundedRectangle(cornerRadius: b.len(6), style: .continuous).fill(JourneyColor.ink(0.22)))
-      VStack(alignment: .leading, spacing: b.len(4)) {
-        Capsule().fill(JourneyColor.ink(0.75)).frame(width: b.len(30), height: b.len(4))
-        Capsule().fill(JourneyColor.ink(0.4)).frame(width: b.len(44), height: b.len(4))
-      }
-    }.padding(b.len(7))
-      .background(RoundedRectangle(cornerRadius: b.len(10), style: .continuous).fill(JourneyColor.ink(0.14)))
-      .overlay(RoundedRectangle(cornerRadius: b.len(10), style: .continuous).strokeBorder(JourneyColor.ink(0.18)))
-      .scaleEffect(p.scale)
-      .position(b.p(50 + CGFloat(i) * 8 + CGFloat(p.x), 129 + CGFloat(i) * 42))
-  }
-}
-
 // MARK: - The shield, as people will meet it
 
 /// The real lock screen's words (GymBlockShield), for an example app; it slides up and locks.
@@ -523,14 +422,15 @@ struct LockScreenRest: View {
 
 // MARK: - The plan
 
-/// Their answers as a plan: three lines on the paper, kg or lb beneath, and the hold to commit.
+/// Their answers as a plan: three lines on the paper (four when their workout with rests on time is
+/// known), and the hold to commit.
 struct PlanStage: View {
   var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
   var body: some View {
-    // The last line finishes settling at 1.05 s; the hold appears after it.
-    SceneClock(duration: 1.1, done: done) { t in
+    // The last line finishes settling at 1.05 s (1.25 s with four); the hold appears after it.
+    SceneClock(duration: rows.count > 3 ? 1.3 : 1.1, done: done) { t in
       VStack(spacing: 18) {
         Spacer(minLength: 0)
         VStack(spacing: 0) {
@@ -538,7 +438,9 @@ struct PlanStage: View {
             let k = Ease.out(Ease.seg(t, 0.15 + Double(i) * 0.2, 0.65 + Double(i) * 0.2))
             VStack(alignment: .leading, spacing: 3) {
               Text(row.0).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-              Text(row.1).font(.app(JourneyLayout.compact ? .title3 : .title2, weight: .semibold)).foregroundStyle(JourneyColor.text).tracking(-0.3)
+              // Their workout with rests on time is the one thing in the plan that's new: the signal.
+              Text(row.1).font(.app(JourneyLayout.compact ? .title3 : .title2, weight: .semibold))
+                .foregroundStyle(i == 3 ? JourneyColor.accent : JourneyColor.text).tracking(-0.3)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, JourneyLayout.compact ? 10 : 15)
               .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
               .opacity(k).offset(y: (1 - k) * 12)
@@ -550,14 +452,16 @@ struct PlanStage: View {
     }.accessibilityIdentifier("journey.plan")
   }
   private var rows: [(String, String)] {
-    let days = store.profile.baseline?.trainingDays ?? 4
+    let baseline = store.profile.baseline ?? RoutineBaseline()
+    let days = baseline.trainingDays ?? 4
     let rest = clockString(store.profile.restSeconds ?? 90)
     let locked = blocking.ready && store.profile.focusEnabled == true
+    let time = TimeBack(baseline, restSeconds: store.profile.restSeconds)
     return [
       (store.t("Training"), String(format: store.t("%@ days a week"), "\(days)")),
       (store.t("While you train"), locked ? String(format: store.t("%@ locked"), blocking.summary(store.t)) : store.t("Rest timer and log")),
       (store.t("Between sets"), String(format: store.t(store.profile.restAlerts == true ? "%@ rests, then a buzz" : "%@ rests"), rest)),
-    ]
+    ] + (time.outcome == .full ? [(store.t("Each workout"), store.aboutWords(time.workout).prefix(1).uppercased() + store.aboutWords(time.workout).dropFirst())] : [])
   }
 }
 

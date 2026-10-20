@@ -2,9 +2,13 @@ import FamilyControls
 import SwiftUI
 
 /// Onboarding: one question or one idea per page, on a fixed grid —
-/// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V5-PLAN.md.
+/// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V8-PLAN.md.
 enum OnboardingStep: String, CaseIterable {
-  case welcome, founder, name, trainingDays, scrolling, phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB, shield, blocking, alerts, commit, account, subscription, splits, firstWorkout
+  case welcome, founder, name, trainingDays, scrolling, restNeed, scrollMinutes, perRest, ahead, exerciseCount, setCount, gymTime
+  case workoutTime, yearTime, promise, shield, blocking, alerts, commit, account, subscription, splits, firstWorkout
+  // V7's pages (17 Oct 2026), replaced on 20 Oct 2026 by time back; saved progress on them resumes
+  // at the rest question.
+  case phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB
   // Asked before 17 Oct 2026 (V5); saved progress on them resumes at the days question.
   case gender, height, weight
   // Decode-only steps saved by earlier journeys.
@@ -12,7 +16,7 @@ enum OnboardingStep: String, CaseIterable {
   case duration, reps, sets, exercises, minutes, breaks, setTiming, routine, ready
   static func restored(_ profile: Profile) -> Self {
     if let id = profile.onboardingStepID, let step = Self(rawValue: id) { return step.current }
-    let old: [Self] = [.welcome, .reveal, .scrolling, .scrolling, .scrolling, .reveal, .logA]
+    let old: [Self] = [.welcome, .restNeed, .scrolling, .scrolling, .scrolling, .restNeed, .restNeed]
     return old[min(max(profile.onboardingStep, 0), old.count - 1)]
   }
   /// Maps removed pages onto the nearest current page; stored answers are never discarded.
@@ -20,38 +24,48 @@ enum OnboardingStep: String, CaseIterable {
     switch self {
     case .body, .gender, .height, .weight: return .trainingDays
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
-    case .minutes, .breaks: return .phoneMinutes
-    case .frequency, .restHabits, .loggingHabits, .setTiming: return .reveal
-    case .mindMuscle: return .mindA
-    case .restStory: return .restA
-    case .progressStory, .ready: return .logA
+    case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
+         .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
+      return .restNeed
     default: return self
     }
   }
   /// The account step or later: the answers are worth keeping in the account from here on.
   var reachedAccount: Bool { [.account, .subscription, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .scrolling, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB, .shield, .alerts, .commit].contains(self) }
+  var animated: Bool { [.welcome, .scrolling, .perRest, .ahead, .workoutTime, .yearTime, .promise, .shield, .alerts, .commit].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
   var stage: String {
     switch self {
     case .scrolling: return "notify"
-    case .mindA, .mindB: return "mind"
-    case .restA, .restB: return "rest"
-    case .logA, .logB: return "log"
+    // Rarely's "already ahead" keeps the stopwatch from the rest question in place.
+    case .restNeed, .ahead: return "watch"
     default: return rawValue
     }
   }
 }
 
 enum OnboardingRoute {
+  /// The pages their answers lead to (docs/ONBOARDING-V8-PLAN.md): Rarely, or scrolling that fits
+  /// inside the rest, goes straight to how GymBlock works; answers that don't fit their gym time get
+  /// the per-rest promise only; under five minutes a workout gets the number and nothing more.
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.founder, .name, .trainingDays, .scrolling]
-    let scrolls = baseline.scrollFrequency != .no
-    if scrolls { steps.append(.phoneMinutes) }
-    steps.append(.reveal)
-    if scrolls { steps.append(.days) }
-    return steps + [.mindA, .mindB, .restA, .restB, .logA, .logB, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    var steps: [OnboardingStep] = [.founder, .name, .trainingDays, .scrolling, .restNeed]
+    let time = TimeBack(baseline)
+    if baseline.scrollFrequency == .no {
+      steps.append(.ahead)
+    } else {
+      steps += [.scrollMinutes, .perRest]
+      if time.lostPerRest != 0 {
+        steps += [.exerciseCount, .setCount, .gymTime]
+        switch time.outcome {
+        case .unfit: steps.append(.promise)
+        case .small: steps.append(.workoutTime)
+        default: steps += [.workoutTime, .yearTime, .promise]
+        }
+      }
+    }
+    return steps + [.shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
   }
 }
 
@@ -63,8 +77,13 @@ struct OnboardingView: View {
   @EnvironmentObject private var account: Account
   /// "I already have an account": the standalone sign-in, which RootView shows.
   var onSignIn: () -> Void = {}
-  @State private var draft = 2.0
-  @State private var estimate = GymTimeEstimate()
+  /// Minutes a scroll lasts, on the wheel.
+  @State private var draft = 1.0
+  /// The rows' choices before Continue saves them. A rest of 0 is "Not sure".
+  @State private var restChoice: Double?
+  @State private var exerciseChoice: Int?
+  @State private var setChoice: Int?
+  @State private var gymChoice: Int?
   @ObservedObject private var blocking = AppBlocking.shared
   /// The system app picker, its working copy, and a note when Screen Time access is refused.
   @State private var picking = false
@@ -96,6 +115,7 @@ struct OnboardingView: View {
   @State private var committed = false
   @MainActor private static var coverShown = false
   private var baseline: RoutineBaseline { store.profile.baseline ?? RoutineBaseline() }
+  private var time: TimeBack { TimeBack(baseline, restSeconds: store.profile.restSeconds) }
   private var step: OnboardingStep { OnboardingStep.restored(store.profile) }
   private var route: [OnboardingStep] { OnboardingRoute.steps(baseline) }
 
@@ -160,7 +180,7 @@ struct OnboardingView: View {
         $0.onboardingStepID = step.rawValue
         // V7 no longer asks body weight, so kg or lb comes from the phone's region the first time.
         if ($0.onboardingVersion ?? 0) < 10 && $0.onboardingStepID == nil { $0.unit = BodyUnits.defaultMetric ? "kg" : "lb" }
-        $0.onboardingVersion = 10
+        $0.onboardingVersion = 11
         if $0.focusEnabled == nil { $0.focusEnabled = false }
         if $0.language.isEmpty {
           $0.language = Locale.current.language.languageCode?.identifier == "es" ? "es" : "en"
@@ -207,7 +227,7 @@ struct OnboardingView: View {
         Text(store.t(headlineCopy))
       }
     }.font(headlineFont).tracking(-0.3).multilineTextAlignment(.center)
-      .lineLimit(step == .reveal ? 3 : 2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
+      .lineLimit([.scrollMinutes, .workoutTime, .promise].contains(step) ? 3 : 2).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
   }
   /// The large title, one step smaller on small screens.
@@ -220,16 +240,13 @@ struct OnboardingView: View {
     case .weight: return "How much do you weigh?"
     case .alerts: return "We’ll buzz you\nwhen rest is up."
     case .scrolling: return "Be honest. Do you check your phone between sets?"
-    case .phoneMinutes: return "Roughly how long, each rest?"
-    case .reveal: return "Here’s where your workout time goes."
-    case .days: return daysHeadline
+    case .restNeed: return "How long do you need to rest between sets?"
+    case .scrollMinutes: return "When you start scrolling between sets, how many minutes do you scroll?"
+    case .ahead: return "Then you’re already ahead."
+    case .exerciseCount: return "How many exercises do you usually do every workout?"
+    case .setCount: return "And how many sets of each exercise?"
+    case .gymTime: return "How long are you usually at the gym?"
     case .commit: return "Here’s your plan."
-    case .mindA: return "Scrolling weakens your mind-muscle connection."
-    case .mindB: return "Put it away. Feel every rep."
-    case .restA: return "Long scrolls between sets?\nThe pump never builds."
-    case .restB: return "Rest on time,\nand it keeps building."
-    case .logA: return "It’s easy to forget how well you did."
-    case .logB: return "Your log remembers. Every set."
     case .shield: return "Open a locked app while you train, and you’ll see this."
     case .blocking: return "Which apps should we lock while you train?"
     case .account: return "Let’s save your plan to your account."
@@ -239,21 +256,46 @@ struct OnboardingView: View {
     default: return "Stay focused with GymBlock."
     }
   }
-  /// Uses their name where it reads naturally.
+  /// Headlines built from their name and their own numbers (already translated).
   private var personal: String? {
     let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !name.isEmpty else { return nil }
+    let time = self.time
     switch step {
-    case .reveal: return name + ", " + store.t("here’s where your workout time goes.")
-    case .trainingDays: return String(format: store.t("Hi %@. How many days a week do you work out?"), name)
-    case .commit: return name + ", " + store.t("here’s your plan.")
+    case .trainingDays where !name.isEmpty: return String(format: store.t("Hi %@. How many days a week do you work out?"), name)
+    case .commit where !name.isEmpty: return name + ", " + store.t("here’s your plan.")
+    case .perRest:
+      guard let lost = time.lostPerRest else { return nil }
+      if lost == 0 { return store.t("Then your scrolling fits inside your rest.") }
+      return String(format: store.t(time.share < 1 ? "That’s %@ lost each time you scroll." : "That’s %@ lost. Every rest."), store.minutesWords(lost))
+    case .workoutTime:
+      if time.outcome == .small {
+        let words = store.minutesWords(Double(max(1, time.shownLost)))
+        return name.isEmpty ? String(format: store.t("Scrolling takes about %@ of your workout."), words)
+          : String(format: store.t("%@, scrolling takes about %@ of your workout."), name, words)
+      }
+      let gym = store.gymWords(time.gym ?? 60)
+      if name.isEmpty {
+        let lost = store.lostWords(time)
+        return String(format: store.t("%@ of your %@ goes to scrolling."), lost.prefix(1).uppercased() + lost.dropFirst(), gym)
+      }
+      return String(format: store.t("%@, %@ of your %@ goes to scrolling."), name, store.lostWords(time), gym)
+    case .yearTime:
+      // The number keeps its unit on the same line ("120 hours", never "120 / hours").
+      let hours = "\(time.shownYear)"
+      return String(format: store.t("At %@ workouts a week, that’s about %@ hours a year."), "\(time.days)", hours)
+        .replacingOccurrences(of: hours + " ", with: hours + "\u{00A0}")
+    case .promise:
+      if time.outcome == .unfit {
+        let lost = time.lostPerRest ?? 0
+        return lost == 1 ? store.t("We’ll give you that minute back. Every rest.")
+          : String(format: store.t("We’ll give you those %@ back. Every rest."), store.minutesWords(lost))
+      }
+      return time.lostIsAnHour ? store.t("We’ll give you that hour back.\nAnd a better workout.")
+        : String(format: store.t("We’ll give you those %@ back.\nAnd a better workout."), String(format: store.t("%@ minutes"), "\(time.shownLost)"))
+    case .alerts:
+      return String(format: store.t("We’ll buzz you\nwhen your %@ is up."), clockString(store.profile.restSeconds ?? 90))
     default: return nil
     }
-  }
-  private var daysHeadline: String {
-    // The number keeps its unit on the same line ("118 hours", never "118 / hours").
-    String(format: store.t("At %@ workouts a week, that’s %@ hours a year on your phone."), "\(estimate.days)", "\(Int(estimate.yearlyPhoneHours.rounded()))")
-      .replacingOccurrences(of: "\(Int(estimate.yearlyPhoneHours.rounded())) ", with: "\(Int(estimate.yearlyPhoneHours.rounded()))\u{00A0}")
   }
   private var firstWorkoutHeadline: String {
     let split = store.data.workouts.first { $0.id == store.profile.preferredSplitID } ?? store.data.workouts.first
@@ -263,13 +305,30 @@ struct OnboardingView: View {
     switch step {
     case .name: return "It’s how we’ll greet you in the app."
     case .trainingDays: return "We’ll set your weekly goal from this."
-    case .scrolling: return "No judgement. Mine was every rest."
-    case .phoneMinutes: return "Your best guess is fine."
+    case .scrolling: return "No judgement. We did too."
+    case .restNeed: return restChoice == 0 ? "We’ll start you at 2 minutes." : "We’ll time your rests to this."
+    case .scrollMinutes: return "Your best guess is fine."
+    case .perRest:
+      let need = time.restNeed
+      if time.lostPerRest == 0 { return "We’ll help you keep it that way." }
+      return need == 1 ? store.t("The first minute was rest you’d take anyway.")
+        : String(format: store.t("The first %@ were rest you’d take anyway."), store.minutesWords(need))
+    case .ahead: return "We’ll help you keep it that way."
+    case .setCount:
+      guard let setChoice else { return nil }
+      let sets = (baseline.exercises ?? 5) * setChoice
+      return String(format: store.t("%@ sets, so %@ rests."), "\(sets)", "\(max(0, sets - 1))")
+    case .gymTime: return "From walking in to walking out."
+    case .workoutTime:
+      let time = self.time
+      if time.outcome == .small { return "We’ll help you keep it that way." }
+      if time.fitted { return String(format: store.t("From your answers, fitted into your %@."), store.gymWords(time.gym ?? 60)) }
+      let per = store.minutesWords(time.lostPerRest ?? 0)
+      return String(format: store.t(time.share < 1 ? "From your answers: about half of %@ rests × %@." : "From your answers: %@ rests × %@."), "\(time.rests ?? 0)", per)
+    case .yearTime: return "Your numbers, multiplied out."
+    case .promise: return "Every rest on time. Every set saved."
     case .alerts: return "One buzz, right when it’s time. Change it anytime."
-    case .reveal: return "A typical workout: 6 exercises × 3 sets, with your rests."
-    case .days: return "Your own numbers, multiplied out."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
-    case .logA, .logB: return "An example log, not your data."
     case .shield: return "It lifts the moment you finish."
     case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
     case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
@@ -305,14 +364,20 @@ struct OnboardingView: View {
                                   set: { weightKG = weightUnit == 0 ? $0 : $0 / 2.20462 }),
                    units: ["kg", "lb"], unitIndex: $weightUnit)
     case .alerts: LockScreenRest(done: sceneDone)
-    case .phoneMinutes:
-      JourneyWheel(values: stride(from: 0.5, through: 10, by: 0.5).map { $0 }, unit: store.t("min"), id: "baseline.scrollMinutes",
-                   value: $draft).frame(height: 216).frame(maxHeight: .infinity)
-    case .reveal: RevealStage(estimate: estimate, done: sceneDone)
-    case .days: DaysStage(estimate: estimate, done: sceneDone)
-    case .mindA, .mindB: MindStage(focused: step == .mindB, done: sceneDone)
-    case .restA, .restB: RestStage(timed: step == .restB, done: sceneDone)
-    case .logA, .logB: LogStage(remembered: step == .logB, done: sceneDone)
+    // One stopwatch for the rest question and Rarely's "already ahead", so it stays in place.
+    case .restNeed, .ahead:
+      RestWatchStage(minutes: step == .ahead ? time.restNeed : restChoice.map { $0 == 0 ? TimeBack.unsureRest : $0 },
+                     ahead: step == .ahead, done: step == .ahead ? sceneDone : {})
+    case .scrollMinutes: ScrollMinutesStage(minutes: $draft)
+    case .perRest: PerRestStage(time: time, done: sceneDone)
+    case .exerciseCount: RackStage(count: exerciseChoice)
+    case .setCount: LogTallyStage(exercises: baseline.exercises ?? 5, sets: setChoice)
+    case .gymTime: GymClockStage(minutes: gymChoice)
+    case .workoutTime: WorkTimeStage(time: time, done: sceneDone)
+    case .yearTime: ExtraWorkoutsStage(time: time, done: sceneDone)
+    case .promise:
+      if time.outcome == .unfit { PerRestStage(time: time, giveBack: true, done: sceneDone) }
+      else { WorkTimeStage(time: time, giveBack: true, done: sceneDone) }
     case .commit: PlanStage(done: sceneDone)
     case .shield: ShieldStage(done: sceneDone)
     case .blocking: BlockStage(locking: locking, choose: chooseApps)
@@ -342,6 +407,12 @@ struct OnboardingView: View {
         Color.clear.frame(height: 44)
       case .trainingDays:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: trainingDays != nil, action: advance)
+        Color.clear.frame(height: 44)
+      case .restNeed, .exerciseCount, .setCount, .gymTime:
+        JourneyGlassGroup(spacing: JourneyLayout.compact ? 8 : 10) {
+          VStack(spacing: JourneyLayout.compact ? 8 : 10) { questionRows }
+        }.padding(.bottom, 14)
+        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: questionAnswered, action: advance)
         Color.clear.frame(height: 44)
       case .alerts:
         // App Review 5.1.1(iv) (17 Oct 2026): a page that explains a permission always goes on to the
@@ -453,6 +524,37 @@ struct OnboardingView: View {
       }
     }
   }
+  /// The time-back questions' rows (docs/ONBOARDING-V8-PLAN.md). Selecting only selects.
+  @ViewBuilder private var questionRows: some View {
+    switch step {
+    case .restNeed:
+      ForEach([(1.0, "1 min"), (1.5, "1½ min"), (2.0, "2 min"), (3.0, "3 min"), (0.0, "Not sure")], id: \.0) { value, title in
+        choice(title, id: "rest.\(value)", selected: restChoice == value) { restChoice = value }
+      }
+    case .exerciseCount:
+      ForEach([(3, "3 or fewer"), (4, "4"), (5, "5"), (6, "6"), (7, "7 or more")], id: \.0) { value, title in
+        choice(title, id: "exercises.\(value)", selected: exerciseChoice == value) { exerciseChoice = value }
+      }
+    case .setCount:
+      ForEach([(2, "2"), (3, "3"), (4, "4"), (5, "5 or more")], id: \.0) { value, title in
+        choice(title, id: "sets.\(value)", selected: setChoice == value) { setChoice = value }
+      }
+    case .gymTime:
+      ForEach([(45, "45 min"), (60, "1 hour"), (90, "1½ hours"), (120, "2 hours"), (150, "2½ hours or more")], id: \.0) { value, title in
+        choice(title, id: "gym.\(value)", selected: gymChoice == value) { gymChoice = value }
+      }
+    default: EmptyView()
+    }
+  }
+  private var questionAnswered: Bool {
+    switch step {
+    case .restNeed: return restChoice != nil
+    case .exerciseCount: return exerciseChoice != nil
+    case .setCount: return setChoice != nil
+    case .gymTime: return gymChoice != nil
+    default: return true
+    }
+  }
   /// Selecting only selects. Continue moves on — nothing jumps away mid-thought.
   private func choice(_ title: String, id: String, selected: Bool, apply: @escaping () -> Void) -> some View {
     JourneyOption(title: store.t(title), selected: selected, id: id) {
@@ -477,10 +579,12 @@ struct OnboardingView: View {
       let p = store.profile
       weightKG = p.bodyWeightKG ?? bodyDefaults(p.gender).weight
       weightUnit = p.bodyWeightKG != nil ? (p.unit == "kg" ? 0 : 1) : heightUnit
-    case .phoneMinutes:
-      let saved = baseline.scrollingMinutes ?? 0
-      draft = saved > 0 ? min(10, (saved * 2).rounded() / 2) : (baseline.scrollFrequency == .sometimes ? 1 : 2)
-    case .reveal, .days: estimate = GymTimeEstimate(baseline)
+    case .restNeed: restChoice = baseline.restNeedUnsure == true ? 0 : baseline.restNeedSeconds.map { Double($0) / 60 }
+    // The wheel starts at their own answer, or at one minute: no suggested number.
+    case .scrollMinutes: draft = min(15, max(1, (baseline.scrollingMinutes ?? 1).rounded()))
+    case .exerciseCount: exerciseChoice = baseline.exercises.map { min(7, max(3, $0)) }
+    case .setCount: setChoice = baseline.sets.map { min(5, max(2, $0)) }
+    case .gymTime: gymChoice = baseline.duration.map { d in [45, 60, 90, 120, 150].min { abs($0 - d) < abs($1 - d) } ?? 60 }
     case .commit: pledged = 0; committed = false
     case .blocking: blockMessage = nil
     default: break
@@ -499,7 +603,18 @@ struct OnboardingView: View {
     if step == .weight {
       store.updateProfile { $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = weightUnit == 0 ? "kg" : "lb" }
     }
-    if step == .phoneMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
+    if step == .restNeed {
+      guard let restChoice else { return }
+      let unsure = restChoice == 0
+      let seconds = Int(((unsure ? TimeBack.unsureRest : restChoice) * 60).rounded())
+      // The rest they need is also their rest timer.
+      update { $0.restNeedSeconds = seconds; $0.restNeedUnsure = unsure }
+      store.updateProfile { $0.restSeconds = seconds }
+    }
+    if step == .scrollMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
+    if step == .exerciseCount { guard let exerciseChoice else { return }; update { $0.exercises = exerciseChoice } }
+    if step == .setCount { guard let setChoice else { return }; update { $0.sets = setChoice } }
+    if step == .gymTime { guard let gymChoice else { return }; update { $0.duration = gymChoice } }
     trackAnswer()
     next()
   }
@@ -513,10 +628,15 @@ struct OnboardingView: View {
     case .height: props["cm_band"] = Int((heightCM / 5).rounded()) * 5; props["unit"] = heightUnit == 0 ? "cm" : "ft_in"
     case .weight: props["kg_band"] = Int((weightKG / 5).rounded()) * 5; props["unit"] = weightUnit == 0 ? "kg" : "lb"
     case .scrolling: props["value"] = baseline.scrollFrequency?.rawValue
-    case .phoneMinutes: props["minutes_per_rest"] = draft
-    case .reveal, .days:
-      props["phone_minutes"] = Int(estimate.phoneMinutes.rounded()); props["training_minutes"] = Int(estimate.trainingMinutes.rounded())
-      props["yearly_phone_hours"] = Int(estimate.yearlyPhoneHours.rounded())
+    case .restNeed: props["rest_seconds"] = restChoice.map { Int((($0 == 0 ? TimeBack.unsureRest : $0) * 60).rounded()) }; props["unsure"] = restChoice == 0
+    case .scrollMinutes: props["minutes_per_scroll"] = draft
+    case .exerciseCount: props["value"] = exerciseChoice
+    case .setCount: props["value"] = setChoice
+    case .gymTime: props["minutes"] = gymChoice
+    case .perRest, .workoutTime, .yearTime, .promise:
+      let time = self.time
+      props["lost_per_rest"] = time.lostPerRest; props["lost_per_workout"] = time.shownLost; props["outcome"] = "\(time.outcome)"
+      props["year_hours"] = time.shownYear; props["extra_workouts"] = time.extraWorkouts
     default: return
     }
     Analytics.track("onboarding_answer", props)

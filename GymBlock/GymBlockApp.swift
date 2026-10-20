@@ -34,14 +34,31 @@ import SwiftUI
       if ProcessInfo.processInfo.arguments.contains("--demo") { store.loadDemoIfEmpty() }
       // Development only: re-enter the app without the paywall (absent from Release builds).
       if ProcessInfo.processInfo.arguments.contains("--skip-onboarding") { store.updateProfile { $0.onboarded = true } }
-      // Development only: open onboarding on one page with sample answers (`-journeyStep reveal`).
+      // Development only: open onboarding on one page with sample answers (`-journeyStep workoutTime`).
       if let step = UserDefaults.standard.string(forKey: "journeyStep") {
         store.updateProfile {
           $0.onboarded = false; $0.onboardingStepID = step; $0.name = "Sirish"; $0.focusEnabled = true
+          // The review's example: needs 1½ min, scrolls 4, 5 exercises × 3 sets, 1½ hours, 4 days.
           var b = $0.baseline ?? RoutineBaseline()
-          b.scrollFrequency = .yes; b.scrollsBetweenSets = true; b.scrollingMinutes = 2
+          b.scrollFrequency = .yes; b.scrollsBetweenSets = true
+          if (b.scrollingMinutes ?? 0) <= 0 { b.scrollingMinutes = 4 }
+          if b.restNeedSeconds == nil { b.restNeedSeconds = 90; b.restNeedUnsure = false }
+          if b.exercises == nil { b.exercises = 5 }
+          if b.sets == nil { b.sets = 3 }
+          if b.duration == nil { b.duration = 90 }
           if b.trainingDays == nil { b.trainingDays = 4 }
-          $0.baseline = b
+          // Other paths: `-journeyFrequency no|sometimes`, `-journeyScroll 1`, `-journeyExercises 6`,
+          // `-journeySets 4`, `-journeyGym 120`, `-journeyRest 120`.
+          let d = UserDefaults.standard
+          if let f = d.string(forKey: "journeyFrequency").flatMap(HabitAnswer.init(rawValue:)) {
+            b.scrollFrequency = f; b.scrollsBetweenSets = f != .no; if f == .no { b.scrollingMinutes = 0 }
+          }
+          if d.object(forKey: "journeyScroll") != nil { b.scrollingMinutes = d.double(forKey: "journeyScroll") }
+          if d.object(forKey: "journeyExercises") != nil { b.exercises = d.integer(forKey: "journeyExercises") }
+          if d.object(forKey: "journeySets") != nil { b.sets = d.integer(forKey: "journeySets") }
+          if d.object(forKey: "journeyGym") != nil { b.duration = d.integer(forKey: "journeyGym") }
+          if d.object(forKey: "journeyRest") != nil { b.restNeedSeconds = d.integer(forKey: "journeyRest") }
+          $0.baseline = b; $0.restSeconds = b.restNeedSeconds
         }
       }
       // Development only: open a sample Push workout in one state (`-workoutStage rest`).

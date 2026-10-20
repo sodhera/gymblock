@@ -34,7 +34,6 @@
 		3BE12AD83FCF3CAF6E0D8BDE /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A0E88CE0E1647679F6856C /* Analytics.swift */; };
 		3D60B472AB2234257F47D5FE /* WorkoutShield.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F18599E2CD2FD02DB528BE8 /* WorkoutShield.swift */; };
 		3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */; };
-		41D1A27CDD3EB2CF558F5AC4 /* BenefitScenes.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */; };
 		4577463A5F691225005491A0 /* WorkoutStepIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDB647737C5A706E73A728E /* WorkoutStepIntent.swift */; };
 		46F7BCEED35CC504B1CC1677 /* OnboardingFeedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFA30D0009B0DC5D6D292BB8 /* OnboardingFeedback.swift */; };
 		473052F91B312391B79100D6 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7F43B605AA518679094848 /* Design.swift */; };
@@ -49,6 +48,7 @@
 		51FC5AC05980C96047E08233 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1C23F4F4C175A9CE78D7C7A /* AppConfig.swift */; };
 		5273CA1544C79E7050D666EF /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A47DB6D4EDE7DD26FB9CACD /* WidgetSnapshot.swift */; };
 		5344BF389B159F48B1698803 /* advance.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C25C3FE16037D11BD08D732 /* advance.wav */; };
+		534BBBC44D49763E2DB309B3 /* JourneyLanguageV8.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60437EC8770D458C1C5F42AD /* JourneyLanguageV8.swift */; };
 		540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C32DC47F5228BD30518BAB /* Typography.swift */; };
 		568A0F4C4DBC449F40D8D809 /* gb-plate-medium.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7B4E14CDE73C4C011540AEF6 /* gb-plate-medium.caf */; };
 		5B36CD8D5448E7C1D2A16483 /* OnboardingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5029EB289FB5CF493FAF16 /* OnboardingControls.swift */; };
@@ -84,6 +84,7 @@
 		903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */; };
 		9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */; };
 		9794E2815C8B3767516E32C3 /* HeroFit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6299BDCE650025D0151AA37 /* HeroFit.swift */; };
+		9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */; };
 		A5175DB659262FC118796C43 /* StoreShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2130D53C7B23982C9EB33C3 /* StoreShots.swift */; };
 		A6457A9FEE6986E494012874 /* OnboardingJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */; };
 		A882C6D05F1882A29FC8F39E /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 95E41EDD1C17E277943D7AA0 /* RevenueCat */; };
@@ -240,6 +241,7 @@
 		5DA1D7B99F91FDC5215A97C4 /* GymBlockTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = GymBlockTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EA16493F6FC82E097EA5393 /* JourneyScores.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyScores.swift; sourceTree = "<group>"; };
 		5FBE6BF65D0F2D525A3338F1 /* AppBlocking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBlocking.swift; sourceTree = "<group>"; };
+		60437EC8770D458C1C5F42AD /* JourneyLanguageV8.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLanguageV8.swift; sourceTree = "<group>"; };
 		61737D64AB2427868DBA6FAC /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
 		61B8CB1AAC1BF4331CE291AD /* JourneyLanguageV7.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLanguageV7.swift; sourceTree = "<group>"; };
 		625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArmIllustration.swift; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 		82B7E85B9438B5E3D328F181 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenGymBlockIntent.swift; sourceTree = "<group>"; };
 		854264B8D10EA53FE36D44B2 /* HomeStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeStats.swift; sourceTree = "<group>"; };
+		892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTimeBack.swift; sourceTree = "<group>"; };
 		8EB7BC812E92C8A63B06196E /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8F4562DF53998B70DF9E5B51 /* BenefitLayoutUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitLayoutUITests.swift; sourceTree = "<group>"; };
 		9055691AD841483990A9C0A7 /* WidgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTests.swift; sourceTree = "<group>"; };
@@ -308,7 +311,6 @@
 		E2528ACFD31D70E2DEAC5D7E /* gb-plate-heavy.caf */ = {isa = PBXFileReference; path = "gb-plate-heavy.caf"; sourceTree = "<group>"; };
 		E284951026C66EE16AB43906 /* GymBlockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockWidgets.swift; sourceTree = "<group>"; };
 		E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressAndSplitTests.swift; sourceTree = "<group>"; };
-		ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BenefitScenes.swift; sourceTree = "<group>"; };
 		EFE37AE609926AAAA2F6258E /* AccountSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettings.swift; sourceTree = "<group>"; };
 		F11589EBCA36DC3039523368 /* WorkoutFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFlowTests.swift; sourceTree = "<group>"; };
 		F1C23F4F4C175A9CE78D7C7A /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
@@ -425,7 +427,6 @@
 				625E058512B9E480BBCB6FF2 /* ArmIllustration.swift */,
 				284030AE460C4F499D46BE48 /* Assets.xcassets */,
 				AB4882431BE1CE28C0353541 /* Backend.swift */,
-				ED3C3D46995AC6B83225B522 /* BenefitScenes.swift */,
 				75FC77AB99B9F4E07C1869EE /* BlockedApps.swift */,
 				A9F89F22A1A0A3FBDFE26FD2 /* BrandMark.swift */,
 				B951846726741284DB93304B /* CloudSync.swift */,
@@ -440,6 +441,7 @@
 				5AD5009E70EBA3A94854B117 /* JourneyArt.swift */,
 				2182B63B8ED2F45B3E4DBD12 /* JourneyLanguage.swift */,
 				61B8CB1AAC1BF4331CE291AD /* JourneyLanguageV7.swift */,
+				60437EC8770D458C1C5F42AD /* JourneyLanguageV8.swift */,
 				2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */,
 				65CA5E9AF764F147406661FE /* JourneyScore.swift */,
 				5EA16493F6FC82E097EA5393 /* JourneyScores.swift */,
@@ -454,6 +456,7 @@
 				3E84B96E98B35792A66A0D98 /* OnboardingScenes.swift */,
 				7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */,
 				6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */,
+				892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */,
 				1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */,
 				61737D64AB2427868DBA6FAC /* Profile.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
@@ -926,7 +929,6 @@
 				AD3188785DA17FDE84DB65B0 /* AppRouter.swift in Sources */,
 				30EE11CCA6770E2393AF2B92 /* ArmIllustration.swift in Sources */,
 				F0EA57A1F5791A926EE00BC8 /* Backend.swift in Sources */,
-				41D1A27CDD3EB2CF558F5AC4 /* BenefitScenes.swift in Sources */,
 				4D76DC796AE14A381625091F /* BlockedApps.swift in Sources */,
 				A995280941A124FC92D14357 /* BlockingPass.swift in Sources */,
 				3A993B5429D068ACDA96B585 /* BrandMark.swift in Sources */,
@@ -942,6 +944,7 @@
 				7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */,
 				16CCC16D448DB518587A0EC3 /* JourneyLanguage.swift in Sources */,
 				E9F8E256752ED2DFD9419D48 /* JourneyLanguageV7.swift in Sources */,
+				534BBBC44D49763E2DB309B3 /* JourneyLanguageV8.swift in Sources */,
 				3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */,
 				113BFA56F7CB3DE809198C4F /* JourneyScore.swift in Sources */,
 				D79CA6E735B6B2BEFD2AF71F /* JourneyScores.swift in Sources */,
@@ -957,6 +960,7 @@
 				3E7D0E652745343B01E52090 /* OnboardingScenes.swift in Sources */,
 				4E13B1EE61AE6E2E2939ABFC /* OnboardingSplits.swift in Sources */,
 				9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */,
+				9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */,
 				6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */,
 				6EB48FEF58CDA08FE4A6B872 /* PaperPalette.swift in Sources */,
 				2DDE9AE21905208FFEE59D50 /* Profile.swift in Sources */,

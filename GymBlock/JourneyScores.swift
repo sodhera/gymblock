@@ -73,17 +73,9 @@ enum JourneyScores {
     sounds: [cue(0.35, .notification, 0.28), cue(0.75, .notification, 0.28), cue(1.1, .notification, 0.28), cue(1.4, .notification, 0.28),
              cue(2.13, .lock, 0.5), cue(WelcomeScene.peak, .plateMedium, 0.4)])
 
-  /// The phone-time ring: a clock ticks the red phone time away (the ticks follow the eased count);
-  /// the red lands with a soft hit, the green rises on a shimmer and lands with a light clink.
-  static func reveal(fill: Double) -> JourneyScore {
-    let ticks = (1...10).map { cue(fill * easeInOutTime(Double($0) / 10), .tock, 0.35) }
-    return JourneyScore(haptics: [.tap(fill, 0.5, 0.3), .swell(fill, 0.12, 0.3, 0, 0.2), .swell(fill + 0.25, 0.5, 0.1, 0.35, 0.7), .tap(fill + 0.75, 0.4, 0.7)],
-                        sounds: ticks + [cue(fill + 0.25, .clink1, 0.3)])
-  }
-
-  /// The year in workouts: crisp ticks that follow the dots as they light (eased, like the fill),
-  /// each a touch firmer, then a heavy thud and plate drop as the last dot lights (DaysStage draws
-  /// the dots from this score's clock).
+  /// The year in extra workouts: crisp ticks that follow the dots as they light (eased, like the
+  /// fill), each a touch firmer, then a heavy thud and plate drop as the last dot lights
+  /// (ExtraWorkoutsStage draws the dots from this score's clock).
   static func year(fill: Double) -> JourneyScore {
     let n = 16
     let times = (1...n).map { fill * easeInOutTime(Double($0) / Double(n + 1)) }
@@ -92,68 +84,52 @@ enum JourneyScores {
       sounds: times.map { cue($0, .tock, 0.3) } + [cue(fill, .plateDrop, 0.55)])
   }
 
-  /// Scrolling weakens it: Health's "reading failed" on the first three twitches (the contraction and
-  /// the two half ones), each clearly weaker than the last, with a falter under its two notes that
-  /// dies sooner each time; the fourth signal only fizzles (MindState.fading: twitch peaks at 1.12,
-  /// 1.935 and 2.75 s, the fizzle at 3.27 s).
-  static let mindFading: JourneyScore = {
-    let beats = [0.25 + 0.62 + 0.25, 1.05 + 0.66 + 0.225, 1.85 + 0.7 + 0.2, 2.65 + 0.62]
-    let strength = [0.75, 0.45, 0.22], volume: [Float] = [0.5, 0.3, 0.17]
-    return JourneyScore(haptics: (0..<3).flatMap { falter(beats[$0], strength[$0]) } + [.swell(beats[3], 0.12, 0.12, 0, 0.2)],
-                        sounds: (0..<3).map { cue(beats[$0] - failAttack, .readingFail, volume[$0]) })
-  }()
+  // MARK: Onboarding V8: time back (docs/ONBOARDING-V8-PLAN.md)
 
-  /// Put it away: a heartbeat and a soft tick on the first two squeezes (0.235 s after each signal
-  /// arrives), then the Activity ring closing on the third (MindState.steady).
-  static let mindSteady: JourneyScore = {
-    let beats = [0.35, 1.2, 2.05].map { $0 + 0.63 + 0.235 }
-    return JourneyScore(
-      haptics: heartbeat(beats[0], 0.55) + heartbeat(beats[1], 0.6) + ring(beats[2]),
-      sounds: [cue(beats[0], .tink, 0.7), cue(beats[1], .tink, 0.85), cue(beats[2] - ringAttack, .goalAttained, 0.45)])
-  }()
-
-  /// The pump (the user's favourite pages; their swells unchanged): each set swells to its peak and
-  /// lands as the arm's contraction peaks. Scrolling: the same soft tock every set and nothing in the
-  /// long rests or after the last one. Timed: a tick that builds every set; when it's full, the
-  /// Activity ring closes, its three rising taps under its notes.
-  static func pump(_ points: [CGPoint], timed: Bool, durations: [Double]) -> JourneyScore {
-    var h: [H] = [], s: [JourneyScore.Cue] = []
-    var t = 0.0, rise = 0
-    let ticks: [Float] = [0.45, 0.6, 0.8, 0.9]
-    for i in 1..<points.count {
-      let d = durations[i - 1]
-      if points[i].y > points[i - 1].y + 0.001 {
-        if timed {
-          let level = min(1, 0.35 + 0.16 * Double(rise)), full = points[i].y >= 0.999
-          h.append(.swell(t, d, max(0.1, level - 0.3), level, 0.5))
-          if full {
-            h += ring(t + d); s.append(cue(t + d - ringAttack, .goalAttained, 0.45))
-          } else {
-            h.append(.tap(t + d, level, 0.4 + 0.08 * Double(rise))); s.append(cue(t + d, .tink, ticks[min(3, rise)]))
-          }
-        } else {
-          h += [.swell(t, d, 0.25, 0.5, 0.4), .tap(t + d, 0.5, 0.5)]
-          s.append(cue(t + d, .tock, 0.8))
-        }
-        rise += 1
-      }
-      t += d
-    }
-    return JourneyScore(haptics: h, sounds: s)
+  /// The stopwatch winding to the rest they need: a light tick, and the keyboard's tick quietly, for
+  /// every 15 seconds the hand passes.
+  static func windUp(from: Double, to: Double, duration: Double) -> JourneyScore {
+    let steps = min(16, Int((abs(to - from) * 4).rounded()))
+    guard steps > 0 else { return JourneyScore() }
+    let times = (1...steps).map { duration * Double($0) / Double(steps) }
+    return JourneyScore(haptics: times.flatMap { tick($0, 0.3) }, sounds: times.map { cue($0, .tink, 0.18) })
   }
 
-  /// Memory: a fainter tap as each number fades to "?".
-  static func forgetting(period: Double, fade: Double) -> JourneyScore {
-    JourneyScore(haptics: (0..<4).map { .tap(Double($0) * period + fade, [0.4, 0.3, 0.2, 0.12][$0], 0.3) })
+  /// A red count (the lost minutes per rest, then per workout): the clock's tock follows the eased
+  /// count, and it lands with a soft hit, or a heavier one for the workout.
+  static func lostCount(at start: Double, fill: Double, heavy: Bool) -> JourneyScore {
+    let ticks = (1...10).map { start + fill * easeInOutTime(Double($0) / 10) }
+    let end = start + fill
+    let land: [H] = heavy ? thud(end, 0.8) : [.tap(end, 0.5, 0.3), .swell(end, 0.12, 0.3, 0, 0.2)]
+    return JourneyScore(haptics: land, sounds: ticks.map { cue($0, .tock, 0.32) } + (heavy ? [cue(end, .plateDrop, 0.4)] : []))
   }
 
-  /// The log: a crisp tick and a soft tick sound as each week's dot pops, the moment the line reaches
-  /// it, following it up and down. Today's dot is the gain: the Activity ring closes as it turns
-  /// green and +5 kg lands (LogFrame).
-  static func remembering(hits: [Double]) -> JourneyScore {
-    let levels = [0.3, 0.45, 0.38, 0.55], volume: [Float] = [0.6, 0.7, 0.65, 0.8], today = hits.count - 1
-    return JourneyScore(haptics: (0..<today).flatMap { tick(hits[$0], levels[min(3, $0)]) } + ring(hits[today]),
-                        sounds: (0..<today).map { cue(hits[$0], .tink, volume[min(3, $0)]) } + [cue(hits[today] - ringAttack, .goalAttained, 0.45)])
+  /// The minutes given back: a rising shimmer while the red slides away, then a latch and a clink as
+  /// the gym bar closes onto the workout.
+  static func giveBack(at start: Double, slide: Double) -> JourneyScore {
+    JourneyScore(haptics: [.swell(start, slide, 0.08, 0.4, 0.7)] + latch(start + slide, 0.7), sounds: [cue(start + slide, .clink1, 0.35)])
+  }
+
+  /// Kit landing on the rack: a thud and a plate's clank for each piece, `gap` apart, starting `at`.
+  static func rack(pieces: Int, at: Double, gap: Double) -> JourneyScore {
+    guard pieces > 0 else { return JourneyScore() }
+    let times = (0..<pieces).map { at + Double($0) * gap }
+    let plates: [JourneyScore.Sound] = [.plateMedium, .plateHeavy]
+    return JourneyScore(haptics: times.flatMap { thud($0, 0.55) },
+                        sounds: times.enumerated().map { cue($0.element, plates[$0.offset % 2], 0.3) })
+  }
+
+  /// Today's log filling: a light tick for each tally mark and the keyboard's tick at the end of each row.
+  static func tally(marks: [[Double]]) -> JourneyScore {
+    JourneyScore(haptics: marks.flatMap { $0.flatMap { tick($0, 0.22) } },
+                 sounds: marks.compactMap { $0.last.map { cue($0, .tink, 0.3) } })
+  }
+
+  /// The gym clock running: its tock, faster as the hands speed up, and a tick when they stop.
+  static func clockRun(duration: Double) -> JourneyScore {
+    let n = 12
+    let times = (1..<n).map { duration * easeInOutTime(Double($0) / Double(n)) }
+    return JourneyScore(haptics: times.flatMap { tick($0, 0.18) } + tick(duration, 0.45), sounds: times.map { cue($0, .tock, 0.26) } + [cue(duration, .tink, 0.5)])
   }
 
   /// The shield locks: a latch and the iPhone's lock click, on the kettlebell's squeeze (1.07 s).

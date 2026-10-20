@@ -55,6 +55,10 @@ struct RoutineBaseline: Codable {
   var loggingHabit: LoggingHabit?
   var setTiming: HabitAnswer?
   var visitsPerTrainingDay: Int?
+  /// Onboarding V8 (20 Oct 2026): the rest they say they need between sets (it also sets their rest
+  /// timer), and whether they chose "Not sure", which counts as 2 minutes.
+  var restNeedSeconds: Int?
+  var restNeedUnsure: Bool?
   var breakCount: Int? { totalSets.map { max(0, $0 - 1) } }
   var effectiveScrollingBreaks: Int? { scrollingBreaks ?? breakCount }
   var breakAssumptionValid: Bool {

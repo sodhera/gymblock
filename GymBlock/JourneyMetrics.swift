@@ -82,32 +82,135 @@ enum JourneyFormat {
   }
 }
 
-/// The onboarding estimate: their own phone minutes per rest inside an assumed typical workout —
-/// 6 exercises × 3 sets, 40 s per set, 2-minute rests, 5 workouts a week.
-/// Self-reported time arithmetic only — never a measured or body-outcome claim.
-struct GymTimeEstimate: Equatable {
-  static let exercises = 6, sets = 3
-  static let restMinutes = 2.0
+/// Onboarding's time maths (docs/ONBOARDING-V8-PLAN.md): the minutes scrolling runs past the rest
+/// they need, multiplied out from their own answers. Every shown number rounds down; nothing is
+/// shown that doesn't fit inside their own gym time. Self-reported arithmetic only — never a
+/// measurement or a body-outcome claim.
+struct TimeBack: Equatable {
+  /// A set, as the old estimate timed it.
   static let setSeconds = 40.0
-  static let workoutLength = 45.0
-  var minutesPerRest = 2.0
-  /// Workouts a week: their answer (since 17 Oct 2026), otherwise five.
-  var days = 5
-  var rests: Int { Self.exercises * Self.sets - 1 }
-  var phoneMinutes: Double { Double(rests) * minutesPerRest }
-  var liftingMinutes: Double { Double(Self.exercises * Self.sets) * Self.setSeconds / 60 }
-  /// Phone time longer than the rest stretches the rest.
-  var workoutMinutes: Double { liftingMinutes + Double(rests) * max(Self.restMinutes, minutesPerRest) }
-  var trainingMinutes: Double { workoutMinutes - phoneMinutes }
-  var phoneShare: Double { workoutMinutes > 0 ? phoneMinutes / workoutMinutes : 0 }
-  var yearlyPhoneHours: Double { phoneMinutes * Double(days) * 52 / 60 }
-  /// The yearly phone time expressed as 45-minute workouts.
-  var yearlyWorkouts: Int { Int((yearlyPhoneHours * 60 / Self.workoutLength).rounded()) }
-  init(minutesPerRest: Double = 2) { self.minutesPerRest = minutesPerRest }
-  init(_ b: RoutineBaseline) {
-    days = min(7, max(1, b.trainingDays ?? 5))
-    if b.scrollFrequency == .no { minutesPerRest = 0 }
-    else { minutesPerRest = b.scrollingMinutes ?? (b.scrollFrequency == .sometimes ? 1 : 2) }
+  /// What "Not sure" counts as.
+  static let unsureRest = 2.0
+  /// Minutes: the rest they need, and how long a scroll between sets lasts once it starts.
+  var restNeed = 1.5
+  var scrolling: Double?
+  /// How many rests a scroll eats: every rest 1, sometimes ½, rarely 0.
+  var share = 1.0
+  var exercises: Int?
+  var setsEach: Int?
+  /// Minutes at the gym, walking in to walking out.
+  var gym: Double?
+  var days = 4
+
+  init() {}
+  init(_ b: RoutineBaseline, restSeconds: Int? = nil) {
+    if b.restNeedUnsure == true { restNeed = Self.unsureRest }
+    else if let s = b.restNeedSeconds ?? restSeconds, s > 0 { restNeed = Double(s) / 60 }
+    share = b.scrollFrequency == .no ? 0 : b.scrollFrequency == .sometimes ? 0.5 : 1
+    scrolling = b.scrollFrequency == .no ? 0 : b.scrollingMinutes.flatMap { $0 > 0 ? $0 : nil }
+    exercises = b.exercises; setsEach = b.sets
+    gym = b.duration.map(Double.init)
+    days = min(7, max(1, b.trainingDays ?? 4))
+  }
+
+  enum Outcome: Equatable {
+    /// Not answered far enough to say.
+    case open
+    /// Rarely scrolls, or the scrolling fits inside the rest they need.
+    case ahead
+    /// Their sets and the rest they need alone run past their gym time: no workout total, only the
+    /// per-rest number (never a guess).
+    case unfit
+    /// Under five minutes a workout: shown as it is, with no year or promise.
+    case small
+    /// The whole pitch: per rest, per workout, per year, given back.
+    case full
+  }
+
+  /// Minutes past the rest they need, for one scroll.
+  var lostPerRest: Double? { scrolling.map { max(0, $0 - restNeed) } }
+  var sets: Int? { exercises.flatMap { e in setsEach.map { e * $0 } } }
+  var rests: Int? { sets.map { max(0, $0 - 1) } }
+  var lifting: Double? { sets.map { Double($0) * Self.setSeconds / 60 } }
+  var neededRest: Double? { rests.map { Double($0) * restNeed } }
+  /// What the answers multiply out to before it's checked against the gym time.
+  var rawLost: Double? {
+    guard let rests, let lostPerRest else { return nil }
+    return Double(rests) * lostPerRest * share
+  }
+  /// What's left of the gym time once the sets and the rest they need are in.
+  var room: Double? {
+    guard let gym, let lifting, let neededRest else { return nil }
+    return gym - lifting - neededRest
+  }
+  /// Minutes lost a workout, never more than their gym time leaves room for.
+  var lost: Double? {
+    guard let rawLost, let room, room > 0 else { return nil }
+    return min(rawLost, room)
+  }
+  /// Whether the answers ran past their gym time and the lost minutes were cut to fit.
+  var fitted: Bool { (rawLost ?? 0) > (room ?? .infinity) + 1e-9 }
+
+  var outcome: Outcome {
+    if share == 0 || lostPerRest == 0 { return .ahead }
+    guard lostPerRest != nil, gym != nil, sets != nil else { return .open }
+    guard let lost else { return .unfit }
+    return lost < 5 ? .small : .full
+  }
+
+  /// The lost minutes as shown: down to the nearest 5 (whole minutes under 5).
+  var shownLost: Int {
+    guard let lost else { return 0 }
+    return lost < 5 ? Int(lost.rounded()) : Int(lost / 5) * 5
+  }
+  /// "about an hour" reads truer than 55 or 65.
+  var lostIsAnHour: Bool { (55...65).contains(shownLost) }
+  /// Their workout with rests on time: the gym time less the lost minutes, up to the nearest 5.
+  var workout: Int {
+    guard let gym, let lost else { return Int(gym ?? 0) }
+    return Int(((gym - lost) / 5 - 1e-9).rounded(.up)) * 5
+  }
+  var yearHours: Double { (lost ?? 0) * Double(days) * 52 / 60 }
+  /// Down to the nearest 10 hours from 20 up.
+  var shownYear: Int { yearHours >= 20 ? Int(yearHours / 10) * 10 : Int(yearHours.rounded(.down)) }
+  /// The year's lost hours as workouts of their own length, down to the nearest 5 from 20 up.
+  var extraWorkouts: Int {
+    guard let gym, gym > 0 else { return 0 }
+    let n = Int(yearHours * 60 / gym)
+    return n >= 20 ? n / 5 * 5 : n
+  }
+  var monthHours: Int { Int((lost ?? 0) * Double(days) * 52 / 12 / 60) }
+}
+
+/// Minutes as people say them: "1½ minutes", "2 hours", "45 minutes", "1 h 5 min".
+enum TimeWords {
+  static func half(_ m: Double) -> String {
+    let whole = Int(m.rounded(.down)), half = m - Double(whole) >= 0.5
+    return half ? (whole == 0 ? "½" : "\(whole)½") : "\(whole)"
+  }
+  static func clock(_ minutes: Double) -> String {
+    let s = Int((minutes * 60).rounded())
+    return String(format: "%d:%02d", s / 60, s % 60)
+  }
+  static func duration(_ m: Int) -> String {
+    m < 60 ? "\(m) min" : m % 60 == 0 ? (m == 60 ? "1 h" : "\(m / 60) h") : "\(m / 60) h \(m % 60) min"
+  }
+  /// 45, 60, 90, 120, 150 → the words the options use.
+  static func gymLong(_ m: Double) -> String {
+    switch Int(m) {
+    case 60: return "1 hour"
+    case 90: return "1½ hours"
+    case 120: return "2 hours"
+    case 150: return "2½ hours"
+    default: return "\(Int(m)) minutes"
+    }
+  }
+  static func gymShort(_ m: Double) -> String {
+    switch Int(m) {
+    case 90: return "1½ h"
+    case 150: return "2½ h"
+    default: return Int(m) % 60 == 0 ? "\(Int(m) / 60) h" : "\(Int(m)) min"
+    }
   }
 }
 

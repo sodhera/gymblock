@@ -59,12 +59,12 @@ import XCTest
       duration: 60, exercises: 6, sets: 3,
       scrollsBetweenSets: true, minutesPerBreak: 2)
     p.onboardingStep = 5
-    XCTAssertEqual(OnboardingStep.restored(p), .reveal)
+    XCTAssertEqual(OnboardingStep.restored(p), .restNeed)
     p.onboardingStepID = "duration"
     XCTAssertEqual(OnboardingStep.restored(p), .scrolling)  // Removed V4 questions resume at the nearest V5 page.
     p.onboardingStepID = nil
     p.baseline?.minutesPerBreak = nil
-    XCTAssertEqual(OnboardingStep.restored(p), .reveal)  // Unknown estimates use the qualitative focus scene.
+    XCTAssertEqual(OnboardingStep.restored(p), .restNeed)  // V8: old progress resumes at the rest question.
     p.onboardingStep = -10
     XCTAssertEqual(OnboardingStep.restored(p), .welcome)
     var data = LocalData()

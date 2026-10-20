@@ -1,5 +1,16 @@
 # Validation — 8 October 2026
 
+## Onboarding V8: time back (20 October 2026)
+
+Built from the approved mockups ([docs/onboarding-mockups/time-back.html](docs/onboarding-mockups/time-back.html), round 2), spec [docs/ONBOARDING-V8-PLAN.md](docs/ONBOARDING-V8-PLAN.md). Pages 5–14 are new or rewritten; the offer's headline and bars, the plan's last line and the rest-alert headline changed; the ring, mind-muscle, pump and log pages and their scenes and scores are gone.
+
+- **Captures.** Every page was captured on `GymBlock Store CPP` (iPhone 18 Pro Max, iOS 27.0) with `-journeyStep`, plus the other paths with the new development options (`-journeyFrequency`, `-journeyScroll`, `-journeyExercises`, `-journeySets`, `-journeyGym`, `-journeyRest`): Rarely, Sometimes, a scroll that fits inside the rest, answers that don't fit the gym time, and Sulav's case (6 × 4 sets in 2 hours: "about an hour", 190 hours, 95 extra workouts, back in about 1 h 5 min). They're in [screenshots/2026-10-20-time-back](screenshots/2026-10-20-time-back/) with an overview of each.
+- **Numbers checked on screen.** The example (needs 1½ min, scrolls 4, 5 × 3, 1½ hours, 4 days): +2:30 a rest, 35 minutes of 1½ hours, about 120 hours a year = 80 extra workouts, about 55 min with rests on time, about 10 hours back a month.
+- **Not checked.** The iPhone SE layout (no SE simulator on this Mac now; the compact sizes are in the code, unseen), the Spanish text on screen (the strings are in `JourneyLanguageV8.swift`; the simulator didn't take the language at launch), haptics (no Taptic Engine in the simulator) and whether the sounds land right (needs ears and a device).
+- **Tests.** The unit tests (`BenefitSceneTests`, `JourneyV2Tests`, `OnboardingJourneyTests`) were rewritten for the new pages and maths, and the whole unit suite passes on `GymBlock Store CPP` with parallel testing off (no clones): 101 tests, 0 failures, 1 skipped (the purchase test that needs a configured product). xcodebuild hung after reporting and was stopped. The onboarding UI journeys (`JourneyV2UITests`, `BenefitLayoutUITests`) were rewritten and compile, but weren't run.
+- **Memory.** Before building, every simulator was shut down to free memory (the Store CPP device was the only one running).
+- **Merged with the same day's other onboarding work.** GitHub's main had nine newer commits from another session (days slider, "Hi Sirish.", Sulav's signature, the fingerprint hold, stronger haptics). This change was rebased onto them, keeping the slider, the greeting and the fingerprint; the UI test helpers now use the slider and the new greeting. After the rebase the app and tests build, the unit suite passes again (101 tests, 0 failures, 1 skipped), and pages 2, 4 and 18 were recaptured.
+
 ## Onboarding V7 (17 October 2026)
 
 Built from the approved mockups ([docs/onboarding-mockups/index.html](docs/onboarding-mockups/index.html), spec [docs/ONBOARDING-V7-PLAN.md](docs/ONBOARDING-V7-PLAN.md)). Every page was captured on the `GymBlock Store CPP` simulator (iPhone 18 Pro Max, iOS 27.0) with `-journeyStep`, in [screenshots/2026-10-17-onboarding-v7](screenshots/2026-10-17-onboarding-v7/). The welcome was also captured as a burst of frames, which shows the notifications stacking, the kettlebell falling and locking the phone, then the arm flexing from grey to green.
