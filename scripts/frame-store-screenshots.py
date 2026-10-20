@@ -10,7 +10,7 @@ bottom edge, cut above each screen's bottom button.
     python3 scripts/frame-store-screenshots.py
     python3 scripts/frame-store-screenshots.py --custom-pages
 
-Reads screenshots/store-2026-10-18/, writes screenshots/store-final/6.9/ and store-final/6.3/.
+Reads screenshots/store-2026-10-20/, writes screenshots/store-final/6.9/ and store-final/6.3/.
 Both slots have the same shape, so the 6.3-inch set is the 6.9-inch frame scaled down.
 --custom-pages writes the custom product pages (docs/listing.md#custom-product-pages) instead: one
 folder per page under screenshots/store-cpp/, numbered in upload order, with an overview strip.
@@ -22,7 +22,7 @@ import sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "screenshots", "store-2026-10-18")
+SRC = os.path.join(ROOT, "screenshots", "store-2026-10-20")
 OUT = os.path.join(ROOT, "screenshots", "store-final")
 
 W, H = 1320, 2868
@@ -41,11 +41,11 @@ SLIDES = [
     ("Stop scrolling in the gym", "scrolling", "Block apps", "1-blocking-apps.png"),
     ("Track your workouts", "workouts", "Time your rests", "2-workout-rest.png"),
     ("Plan your progress", "progress", "Stay motivated", "3-home.png"),
-    ("Beat your record", "record", None, "4-bench-record.png"),
+    ("Beat your record", "record", None, "4-squat-record.png"),
     ("Keep your streak alive", "streak", None, "5-profile-month.png"),
 ]
 
-# The custom product pages' own first cards. A capture outside store-2026-10-18 is given as its path
+# The custom product pages' own first cards. A capture outside store-2026-10-20 is given as its path
 # from screenshots/. `phone` and `popout` are frame()'s: the Lock Screen puts the Live Activity at its
 # foot, below the usual cut, so those cards' phone sits 110 px higher and 7% smaller, cut just under
 # the activity's Start set button; the two Profile cards lift a different part of the screen.
@@ -58,7 +58,7 @@ NEW_SLIDES = {
     "gym-log": dict(headline="Log every set in one tap", accent="set", sub="Last time already filled in",
                     capture="2-workout-rest.png"),
     "pr": dict(headline="Track every PR", accent="PR", sub="Same reps, more weight",
-               capture="4-bench-record.png"),
+               capture="4-squat-record.png"),
     "doomscrolling": dict(headline="Quit doomscrolling", accent="doomscrolling", sub="Apps locked until Finish",
                           capture="1-blocking-apps.png"),
     "social": dict(headline="Social media off at the gym", accent="Social", sub="Back on when you finish",

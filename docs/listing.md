@@ -96,12 +96,12 @@ Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setg
 | # | Headline | Second line | Screen |
 |---|---|---|---|
 | 1 | Stop **scrolling** in the gym | Block apps | Onboarding's apps page: "Which apps should we lock?" (since 20 Oct) with six locked sample apps (TikTok, Instagram, Snapchat, +3 more) (`--ui-reset -storeShots YES -journeyStep blocking`) |
-| 2 | Track your **workouts** | Time your rests | Arms mid-rest after set 1 (`-workoutStage rest -storeShots YES`) |
-| 3 | Plan your **progress** | Stay motivated | Home: the week dots in each split's colour, 6 week streak, Bench press +25 kg, Up next Push (after the workout below) |
-| 4 | Beat your **record** | | Bench press before/after, 60 → 85 kg × 5, +25 kg (Home → tap the chart) |
+| 2 | Track your **workouts** | Time your rests | Push mid-rest after set 1 (`-workoutStage rest -storeShots YES`) |
+| 3 | Plan your **progress** | Stay motivated | Home: 6 week streak, Squat +20 kg, Up next Legs (after the workout below) |
+| 4 | Beat your **record** | | Squat before/after, 80 → 100 kg × 5, +20 kg (Home → tap the chart) |
 | 5 | Keep your **streak** alive | | Profile: October's training dots and blocked apps |
 
-Slides 3–5 come from one seeded run on a fresh install: `--ui-reset -workoutStage next -storeShots YES`, End → End workout → Done → Home (3) → tap the chart (4) → Profile tab (5). Which lift Home's chart shows depends on the day the run is made (Squat on 13 Oct, Bench press on 18 Oct). The status bar is `simctl status_bar … --time 09:41 --batteryState discharging --batteryLevel 100`. The rebuilt shield over Instagram (`-shieldPreview Instagram`) and the workout summary were tried for slides 1 and 5 on 12 Oct and rejected. Since 18 Oct the shield has its own onboarding page, before the apps page (`-journeyStep shield`, "Open a locked app while you train, and you'll see this."). It was framed for slide 1 as an alternative: it fills the phone more, but slide 1 kept the apps page, which shows "Block apps" with apps people know. The sample history's weeks start on Monday, so on a Monday only the day's own workout fills this week's dot.
+Slides 3–5 come from one seeded run on a fresh install: `--ui-reset -workoutStage next -storeShots YES`, End → End workout → Done → Home (3) → tap the chart (4) → Profile tab (5). Which lift Home's chart shows depends on the day the run is made (Squat on 13 Oct, Bench press on 18 Oct, Squat on 20 Oct). The status bar is `simctl status_bar … --time 09:41 --batteryState discharging --batteryLevel 100`. The rebuilt shield over Instagram (`-shieldPreview Instagram`) and the workout summary were tried for slides 1 and 5 on 12 Oct and rejected. Since 18 Oct the shield has its own onboarding page, before the apps page (`-journeyStep shield`, "Open a locked app while you train, and you'll see this."). It was framed for slide 1 as an alternative: it fills the phone more, but slide 1 kept the apps page, which shows "Block apps" with apps people know. The sample history's weeks start on Monday, so on a Monday only the day's own workout fills this week's dot.
 
 Keep the onboarding phone-time estimates ("34 of 46 minutes") out of the screenshots. They are the user's own numbers, not a measurement.
 
