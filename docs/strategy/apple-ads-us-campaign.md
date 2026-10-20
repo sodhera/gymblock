@@ -1,6 +1,6 @@
-# Gym Block: US Apple Ads campaign
+# GymBlock: US Apple Ads campaign
 
-Written 17 Oct 2026. The target is the US. The App Store fields it depends on, the search-demand tables and the custom product pages are in [docs/listing.md](../listing.md). This doc doesn't launch or change anything in Apple Ads.
+Written 17 Oct 2026; updated 20 Oct 2026 for the new name (`GymBlock: Gym App Blocker`) and keyword field. The target is the US. The App Store fields it depends on, the search-demand tables and the custom product pages are in [docs/listing.md](../listing.md). This doc doesn't launch or change anything in Apple Ads.
 
 ## When it can start
 
@@ -8,7 +8,7 @@ Apple Ads needs a live app, so nothing starts until version 1.0 (build 4, with A
 
 **Phase 1, from the day 1.0 is live.** 1.0 carries the 10 Oct fields: name `Gym Block: Stop Scrolling`, subtitle `Workout Tracker & Rest Timer`, keywords `blocker,apps,reels,shorts,scroll,no,lock,doom,social,media,phone,addiction,log,lifting,pr,set,split`. That already makes most of the keywords below relevant. Run every keyword marked "1.0".
 
-**Phase 2, once 1.0.1 ships the 17 Oct keyword field and the extra-language fields.** Add the keywords marked "1.0.1" (doomscrolling, gym focus and the long tail). Apple doesn't say whether the extra-language keyword fields count for ad relevance as they do for search; if a keyword that only they cover gets no impressions after 48 hours at a reasonable bid, leave it to organic search.
+**Phase 2, once 1.0.1 ships.** 1.0.1 is the next version: name `GymBlock: Gym App Blocker`, the 20 Oct keyword field `block,stop,scrolling,scroll,doomscrolling,doom,no,reels,shorts,social,media,phone,log,lifting,pr,set` and the extra-language fields. Add the keywords marked "1.0.1" (doomscrolling, the one-word brand and the long tail). Apple doesn't say whether the extra-language keyword fields count for ad relevance as they do for search; if a keyword that only they cover gets no impressions after 48 hours at a reasonable bid, leave it to organic search.
 
 Before the first day, check the settings that can stop delivery:
 - The campaign and ad group are on and their start dates have passed. There's a valid payment method, and the campaign isn't on hold.
@@ -150,17 +150,18 @@ Like the Reels & app blockers searchers, these people mostly want an all-day blo
 | Keyword | Demand | Top 10 | Phase |
 | --- | --- | ---: | --- |
 | workout blocker | 9 | 1,620 | 1.0 |
-| gym focus | – | 1 | 1.0.1 |
+| gym focus | – | 1 | 1.0.1 (Arabic field's `focus`) |
 | screen time gym | 13 | 1,557 | 1.0.1 |
 | gym lock | – | 1,157 | 1.0 (from 1.0.1 through the Vietnamese field's `lock`) |
 | gym blocker | – | n/c | 1.0 |
+| gym app blocker | n/c | n/c | 1.0.1 (the new name) |
 
 ### Brand campaign
 
 | Keyword | Notes |
 | --- | --- |
-| gym block | No searches yet, and today the results are block-puzzle games. Defends the name against the small GymLock apps. |
-| gymblock | |
+| gym block | With 1.0 live, "gym block" shows other apps first: two everyday words. Defends the name against the small GymLock apps. |
+| gymblock | From 1.0.1 the name is one word, so this becomes an exact match only GymBlock has; the ad keeps the top spot while organic rank builds. |
 
 ### Discovery campaign
 
