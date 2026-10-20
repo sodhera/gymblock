@@ -2,32 +2,32 @@ import XCTest
 @testable import GymBlock
 
 @MainActor final class BenefitSceneTests: XCTestCase {
-  /// The review's example: needs 1½ min, scrolls 4, 5 exercises × 3 sets, 1½ hours, 4 days.
+  /// The review's example: needs 1.5 min, scrolls 4, 5 exercises × 3 sets, 1.5 hours, 4 days.
   private func example() -> RoutineBaseline {
     var b = RoutineBaseline(); b.scrollFrequency = .yes; b.scrollsBetweenSets = true
     b.restNeedSeconds = 90; b.scrollingMinutes = 4; b.exercises = 5; b.sets = 3; b.duration = 90; b.trainingDays = 4
     return b
   }
   func testEveryRouteTellsItsOwnStoryThenBlockingThenOffer() {
-    let tail: [OnboardingStep] = [.shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    let tail: [OnboardingStep] = [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
     for answer in HabitAnswer.allCases {
       var b = example(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(8)), tail)
-      XCTAssertEqual(Array(route.prefix(5)), [.founder, .name, .trainingDays, .scrolling, .restNeed])  // Sulav's note, then one question a page.
+      XCTAssertEqual(Array(route.suffix(9)), tail)
+      XCTAssertEqual(Array(route.prefix(4)), [.name, .trainingDays, .scrolling, .restNeed])  // One question a page; Sulav's note comes later.
       XCTAssertEqual(route.contains(.scrollMinutes), answer != .no)
       XCTAssertEqual(route.contains(.ahead), answer == .no)
       XCTAssertEqual(route.count, answer == .no ? 14 : 21)  // 22 and 15 pages with the welcome.
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
-    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.founder, .name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .founder, .shield])
     // Sets and the rest they need alone don't fit the gym time: only the per-rest promise.
     var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
-    XCTAssertEqual(Array(OnboardingRoute.steps(unfit).dropFirst(10).prefix(2)), [.promise, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(unfit).dropFirst(9).prefix(3)), [.promise, .founder, .shield])
     // Under five minutes a workout: the number, then on.
     var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2; small.duration = 45
-    XCTAssertEqual(Array(OnboardingRoute.steps(small).dropFirst(10).prefix(2)), [.workoutTime, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(small).dropFirst(9).prefix(3)), [.workoutTime, .founder, .shield])
     XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .firstWorkout)
   }
   func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
@@ -63,7 +63,7 @@ import XCTest
     XCTAssertEqual(t.days, 4)
     XCTAssertEqual(t.yearHours, 35.0 * 4 * 52 / 60, accuracy: 0.001)  // 121.3 h
     XCTAssertEqual(t.shownYear, 120)  // Down to the nearest 10.
-    XCTAssertEqual(t.extraWorkouts, 80)  // 121.3 h ÷ 1½ h = 80.9, down to the nearest 5.
+    XCTAssertEqual(t.extraWorkouts, 80)  // 121.3 h ÷ 1.5 h = 80.9, down to the nearest 5.
     XCTAssertEqual(t.monthHours, 10)
   }
   func testSplitTemplatesUseOnlyCatalogueExercises() {
@@ -120,9 +120,9 @@ import XCTest
   }
   func testOnlyTheScrollingPastTheRestTheyNeedIsLost() {
     let t = TimeBack(example())
-    XCTAssertEqual(t.lostPerRest, 2.5)  // 4 − 1½: the rest they need is never lost.
+    XCTAssertEqual(t.lostPerRest, 2.5)  // 4 − 1.5: the rest they need is never lost.
     XCTAssertEqual(t.sets, 15); XCTAssertEqual(t.rests, 14)
-    XCTAssertEqual(t.lost!, 35, accuracy: 0.0001)  // 14 × 2½
+    XCTAssertEqual(t.lost!, 35, accuracy: 0.0001)  // 14 × 2.5
     XCTAssertEqual(t.shownLost, 35); XCTAssertEqual(t.workout, 55); XCTAssertFalse(t.lostIsAnHour)
     XCTAssertEqual(t.outcome, .full); XCTAssertFalse(t.fitted)
     // Sulav's case: 6 × 4 in 2 hours is "about an hour", back in about 1 h 5 min.
@@ -167,10 +167,10 @@ import XCTest
     XCTAssertEqual(TimeBack(RoutineBaseline()).outcome, .open)
   }
   func testTimeReadsAsPeopleSayIt() {
-    XCTAssertEqual(TimeWords.half(1.5), "1½"); XCTAssertEqual(TimeWords.half(2), "2"); XCTAssertEqual(TimeWords.half(0.5), "½")
+    XCTAssertEqual(TimeWords.half(1.5), "1.5"); XCTAssertEqual(TimeWords.half(2), "2"); XCTAssertEqual(TimeWords.half(0.5), "0.5")
     XCTAssertEqual(TimeWords.clock(2.5), "2:30"); XCTAssertEqual(TimeWords.clock(1.5), "1:30")
     XCTAssertEqual(TimeWords.duration(55), "55 min"); XCTAssertEqual(TimeWords.duration(65), "1 h 5 min"); XCTAssertEqual(TimeWords.duration(60), "1 h")
-    XCTAssertEqual(TimeWords.gymLong(90), "1½ hours"); XCTAssertEqual(TimeWords.gymShort(90), "1½ h"); XCTAssertEqual(TimeWords.gymLong(45), "45 minutes")
+    XCTAssertEqual(TimeWords.gymLong(90), "1.5 hours"); XCTAssertEqual(TimeWords.gymShort(90), "1.5 h"); XCTAssertEqual(TimeWords.gymLong(45), "45 minutes")
   }
   func testBodyAnswersDecodeOptionallyForExistingProfiles() throws {
     var p = Profile(); p.gender = "female"; p.heightCM = 165; p.bodyWeightKG = 61.5

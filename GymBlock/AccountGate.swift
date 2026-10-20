@@ -107,7 +107,6 @@ struct PaywallView: View {
   @EnvironmentObject private var store: GymStore
   @EnvironmentObject private var account: Account
   @Environment(\.dynamicTypeSize) private var typeSize
-  @State private var reminds = false
 
   var body: some View {
     ZStack {
@@ -116,25 +115,22 @@ struct PaywallView: View {
         GeometryReader { geo in
           ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-              HStack(spacing: 8) {
-                BrandMark(size: 17)
-                Text("GymBlock Pro").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
-              }.accessibilityElement(children: .combine)
+              // The pre-V7 paywall (crowns, plan cards with a check), restored 20 Oct 2026 at the user's
+              // request, with today's headline from their numbers and their time at the gym under it.
               Text(headline)
-                .font(.app(size: JourneyLayout.compact ? 27 : 33, weight: .bold, relativeTo: .largeTitle)).tracking(-0.6).foregroundStyle(JourneyColor.text)
-                .fixedSize(horizontal: false, vertical: true).padding(.top, 10)
+                .font(JourneyType.headline).tracking(-0.3).foregroundStyle(JourneyColor.text)
+                .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
-              Spacer(minLength: 18).frame(maxHeight: 26)
+              Spacer(minLength: 20).frame(maxHeight: 32)
               if time.outcome == .full {
                 TwoWays(time: time)
-                Spacer(minLength: 18).frame(maxHeight: 24)
+                Spacer(minLength: 20).frame(maxHeight: 32)
               }
               benefits
-              if let plan = subscription.plan, plan.trialDays > 0 {
-                TrialTimeline(days: plan.trialDays, reminds: reminds).padding(.top, 22)
-              }
-              Spacer(minLength: 20).frame(maxHeight: 40)
-              plans
+              Spacer(minLength: 18).frame(maxHeight: 22)
+              // Cards are sized from the page's width, not by aspect ratio: .aspectRatio inside this row
+              // squeezed them into tall strips (20 Oct 2026). Accessibility sizes keep their own height.
+              plans(side: typeSize.isAccessibilitySize ? nil : (geo.size.width - 56 - 10) / 2)
               if let message = subscription.message, !subscription.plans.isEmpty {
                 Text(store.t(message)).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
                   .frame(maxWidth: .infinity).multilineTextAlignment(.center).padding(.top, 14)
@@ -145,7 +141,8 @@ struct PaywallView: View {
               // Clears the fade above the footer.
               Color.clear.frame(height: 28)
             }
-            .padding(.horizontal, 28).padding(.top, 36)
+            // The title sits just under the status bar (20 Oct 2026: 36 pt left a dead band over it).
+            .padding(.horizontal, 28).padding(.top, 6)
             .frame(minHeight: geo.size.height, alignment: .top)
           }.scrollIndicators(.hidden)
         }
@@ -155,8 +152,6 @@ struct PaywallView: View {
     .foregroundStyle(JourneyColor.text)
     .animation(JourneyMotion.gentle, value: subscription.plans)
     .task { await subscription.load() }
-    // Day 5's reminder is a local notification, so it's only promised when notifications are allowed.
-    .task { reminds = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .authorized }
     .track(screen: "paywall")
   }
 
@@ -166,34 +161,26 @@ struct PaywallView: View {
   private func footerLink(_ title: String) -> some View {
     Text(title).padding(.horizontal, 6).frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
   }
-  /// The change, sold in their own numbers (docs/ONBOARDING-V8-PLAN.md): the minutes back, never a
-  /// body prediction. Rarely, or a scroll that fits the rest: every rest on time.
+  /// The change, never a body prediction: "{Name}, get your time back." for anyone whose phone runs
+  /// past their rest (20 Oct 2026, at the user's request: "get your 10 minutes back" undersold it; the
+  /// bars under it carry their own minutes). Rarely, or a phone that fits the rest: every rest on time.
   private var headline: String {
     let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
-    let time = self.time
-    func named(_ withName: String, _ without: String, _ args: CVarArg...) -> String {
-      name.isEmpty ? String(format: store.t(without), arguments: args) : String(format: store.t(withName), arguments: [name] + args)
-    }
-    switch time.outcome {
-    case .full:
-      return time.lostIsAnHour ? named("%@, get your hour back.", "Get your hour back.")
-        : named("%@, get your %@ back.", "Get your %@ back.", String(format: store.t("%@ minutes"), "\(time.shownLost)"))
-    case .unfit where (time.lostPerRest ?? 0) > 0:
-      return named("%@, get %@ back every rest.", "Get %@ back every rest.", store.minutesWords(time.lostPerRest ?? 0))
-    default:
-      return named("%@, keep every rest on time.", "Keep every rest on time.")
-    }
+    let loses = (time.lostPerRest ?? 0) > 0
+    let line = loses ? "Get your time back." : "Keep every rest on time."
+    let named = loses ? "%@, get your time back." : "%@, keep every rest on time."
+    return name.isEmpty ? store.t(line) : String(format: store.t(named), name)
   }
   private var benefits: some View {
-    VStack(alignment: .leading, spacing: 11) {
-      // Short, plain words: one promise per line, readable at a glance.
-      Benefit(text: store.t("Apps locked from your first set to your last"))
-      Benefit(text: store.t("A buzz the moment rest is up"))
-      Benefit(text: store.t("Every set saved, and what to beat next time"))
+    VStack(alignment: .leading, spacing: 18) {
+      // Short, plain words: one idea per line, readable at a glance.
+      Benefit(lead: store.t("No distractions"), detail: store.t("Your apps stay locked while you work out."))
+      Benefit(lead: store.t("Rest timer"), detail: store.t("Your phone buzzes when rest is over."))
+      Benefit(lead: store.t("Track progress"), detail: store.t("Every set you do is saved."))
     }.accessibilityIdentifier("journey.recap")
   }
 
-  @ViewBuilder private var plans: some View {
+  @ViewBuilder private func plans(side: CGFloat?) -> some View {
     if subscription.plans.isEmpty && !subscription.busy && subscription.message != nil {
       // Nothing to choose from: say why, and offer another try when the store is configured.
       VStack(spacing: 8) {
@@ -210,18 +197,20 @@ struct PaywallView: View {
         JourneyTextButton(title: "Continue without subscribing · Debug", id: "subscription.debugSkip", action: skip).padding(.top, 8)
       #endif
     } else {
-      planCards
+      planCards(side: side)
     }
   }
-  private var planCards: some View {
+  private func planCards(side: CGFloat?) -> some View {
     VStack(spacing: 10) {
+      Text(store.t("Select a plan that fits you")).font(.app(.subheadline, weight: .semibold))
+        .frame(maxWidth: .infinity)
       HStack(alignment: .top, spacing: 10) {
         if subscription.plans.isEmpty {
           // Placeholders hold the cards' exact footprint, so nothing jumps when prices land.
-          PricingCardPlaceholder(); PricingCardPlaceholder()
+          PricingCardPlaceholder(side: side); PricingCardPlaceholder(side: side)
         } else {
           ForEach(subscription.plans) { plan in
-            PricingCard(plan: plan, selected: subscription.selected == plan.id) {
+            PricingCard(plan: plan, selected: subscription.selected == plan.id, side: side) {
               withAnimation(JourneyMotion.gentle) { subscription.selected = plan.id }
               JourneyHaptic.play(.selection, store.profile)
               Analytics.tap("plan." + (plan.yearly ? "yearly" : "monthly"))
@@ -229,19 +218,20 @@ struct PaywallView: View {
           }
         }
       }.padding(.top, 9)  // Room for the badge overhanging the yearly card.
-      Text(terms).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
-        .multilineTextAlignment(.center).frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-        .accessibilityIdentifier("subscription.terms")
-      if subscription.plan?.trialDays ?? 0 > 0 {
-        Text(store.t("No payment due today. Cancel anytime.")).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
-          .frame(maxWidth: .infinity)
-      }
     }
   }
 
   private var footer: some View {
     // The same footprint as every onboarding page's actions: the button, then a 44-pt row.
     VStack(spacing: 4) {
+      // What's charged and that it renews, always in full view right above the button that charges
+      // (App Review 3.1.2): under the cards it sat beneath the footer's fade, washed out until scrolled.
+      if !subscription.plans.isEmpty {
+        Text(terms).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
+          .multilineTextAlignment(.center).frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
+          .padding(.bottom, 8)
+          .accessibilityIdentifier("subscription.terms")
+      }
       JourneyButton(title: buyTitle, symbol: nil, id: "subscription.buy",
                     enabled: subscription.plan != nil && !subscription.busy, loading: subscription.busy && subscription.plan != nil) {
         Task { await subscription.buy() }
@@ -258,7 +248,7 @@ struct PaywallView: View {
           Button { signOut() } label: { footerLink(store.t("Sign out")) }.accessibilityIdentifier("subscription.signOut")
         }
       }
-      .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).buttonStyle(.plain)
+      .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).buttonStyle(.hapticPlain)
     }
     .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
     .background(alignment: .top) {
@@ -293,14 +283,18 @@ struct PaywallView: View {
   }
 }
 
-/// One promise: an emerald check and a plain line.
+/// A reason to subscribe: a crown (JournalBlock's, in the app's emerald), a bold lead, then the plain detail on the same line.
 private struct Benefit: View {
-  let text: String
+  let lead: String
+  let detail: String
   var body: some View {
-    HStack(alignment: .firstTextBaseline, spacing: 10) {
-      Image(systemName: "checkmark.circle.fill").font(.system(size: 18)).symbolRenderingMode(.palette)
-        .foregroundStyle(JourneyColor.onAccent, JourneyColor.signal).accessibilityHidden(true)
-      Text(text).font(.app(.body)).foregroundStyle(JourneyColor.text).fixedSize(horizontal: false, vertical: true)
+    HStack(alignment: .top, spacing: 12) {
+      Image(systemName: "crown.fill").font(.system(size: 17))
+        .foregroundStyle(LinearGradient(colors: [JourneyColor.signal.opacity(0.75), JourneyColor.signal], startPoint: .top, endPoint: .bottom))
+        .frame(width: 24, alignment: .leading).padding(.top, 1).accessibilityHidden(true)
+      (Text(lead + ": ").font(.app(.body, weight: .semibold)).foregroundColor(JourneyColor.text)
+       + Text(detail).font(.app(.body)).foregroundColor(JourneyColor.secondary))
+        .lineSpacing(2).fixedSize(horizontal: false, vertical: true)
       Spacer(minLength: 0)
     }.accessibilityElement(children: .combine)
   }
@@ -316,8 +310,6 @@ private struct TwoWays: View {
   var body: some View {
     let gym = time.gym ?? 60, lost = Double(time.shownLost)
     VStack(alignment: .leading, spacing: 9) {
-      Text(String(format: store.t("Your time at the gym: %@"), store.gymWords(gym)))
-        .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
       // The darker shades keep the white labels at AA (5.3:1 and 5.7:1; the plain ones were 3.6 and 4.4).
       bar(store.t("Today"), JourneyColor.secondary, [
         (gym - lost, JourneyColor.signalText, "", false),
@@ -327,17 +319,11 @@ private struct TwoWays: View {
         (gym - lost, JourneyColor.signalText, store.aboutLine(time.workout), false),
         (lost, Color.clear, "", false),
       ])
-      // Under an hour a month there's nothing honest to round to, so the line stays out.
-      if time.monthHours >= 1 {
-        Text(String(format: store.t("From your answers. About %@ hours back a month."), "\(time.monthHours)"))
-          .font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
-      } else {
-        Text(store.t("From your answers.")).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
-      }
+      // Just the two bars (20 Oct 2026, at the user's request): no "Your time at the gym" or "From your answers" lines.
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("paywall.twoWays")
     .accessibilityLabel([String(format: store.t("Your time at the gym: %@"), store.gymWords(gym)),
-                         store.t("Today") + ": " + String(format: store.t("%@ min scrolling"), "\(time.shownLost)"),
+                         store.t("Today") + ": " + String(format: store.t("%@ min on your phone"), "\(time.shownLost)"),
                          store.t("With GymBlock") + ": " + store.aboutLine(time.workout)].joined(separator: ". "))
   }
   /// A labelled bar of parts: minutes, fill, the words inside, and whether it's the red one. The red
@@ -393,85 +379,67 @@ private struct TwoWays: View {
   }
 }
 
-/// Today, the reminder, the day billing starts: nobody has to hunt for what they agree to.
-private struct TrialTimeline: View {
-  let days: Int
-  let reminds: Bool
-  @EnvironmentObject private var store: GymStore
-  var body: some View {
-    let steps: [(String, String, Bool)] = [(store.t("Today"), store.t("Full access, $0"), true)]
-      + (reminds && days > 2 ? [(String(format: store.t("Day %@"), "\(days - 2)"), store.t("We remind you"), true)] : [])
-      + [(String(format: store.t("Day %@"), "\(days)"), store.t("Plan starts"), false)]
-    ZStack(alignment: .top) {
-      GeometryReader { g in
-        Capsule().fill(JourneyColor.ink(0.14)).frame(height: 2).offset(y: 5)
-        Capsule().fill(JourneyColor.signal).frame(width: g.size.width * (steps.count == 3 ? 0.5 : 0.08), height: 2).offset(y: 5)
-      }.frame(height: 12).padding(.horizontal, 6)
-      HStack(alignment: .top) {
-        ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
-          let align: HorizontalAlignment = i == 0 ? .leading : i == steps.count - 1 ? .trailing : .center
-          VStack(alignment: align, spacing: 3) {
-            Circle().fill(step.2 ? JourneyColor.signal : JourneyColor.stage).frame(width: 12, height: 12)
-              .overlay(Circle().strokeBorder(step.2 ? JourneyColor.signal : JourneyColor.ink(0.25), lineWidth: 2))
-            Text(step.0).font(.app(.footnote, weight: .semibold)).foregroundStyle(JourneyColor.text).padding(.top, 3)
-            Text(step.1).font(.app(.caption)).foregroundStyle(JourneyColor.secondary)
-          }
-          if i < steps.count - 1 { Spacer(minLength: 0) }
-        }
-      }
-    }.accessibilityElement(children: .combine).accessibilityIdentifier("paywall.timeline")
-  }
-}
-
-/// One plan, as a card beside the other: the period, the price a month (large), what's billed and
-/// how often, and the trial or saving as a badge on the edge.
+/// One plan, as a card beside the other: period, a check, the price, the yearly anchor struck
+/// through, and how it's billed. The saving overhangs the top edge like a sticker.
 private struct PricingCard: View {
   let plan: GymSubscription.Plan
   let selected: Bool
+  /// The square's side, from the page width; nil at accessibility sizes, where the card grows instead.
+  var side: CGFloat? = nil
   let action: () -> Void
   @EnvironmentObject private var store: GymStore
-  private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 18, style: .continuous) }
+  private var shape: RoundedRectangle { RoundedRectangle(cornerRadius: 20, style: .continuous) }
   var body: some View {
     Button(action: action) {
-      VStack(alignment: .leading, spacing: 4) {
-        Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(.app(.subheadline, weight: .semibold))
-          .foregroundStyle(selected ? JourneyColor.text : JourneyColor.secondary)
-        (Text(plan.perMonth ?? plan.price).font(.app(size: 26, weight: .bold, relativeTo: .title))
-         + Text("/" + store.t("mo")).font(.app(.subheadline)).foregroundColor(JourneyColor.secondary))
-          .monospacedDigit().lineLimit(1).minimumScaleFactor(0.5).padding(.top, 2)
-        Text(footnote).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .firstTextBaseline) {
+          Text(store.t(plan.yearly ? "Yearly" : "Monthly")).font(.app(.subheadline, weight: .semibold))
+            .textCase(.uppercase).tracking(0.4).lineLimit(1).minimumScaleFactor(0.6)
+          Spacer(minLength: 4)
+          Image(systemName: selected ? "checkmark.circle.fill" : "circle").font(.system(size: 17))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(selected ? JourneyColor.onAccent : JourneyColor.ink(0.25), selected ? JourneyColor.signal : JourneyColor.ink(0.25))
+            .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 3 }
+            .accessibilityHidden(true)
+        }
+        Spacer(minLength: 4)
+        Text(plan.price).font(.app(size: 25, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.45)
+        // Reserved when absent, so both prices sit on the same line.
+        Text(plan.anchor ?? " ").font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
+          .strikethrough(plan.anchor != nil, color: JourneyColor.tertiary).lineLimit(1).minimumScaleFactor(0.6).padding(.top, 2)
+        Spacer(minLength: 4)
+        Text(footnote).font(.app(.caption)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
       }
       .foregroundStyle(JourneyColor.text)
-      .padding(16).frame(maxWidth: .infinity, alignment: .topLeading)
-      .frame(minHeight: 104, maxHeight: .infinity, alignment: .topLeading)
+      .padding(15).frame(maxWidth: .infinity, alignment: .topLeading)
+      // Square: as tall as the card is wide (20 Oct 2026; a 148-pt minimum left them wider than tall).
+      .frame(minHeight: side == nil ? 148 : nil, alignment: .topLeading)
+      .frame(height: side, alignment: .topLeading)
       .contentShape(shape)
     }
     .buttonStyle(JourneyPressStyle())
-    .background(shape.fill(selected ? Color.white : .clear))
-    .journeyGlass(shape, interactive: true)
-    .overlay(shape.strokeBorder(selected ? JourneyColor.text : JourneyColor.hairline, lineWidth: selected ? 2 : 1).allowsHitTesting(false))
-    .overlay(alignment: .topTrailing) {
-      if let badge {
-        Text(badge).font(.app(.caption2, weight: .bold))
+    .journeyGlass(shape, tint: selected ? JourneyColor.signal.opacity(0.10) : nil, interactive: true)
+    .overlay(shape.strokeBorder(selected ? JourneyColor.signal.opacity(0.6) : JourneyColor.hairline, lineWidth: selected ? 1.8 : 1).allowsHitTesting(false))
+    .overlay(alignment: .top) {
+      if let savings = plan.savings {
+        Text(String(format: store.t("%@%% OFF"), "\(savings)")).font(.app(.caption2, weight: .bold)).tracking(0.3)
           .foregroundStyle(JourneyColor.onAccent).padding(.horizontal, 9).padding(.vertical, 4)
-          .background(Capsule().fill(JourneyColor.signal)).offset(x: -12, y: -10)
+          .background(Capsule().fill(JourneyColor.signal)).offset(y: -9)
           .accessibilityIdentifier("plan.savings")
       }
     }
     .animation(JourneyMotion.gentle, value: selected)
     .accessibilityIdentifier("plan." + (plan.yearly ? "yearly" : "monthly")).accessibilityAddTraits(selected ? .isSelected : [])
   }
-  private var badge: String? {
-    if plan.trialDays > 0 { return String(format: store.t("%@ days free"), "\(plan.trialDays)") }
-    return plan.savings.map { String(format: store.t("%@%% OFF"), "\($0)") }
-  }
   private var footnote: String {
-    plan.yearly ? String(format: store.t("%@ billed yearly"), plan.price) : store.t("Billed monthly")
+    store.t(plan.trialDays > 0 ? (plan.yearly ? "Billed yearly after free trial." : "Billed monthly after free trial.")
+      : (plan.yearly ? "Billed yearly." : "Billed monthly."))
   }
 }
 
 /// A pricing card's footprint while the store answers.
 private struct PricingCardPlaceholder: View {
+  var side: CGFloat? = nil
   var body: some View {
     let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
     VStack(alignment: .leading, spacing: 0) {
@@ -481,7 +449,9 @@ private struct PricingCardPlaceholder: View {
       Spacer(minLength: 4)
       Capsule().fill(JourneyColor.ink(0.08)).frame(width: 86, height: 9)
     }
-    .padding(16).frame(maxWidth: .infinity, minHeight: 104, alignment: .topLeading)
+    .padding(15).frame(maxWidth: .infinity, alignment: .topLeading)
+    .frame(minHeight: side == nil ? 148 : nil, alignment: .topLeading)
+    .frame(height: side, alignment: .topLeading)
     .journeyGlass(shape)
     .accessibilityHidden(true)
   }

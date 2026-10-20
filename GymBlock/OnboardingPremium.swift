@@ -159,16 +159,27 @@ enum JourneyMotion {
     default: return .heavy
     }
   }
-  /// Every strength lifted (18 Oct 2026): the square root keeps the order (a fading run still fades,
-  /// a crescendo still builds) while a 0.25 tap becomes 0.5 and a 0.5 one about 0.7. The scored
-  /// onboarding haptics (`JourneyScore`) go through it too.
-  nonisolated static func boost(_ intensity: Double) -> Double { min(1, max(0, intensity)).squareRoot() }
+  /// Every strength lifted (18 Oct 2026, and again on 20 Oct 2026 at the user's request: the app should
+  /// feel premium): the power keeps the order (a fading run still fades, a crescendo still builds)
+  /// while a 0.25 tap becomes about 0.6 and a 0.5 one about 0.78. The scored onboarding haptics
+  /// (`JourneyScore`) go through it too.
+  nonisolated static func boost(_ intensity: Double) -> Double { pow(min(1, max(0, intensity)), 0.36) }
+  /// Tap-level feedback (press, light press, selection) lands once per touch: a button that taps on
+  /// press-down and again in its action would otherwise feel like a double tap. Meaningful beats
+  /// (success, a landing, a lock) always play.
+  private static var lastTap = Date.distantPast
+  private static func claimTap() -> Bool {
+    let now = Date()
+    guard now.timeIntervalSince(lastTap) > 0.3 else { return false }
+    lastTap = now
+    return true
+  }
   /// Haptics are always on (11 Oct 2026): designed feedback is part of the app, not a preference.
   /// Each generator is readied again after it fires, so the next tap in a run lands on time.
   static func play(_ kind: Self, _ profile: Profile, intensity: CGFloat = 1) {
     switch kind {
-    // A selection tick is a light impact now: iOS's selection feedback is too faint to notice.
-    case .selection: let g = impact(.light); g.impactOccurred(intensity: CGFloat(boost(0.8))); g.prepare()
+    // A selection tick is a firm, short impact: iOS's selection feedback is too faint to notice.
+    case .selection: guard claimTap() else { return }; let g = impact(.medium); g.impactOccurred(intensity: CGFloat(boost(0.75))); g.prepare()
     case .success: notifier.notificationOccurred(.success); notifier.prepare()
     default: let g = impact(style(kind)); g.impactOccurred(intensity: CGFloat(boost(Double(intensity)))); g.prepare()
     }
@@ -176,9 +187,11 @@ enum JourneyMotion {
   /// A primary button pressed (18 Oct 2026, at the user's request): a firm tap. Played through UIKit, not
   /// `JourneyScorePlayer`, whose page change stops everything it started, so the tap used to be cut
   /// before it could be felt.
-  static func press() { let g = impact(.medium); g.impactOccurred(intensity: CGFloat(boost(0.7))); g.prepare() }
-  /// A text button pressed: the same tap, lighter.
-  static func pressLight() { let g = impact(.light); g.impactOccurred(intensity: CGFloat(boost(0.7))); g.prepare() }
+  static func press() { guard claimTap() else { return }; let g = impact(.heavy); g.impactOccurred(intensity: CGFloat(boost(0.8))); g.prepare() }
+  /// Any other button pressed (every button has one since 20 Oct 2026): the same tap, a step lighter.
+  static func pressLight() { guard claimTap() else { return }; let g = impact(.medium); g.impactOccurred(intensity: CGFloat(boost(0.75))); g.prepare() }
+  /// A value changed by a control (a toggle, a picker, a stepper): a crisp tick.
+  static func tick() { guard claimTap() else { return }; let g = impact(.rigid); g.impactOccurred(intensity: CGFloat(boost(0.7))); g.prepare() }
   /// Wakes the Taptic Engine ahead of a beat that must land with what's on screen; an idle one
   /// starts late. It stays ready for a few seconds.
   static func prepare(_ kind: Self) {
@@ -326,6 +339,36 @@ struct JourneyPressStyle: ButtonStyle {
     configuration.label
       .scaleEffect(configuration.isPressed ? 0.97 : 1)
       .animation(.smooth(duration: 0.25), value: configuration.isPressed)
+      // The tap lands as the finger goes down, as the button gives (20 Oct 2026: every button has one).
+      .onChange(of: configuration.isPressed) { _, pressed in if pressed { JourneyHaptic.pressLight() } }
+  }
+}
+
+/// `.plain`, with the tap: the label unstyled, dimmed while pressed, and the haptic as it goes down.
+struct HapticPlainStyle: ButtonStyle {
+  func makeBody(configuration: Configuration) -> some View {
+    configuration.label
+      .opacity(configuration.isPressed ? 0.6 : 1)
+      .onChange(of: configuration.isPressed) { _, pressed in if pressed { JourneyHaptic.pressLight() } }
+  }
+}
+extension ButtonStyle where Self == HapticPlainStyle {
+  static var hapticPlain: HapticPlainStyle { HapticPlainStyle() }
+}
+
+extension Binding {
+  /// The same binding, with a crisp tick each time a control sets it (toggles, pickers).
+  var ticking: Binding<Value> { Binding(get: { wrappedValue }, set: { wrappedValue = $0; JourneyHaptic.tick() }) }
+}
+
+extension View {
+  /// A crisp tick whenever a control's value changes: toggles, pickers, steppers.
+  func tickOnChange<V: Equatable>(_ value: V) -> some View {
+    onChange(of: value) { _, _ in JourneyHaptic.tick() }
+  }
+  /// A tap for links and controls that take no button style (navigation links, glass buttons).
+  func tapHaptic() -> some View {
+    simultaneousGesture(TapGesture().onEnded { JourneyHaptic.pressLight() })
   }
 }
 
@@ -379,7 +422,7 @@ struct JourneyTextButton: View {
     Button(action: { JourneyHaptic.pressLight(); Analytics.tap(id); action() }) {
       Text(title).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
         .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-    }.buttonStyle(.plain).accessibilityIdentifier(id)
+    }.buttonStyle(.hapticPlain).accessibilityIdentifier(id)
   }
 }
 

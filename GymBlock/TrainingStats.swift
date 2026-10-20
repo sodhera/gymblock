@@ -143,10 +143,10 @@ struct TrainingStatsView: View {
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
-            Picker(store.t("Period"), selection: $fourWeeks) {
+            Picker(store.t("Period"), selection: $fourWeeks.ticking) {
               Text(store.t("Last 4 weeks")).tag(true); Text(store.t("All time")).tag(false)
             }
-            Picker(store.t("Scope"), selection: $splitID) {
+            Picker(store.t("Scope"), selection: $splitID.ticking) {
               Text(store.t("All workouts")).tag(Optional<UUID>.none)
               ForEach(store.data.workouts) { Text($0.name).tag(Optional($0.id)) }
             }

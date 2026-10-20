@@ -44,7 +44,7 @@ struct ExercisePickerContent: View {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
           Text(search.isEmpty ? store.t("New exercise") : store.t("Create") + " ‘" + search + "’").font(.app(.body)).lineLimit(1)
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
-      }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
+      }.buttonStyle(.hapticPlain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
         .accessibilityIdentifier("exercise.custom")
     }
     .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
@@ -70,7 +70,7 @@ struct ExercisePickerContent: View {
           Text(setCount(done, store: store)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary)
         }
       }.frame(maxWidth: .infinity, minHeight: 50, alignment: .leading).contentShape(Rectangle())
-    }.buttonStyle(.plain).pageRow().accessibilityIdentifier("exercise." + exercise.id)
+    }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("exercise." + exercise.id)
   }
 }
 struct SelectNumberOnFocus: ViewModifier {
@@ -100,10 +100,10 @@ struct SessionRecordsView: View {
       }
         .gymPage().navigationTitle(store.t("Sets")).navigationBarTitleDisplayMode(.inline).track(screen: "workout.sets").toolbar {
           ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Done")) { dismiss() }.accessibilityIdentifier("records.done")
+            Button(store.t("Done")) { JourneyHaptic.pressLight(); dismiss() }.accessibilityIdentifier("records.done")
           }
           ToolbarItem(placement: .topBarLeading) {
-            Button(store.t("Add set")) { adding = true }.accessibilityLabel(store.t("Add completed set")).accessibilityIdentifier(
+            Button(store.t("Add set")) { JourneyHaptic.pressLight(); adding = true }.accessibilityLabel(store.t("Add completed set")).accessibilityIdentifier(
               "records.add")
           }
         }.navigationDestination(isPresented: $adding) {
@@ -155,11 +155,11 @@ struct SetEditor: View {
 
         }
         if set == nil && exercise?.timed != true {
-          DisclosureGroup(store.t("Details")) { Toggle(store.t("Warm-up"), isOn: $warmup) }
+          DisclosureGroup(store.t("Details")) { Toggle(store.t("Warm-up"), isOn: $warmup.ticking) }
         }
         if let set {
           DisclosureGroup(store.t("Details"), isExpanded: $timingExpanded) {
-            if exercise?.timed != true { Toggle(store.t("Warm-up"), isOn: $warmup) }
+            if exercise?.timed != true { Toggle(store.t("Warm-up"), isOn: $warmup.ticking) }
             DatePicker(store.t("Completed at"), selection: $date, in: ...Date())
             timingInput("Set time (seconds)", text: $elapsedSeconds, id: "edit.elapsed")
             if set.gapSourceID != nil {
@@ -174,7 +174,7 @@ struct SetEditor: View {
         }
         if error { Text(store.t("Check the entered values.")).foregroundStyle(GymColor.red) }
         if let set {
-          Button(store.t("Delete set"), role: .destructive) {
+          Button(store.t("Delete set"), role: .destructive) { JourneyHaptic.pressLight()
             store.deleteSet(set, sessionID: sessionID)
             dismiss()
           }.accessibilityIdentifier("edit.delete")
@@ -182,9 +182,9 @@ struct SetEditor: View {
       }.gymPage().navigationTitle(store.t(set == nil ? "Add completed set" : "Edit set"))
         .navigationBarTitleDisplayMode(.inline).navigationBarBackButtonHidden()
         .toolbar {
-          ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+          ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } }
           ToolbarItem(placement: .confirmationAction) {
-            Button(store.t("Save")) { save() }.accessibilityIdentifier("edit.save")
+            Button(store.t("Save")) { JourneyHaptic.pressLight(); save() }.accessibilityIdentifier("edit.save")
           }
 
         }
@@ -291,7 +291,7 @@ struct CustomExerciseView: View {
           .accessibilityIdentifier("custom.name")
         VStack(alignment: .leading, spacing: 10) {
           PageLabel(text: store.t("Measure"))
-          Picker(store.t("Measure"), selection: $timed) {
+          Picker(store.t("Measure"), selection: $timed.ticking) {
             Text(store.t("Reps")).tag(false); Text(store.t("Time")).tag(true)
           }.pickerStyle(.segmented).accessibilityIdentifier("custom.measure")
           Text(store.t(timed ? "The set clock times it." : "You log weight and reps."))
@@ -303,9 +303,9 @@ struct CustomExerciseView: View {
     .navigationTitle(store.t("New exercise")).navigationBarTitleDisplayMode(.inline)
     .navigationBarBackButtonHidden()
     .toolbar {
-      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } }
       ToolbarItem(placement: .confirmationAction) {
-        Button(store.t("Save")) {
+        Button(store.t("Save")) { JourneyHaptic.pressLight()
           onAdd(Exercise(id: UUID().uuidString, name: clean, area: "Your training", timed: timed))
           dismiss()
         }.fontWeight(.semibold).disabled(clean.isEmpty).accessibilityIdentifier("custom.add")

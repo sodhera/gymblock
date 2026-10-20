@@ -40,14 +40,14 @@ struct BlockedAppsView: View {
     VStack(spacing: 0) {
       HStack(spacing: 14) {
         BlockingIcon(symbol: "lock.fill")
-        Toggle(isOn: Binding(get: { store.profile.focusEnabled == true }, set: setBlocking)) {
+        Toggle(isOn: Binding(get: { store.profile.focusEnabled == true }, set: { setBlocking($0); JourneyHaptic.tick() })) {
           Text(store.t("Block while you train")).font(.app(.body)).foregroundStyle(JourneyColor.text)
         }.tint(JourneyColor.signal).accessibilityIdentifier("focus.enabled")
       }.frame(minHeight: 60)
       SettingsDivider()
       Button(action: chooseApps) {
         BlockingRow(symbol: "square.grid.2x2.fill", title: store.t("Apps"), value: blocking.isEmpty ? store.t("None") : blocking.summary(store.t))
-      }.buttonStyle(.plain).accessibilityIdentifier("blocking.apps")
+      }.buttonStyle(.hapticPlain).accessibilityIdentifier("blocking.apps")
     }
     .padding(.horizontal, 16)
     .journeySurface(cornerRadius: 20)
@@ -59,7 +59,7 @@ struct BlockedAppsView: View {
     VStack(alignment: .leading, spacing: 8) {
       Text(store.t("Screen Time access is off for GymBlock, so nothing is blocked."))
         .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
-      Button(store.t("Allow Screen Time"), action: allowAccess)
+      Button(store.t("Allow Screen Time")) { JourneyHaptic.pressLight(); allowAccess() }
         .font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.signal)
         .accessibilityIdentifier("blocking.allow")
     }

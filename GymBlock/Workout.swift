@@ -65,7 +65,7 @@ struct WorkoutView: View {
           ScrollView {
             VStack(alignment: .leading, spacing: 30) {
               if store.deletedSet != nil {
-                Button(store.t("Undo delete")) { store.undoDelete() }.font(.app(.subheadline, weight: .semibold))
+                Button(store.t("Undo delete")) { JourneyHaptic.pressLight(); store.undoDelete() }.font(.app(.subheadline, weight: .semibold))
                   .foregroundStyle(JourneyColor.text).accessibilityIdentifier("set.undo")
               }
               ForEach(exercises) { item in section(item).id(item.id) }
@@ -104,7 +104,7 @@ struct WorkoutView: View {
         ToolbarItem(placement: .topBarTrailing) {
           // Until the first set is logged there's nothing to keep: Cancel throws the workout away
           // (no summary, nothing in Profile) and unlocks the apps. After that it's End.
-          Button(store.t(session.sets.isEmpty && !active ? "Cancel" : "End"), action: end)
+          Button(store.t(session.sets.isEmpty && !active ? "Cancel" : "End")) { JourneyHaptic.pressLight(); end() }
             .accessibilityIdentifier("session.finish")
         }
       }
@@ -115,7 +115,7 @@ struct WorkoutView: View {
           .navigationTitle(store.t("Choose exercise")).navigationBarTitleDisplayMode(.inline)
           .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-              Button(store.t("Cancel")) { picker = false }.accessibilityIdentifier("exercise.cancel")
+              Button(store.t("Cancel")) { JourneyHaptic.pressLight(); picker = false }.accessibilityIdentifier("exercise.cancel")
             }
           }
       }
@@ -123,24 +123,24 @@ struct WorkoutView: View {
     .sheet(item: $editing) { SetEditor(set: $0, sessionID: session.id) }
     // Asked what you tapped (End, or another exercise), then what's at stake: the set that's running.
     .confirmationDialog(store.t("End workout?"), isPresented: $confirmEndSet, titleVisibility: .visible) {
-      Button(store.t("Save set and end")) { if finishSet() { store.finish() } }
+      Button(store.t("Save set and end")) { JourneyHaptic.pressLight(); if finishSet() { store.finish() } }
         .disabled(!setValid).accessibilityIdentifier("session.saveEnd")
-      Button(store.t("Discard set and end"), role: .destructive) { store.cancelSet(); store.finish() }
+      Button(store.t("Discard set and end"), role: .destructive) { JourneyHaptic.pressLight(); store.cancelSet(); store.finish() }
         .accessibilityIdentifier("session.discardEnd")
       // Not a cancel role: iOS can hide those in action sheets, and this choice must stay visible.
-      Button(store.t("Keep going")) {}.accessibilityIdentifier("session.keepGoing")
+      Button(store.t("Keep going")) { JourneyHaptic.pressLight() }.accessibilityIdentifier("session.keepGoing")
     } message: { Text(runningSet) }
     // An alert, not an action sheet: both choices stay visible, so there is always a way back.
     .alert(store.t("End workout?"), isPresented: $confirmEnd) {
-      Button(store.t("End workout")) { store.finish() }.accessibilityIdentifier("session.endConfirm")
-      Button(store.t("Keep going"), role: .cancel) {}
+      Button(store.t("End workout")) { JourneyHaptic.pressLight(); store.finish() }.accessibilityIdentifier("session.endConfirm")
+      Button(store.t("Keep going"), role: .cancel) { JourneyHaptic.pressLight() }
     } message: { Text(setCount(session.completedSets.count, store: store) + " " + store.t("will be saved.")) }
     .confirmationDialog(store.t("Switch exercise?"), isPresented: $confirmSwitch, titleVisibility: .visible) {
-      Button(store.t("Save set and switch")) { resolveSwitch(saving: true) }
+      Button(store.t("Save set and switch")) { JourneyHaptic.pressLight(); resolveSwitch(saving: true) }
         .disabled(!setValid).accessibilityIdentifier("switch.save")
-      Button(store.t("Discard set and switch"), role: .destructive) { resolveSwitch(saving: false) }
+      Button(store.t("Discard set and switch"), role: .destructive) { JourneyHaptic.pressLight(); resolveSwitch(saving: false) }
         .accessibilityIdentifier("switch.discard")
-      Button(store.t("Keep going")) { pendingExercise = nil }.accessibilityIdentifier("switch.cancel")
+      Button(store.t("Keep going")) { JourneyHaptic.pressLight(); pendingExercise = nil }.accessibilityIdentifier("switch.cancel")
     } message: { Text(runningSet) }
     .onChange(of: confirmSwitch) { _, shown in if !shown { pendingExercise = nil } }
     // Access turned off in iOS Settings mid-workout lifts the block; say so on the way back in.
@@ -150,7 +150,7 @@ struct WorkoutView: View {
       if has && accessLost { accessLost = false }
     }
     .alert(store.t("Apps aren’t blocked"), isPresented: $accessLost) {
-      Button(store.t("Allow Screen Time")) {
+      Button(store.t("Allow Screen Time")) { JourneyHaptic.pressLight()
         Analytics.track("blocking_unavailable", ["choice": "allow", "where": "workout"])
         Task { @MainActor in
           // iOS's Screen Time sheet waits until this question has fully gone, or it can strand it on screen.
@@ -158,7 +158,7 @@ struct WorkoutView: View {
           _ = await blocking.allow()
         }
       }
-      Button(store.t("Continue without blocking"), role: .cancel) {
+      Button(store.t("Continue without blocking"), role: .cancel) { JourneyHaptic.pressLight()
         Analytics.track("blocking_unavailable", ["choice": "without", "where": "workout"])
       }
     } message: { Text(store.t("Screen Time access is off for GymBlock.")) }
@@ -238,7 +238,7 @@ struct WorkoutView: View {
       .scaleEffect(lifted == item.id ? 1.03 : 1, anchor: .leading)
       .animation(.spring(duration: 0.25, bounce: 0.3), value: lifted)
       // Tap the name to switch to this exercise; hold it, then drag, to move it.
-      .onTapGesture { switchTo(item) }
+      .onTapGesture { JourneyHaptic.pressLight(); switchTo(item) }
       .gesture(reorderGesture(item))
       .accessibilityElement(children: .contain).accessibilityAddTraits(.isHeader)
       .accessibilityHint(current ? "" : store.t("Switch to this exercise"))
@@ -273,7 +273,7 @@ struct WorkoutView: View {
       Button { store.changeTarget(item, by: 1); JourneyHaptic.play(.selection, store.profile) } label: {
         Image(systemName: "plus").frame(width: 34, height: 36).contentShape(Rectangle())
       }.accessibilityLabel(store.t("More sets")).accessibilityIdentifier("sets.plus.\(item.id)")
-    }.font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary).buttonStyle(.plain)
+    }.font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.tertiary).buttonStyle(.hapticPlain)
   }
 
   /// Hold (0.35 s) then drag. The page gives way to a compact list of names with the held one under
@@ -355,7 +355,7 @@ struct WorkoutView: View {
           .foregroundStyle(set.unsuccessful == true ? JourneyColor.secondary : JourneyColor.text).lineLimit(1)
         Spacer(minLength: 0)
       }.frame(minHeight: 40).contentShape(Rectangle())
-    }.buttonStyle(.plain)
+    }.buttonStyle(.hapticPlain)
       .accessibilityLabel(store.t("Set") + " \(number), " + setValue(set, store: store))
       .accessibilityIdentifier("saved." + set.id.uuidString)
   }
@@ -377,7 +377,7 @@ struct WorkoutView: View {
       }
       Spacer(minLength: 0)
       if active {
-        Button(store.t("Cancel")) { field = nil; store.cancelSet() }.font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
+        Button(store.t("Cancel")) { JourneyHaptic.pressLight(); field = nil; store.cancelSet() }.font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
           .accessibilityLabel(store.t("Cancel set")).accessibilityIdentifier("set.cancel")
       }
     }.frame(minHeight: 56)
@@ -461,7 +461,7 @@ struct WorkoutView: View {
         Image(systemName: "plus").font(.system(.body, weight: .semibold))
         Text(store.t(exercises.isEmpty ? "Choose exercise" : "Add exercise")).font(.app(.body))
       }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
-    }.buttonStyle(.plain).accessibilityIdentifier("set.change")
+    }.buttonStyle(.hapticPlain).accessibilityIdentifier("set.change")
   }
 
   /// What a set still to come should be: the set you're drafting for this exercise, its saved draft,
@@ -499,7 +499,7 @@ struct WorkoutView: View {
             Button { stepFocused(1) } label: { Image(systemName: "plus").frame(maxWidth: .infinity, minHeight: 50).contentShape(Rectangle()) }
               .accessibilityLabel(store.t("More")).accessibilityIdentifier("set.keyboard.plus")
           }
-          .buttonStyle(.plain).font(.app(size: 22, weight: .semibold)).foregroundStyle(JourneyColor.text)
+          .buttonStyle(.hapticPlain).font(.app(size: 22, weight: .semibold)).foregroundStyle(JourneyColor.text)
           .journeyGlass(Capsule(), interactive: true)
           doneButton
         }
@@ -524,6 +524,7 @@ struct WorkoutView: View {
     let next = field == .weight
     let id = next ? "set.keyboard.next" : "set.keyboard.done"
     let close = {
+      JourneyHaptic.pressLight()
       Analytics.tap(id)
       if next { field = .reps; JourneyHaptic.play(.selection, store.profile) } else { field = nil }
     }
@@ -596,7 +597,7 @@ struct WorkoutView: View {
   /// The time left in the rest, then how far over; tap it to change the rest length.
   private var restMenu: some View {
     Menu {
-      Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
+      Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0); JourneyHaptic.tick() })) {
         ForEach(GymStore.restChoices, id: \.self) { Text(clockString($0)).tag($0) }
       }
     } label: {

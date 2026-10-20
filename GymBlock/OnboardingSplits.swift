@@ -72,7 +72,7 @@ struct SplitsStage: View {
             .accessibilityLabel("\(split.exercises.count) " + store.t("exercises"))
           Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
         }.frame(maxWidth: .infinity, minHeight: 46, alignment: .leading).contentShape(Rectangle())
-      }.buttonStyle(.plain).accessibilityIdentifier("splits.row." + split.name)
+      }.buttonStyle(.hapticPlain).accessibilityIdentifier("splits.row." + split.name)
       Menu {
         Button(store.t("Edit split"), systemImage: "pencil") { editing = split }
         Button(store.t("Delete split"), systemImage: "trash", role: .destructive) { deleting = split }

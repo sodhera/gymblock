@@ -189,7 +189,9 @@ struct FeedPhone: View {
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var position = 0
-  static let size = CGSize(width: 146, height: 262)
+  /// A phone a little wider than a real iPhone (1 : 1.93), which read too tall at this size, with
+  /// its tighter corners, not a rounded card.
+  static let size = CGSize(width: 136, height: 262)
   static let reels: [(caption: String, top: Color, bottom: Color)] = [
     ("POV: just one more video", Color(red: 0.79, green: 0.72, blue: 0.65), Color(red: 0.55, green: 0.48, blue: 0.42)),
     ("Rate this pump 1–10", Color(red: 0.66, green: 0.71, blue: 0.61), Color(red: 0.39, green: 0.46, blue: 0.37)),
@@ -201,16 +203,14 @@ struct FeedPhone: View {
   var body: some View {
     let n = Self.reels.count
     GeometryReader { g in
-      // Captions only where they fit; on a small phone the shrunken text read as "3 mi…".
-      let words = g.size.width >= 118
       VStack(spacing: 0) {
-        ForEach(0...n, id: \.self) { i in reel(Self.reels[i % n], words: words).frame(height: g.size.height) }
+        ForEach(0...n, id: \.self) { i in reel(Self.reels[i % n]).frame(height: g.size.height) }
       }.offset(y: -CGFloat(position) * g.size.height)
     }
-    .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
-    .padding(6)
-    .background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
-    .overlay(alignment: .top) { Capsule().fill(Color(red: 0.04, green: 0.04, blue: 0.05)).frame(width: 40, height: 12).padding(.top, 13) }
+    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    .padding(4)
+    .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
+    .overlay(alignment: .top) { Capsule().fill(Color(red: 0.04, green: 0.04, blue: 0.05)).frame(width: 34, height: 10).padding(.top, 9) }
     .shadow(color: .black.opacity(0.18), radius: 14, y: 10)
     .aspectRatio(Self.size.width / Self.size.height, contentMode: .fit)
     .accessibilityHidden(true)
@@ -229,15 +229,14 @@ struct FeedPhone: View {
       }
     }
   }
-  private func reel(_ r: (caption: String, top: Color, bottom: Color), words: Bool) -> some View {
+  /// A video with its caption drawn as two white lines: a picture of a feed, not more words to read.
+  private func reel(_ r: (caption: String, top: Color, bottom: Color)) -> some View {
     ZStack(alignment: .bottomLeading) {
       LinearGradient(colors: [r.top, r.bottom], startPoint: .topLeading, endPoint: .bottomTrailing)
-      if words {
-        VStack(alignment: .leading, spacing: 2) {
-          Text(store.t(r.caption)).font(.system(size: 12.5, weight: .bold)).lineLimit(2)
-          Text("@gym.daily").font(.system(size: 10)).opacity(0.8)
-        }.foregroundStyle(.white).padding(.leading, 11).padding(.trailing, 38).padding(.bottom, 15)
-      }
+      VStack(alignment: .leading, spacing: 5) {
+        Capsule().fill(.white.opacity(0.9)).frame(width: 52, height: 6)
+        Capsule().fill(.white.opacity(0.55)).frame(width: 34, height: 5)
+      }.padding(.leading, 10).padding(.bottom, 16)
       VStack(spacing: 11) {
         ForEach(["heart.fill", "bubble.right.fill", "paperplane.fill"], id: \.self) { Image(systemName: $0) }
       }.font(.system(size: 16, weight: .semibold)).foregroundStyle(.white)
@@ -253,17 +252,9 @@ struct ScrollMinutesStage: View {
   private func words(_ m: Double) -> String { m >= 15 ? "15+ " + store.t("min") : "\(Int(m)) " + store.t("min") }
   var body: some View {
     VStack(spacing: JourneyLayout.compact ? 6 : 10) {
-      HStack(spacing: 6) {
-        Image(systemName: "timer")
-        Text(words(minutes)).monospacedDigit().contentTransition(.numericText(value: minutes))
-      }
-      .font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.onButton)
-      .padding(.horizontal, 12).padding(.vertical, 6).background(Capsule().fill(JourneyColor.button))
-      .animation(.snappy, value: minutes)
-      .accessibilityHidden(true)  // The wheel says the same thing.
       FeedPhone().frame(minHeight: 120, maxHeight: FeedPhone.size.height).frame(maxHeight: .infinity)
       JourneyWheel(values: (1...15).map(Double.init), unit: store.t("min"), id: "baseline.scrollMinutes", value: $minutes,
-                   format: words, label: store.t("Minutes you scroll"))
+                   format: words, label: store.t("Minutes on your phone"))
         .frame(height: JourneyLayout.compact ? 130 : 170)
         .clipped()  // The picker drew its rows under the caption on small phones.
     }
@@ -407,6 +398,130 @@ extension TimeLanes {
 
 // MARK: - Page 8: lost per rest (the first graph)
 
+/// The names under a strip, each centred under its own part and in its colour, so the link is
+/// seen rather than read. A part too narrow for its label pins it to the strip's outer edge.
+/// `swap` crossfades in over the right label (the promise: "On your phone" becomes "Back to you").
+struct StripLabels: View {
+  typealias Label = (name: String, value: String, color: Color)
+  let part: Double
+  let left: Label
+  /// Nothing under the right part when there's nothing to name (a phone that fills the whole rest).
+  let right: Label?
+  var swap: Label? = nil
+  var swapped: Double = 0
+  var body: some View {
+    GeometryReader { g in
+      let w = g.size.width, lw = w * part, rw = w - lw
+      ZStack(alignment: .topLeading) {
+        label(left).frame(width: lw, alignment: lw < 120 ? .leading : .center)
+        ZStack {
+          if let right { label(right).opacity(1 - swapped) }
+          if let swap { label(swap).opacity(swapped) }
+        }.frame(width: rw, alignment: rw < 120 ? .trailing : .center).offset(x: lw)
+      }
+    }
+    .frame(height: 46)
+  }
+  private func label(_ l: Label) -> some View {
+    VStack(spacing: 1) {
+      Text(l.name).font(.app(.footnote, weight: .medium)).foregroundStyle(l.color == JourneyColor.text ? JourneyColor.secondary : l.color)
+      Text(l.value).font(.app(.title3, weight: .semibold)).monospacedDigit().foregroundStyle(l.color)
+    }.fixedSize()
+  }
+}
+
+/// Page 8 when the phone fits inside the rest (20 Oct 2026, so it matches the strips): the strip is
+/// one rest, the phone time inside it in grey, the rest of the rest left light. No red: nothing's lost.
+struct RestFitsStage: View {
+  let time: TimeBack
+  let done: () -> Void
+  @EnvironmentObject private var store: GymStore
+  static let grow = PerRestStage.grow, fill = PerRestStage.fill
+  var body: some View {
+    let need: Double = time.restNeed
+    let phone: Double = min(need, time.scrolling ?? need)
+    let left: Double = max(0, need - phone)
+    let part: Double = max(0, min(1, phone / max(0.01, need)))
+    let title: String = String(format: store.t("One rest: %@"), RestStripStage.minutes(need, store))
+    let label: String = title + ". " + store.t("On your phone") + " " + RestStripStage.minutes(phone, store)
+    let duration: Double = Self.grow + Self.fill + 0.3
+    SceneClock(duration: duration, done: done) { t in
+      let sweep: Double = part * JourneyScores.easeInOut(Ease.seg(t, 0, Self.grow + Self.fill))
+      let labels: Double = Ease.out(Ease.seg(t, Self.grow + Self.fill - 0.2, Self.grow + Self.fill + 0.2))
+      VStack(alignment: .leading, spacing: 10) {
+        Spacer(minLength: 0)
+        Text(title).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text)
+        GeometryReader { g in
+          ZStack(alignment: .leading) {
+            Rectangle().fill(JourneyColor.ink(0.06))
+            Rectangle().fill(JourneyColor.ink(0.24)).frame(width: g.size.width * sweep)
+          }
+        }
+        .frame(height: 22)
+        .clipShape(Capsule())
+        StripLabels(part: part,
+                    left: (store.t("On your phone"), RestStripStage.minutes(phone, store), JourneyColor.text),
+                    right: left >= 0.5 ? (store.t("Rest left"), RestStripStage.minutes(left, store), JourneyColor.secondary) : nil)
+          .opacity(labels)
+        Spacer(minLength: 0)
+      }
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("perRest.lanes")
+    .accessibilityLabel(label)
+  }
+}
+
+/// Page 8 as one strip, like page 12 (20 Oct 2026, at the user's request): the strip is one rest's
+/// time on the phone; the grey is the rest they need, the red the minutes past it. It sweeps in on the
+/// score's clock, the grey first, then the red as the count used to run; the labels name the parts.
+struct RestStripStage: View {
+  let time: TimeBack
+  let done: () -> Void
+  @EnvironmentObject private var store: GymStore
+  static let grow = PerRestStage.grow, fill = PerRestStage.fill
+  var body: some View {
+    let need: Double = time.restNeed, lost: Double = time.lostPerRest ?? 0
+    let phone: Double = need + lost
+    let part: Double = max(0, min(1, need / max(0.01, phone)))
+    let title: String = String(format: store.t("One rest: %@ on your phone"), Self.minutes(phone, store)) + ". "
+    let label: String = title + store.t("Resting") + " " + Self.minutes(need, store) + ". " + store.t("Past your rest") + " " + Self.minutes(lost, store)
+    let duration: Double = Self.grow + Self.fill + 0.3
+    SceneClock(duration: duration, score: JourneyScores.lostCount(at: Self.grow, fill: Self.fill, heavy: false), done: done) { t in
+      frame(t, part: part, need: need, lost: lost, phone: phone)
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("perRest.lanes")
+    .accessibilityLabel(label)
+  }
+  static func minutes(_ m: Double, _ store: GymStore) -> String { TimeWords.half(m) + " " + store.t("min") }
+  private func frame(_ t: Double, part: Double, need: Double, lost: Double, phone: Double) -> some View {
+    let grey: Double = part * Ease.out(Ease.seg(t, 0, Self.grow))
+    let red: Double = (1 - part) * JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
+    let sweep: Double = grey + red
+    let labels: Double = Ease.out(Ease.seg(t, Self.grow + Self.fill - 0.2, Self.grow + Self.fill + 0.2))
+    return VStack(alignment: .leading, spacing: 10) {
+      Spacer(minLength: 0)
+      Text(String(format: store.t("One rest: %@ on your phone"), Self.minutes(phone, store))).font(.app(.subheadline, weight: .semibold))
+        .foregroundStyle(JourneyColor.text)
+      GeometryReader { g in
+        let w = g.size.width
+        ZStack(alignment: .leading) {
+          Rectangle().fill(JourneyColor.ink(0.24)).frame(width: w * part)
+          Rectangle().fill(JourneyColor.danger).frame(width: w * (1 - part)).offset(x: w * part)
+        }
+        .frame(width: w, alignment: .leading)
+        .mask(alignment: .leading) { Rectangle().frame(width: w * sweep) }
+      }
+      .frame(height: 22)
+      .clipShape(Capsule())
+      StripLabels(part: part,
+                  left: (store.t("Resting"), Self.minutes(need, store), JourneyColor.text),
+                  right: (store.t("Past your rest"), Self.minutes(lost, store), JourneyColor.dangerText))
+        .opacity(labels)
+      Spacer(minLength: 0)
+    }
+  }
+}
+
 /// The rest they need against how long they scroll, on one axis. Both bars grow, then the part of
 /// the scroll past the rest turns red and counts up; the part inside the rest stays the rest's grey,
 /// because it isn't lost. When the scroll fits inside the rest, no red.
@@ -423,35 +538,31 @@ struct PerRestStage: View {
     let duration = giveBack ? Self.wait + Self.slide + 0.4 : Self.grow + (lost > 0 ? Self.fill : 0) + 0.3
     let score = giveBack ? JourneyScores.giveBack(at: Self.wait, slide: Self.slide)
       : lost > 0 ? JourneyScores.lostCount(at: Self.grow, fill: Self.fill, heavy: false) : nil
-    SceneClock(duration: duration, score: score, done: done) { t in
-      let g = giveBack ? 1 : Ease.out(Ease.seg(t, 0, Self.grow))
-      let r = giveBack ? 1 - Ease.inOut(Ease.seg(t, Self.wait, Self.wait + Self.slide)) : JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
-      let after = giveBack ? Ease.out(Ease.seg(t, Self.wait + Self.slide - 0.2, Self.wait + Self.slide + 0.3)) : 0
-      VStack(spacing: JourneyLayout.compact ? 10 : 18) {
-        Spacer(minLength: 0)
-        if lost > 0 && !giveBack {
-          VStack(spacing: 2) {
-            Text("+" + TimeWords.clock(lost * r)).font(.app(size: JourneyLayout.compact ? 38 : 46, weight: .bold, relativeTo: .largeTitle))
-              .monospacedDigit().foregroundStyle(JourneyColor.danger).lineLimit(1).minimumScaleFactor(0.6)
-              .accessibilityIdentifier("perRest.lost")
-            Text(store.t(time.share < 1 ? "each time you scroll" : "every rest")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
-          }
-          // Hidden while the bars grow and faded in as the count starts, so it never reads "+0:00".
-          .opacity(Ease.seg(t, Self.grow + 0.05, Self.grow + 0.25))
-        }
-        TimeLanes(axis: axis,
-                  top: (store.t("Rest you need"), TimeWords.clock(need), need * g),
-                  bottom: (store.t("Scrolling"), TimeWords.clock(giveBack && r < 0.5 ? need : scroll), min(need, scroll) * g, lost * r),
-                  mark: need, marked: g,
-                  back: giveBack ? (lost, after) : nil,
-                  notes: giveBack ? [(String(format: store.t("%@ min back"), TimeWords.half(lost)), JourneyColor.signalText, after, need + lost / 2)] : [],
-                  ticks: TimeLanes.restTicks(axis, store: store))
-        Spacer(minLength: 0)
-      }
-    }
+    let label: String = store.t("Rest you need") + " " + TimeWords.clock(need) + ", " + store.t("On your phone") + " " + TimeWords.clock(scroll)
+    let extra: String = lost > 0 ? ", +" + TimeWords.clock(lost) : ""
+    SceneClock(duration: duration, score: score, done: done) { t in frame(t, need: need, scroll: scroll, lost: lost, axis: axis) }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("perRest.lanes")
-    .accessibilityLabel(store.t("Rest you need") + " " + TimeWords.clock(need) + ", " + store.t("Scrolling") + " " + TimeWords.clock(scroll)
-      + (lost > 0 ? ", +" + TimeWords.clock(lost) : ""))
+    .accessibilityLabel(label + extra)
+  }
+  /// One frame of the scene, on its own so the compiler checks it separately from `body`.
+  private func frame(_ t: Double, need: Double, scroll: Double, lost: Double, axis: Double) -> some View {
+    let g: Double = giveBack ? 1 : Ease.out(Ease.seg(t, 0, Self.grow))
+    let slid: Double = Ease.inOut(Ease.seg(t, Self.wait, Self.wait + Self.slide))
+    let counted: Double = JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
+    let r: Double = giveBack ? 1 - slid : counted
+    let after: Double = giveBack ? Ease.out(Ease.seg(t, Self.wait + Self.slide - 0.2, Self.wait + Self.slide + 0.3)) : 0
+    return VStack(spacing: JourneyLayout.compact ? 10 : 18) {
+      Spacer(minLength: 0)
+      // No count of its own (20 Oct 2026): the headline says the number, the red shows it.
+      TimeLanes(axis: axis,
+                top: (store.t("Rest you need"), TimeWords.clock(need), need * g),
+                bottom: (store.t("On your phone"), TimeWords.clock(giveBack && r < 0.5 ? need : scroll), min(need, scroll) * g, lost * r),
+                mark: need, marked: g,
+                back: giveBack ? (lost, after) : nil,
+                notes: giveBack ? [(String(format: store.t("%@ min back"), TimeWords.half(lost)), JourneyColor.signalText, after, need + lost / 2)] : [],
+                ticks: giveBack ? TimeLanes.restTicks(axis, store: store) : [])
+      Spacer(minLength: 0)
+    }
   }
 }
 
@@ -771,10 +882,79 @@ struct GymClockStage: View {
 
 // MARK: - Pages 12 and 14: the workout, two bars
 
+/// Page 12 as one strip, after SleepBlock's night strip (20 Oct 2026, at the user's request): the
+/// strip is their whole time at the gym and the phone is a red bite out of its end, so the page states
+/// one subtraction instead of comparing two bars. It sweeps in left to right on the score's clock, the
+/// grey while the bars used to grow and the red as the count used to run, and then the good news lands
+/// in ink above it: their workout with rests on time. Rounded ends like the bars it replaced (the user's call
+/// over SleepBlock's square ones); no legend, no ticks. The headline already says the minutes lost.
+struct WorkStripStage: View {
+  let time: TimeBack
+  /// The promise page (page 14): the strip starts on page 12's last frame, the red slides out of it,
+  /// a dashed emerald outline is left where it was, and the good news turns emerald: "with GymBlock".
+  var giveBack = false
+  let done: () -> Void
+  @EnvironmentObject private var store: GymStore
+  static let grow = WorkTimeStage.grow, fill = WorkTimeStage.fill
+  static let wait = WorkTimeStage.wait, slide = WorkTimeStage.slide
+  var body: some View {
+    let gym: Double = time.gym ?? 60, lost: Double = Double(time.shownLost)
+    let part: Double = max(0, min(1, (gym - lost) / max(1, gym)))
+    let gymPart: String = store.t("Your time at the gym") + ", " + store.gymWords(gym) + ". "
+    let workPart: String = store.t("Training") + " " + TimeWords.duration(time.workout) + ". "
+    let phonePart: String = store.t(giveBack ? "Back to you" : "On your phone") + " \(time.shownLost) " + store.t("min")
+    let duration: Double = giveBack ? Self.wait + Self.slide + 0.6 : Self.grow + Self.fill + 0.5
+    let score = giveBack ? JourneyScores.giveBack(at: Self.wait, slide: Self.slide) : JourneyScores.lostCount(at: Self.grow, fill: Self.fill, heavy: true)
+    SceneClock(duration: duration, score: score, done: done) { t in
+      frame(t, part: part, gym: gym)
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier(giveBack ? "promise.lanes" : "workout.lanes")
+    .accessibilityLabel(gymPart + workPart + phonePart)
+  }
+  private func frame(_ t: Double, part: Double, gym: Double) -> some View {
+    let grey: Double = giveBack ? part : part * Ease.out(Ease.seg(t, 0, Self.grow))
+    let red: Double = giveBack ? 1 - part : (1 - part) * JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
+    let sweep: Double = grey + red
+    // The promise: the red slides out to the right, then the outline and its label arrive.
+    let gone: Double = giveBack ? Ease.inOut(Ease.seg(t, Self.wait, Self.wait + Self.slide)) : 0
+    let after: Double = giveBack ? Ease.out(Ease.seg(t, Self.wait + Self.slide - 0.2, Self.wait + Self.slide + 0.3)) : 0
+    let labels: Double = giveBack ? 1 : Ease.out(Ease.seg(t, Self.grow + Self.fill, Self.grow + Self.fill + 0.4))
+    let lost = "\(time.shownLost) " + store.t("min")
+    // The labels name the strip's parts, so there's nothing to work out: the whole is their time at
+    // the gym, the grey their workout, the end what the phone takes (or, on the promise, what's back).
+    return VStack(alignment: .leading, spacing: 10) {
+      Spacer(minLength: 0)
+      Text(String(format: store.t("Your %@ at the gym"), TimeWords.gymShort(gym))).font(.app(.subheadline, weight: .semibold))
+        .foregroundStyle(JourneyColor.text)
+      GeometryReader { g in
+        let w = g.size.width
+        ZStack(alignment: .leading) {
+          Rectangle().fill(JourneyColor.ink(0.24)).frame(width: w * part)
+          Rectangle().fill(JourneyColor.danger).frame(width: w * (1 - part))
+            .offset(x: w * part + w * (1 - part) * gone).opacity(1 - gone)
+          UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 11, topTrailingRadius: 11)
+            .strokeBorder(JourneyColor.accent, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            .frame(width: w * (1 - part)).offset(x: w * part).opacity(after)
+        }
+        .frame(width: w, alignment: .leading)
+        .mask(alignment: .leading) { Rectangle().frame(width: w * sweep) }
+      }
+      .frame(height: 22)
+      .clipShape(Capsule())
+      StripLabels(part: part,
+                  left: (store.t("Training"), TimeWords.duration(time.workout), JourneyColor.text),
+                  right: (store.t("On your phone"), lost, JourneyColor.dangerText),
+                  swap: (store.t("Back to you"), lost, JourneyColor.signalText), swapped: after)
+        .opacity(labels)
+      Spacer(minLength: 0)
+    }
+  }
+}
+
+/// The bars use the minutes as shown, so the two always add up to their gym time.
 /// Page 8's two bars at workout size: their workout with rests on time, against their time at the
 /// gym; the red is the minutes scrolling runs past the rest. On the promise page it starts on that
 /// last frame and the red slides away: the gym bar closes onto the workout and "35 min back" shows.
-/// The bars use the minutes as shown, so the two always add up to their gym time.
 struct WorkTimeStage: View {
   let time: TimeBack
   var giveBack = false
@@ -792,7 +972,6 @@ struct WorkTimeStage: View {
       let g = giveBack ? 1 : Ease.out(Ease.seg(t, 0, Self.grow))
       let r = giveBack ? 1 - Ease.inOut(Ease.seg(t, Self.wait, Self.wait + Self.slide)) : JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
       let after = giveBack ? Ease.out(Ease.seg(t, Self.wait + Self.slide - 0.2, Self.wait + Self.slide + 0.3)) : 0
-      let ended = giveBack ? 0 : Ease.seg(t, Self.grow + Self.fill, Self.grow + Self.fill + 0.3)
       VStack(spacing: JourneyLayout.compact ? 10 : 18) {
         Spacer(minLength: 0)
         VStack(spacing: 2) {
@@ -807,12 +986,8 @@ struct WorkTimeStage: View {
               Text(store.t("at the gym today")).foregroundStyle(JourneyColor.secondary).opacity(1 - Ease.seg(after, 0, 0.45))
               Text(store.t("with GymBlock")).foregroundStyle(JourneyColor.signalText).opacity(Ease.seg(after, 0.5, 1))
             }.font(.app(.subheadline, weight: .semibold))
-          } else {
-            Text("+\(max(1, Int((lost * r).rounded()))) " + store.t("min")).font(.app(size: JourneyLayout.compact ? 38 : 46, weight: .bold, relativeTo: .largeTitle))
-              .monospacedDigit().foregroundStyle(JourneyColor.danger).lineLimit(1).minimumScaleFactor(0.6)
-              .accessibilityIdentifier("workout.lost")
-            Text(store.t("scrolling, every workout")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
           }
+          // Page 12 has no count of its own (20 Oct 2026): the headline says the number, the red shows it.
         }
         // Page 12 hides its count while the bars grow and fades it in as it starts, from +1, so it
         // never reads "+0 min".
@@ -822,9 +997,9 @@ struct WorkTimeStage: View {
                   bottom: (store.t("Your time at the gym"), after > 0.5 ? shownWorkout : TimeWords.gymShort(gym), workout * g, lost * r),
                   mark: workout, marked: g,
                   back: giveBack ? (lost, after) : nil,
-                  notes: [("+\(time.shownLost) " + store.t("min"), JourneyColor.dangerText, giveBack ? 1 - Ease.seg(after, 0, 0.45) : ended, workout + lost / 2),
+                  notes: [("+\(time.shownLost) " + store.t("min"), JourneyColor.dangerText, giveBack ? 1 - Ease.seg(after, 0, 0.45) : 0, workout + lost / 2),
                           (String(format: store.t("%@ min back"), "\(time.shownLost)"), JourneyColor.signalText, after, workout + lost / 2)],
-                  ticks: TimeLanes.gymTicks(gym, store: store))
+                  ticks: giveBack ? TimeLanes.gymTicks(gym, store: store) : [])
         Spacer(minLength: 0)
       }
     }
@@ -832,7 +1007,7 @@ struct WorkTimeStage: View {
     .accessibilityLabel(giveBack
       ? store.t("with GymBlock") + ", " + shownWorkout + ". " + String(format: store.t("%@ min back"), "\(time.shownLost)")
       : store.t("Your workout, rests on time") + ", " + shownWorkout + ". " + store.t("Your time at the gym") + ", " + store.gymWords(gym)
-        + ". +\(time.shownLost) " + store.t("min") + " " + store.t("scrolling, every workout"))
+        + ". +\(time.shownLost) " + store.t("min") + " " + store.t("on your phone, every workout"))
   }
 }
 

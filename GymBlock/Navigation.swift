@@ -26,9 +26,9 @@ struct GymNavigationView: View {
       if let r, screen != .home { router.consume(r) }
     }
     .alert(store.t("Still working out?"), isPresented: $stale) {
-      Button(store.t("Finish workout")) { store.finishStale() }.accessibilityIdentifier("stale.finish")
+      Button(store.t("Finish workout")) { JourneyHaptic.pressLight(); store.finishStale() }.accessibilityIdentifier("stale.finish")
       // A paused workout comes back paused; this is the one-tap way back in.
-      Button(store.t(store.isPaused ? "Resume" : "Keep going"), role: .cancel) { store.resume() }
+      Button(store.t(store.isPaused ? "Resume" : "Keep going"), role: .cancel) { JourneyHaptic.pressLight(); store.resume() }
         .accessibilityIdentifier("stale.keep")
     } message: {
       Text(staleMessage)

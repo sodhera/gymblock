@@ -54,7 +54,7 @@ struct ExerciseProgressList: View {
                   Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
                     .accessibilityHidden(true)
                 }.padding(.vertical, 14).contentShape(Rectangle())
-              }.buttonStyle(.plain).accessibilityIdentifier("progress.exercise." + exercise.id)
+              }.buttonStyle(.hapticPlain).accessibilityIdentifier("progress.exercise." + exercise.id)
             }
           }.padding(.horizontal, 20).padding(.vertical, 4).frame(maxWidth: .infinity, alignment: .leading)
             .journeySurface(cornerRadius: 24)
@@ -63,7 +63,7 @@ struct ExerciseProgressList: View {
     }.gymPage().navigationTitle(store.t(title)).navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
-          Picker(store.t("Scope"), selection: $scopeID) {
+          Picker(store.t("Scope"), selection: $scopeID.ticking) {
             Text(store.t("Free workouts")).tag(Optional<UUID>.none)
             ForEach(scopes) { Text($0.name).tag(Optional($0.id)) }
           }.pickerStyle(.menu).accessibilityIdentifier("progress.scope")
@@ -117,7 +117,7 @@ struct ExerciseProgressView: View {
       VStack(alignment: .leading, spacing: 14) {
         Eyebrow(text: split?.name ?? store.t("Free workouts"))
         if comparable(repMode: true).count > 1 && comparable(repMode: false).count > 1 {
-          Picker(store.t("Compare"), selection: $repMode) {
+          Picker(store.t("Compare"), selection: $repMode.ticking) {
             Text(store.t("Reps")).tag(true); Text(store.t("Weight")).tag(false)
           }.pickerStyle(.segmented)
         }
@@ -244,7 +244,7 @@ struct ExerciseProgressView: View {
             Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
               .accessibilityHidden(true)
           }.frame(minHeight: 44).contentShape(Rectangle())
-        }.buttonStyle(.plain)
+        }.buttonStyle(.hapticPlain)
       }
     }.padding(.horizontal, 20).padding(.bottom, 6).frame(maxWidth: .infinity, alignment: .leading).journeySurface()
   }

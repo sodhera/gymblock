@@ -186,11 +186,11 @@ struct TimeBack: Equatable {
   var monthHours: Int { lost == nil ? 0 : Int(Double(shownLost) * Double(days) * 52 / 12 / 60) }
 }
 
-/// Minutes as people say them: "1½ minutes", "2 hours", "45 minutes", "1 h 5 min".
+/// Minutes as people say them: "1.5 minutes", "2 hours", "45 minutes", "1 h 5 min".
 enum TimeWords {
   static func half(_ m: Double) -> String {
     let whole = Int(m.rounded(.down)), half = m - Double(whole) >= 0.5
-    return half ? (whole == 0 ? "½" : "\(whole)½") : "\(whole)"
+    return half ? "\(whole).5" : "\(whole)"
   }
   static func clock(_ minutes: Double) -> String {
     let s = Int((minutes * 60).rounded())
@@ -203,16 +203,16 @@ enum TimeWords {
   static func gymLong(_ m: Double) -> String {
     switch Int(m) {
     case 60: return "1 hour"
-    case 90: return "1½ hours"
+    case 90: return "1.5 hours"
     case 120: return "2 hours"
-    case 150: return "2½ hours"
+    case 150: return "2.5 hours"
     default: return "\(Int(m)) minutes"
     }
   }
   static func gymShort(_ m: Double) -> String {
     switch Int(m) {
-    case 90: return "1½ h"
-    case 150: return "2½ h"
+    case 90: return "1.5 h"
+    case 150: return "2.5 h"
     default: return Int(m) % 60 == 0 ? "\(Int(m) / 60) h" : "\(Int(m)) min"
     }
   }

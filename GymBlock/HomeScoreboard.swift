@@ -249,7 +249,7 @@ struct UpNext: View {
             Image(systemName: "plus").font(.system(.subheadline, weight: .semibold))
             Text(link.label).font(.app(.body, weight: .medium))
           }.foregroundStyle(JourneyColor.signal).frame(minHeight: 44).contentShape(Rectangle())
-        }.buttonStyle(.plain).accessibilityIdentifier("home.setUpSplit")
+        }.buttonStyle(.hapticPlain).accessibilityIdentifier("home.setUpSplit")
       }
     }
   }

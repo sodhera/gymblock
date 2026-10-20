@@ -32,12 +32,12 @@ struct PreferencesView: View {
         SettingsLabel(store.t("You"))
         Button { draftName = store.profile.name; renaming = true } label: {
           SettingRow(title: store.t("Name"), value: store.profile.name.isEmpty ? store.t("Optional") : store.profile.name, chevron: true)
-        }.buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.name")
+        }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.name")
         if let email = account.email {
           SettingRow(title: store.t("Email"), value: email).pageRow()
         }
         NavigationLink { BodySettingsView() } label: { SettingRow(title: store.t("Body")) }
-          .pageRow().accessibilityIdentifier("settings.body")
+          .tapHaptic().pageRow().accessibilityIdentifier("settings.body")
 
         SubscriptionSettingsSection()
 
@@ -53,7 +53,7 @@ struct PreferencesView: View {
 
         SettingsLabel(store.t("Blocking"))
         NavigationLink { BlockedAppsView() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
-          .pageRow().accessibilityIdentifier("settings.blockedApps")
+          .tapHaptic().pageRow().accessibilityIdentifier("settings.blockedApps")
         SettingToggle(title: store.t("Strict mode"), id: "settings.strict",
                       isOn: Binding(get: { strict }, set: { on in strict = on; Analytics.tap("settings.strict", ["on": on]) }))
         SettingsNote(store.t(strict ? "No way past the block until you finish." : "The block screen offers 1 minute, once per exercise."))
@@ -87,9 +87,9 @@ struct PreferencesView: View {
 
         SettingsLabel(store.t("Your data"))
         NavigationLink { TrainingAnswersForm() } label: { SettingRow(title: store.t("Training answers")) }
-          .pageRow().accessibilityIdentifier("settings.baseline")
+          .tapHaptic().pageRow().accessibilityIdentifier("settings.baseline")
         NavigationLink { DataSettingsView() } label: { SettingRow(title: store.t("Data")) }
-          .pageRow().accessibilityIdentifier("settings.data")
+          .tapHaptic().pageRow().accessibilityIdentifier("settings.data")
 
         LegalSection()
         AccountSection { dismiss() }
@@ -99,8 +99,8 @@ struct PreferencesView: View {
       .toolbar(.hidden, for: .navigationBar)
       .alert(store.t("Your name"), isPresented: $renaming) {
         TextField(store.t("Your name"), text: $draftName).textInputAutocapitalization(.words)
-        Button(store.t("Cancel"), role: .cancel) {}
-        Button(store.t("Save")) {
+        Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
+        Button(store.t("Save")) { JourneyHaptic.pressLight()
           store.updateProfile { $0.name = String(draftName.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40)) }
         }
       } message: { Text(store.t("This is how GymBlock greets you.")) }
@@ -120,7 +120,7 @@ struct PreferencesView: View {
           Spacer(minLength: 12)
           Text(store.t("Turn on")).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal).lineLimit(1)
         }.frame(minHeight: 50).contentShape(Rectangle())
-      }.buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.notifications")
+      }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.notifications")
     } else {
       SettingRow(title: store.t("Notifications"), value: notifications == nil ? nil : store.t("On")).pageRow()
         .accessibilityIdentifier("settings.notifications")
@@ -211,7 +211,7 @@ struct SettingToggle: View {
   let id: String
   @Binding var isOn: Bool
   var body: some View {
-    Toggle(isOn: $isOn) { Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text) }
+    Toggle(isOn: $isOn.ticking) { Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text) }
       .tint(JourneyColor.signal).frame(minHeight: 50).pageRow().accessibilityIdentifier(id)
   }
 }
@@ -230,7 +230,8 @@ struct SettingMenu<Choices: View>: View {
         Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
         Image(systemName: "chevron.up.chevron.down").font(.system(.caption, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
       }.frame(minHeight: 50).contentShape(Rectangle())
-    }.buttonStyle(.plain).pageRow().accessibilityLabel(title + ", " + value).accessibilityIdentifier(id)
+    }.buttonStyle(.hapticPlain).pageRow().accessibilityLabel(title + ", " + value).accessibilityIdentifier(id)
+      .tickOnChange(value)
   }
 }
 
@@ -263,13 +264,13 @@ struct DataSettingsView: View {
     SettingsSubpage(title: store.t("Data")) {
       if store.data.history.isEmpty && store.data.workouts.isEmpty {
         Button { store.loadDemoIfEmpty() } label: { SettingRow(title: store.t("Load sample workouts")) }
-          .buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.demo")
+          .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.demo")
       }
       Button { deleting = true } label: { SettingRow(title: store.t("Delete training answers"), titleColor: JourneyColor.secondary) }
-        .buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.deleteAnswers")
+        .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.deleteAnswers")
         .confirmationDialog(store.t("Delete training answers?"), isPresented: $deleting, titleVisibility: .visible) {
-          Button(store.t("Delete answers"), role: .destructive) { store.deleteRoutineAnswers() }
-          Button(store.t("Cancel"), role: .cancel) {}
+          Button(store.t("Delete answers"), role: .destructive) { JourneyHaptic.pressLight(); store.deleteRoutineAnswers() }
+          Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
         } message: { Text(store.t("Workouts and splits stay saved.")) }
       SettingsNote(store.t("Workouts and splits stay saved."))
     }.track(screen: "settings.data")
@@ -305,9 +306,9 @@ struct TrainingAnswersForm: View {
     .track(screen: "settings.answers")
     .navigationBarBackButtonHidden()
     .toolbar {
-      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } }
       ToolbarItem(placement: .confirmationAction) {
-        Button(store.t("Save")) {
+        Button(store.t("Save")) { JourneyHaptic.pressLight()
           guard invalid.isEmpty, draft.trainingDays == nil || (1...7).contains(draft.trainingDays!),
             draft.duration == nil || (1...600).contains(draft.duration!),
             draft.exercises == nil || (1...50).contains(draft.exercises!),

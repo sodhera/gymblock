@@ -50,7 +50,7 @@ enum OnboardingRoute {
   /// inside the rest, goes straight to how GymBlock works; answers that don't fit their gym time get
   /// the per-rest promise only; under five minutes a workout gets the number and nothing more.
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.founder, .name, .trainingDays, .scrolling, .restNeed]
+    var steps: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed]
     let time = TimeBack(baseline)
     if baseline.scrollFrequency == .no {
       steps.append(.ahead)
@@ -65,7 +65,8 @@ enum OnboardingRoute {
         }
       }
     }
-    return steps + [.shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    // Sulav's note sits after their own number, before how GymBlock works (20 Oct 2026; it was page 2).
+    return steps + [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
   }
 }
 
@@ -246,15 +247,13 @@ struct OnboardingView: View {
   }
   private var headlineText: some View {
     Group {
-      if step == .founder {
-        Text(store.t("“Perfection is lots of little things done right.”")).italic()
-      } else if let personal {
+      if let personal {
         Text(personal)
       } else {
         Text(store.t(headlineCopy))
       }
     }.font(headlineFont).tracking(-0.3).multilineTextAlignment(.center)
-      .lineLimit(typeSize.isAccessibilitySize ? nil : [.scrollMinutes, .workoutTime, .promise].contains(step) ? 3 : 2)
+      .lineLimit(typeSize.isAccessibilitySize ? nil : [.workoutTime, .promise].contains(step) ? 3 : 2)
       .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
       .accessibilityFocused($questionFocused)
@@ -270,7 +269,7 @@ struct OnboardingView: View {
     case .alerts: return "We’ll buzz you\nwhen rest is up."
     case .scrolling: return "Be honest. Do you check your phone between sets?"
     case .restNeed: return "How long do you need to rest between sets?"
-    case .scrollMinutes: return "Once you start scrolling, how many minutes go by?"
+    case .scrollMinutes: return "How long are you on your phone each time?"
     case .ahead: return "Then you’re already ahead."
     case .exerciseCount: return "How many exercises per workout?"
     case .setCount: return "And how many sets of each?"
@@ -280,6 +279,7 @@ struct OnboardingView: View {
     case .blocking: return "Which apps should we lock?"
     case .account: return "Let’s save your plan."
     case .splits: return "You’re in. How do you split your training?"
+    case .founder: return "Why I built GymBlock."
     case .trainingDays: return "How many days a week do you work out?"
     case .firstWorkout: return firstWorkoutHeadline
     default: return "Stay focused with GymBlock."
@@ -294,21 +294,19 @@ struct OnboardingView: View {
     case .commit where !name.isEmpty: return name + ", " + store.t("here’s your plan.")
     case .perRest:
       guard let lost = time.lostPerRest else { return nil }
-      if lost == 0 { return store.t("Then your scrolling fits inside your rest.") }
-      return String(format: store.t(time.share < 1 ? "That’s %@ lost each time you scroll." : "That’s %@ lost. Every rest."), store.minutesWords(lost))
+      if lost == 0 { return store.t("Then your phone time fits inside your rest.") }
+      return String(format: store.t(time.share < 1 ? "That’s %@ lost each time you pick it up." : "That’s %@ lost. Every rest."), store.minutesWords(lost))
     case .workoutTime:
       if time.outcome == .small {
         let words = store.minutesWords(Double(max(1, time.shownLost)))
-        return name.isEmpty ? String(format: store.t("Scrolling takes about %@ of your workout."), words)
-          : String(format: store.t("%@, scrolling takes about %@ of your workout."), name, words)
+        return name.isEmpty ? String(format: store.t("Your phone takes about %@ of your workout."), words)
+          : String(format: store.t("%@, your phone takes about %@ of your workout."), name, words)
       }
-      let gym = store.gymWords(time.gym ?? 60), lost = "\(time.shownLost)"
-      if time.lostIsAnHour {
-        return name.isEmpty ? String(format: store.t("About an hour of your %@ goes to scrolling."), gym)
-          : String(format: store.t("%@, about an hour of your %@ goes to scrolling."), name, gym)
-      }
-      return name.isEmpty ? String(format: store.t("%@ minutes of your %@ goes to scrolling."), lost, gym)
-        : String(format: store.t("%@, %@ minutes of your %@ goes to scrolling."), name, lost, gym)
+      let lost = "\(time.shownLost)"
+      // No name here (20 Oct 2026): with it the headline ran to three lines over a scene that shows it.
+      // Two lines: the gym time is on the bars already.
+      if time.lostIsAnHour { return store.t("About an hour goes to your phone, every workout.") }
+      return String(format: store.t("%@ minutes go to your phone, every workout."), lost)
     case .yearTime:
       // The number keeps its unit on the same line ("120 hours", never "120 / hours").
       let hours = "\(time.shownYear)"
@@ -320,8 +318,8 @@ struct OnboardingView: View {
         return lost == 1 ? store.t("We’ll give you that minute back. Every rest.")
           : String(format: store.t("We’ll give you those %@ back. Every rest."), store.minutesWords(lost))
       }
-      return time.lostIsAnHour ? store.t("We’ll give you that hour back.\nAnd a better workout.")
-        : String(format: store.t("We’ll give you those %@ back.\nAnd a better workout."), String(format: store.t("%@ minutes"), "\(time.shownLost)"))
+      return time.lostIsAnHour ? store.t("We’ll give you that hour back.")
+        : String(format: store.t("We’ll give you those %@ back."), String(format: store.t("%@ minutes"), "\(time.shownLost)"))
     case .alerts:
       return String(format: store.t("We’ll buzz you\nwhen your %@ is up."), clockString(store.profile.restSeconds ?? 90))
     default: return nil
@@ -356,7 +354,7 @@ struct OnboardingView: View {
       let per = store.minutesWords(time.lostPerRest ?? 0)
       return String(format: store.t(time.share < 1 ? "From your answers: about half of %@ rests × %@." : "From your answers: %@ rests × %@."), "\(time.rests ?? 0)", per)
     case .yearTime: return String(format: store.t(time.days == 1 ? "At %@ workout a week." : "At %@ workouts a week."), "\(time.days)")
-    case .promise: return "Every rest on time. Every set saved."
+    case .promise: return "And a better workout: every rest on time."
     case .alerts: return "One buzz, right when it’s time. Change it anytime."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
     case .shield: return "It lifts the moment you finish."
@@ -399,15 +397,17 @@ struct OnboardingView: View {
       RestWatchStage(minutes: step == .ahead ? time.restNeed : restChoice.map { $0 == 0 ? TimeBack.unsureRest : $0 },
                      ahead: step == .ahead, done: step == .ahead ? sceneDone : {})
     case .scrollMinutes: ScrollMinutesStage(minutes: $draft)
-    case .perRest: PerRestStage(time: time, done: sceneDone)
+    // One strip either way: red past the rest, or the phone time inside it.
+    case .perRest:
+      if (time.lostPerRest ?? 0) > 0 { RestStripStage(time: time, done: sceneDone) } else { RestFitsStage(time: time, done: sceneDone) }
     case .exerciseCount: RackStage(count: exerciseChoice)
     case .setCount: LogTallyStage(exercises: baseline.exercises ?? 5, sets: setChoice)
     case .gymTime: GymClockStage(minutes: gymChoice)
-    case .workoutTime: WorkTimeStage(time: time, done: sceneDone)
+    case .workoutTime: WorkStripStage(time: time, done: sceneDone)
     case .yearTime: ExtraWorkoutsStage(time: time, done: sceneDone)
     case .promise:
       if time.outcome == .unfit { PerRestStage(time: time, giveBack: true, done: sceneDone) }
-      else { WorkTimeStage(time: time, giveBack: true, done: sceneDone) }
+      else { WorkStripStage(time: time, giveBack: true, done: sceneDone) }
     case .commit: PlanStage(done: sceneDone)
     case .shield: ShieldStage(done: sceneDone)
     case .blocking: BlockStage(locking: locking, choose: chooseApps)
@@ -460,7 +460,7 @@ struct OnboardingView: View {
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
         Color.clear.frame(height: 44)
       case .welcome:
-        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.founder) })
+        gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.name) })
         JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn", action: onSignIn)
           .opacity(ready ? 1 : 0).allowsHitTesting(ready).accessibilityHidden(!ready)
       case .account:
@@ -560,7 +560,7 @@ struct OnboardingView: View {
   @ViewBuilder private var questionRows: some View {
     switch step {
     case .restNeed:
-      ForEach([(1.0, "1 min"), (1.5, "1½ min"), (2.0, "2 min"), (3.0, "3 min"), (0.0, "Not sure")], id: \.0) { value, title in
+      ForEach([(1.0, "1 min"), (1.5, "1.5 min"), (2.0, "2 min"), (3.0, "3 min"), (0.0, "Not sure")], id: \.0) { value, title in
         choice(title, id: "rest.\(value)", selected: restChoice == value) { restChoice = value }
       }
     case .exerciseCount:
@@ -572,7 +572,7 @@ struct OnboardingView: View {
         choice(title, id: "sets.\(value)", selected: setChoice == value) { setChoice = value }
       }
     case .gymTime:
-      ForEach([(45, "45 min"), (60, "1 hour"), (90, "1½ hours"), (120, "2 hours"), (150, "2½ hours or more")], id: \.0) { value, title in
+      ForEach([(45, "45 min"), (60, "1 hour"), (90, "1.5 hours"), (120, "2 hours"), (150, "2.5 hours or more")], id: \.0) { value, title in
         choice(title, id: "gym.\(value)", selected: gymChoice == value) { gymChoice = value }
       }
     default: EmptyView()
@@ -680,8 +680,7 @@ struct OnboardingView: View {
   }
   private func back() {
     guard !locking else { return }
-    if step == .founder { move(.welcome); return }
-    if step == .name { dismissKeyboard() }
+    if step == .name { dismissKeyboard(); move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
   /// Apple's picker only returns a choice once Screen Time access is granted, so tapping Choose apps

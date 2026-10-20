@@ -210,6 +210,7 @@ struct FounderStage: View {
     // The larger setting where it fits, the body size on small screens, scrolling only as a last
     // resort (the largest accessibility sizes).
     ViewThatFits(in: .vertical) {
+      letter(.app(.title2), spacing: 18)
       letter(.app(.title3), spacing: 16)
       // Between title 3 and body: on the largest phones the body size left an empty band under the note.
       letter(.app(size: 18.5, relativeTo: .body), spacing: 14)
@@ -227,11 +228,12 @@ struct FounderStage: View {
   }
   private func letter(_ font: Font, spacing: CGFloat, signature: CGFloat = 32) -> some View {
     VStack(alignment: .leading, spacing: spacing) {
-      Text(store.t("Hey friend,"))
-      Text(store.t("In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them."))
-      Text(store.t("Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone."))
-      Text(store.t("GymBlock is how I took those minutes back. It locks the apps that pull you away while you train, and keeps an honest record of every set, so you always know what you did last time and what to beat today."))
-      Text(store.t("Little things, done right, every session."))
+      // Written the way Sulav talks (20 Oct 2026: the tidy version read as AI): short, a bit loose,
+      // one real moment, no moral. No quote, no pump, the phone rather than scrolling.
+      Text(store.t("Hey, it’s Sulav."))
+      Text(store.t("I used to grab my phone between sets for a “quick” look. Then I’d look up, 10 minutes gone, no idea what set I was on."))
+      Text(store.t("I made GymBlock for me first. I still use it every single workout."))
+      Text(store.t("Anyway, hope it helps."))
       VStack(alignment: .leading, spacing: 2) {
         Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
         // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in

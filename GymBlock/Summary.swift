@@ -49,13 +49,13 @@ struct SummaryView: View {
     .track(screen: "summary", ["gains": gains.count, "first": first])
     .alert(store.t("Save as split"), isPresented: $naming) {
       TextField(store.t("Split name"), text: $splitName).accessibilityIdentifier("summary.splitName")
-      Button(store.t("Save")) {
+      Button(store.t("Save")) { JourneyHaptic.pressLight()
         let name = splitName.trimmingCharacters(in: .whitespacesAndNewlines)
         store.saveWorkout(from: session, name: name.isEmpty ? store.t("My split") : name)
         saved = true
         JourneyHaptic.play(.success, store.profile)
       }
-      Button(store.t("Cancel"), role: .cancel) {}
+      Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
     } message: { Text(store.t("Start it from Home next time.")) }
     .task {
       guard !shown else { return }
@@ -157,7 +157,7 @@ struct SummaryView: View {
   private var dock: some View {
     VStack(spacing: 6) {
       if canSaveSplit {
-        Button(store.t("Save as split")) { splitName = session.name == "Free workout" ? "" : session.name; naming = true }
+        Button(store.t("Save as split")) { JourneyHaptic.pressLight(); splitName = session.name == "Free workout" ? "" : session.name; naming = true }
           .font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.secondary).frame(minHeight: 44)
           .accessibilityIdentifier("summary.saveSplit")
       } else if saved {

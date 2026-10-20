@@ -64,7 +64,7 @@ struct SplitEditorContent: View {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
           Text(store.t(exercises.isEmpty ? "Add exercises" : "Add more")).font(.app(.body))
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
-      }.buttonStyle(.plain).pageRow().listRowSeparator(.hidden, edges: .bottom)
+      }.buttonStyle(.hapticPlain).pageRow().listRowSeparator(.hidden, edges: .bottom)
         .accessibilityIdentifier("split.exercises")
       if exercises.count > 1 {
         Text(store.t("Hold and drag to reorder. Swipe to remove.")).font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary)
@@ -84,9 +84,9 @@ struct SplitEditorContent: View {
       naming = true
     }
     .toolbar {
-      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } }
+      ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } }
       ToolbarItem(placement: .confirmationAction) {
-        Button(store.t("Save")) {
+        Button(store.t("Save")) { JourneyHaptic.pressLight()
           if store.saveSplit(id: workout.id, name: name, exercises: exercises, color: color) {
             JourneyHaptic.play(.success, store.profile)
             if let saved = store.data.workouts.first(where: { $0.id == workout.id }), let onSaved { onSaved(saved) }
@@ -112,7 +112,7 @@ struct SplitEditorContent: View {
             .overlay(Circle().strokeBorder(JourneyColor.text, lineWidth: option == color ? 2 : 0))
             .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.hapticPlain)
         .accessibilityLabel(store.t(option.label)).accessibilityAddTraits(option == color ? .isSelected : [])
         .accessibilityIdentifier("split.color." + option.rawValue)
       }
@@ -158,7 +158,7 @@ struct SplitExercisePicker: View {
           Image(systemName: "plus").font(.system(.body, weight: .semibold))
           Text(!query.isEmpty && !exact ? String(format: store.t("Add “%@”"), query) : store.t("New exercise")).font(.app(.body)).lineLimit(1)
         }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 52, alignment: .leading).contentShape(Rectangle())
-      }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
+      }.buttonStyle(.hapticPlain).padding(.top, 8).pageRow().listRowSeparator(.hidden)
         .accessibilityIdentifier("split.exercise.new")
     }
     .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
@@ -173,7 +173,7 @@ struct SplitExercisePicker: View {
     .navigationBarBackButtonHidden()
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
-        Button(store.t("Done")) { dismiss() }.fontWeight(.semibold)
+        Button(store.t("Done")) { JourneyHaptic.pressLight(); dismiss() }.fontWeight(.semibold)
           .accessibilityLabel(store.t("Done") + (exercises.isEmpty ? "" : ", \(exercises.count) " + store.t("selected")))
           .accessibilityIdentifier("split.exercises.done")
       }
@@ -195,7 +195,7 @@ struct SplitExercisePicker: View {
             .transition(.scale.combined(with: .opacity)).accessibilityHidden(true)
         }
       }.frame(maxWidth: .infinity, minHeight: 50, alignment: .leading).contentShape(Rectangle())
-    }.buttonStyle(.plain).pageRow()
+    }.buttonStyle(.hapticPlain).pageRow()
       .accessibilityAddTraits(selected ? .isSelected : []).accessibilityIdentifier("split.exercise.\(exercise.id)")
   }
 }

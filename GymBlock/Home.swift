@@ -282,7 +282,7 @@ struct BlockingLine: View {
         BlockedIcons(size: 22, limit: 6).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
       case .noAccess:
         Text(store.t("Apps won’t be blocked")).foregroundStyle(JourneyColor.tertiary)
-        Button(store.t("Allow Screen Time")) {
+        Button(store.t("Allow Screen Time")) { JourneyHaptic.pressLight()
           Analytics.track("blocking_unavailable", ["choice": "allow", "where": "plan"])
           Task { @MainActor in _ = await blocking.allow() }
         }.fontWeight(.semibold).foregroundStyle(JourneyColor.signal).accessibilityIdentifier("plan.allow")
@@ -290,7 +290,7 @@ struct BlockingLine: View {
         Text(store.t(state == .off ? "App blocking is off" : "Choose apps to block")).foregroundStyle(JourneyColor.tertiary)
         NavigationLink { BlockedAppsView() } label: {
           Text(store.t(state == .off ? "Turn on" : "Choose apps")).fontWeight(.semibold).foregroundStyle(JourneyColor.signal)
-        }.accessibilityIdentifier("plan.blocking")
+        }.tapHaptic().accessibilityIdentifier("plan.blocking")
       }
     }
     .font(.app(.subheadline)).lineLimit(1).minimumScaleFactor(0.8)
@@ -404,7 +404,7 @@ struct WorkoutChoiceView: View {
               .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 12)
             if !store.data.workouts.isEmpty {
-              Button(store.t(editMode ? "Done" : "Edit")) { withAnimation(.smooth(duration: 0.25)) { editMode.toggle() } }
+              Button(store.t(editMode ? "Done" : "Edit")) { JourneyHaptic.pressLight(); withAnimation(.smooth(duration: 0.25)) { editMode.toggle() } }
                 .font(.app(.body, weight: editMode ? .semibold : .regular))
                 .foregroundStyle(editMode ? JourneyColor.text : JourneyColor.secondary).accessibilityIdentifier("split.edit")
             }
@@ -424,7 +424,7 @@ struct WorkoutChoiceView: View {
                 Image(systemName: "plus").font(.system(.body, weight: .semibold))
                 Text(store.t("New split")).font(.app(.body))
               }.foregroundStyle(JourneyColor.signal).frame(maxWidth: .infinity, minHeight: 56, alignment: .leading).contentShape(Rectangle())
-            }.buttonStyle(.plain).accessibilityIdentifier("split.add")
+            }.buttonStyle(.hapticPlain).accessibilityIdentifier("split.add")
           }
         }.padding(.horizontal, 20).padding(.top, 24).padding(.bottom, 24)
       }
@@ -437,11 +437,11 @@ struct WorkoutChoiceView: View {
       }
       .alert(store.t("Delete this split?"), isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
              presenting: deleting) { split in
-        Button(store.t("Delete split"), role: .destructive) {
+        Button(store.t("Delete split"), role: .destructive) { JourneyHaptic.pressLight()
           store.deleteSplit(split.id)
           if store.data.workouts.isEmpty { editMode = false }
         }
-        Button(store.t("Cancel"), role: .cancel) {}
+        Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
       } message: { _ in Text(store.t("Past workouts stay in Profile.")) }
     }.presentationDetents([.medium, .large], selection: $detent).presentationDragIndicator(.visible)
       .onChange(of: creating) { _, open in if open { withAnimation { detent = .large } } }
@@ -466,7 +466,7 @@ struct WorkoutChoiceView: View {
           Button { deleting = split } label: {
             Image(systemName: "trash").font(.system(.body, weight: .medium)).foregroundStyle(JourneyColor.tertiary)
               .frame(width: 44, height: 44).contentShape(Rectangle())
-          }.buttonStyle(.plain).accessibilityLabel(store.t("Delete split")).accessibilityIdentifier("split.delete.\(split.name)")
+          }.buttonStyle(.hapticPlain).accessibilityLabel(store.t("Delete split")).accessibilityIdentifier("split.delete.\(split.name)")
           Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
             .accessibilityHidden(true)
         } else if selected {
@@ -475,11 +475,11 @@ struct WorkoutChoiceView: View {
         }
       }.padding(.vertical, 12).frame(maxWidth: .infinity, minHeight: 64, alignment: .leading).contentShape(Rectangle())
     }
-    .buttonStyle(.plain)
+    .buttonStyle(.hapticPlain)
     .contextMenu {
       if let split {
-        Button(store.t("Edit split"), systemImage: "pencil") { editing = split }
-        Button(store.t("Delete split"), systemImage: "trash", role: .destructive) { deleting = split }
+        Button(store.t("Edit split"), systemImage: "pencil") { JourneyHaptic.pressLight(); editing = split }
+        Button(store.t("Delete split"), systemImage: "trash", role: .destructive) { JourneyHaptic.pressLight(); deleting = split }
       }
     }
     .accessibilityAddTraits(selected ? .isSelected : [])

@@ -61,15 +61,15 @@ struct AccountSection: View {
     SettingsLabel(store.t("Account"))
     if !cloud && !AppConfig.offline {
       Button { signingIn = true } label: { SettingRow(title: store.t("Sign in"), chevron: true) }
-        .buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.signin")
+        .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.signin")
         .sheet(isPresented: $signingIn) { SignInSheet() }
     }
     Button { confirmLogOut = true } label: {
       SettingRow(title: store.t(cloud || AppConfig.offline ? "Log out" : "Clear this iPhone"))
-    }.buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.logout")
+    }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.logout")
       .confirmationDialog(store.t(cloud ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
-        Button(store.t(cloud || AppConfig.offline ? "Log out" : "Clear")) { logOut() }.accessibilityIdentifier("settings.logout.confirm")
-        Button(store.t("Cancel"), role: .cancel) {}
+        Button(store.t(cloud || AppConfig.offline ? "Log out" : "Clear")) { JourneyHaptic.pressLight(); logOut() }.accessibilityIdentifier("settings.logout.confirm")
+        Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
       } message: {
         Text(store.t(cloud ? "Your workouts stay in your account. This iPhone is cleared." : "Your workouts and splits stay on this iPhone."))
       }
@@ -78,17 +78,17 @@ struct AccountSection: View {
       Button(role: .destructive) { confirmDelete = true } label: {
         Text(store.t("Delete account")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
           .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
-      }.buttonStyle(.plain).padding(.top, 8).pageRow().listRowSeparator(.hidden).accessibilityIdentifier("settings.delete")
+      }.buttonStyle(.hapticPlain).padding(.top, 8).pageRow().listRowSeparator(.hidden).accessibilityIdentifier("settings.delete")
         .alert(store.t("Delete your account?"), isPresented: $confirmDelete) {
-          Button(store.t("Delete account"), role: .destructive) { deleteAccount() }
+          Button(store.t("Delete account"), role: .destructive) { JourneyHaptic.pressLight(); deleteAccount() }
             .accessibilityIdentifier("settings.delete.confirm")
-          Button(store.t("Cancel"), role: .cancel) {}
+          Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
         } message: {
           Text(store.t(cloud ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone."
                        : "This permanently deletes your workouts, splits, answers and settings. It can’t be undone."))
         }
         .alert(store.t("Could not delete the account"), isPresented: $failed) {
-          Button("OK") {}
+          Button("OK") { JourneyHaptic.pressLight() }
         } message: { Text(store.t("Check your connection and try again.")) }
     }
   }
@@ -139,7 +139,7 @@ struct SignInSheet: View {
         }.padding(24)
       }
       .navigationTitle(store.t("Sign in")).navigationBarTitleDisplayMode(.inline)
-      .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { dismiss() } } }
+      .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } } }
       .onChange(of: account.userID) { _, id in if id != nil { dismiss() } }
     }.track(screen: "settings.signin")
   }
@@ -167,7 +167,7 @@ struct SubscriptionSettingsSection: View {
       SettingsLabel(store.t("Subscription"))
       SettingRow(title: "Gym Block Pro", value: renewal).pageRow()
       Button { managing = true } label: { SettingRow(title: store.t("Manage subscription"), chevron: true) }
-        .buttonStyle(.plain).pageRow().accessibilityIdentifier("settings.manageSubscription")
+        .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.manageSubscription")
         .manageSubscriptionsSheet(isPresented: $managing)
     }
   }

@@ -97,7 +97,7 @@ struct ProfileTab: View {
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
           }.padding(.horizontal, 20).padding(.vertical, 10).contentShape(Rectangle())
-        }.buttonStyle(.plain).accessibilityIdentifier("profile.allWorkouts")
+        }.buttonStyle(.hapticPlain).accessibilityIdentifier("profile.allWorkouts")
       }
     }
   }
@@ -306,13 +306,13 @@ private struct AllWorkoutsView: View {
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
-        Button(store.t(selecting ? "Done" : "Select")) {
+        Button(store.t(selecting ? "Done" : "Select")) { JourneyHaptic.pressLight()
           withAnimation(JourneyMotion.gentle) { selecting.toggle(); chosen = [] }
         }.accessibilityIdentifier("history.select")
       }
       if selecting {
         ToolbarItem(placement: .topBarLeading) {
-          Button(store.t(chosen.count == sessions.count ? "Deselect all" : "Select all")) {
+          Button(store.t(chosen.count == sessions.count ? "Deselect all" : "Select all")) { JourneyHaptic.pressLight()
             chosen = chosen.count == sessions.count ? [] : Set(sessions.map(\.id))
           }.accessibilityIdentifier("history.selectAll")
         }
@@ -328,12 +328,12 @@ private struct AllWorkoutsView: View {
       }
     }
     .alert(store.t(chosen.count == 1 ? "Delete this workout?" : "Delete these workouts?"), isPresented: $confirming) {
-      Button(store.t("Delete"), role: .destructive) {
+      Button(store.t("Delete"), role: .destructive) { JourneyHaptic.pressLight()
         store.deleteWorkouts(chosen)
         JourneyHaptic.play(.success, store.profile)
         withAnimation(JourneyMotion.gentle) { chosen = []; selecting = false }
       }
-      Button(store.t("Cancel"), role: .cancel) {}
+      Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
     } message: {
       Text(store.t("Their sets go too. This can't be undone."))
     }
@@ -371,7 +371,7 @@ struct WorkoutEntryView: View {
             header(session)
             ForEach(exercises) { exercise in section(exercise, sets: session.sets.filter { $0.exercise.id == exercise.id }) }
             if store.deletedSet != nil {
-              Button(store.t("Undo")) { store.undoDelete() }.font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+              Button(store.t("Undo")) { JourneyHaptic.pressLight(); store.undoDelete() }.font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
             }
           }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 40)
         }.scrollIndicators(.hidden)
@@ -386,7 +386,7 @@ struct WorkoutEntryView: View {
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         Menu {
-          Button(store.t("Delete workout"), systemImage: "trash", role: .destructive) { deleting = true }
+          Button(store.t("Delete workout"), systemImage: "trash", role: .destructive) { JourneyHaptic.pressLight(); deleting = true }
             .accessibilityIdentifier("workout.delete")
         } label: {
           // Bare glyph: iOS draws the round glass button behind a toolbar item.
@@ -396,9 +396,9 @@ struct WorkoutEntryView: View {
     }
     // An alert, not a dialog: raised from a toolbar menu, a dialog anchors to the bar and covers the title.
     .alert(store.t("Delete this workout?"), isPresented: $deleting) {
-      Button(store.t("Delete workout"), role: .destructive) { store.deleteWorkout(sessionID); dismiss() }
+      Button(store.t("Delete workout"), role: .destructive) { JourneyHaptic.pressLight(); store.deleteWorkout(sessionID); dismiss() }
         .accessibilityIdentifier("workout.delete.confirm")
-      Button(store.t("Cancel"), role: .cancel) {}
+      Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
     } message: { Text(store.t("Its sets leave History and progress. This can’t be undone.")) }
     .navigationDestination(isPresented: Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })) {
       if let editing { SetEditor(set: editing, sessionID: sessionID, embedded: true) }
@@ -443,7 +443,7 @@ struct WorkoutEntryView: View {
               .foregroundStyle(set.unsuccessful == true ? JourneyColor.secondary : JourneyColor.text)
             Spacer(minLength: 0)
           }.frame(minHeight: 40).contentShape(Rectangle())
-        }.buttonStyle(.plain)
+        }.buttonStyle(.hapticPlain)
           .accessibilityLabel(store.t("Set") + " \(index + 1), " + setValue(set, store: store))
           .accessibilityIdentifier("saved." + set.id.uuidString)
       }

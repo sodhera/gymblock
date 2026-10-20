@@ -9,11 +9,12 @@ struct GlassIconButton: View {
   var body: some View {
     let icon = Image(systemName: symbol).font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
       .frame(width: 44, height: 44)
+    let tapped = { JourneyHaptic.pressLight(); action() }
     Group {
       if #available(iOS 26.0, *) {
-        Button(action: action) { icon }.buttonStyle(.glass).buttonBorderShape(.circle)
+        Button(action: tapped) { icon }.buttonStyle(.glass).buttonBorderShape(.circle)
       } else {
-        Button(action: action) { icon.background(Circle().fill(JourneyColor.fill)) }.buttonStyle(JourneyPressStyle())
+        Button(action: tapped) { icon.background(Circle().fill(JourneyColor.fill)) }.buttonStyle(JourneyPressStyle())
       }
     }.accessibilityLabel(label).accessibilityIdentifier(id)
   }
@@ -26,11 +27,12 @@ struct GlassPillButton: View {
   var body: some View {
     let label = Text(title).font(JourneyType.label).foregroundStyle(JourneyColor.text)
       .padding(.horizontal, 6).frame(minHeight: 32)
+    let tapped = { JourneyHaptic.pressLight(); action() }
     Group {
       if #available(iOS 26.0, *) {
-        Button(action: action) { label }.buttonStyle(.glass).buttonBorderShape(.capsule)
+        Button(action: tapped) { label }.buttonStyle(.glass).buttonBorderShape(.capsule)
       } else {
-        Button(action: action) { label.padding(.horizontal, 10).frame(minHeight: 44).background(Capsule().fill(JourneyColor.fill)) }
+        Button(action: tapped) { label.padding(.horizontal, 10).frame(minHeight: 44).background(Capsule().fill(JourneyColor.fill)) }
           .buttonStyle(JourneyPressStyle())
       }
     }.accessibilityIdentifier(id)

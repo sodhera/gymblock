@@ -39,7 +39,7 @@ struct HistoryHubView: View {
       .toolbar {
         if !store.data.history.isEmpty {
           ToolbarItem(placement: .topBarTrailing) {
-            Picker(store.t("Period"), selection: $fourWeeks) {
+            Picker(store.t("Period"), selection: $fourWeeks.ticking) {
               Text(store.t("Last 4 weeks")).tag(true); Text(store.t("All time")).tag(false)
             }.pickerStyle(.menu).accessibilityIdentifier("history.period")
           }
@@ -65,7 +65,7 @@ struct HistoryHubView: View {
           Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
             .accessibilityHidden(true)
         }.contentShape(Rectangle())
-      }.buttonStyle(.plain)
+      }.buttonStyle(.hapticPlain)
         .accessibilityLabel(store.t(volumeMetric ? "Weight moved" : "Reps") + ", " + formatNumber(total.rounded()) + " " + unit)
         .accessibilityIdentifier(volumeMetric ? "history.volume" : "history.reps")
       WeeklyBars(weeks: weeks).accessibilityHidden(true)
@@ -127,7 +127,7 @@ struct HistoryHubView: View {
               Image(systemName: "chevron.right").font(.system(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
                 .padding(.top, 3).accessibilityHidden(true)
             }.padding(.vertical, 14).contentShape(Rectangle())
-          }.buttonStyle(.plain).accessibilityIdentifier("history." + session.id.uuidString)
+          }.buttonStyle(.hapticPlain).accessibilityIdentifier("history." + session.id.uuidString)
         }
       }
     }.padding(.horizontal, 20).padding(.bottom, 6).frame(maxWidth: .infinity, alignment: .leading)
@@ -193,7 +193,7 @@ struct WorkoutDetailView: View {
           HStack {
             Text(store.t("Set in progress")).foregroundStyle(JourneyColor.secondary)
             Spacer()
-            Button(store.t("Cancel set"), action: cancelSet).foregroundStyle(JourneyColor.signal).accessibilityIdentifier("set.cancel")
+            Button(store.t("Cancel set")) { JourneyHaptic.pressLight(); cancelSet() }.foregroundStyle(JourneyColor.signal).accessibilityIdentifier("set.cancel")
           }.frame(minHeight: 44)
         }
       }
@@ -209,7 +209,7 @@ struct WorkoutDetailView: View {
               Text(store.t(exercise.timed ? "Time" : "Reps")).frame(width: 60, alignment: .trailing)
             }.font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary).accessibilityHidden(true)
             ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
-              Button { editing = set } label: {
+              Button { JourneyHaptic.pressLight(); editing = set } label: {
                 if typeSize.isAccessibilitySize {
                   VStack(alignment: .leading, spacing: 6) {
                     Text(store.t("Set") + " \(index + 1)").foregroundStyle(JourneyColor.tertiary)
@@ -238,18 +238,18 @@ struct WorkoutDetailView: View {
         }
         if session.sets.isEmpty { Text(store.t("No sets yet")).foregroundStyle(JourneyColor.secondary) }
       }
-      if store.deletedSet != nil { Button(store.t("Undo")) { store.undoDelete() } }
+      if store.deletedSet != nil { Button(store.t("Undo")) { JourneyHaptic.pressLight(); store.undoDelete() } }
       if !embedded, session != nil {
         Section {
-          Button(store.t("Delete workout"), role: .destructive) { deletingWorkout = true }
+          Button(store.t("Delete workout"), role: .destructive) { JourneyHaptic.pressLight(); deletingWorkout = true }
             .foregroundStyle(Color(uiColor: .systemRed)).accessibilityIdentifier("workout.delete")
         }
       }
     }.gymPage().navigationTitle(embedded ? store.t("Sets") : store.t(session?.name ?? "Workout"))
       .confirmationDialog(store.t("Delete this workout?"), isPresented: $deletingWorkout, titleVisibility: .visible) {
-        Button(store.t("Delete workout"), role: .destructive) { store.deleteWorkout(sessionID); dismiss() }
+        Button(store.t("Delete workout"), role: .destructive) { JourneyHaptic.pressLight(); store.deleteWorkout(sessionID); dismiss() }
           .accessibilityIdentifier("workout.delete.confirm")
-        Button(store.t("Cancel"), role: .cancel) {}
+        Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
       } message: { Text(store.t("Its sets leave History and progress. This can’t be undone.")) }
       .navigationBarTitleDisplayMode(.inline)
       .navigationDestination(isPresented: Binding(get: { editing != nil }, set: { if !$0 { editing = nil } })) {

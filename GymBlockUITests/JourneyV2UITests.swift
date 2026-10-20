@@ -29,9 +29,8 @@ final class JourneyV5UITests: XCTestCase {
     wait(for: [delay], timeout: seconds + 2)
   }
 
-  /// Sulav's note → name → days a week (lands on the phone question). Choosing never advances on its own.
+  /// Name → days a week (lands on the phone question). Choosing never advances on its own.
   private func profile(_ name: String = "Sam", days: Int = 4) {
-    page("“Perfection is lots of little things done right.”"); next()
     page("First, what should we call you?")
     let field = app.textFields["profile.name"]
     XCTAssertTrue(field.waitForExistence(timeout: 6))
@@ -68,7 +67,7 @@ final class JourneyV5UITests: XCTestCase {
   /// sets and time at the gym.
   private func timeBack(rest: String = "rest.1.5", scroll: String = "4 min", exercises: Int = 5, sets: Int = 3, gym: Int = 90, perRest: String) {
     choose(rest, on: "How long do you need to rest between sets?")
-    page("Once you start scrolling, how many minutes go by?")
+    page("How long are you on your phone each time?")
     XCTAssertTrue(app.pickerWheels.firstMatch.waitForExistence(timeout: 6))
     app.pickerWheels.firstMatch.adjust(toPickerWheelValue: scroll); snap("07-scroll"); next()
     page(perRest)
@@ -82,15 +81,14 @@ final class JourneyV5UITests: XCTestCase {
     XCTAssertTrue(app.buttons["onboarding.continue"].waitForExistence(timeout: 8)); snap("01-welcome"); next()
     profile("Sirish")
     snap("05-scrolling"); answer("habit.scrolling.yes")
-    timeBack(perRest: "That’s 2½ minutes lost. Every rest.")
-    // 14 rests × (4 − 1½ min): only the scrolling past the rest they need.
-    page("Sirish, 35 minutes of your 1½ hours goes to scrolling."); snap("12-workout")
-    let lost = expectation(for: NSPredicate(format: "label == %@", "+35 min"), evaluatedWith: any("workout.lost"))
-    wait(for: [lost], timeout: 6)
+    timeBack(perRest: "That’s 2.5 minutes lost. Every rest.")
+    // 14 rests × (4 − 1.5 min): only the scrolling past the rest they need.
+    page("35 minutes go to your phone, every workout."); snap("12-workout")
     next(); page("That’s about 120\u{00A0}hours a year.")  // 35 min × 4 × 52, down to 10.
     XCTAssertTrue(app.staticTexts["year.workouts"].waitForExistence(timeout: 4))
-    XCTAssertEqual(app.staticTexts["year.workouts"].label, "= 80 extra workouts"); snap("13-year")  // Of their 1½ hours.
-    next(); page("We’ll give you those 35 minutes back.\nAnd a better workout."); snap("14-promise")
+    XCTAssertEqual(app.staticTexts["year.workouts"].label, "= 80 extra workouts"); snap("13-year")  // Of their 1.5 hours.
+    next(); page("We’ll give you those 35 minutes back."); snap("14-promise")
+    next(); page("Why I built GymBlock."); snap("14b-founder")
     next(); page("Open a locked app mid-workout and you’ll see this."); settle(2); snap("15-shield")
     next(); page("Which apps should we lock?")
     // Apps come from Screen Time's own picker, which needs the iPhone passcode: not reachable from a UI test.
@@ -104,7 +102,7 @@ final class JourneyV5UITests: XCTestCase {
     page("Let’s save your plan."); snap("19-account")
     XCTAssertEqual(app.buttons["account.apple"].label, "Sign up with Apple")  // Sign-up's own words.
     tap("account.debugSkip")
-    page("Sirish, get your 35 minutes back.")
+    page("Sirish, get your time back.")
     XCTAssertTrue(any("paywall.twoWays").waitForExistence(timeout: 6))
     XCTAssertTrue(any("journey.recap").exists)
     XCTAssertTrue(app.staticTexts["subscription.message"].exists)  // Says why there are no plans.
@@ -117,7 +115,9 @@ final class JourneyV5UITests: XCTestCase {
     choose("rest.0.0", on: "How long do you need to rest between sets?")  // Not sure: 2 minutes.
     page("Then you’re already ahead.")
     XCTAssertFalse(app.pickerWheels.firstMatch.exists)  // Rarely: no scrolling minutes, nothing to add up.
+    next(); page("Why I built GymBlock.")
     next(); page("Open a locked app mid-workout and you’ll see this.")
+    tap("onboarding.back"); page("Why I built GymBlock.")
     tap("onboarding.back"); page("Then you’re already ahead.")
     tap("onboarding.back"); page("How long do you need to rest between sets?")
     XCTAssertTrue(app.buttons["rest.0.0"].isSelected)
@@ -134,22 +134,22 @@ final class JourneyV5UITests: XCTestCase {
     snap("21-sign-in")
     tap("onboarding.back")
     wait(for: [expectation(for: NSPredicate(format: "hittable == true"), evaluatedWith: app.buttons["onboarding.continue"])], timeout: 20)
-    tap("onboarding.continue"); page("“Perfection is lots of little things done right.”")
+    tap("onboarding.continue"); page("First, what should we call you?")
   }
 
   func testRelaunchResumesWithoutBypassingOffer() {
     next(); profile("Ana"); body(); answer("habit.scrolling.sometimes")
-    timeBack(perRest: "That’s 2½ minutes lost each time you scroll.")
-    page("Ana, 15 minutes of your 1½ hours goes to scrolling.")  // Half of 14 rests × 2½, down to 5.
-    next(); next(); page("We’ll give you those 15 minutes back.\nAnd a better workout.")
-    next(); next(); page("Which apps should we lock?"); tap("blocking.later")
+    timeBack(perRest: "That’s 2.5 minutes lost each time you pick it up.")
+    page("15 minutes go to your phone, every workout.")  // Half of 14 rests × 2.5, down to 5.
+    next(); next(); page("We’ll give you those 15 minutes back.")
+    next(); next(); next(); page("Which apps should we lock?"); tap("blocking.later")
     allowAlerts()
     page("Ana, here’s your plan."); app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Let’s save your plan."); tap("account.debugSkip")
-    page("Ana, get your 15 minutes back.")
+    page("Ana, get your time back.")
     XCTAssertTrue(any("journey.recap").waitForExistence(timeout: 5))
     app.terminate(); app.launchArguments = ["--offline"]; app.launch()  // No reset, no skip: the offer is where it resumes.
-    page("Ana, get your 15 minutes back.")
+    page("Ana, get your time back.")
     // The offer is a wall, as in SleepBlock: no way back into the questions, none into the app.
     XCTAssertFalse(app.buttons["onboarding.back"].exists)
     XCTAssertFalse(app.buttons["home.start"].exists)
@@ -162,14 +162,14 @@ final class JourneyV5UITests: XCTestCase {
     app.launchArguments = ["--ui-reset", "--ui-reduced-motion", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityM"]
     app.launch()
     next(); profile(); body(); answer("habit.scrolling.yes")
-    timeBack(perRest: "That’s 2½ minutes lost. Every rest.")
-    page("Sam, 35 minutes of your 1½ hours goes to scrolling."); snap("large-workout")
-    for name in ["year", "promise", "shield"] { next(); snap("large-" + name) }
+    timeBack(perRest: "That’s 2.5 minutes lost. Every rest.")
+    page("35 minutes go to your phone, every workout."); snap("large-workout")
+    for name in ["year", "promise", "founder", "shield"] { next(); snap("large-" + name) }
     next(); page("Which apps should we lock?"); snap("large-blocking")
     tap("blocking.later"); allowAlerts(); snap("large-alerts")
     page("Sam, here’s your plan."); snap("large-commit")
     app.buttons["commit.hold"].press(forDuration: 2.2)
     page("Let’s save your plan."); tap("account.debugSkip")
-    page("Sam, get your 35 minutes back."); snap("large-offer")
+    page("Sam, get your time back."); snap("large-offer")
   }
 }
