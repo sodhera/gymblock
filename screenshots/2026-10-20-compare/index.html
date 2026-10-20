@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Onboarding Side by Side</title>
+<style>
+:root { --paper:#F5F3EF; --ink:#16161A; --soft:#6B6A66; --line:#E2DED6; --emerald:#0F9A6B; --card:#FFFFFF; --warm:#B8452F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper:#16161A; --ink:#F5F3EF; --soft:#A3A19B; --line:#2C2C31; --card:#1F1F24; } }
+:root[data-theme="dark"] { --paper:#16161A; --ink:#F5F3EF; --soft:#A3A19B; --line:#2C2C31; --card:#1F1F24; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 -apple-system, "SF Pro Text", system-ui, sans-serif; }
+main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+h1 { font-size:28px; margin:0 0 6px; letter-spacing:-0.02em; }
+.lede { color:var(--soft); margin:0 0 18px; }
+.key { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:22px; }
+.key div { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:12px 14px; }
+.key b { display:block; }
+.key span { color:var(--soft); font-size:13px; }
+.cols { position:sticky; top:0; z-index:2; display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:10px 0; background:var(--paper); border-bottom:1px solid var(--line); font-weight:600; text-align:center; }
+.row { padding:22px 0; border-bottom:1px solid var(--line); scroll-margin-top:48px; }
+.row header { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.num { width:28px; height:28px; border-radius:50%; background:var(--ink); color:var(--paper); display:grid; place-items:center; font-size:13px; font-weight:600; flex:none; }
+h2 { font-size:18px; margin:0; flex:1; }
+.tag { font-size:12px; font-weight:600; padding:3px 9px; border-radius:99px; border:1px solid var(--line); }
+.tag.diff { color:var(--emerald); border-color:var(--emerald); }
+.tag.same { color:var(--soft); }
+.note { margin:0 0 12px; color:var(--soft); font-size:14px; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+figure { margin:0; }
+figure img { width:100%; display:block; border-radius:18px; border:1px solid var(--line); background:var(--card); }
+figcaption { text-align:center; color:var(--soft); font-size:12px; margin-top:6px; }
+.gone { aspect-ratio:750/1334; border-radius:18px; border:1px dashed var(--line); display:grid; place-items:center; text-align:center; color:var(--soft); font-size:14px; padding:12px; }
+nav { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+nav a { font-size:12px; color:var(--ink); text-decoration:none; border:1px solid var(--line); border-radius:99px; padding:3px 9px; background:var(--card); }
+@media (max-width:520px) { .key { grid-template-columns:1fr; } .pair, .cols { gap:8px; } figure img, .gone { border-radius:12px; } }
+</style></head>
+<body><main>
+<h1>Onboarding, side by side</h1>
+<p class="lede">Every page on the iPhone SE simulator (iOS 26.5, like your phone), same answers on both: rest 90 s, scrolling 4 min, 5 exercises × 3 sets, 90 min at the gym, 4 days a week. Each captured 12 s after the page opens.</p>
+<div class="key">
+  <div><b>Ours (GB Sirish)</b><span>V8 plus today’s inspection fixes, not committed. Doesn’t have Sulav’s changes.</span></div>
+  <div><b>Sulav (GB Sulav)</b><span>GitHub main, ef8a800. V8 plus his changes. Doesn’t have today’s fixes.</span></div>
+</div>
+<nav><a href="#welcome">Welcome</a><a href="#founder">Sulav’s note</a><a href="#name">Name</a><a href="#trainingDays">Days a week</a><a href="#scrolling">Phone between sets</a><a href="#ahead">“Rarely” answer</a><a href="#restNeed">Rest they need</a><a href="#scrollMinutes">Minutes scrolling</a><a href="#perRest">Per rest</a><a href="#exerciseCount">Exercises</a><a href="#setCount">Sets each</a><a href="#gymTime">Time at the gym</a><a href="#workoutTime">Your workout</a><a href="#yearTime">Your year</a><a href="#promise">The promise</a><a href="#shield">Shield</a><a href="#blocking">Choose apps</a><a href="#alerts">Rest alerts</a><a href="#commit">Commit</a><a href="#account">Account</a><a href="#subscription">Offer</a><a href="#splits">Splits</a><a href="#firstWorkout">First workout</a></nav>
+<div class="cols"><div>Ours</div><div>Sulav</div></div>
+
+<section class="row" id="welcome">
+  <header><span class="num">1</span><h2>Welcome</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: one message, “Focused workouts.”, the locking phone and the flexing arm. Ours: the two-row welcome.</p>
+  <div class="pair">
+    <figure><img src="sirish/welcome.jpg" alt="Ours: Welcome" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/welcome.jpg" alt="Sulav: Welcome" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="founder">
+  <header><span class="num">2</span><h2>Sulav’s note</h2><span class="tag diff">Removed by Sulav</span></header>
+  <p class="note">Sulav: removed; Get started goes straight to the name. Ours: the note is page 2.</p>
+  <div class="pair">
+    <figure><img src="sirish/founder.jpg" alt="Ours: Sulav’s note" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><div class="gone">No page.<br>Sulav removed his note.</div><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="name">
+  <header><span class="num">3</span><h2>Name</h2><span class="tag same">Same</span></header>
+  
+  <div class="pair">
+    <figure><img src="sirish/name.jpg" alt="Ours: Name" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/name.jpg" alt="Sulav: Name" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="trainingDays">
+  <header><span class="num">4</span><h2>Days a week</h2><span class="tag same">Same</span></header>
+  <p class="note">Ours: the slider’s end labels a shade darker (inspection fix).</p>
+  <div class="pair">
+    <figure><img src="sirish/trainingDays.jpg" alt="Ours: Days a week" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/trainingDays.jpg" alt="Sulav: Days a week" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="scrolling">
+  <header><span class="num">5</span><h2>Phone between sets</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “Does your phone suck you in between sets?” over a phone pulling the kit into its feed. Ours: “Do you check your phone between sets?” over notifications.</p>
+  <div class="pair">
+    <figure><img src="sirish/scrolling.jpg" alt="Ours: Phone between sets" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/scrolling.jpg" alt="Sulav: Phone between sets" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="ahead">
+  <header><span class="num">·</span><h2>“Rarely” answer</h2><span class="tag same">Same</span></header>
+  <p class="note">Only if they answer Rarely on the page before.</p>
+  <div class="pair">
+    <figure><img src="sirish/ahead.jpg" alt="Ours: “Rarely” answer" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/ahead.jpg" alt="Sulav: “Rarely” answer" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="restNeed">
+  <header><span class="num">6</span><h2>Rest they need</h2><span class="tag diff">Different</span></header>
+  <p class="note">Ours: answers as big-number tiles (inspection fix). Sulav: answer rows.</p>
+  <div class="pair">
+    <figure><img src="sirish/restNeed.jpg" alt="Ours: Rest they need" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/restNeed.jpg" alt="Sulav: Rest they need" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="scrollMinutes">
+  <header><span class="num">7</span><h2>Minutes scrolling</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “Once you start scrolling, how many minutes go by?” Ours: “When you start scrolling between sets, how many minutes do you scroll?”</p>
+  <div class="pair">
+    <figure><img src="sirish/scrollMinutes.jpg" alt="Ours: Minutes scrolling" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/scrollMinutes.jpg" alt="Sulav: Minutes scrolling" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="perRest">
+  <header><span class="num">8</span><h2>Per rest</h2><span class="tag diff">Different</span></header>
+  <p class="note">Ours: the part of the scrolling bar that’s rest you need is grey, not pink, and the red is darker (inspection fixes).</p>
+  <div class="pair">
+    <figure><img src="sirish/perRest.jpg" alt="Ours: Per rest" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/perRest.jpg" alt="Sulav: Per rest" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="exerciseCount">
+  <header><span class="num">9</span><h2>Exercises</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “How many exercises per workout?”, the rack built to the count, a plain kettlebell. Ours: longer headline, tiles, the seven-slot rack with the brand mark.</p>
+  <div class="pair">
+    <figure><img src="sirish/exerciseCount.jpg" alt="Ours: Exercises" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/exerciseCount.jpg" alt="Sulav: Exercises" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="setCount">
+  <header><span class="num">10</span><h2>Sets each</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “And how many sets of each?”, the log sits straight. Ours: longer headline, tiles, a tilted log.</p>
+  <div class="pair">
+    <figure><img src="sirish/setCount.jpg" alt="Ours: Sets each" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/setCount.jpg" alt="Sulav: Sets each" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="gymTime">
+  <header><span class="num">11</span><h2>Time at the gym</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “How long are you at the gym?” Ours: “How long are you usually at the gym?”, tiles.</p>
+  <div class="pair">
+    <figure><img src="sirish/gymTime.jpg" alt="Ours: Time at the gym" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/gymTime.jpg" alt="Sulav: Time at the gym" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="workoutTime">
+  <header><span class="num">12</span><h2>Your workout</h2><span class="tag diff">Different</span></header>
+  <p class="note">Ours: darker bars and labels, every number rounded down to the same figure (inspection fixes).</p>
+  <div class="pair">
+    <figure><img src="sirish/workoutTime.jpg" alt="Ours: Your workout" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/workoutTime.jpg" alt="Sulav: Your workout" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="yearTime">
+  <header><span class="num">13</span><h2>Your year</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “That’s about 120 hours a year.”, with “At 4 workouts a week.” under the dots. Ours: “At 4 workouts a week, that’s about 120 hours a year.”, with “Your numbers, multiplied out.”</p>
+  <div class="pair">
+    <figure><img src="sirish/yearTime.jpg" alt="Ours: Your year" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/yearTime.jpg" alt="Sulav: Your year" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="promise">
+  <header><span class="num">14</span><h2>The promise</h2><span class="tag diff">Different</span></header>
+  <p class="note">Ours: darker bars, the hero number placed higher (inspection fixes).</p>
+  <div class="pair">
+    <figure><img src="sirish/promise.jpg" alt="Ours: The promise" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/promise.jpg" alt="Sulav: The promise" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="shield">
+  <header><span class="num">15</span><h2>Shield</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: plays on a phone (home screen, a tap on TikTok, then GymBlock’s shield; it loops). Ours: the shield on its own.</p>
+  <div class="pair">
+    <figure><img src="sirish/shield.jpg" alt="Ours: Shield" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/shield.jpg" alt="Sulav: Shield" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="blocking">
+  <header><span class="num">16</span><h2>Choose apps</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “Which apps should we lock?” Ours: “…while you train?”</p>
+  <div class="pair">
+    <figure><img src="sirish/blocking.jpg" alt="Ours: Choose apps" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/blocking.jpg" alt="Sulav: Choose apps" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="alerts">
+  <header><span class="num">17</span><h2>Rest alerts</h2><span class="tag same">Same</span></header>
+  
+  <div class="pair">
+    <figure><img src="sirish/alerts.jpg" alt="Ours: Rest alerts" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/alerts.jpg" alt="Sulav: Rest alerts" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="commit">
+  <header><span class="num">18</span><h2>Commit</h2><span class="tag diff">Different</span></header>
+  <p class="note">Ours: the fingerprint sits higher on the SE (inspection fix).</p>
+  <div class="pair">
+    <figure><img src="sirish/commit.jpg" alt="Ours: Commit" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/commit.jpg" alt="Sulav: Commit" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="account">
+  <header><span class="num">19</span><h2>Account</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “Let’s save your plan.” Ours: “…to your account.”</p>
+  <div class="pair">
+    <figure><img src="sirish/account.jpg" alt="Ours: Account" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/account.jpg" alt="Sulav: Account" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="subscription">
+  <header><span class="num">20</span><h2>Offer</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav’s copy still has the cut-off “35 min scro…” label inside the red bar; ours moves it under the bar (inspection fix).</p>
+  <div class="pair">
+    <figure><img src="sirish/subscription.jpg" alt="Ours: Offer" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/subscription.jpg" alt="Sulav: Offer" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="splits">
+  <header><span class="num">21</span><h2>Splits</h2><span class="tag diff">Different</span></header>
+  <p class="note">Sulav: “You’re in. How do you split your training?” Ours: “…usually split…”</p>
+  <div class="pair">
+    <figure><img src="sirish/splits.jpg" alt="Ours: Splits" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/splits.jpg" alt="Sulav: Splits" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+<section class="row" id="firstWorkout">
+  <header><span class="num">22</span><h2>First workout</h2><span class="tag same">Same</span></header>
+  
+  <div class="pair">
+    <figure><img src="sirish/firstWorkout.jpg" alt="Ours: First workout" loading="lazy"><figcaption>Ours</figcaption></figure>
+    <figure><img src="sulav/firstWorkout.jpg" alt="Sulav: First workout" loading="lazy"><figcaption>Sulav</figcaption></figure>
+  </div>
+</section>
+</main></body></html>
