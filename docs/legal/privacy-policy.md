@@ -2,13 +2,13 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** October 14, 2026
+**Last Updated:** October 22, 2026
 
 Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**") operates the GymBlock application for iPhone (the "**App**"). GymBlock helps you keep your phone away between sets, time your rests, log your sets, and see like-for-like strength progress. This Privacy Policy explains what information we collect when you use the App, why we collect it, where it is stored, who processes it on our behalf, and the choices you have. By using GymBlock, you agree to the practices described in this Privacy Policy.
 
 We are committed to transparency and to safeguarding your personal data. Please read this Privacy Policy carefully. If you do not agree with any part of it, please do not use the App.
 
-> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database, and only there. No advertising SDKs, no cross-app tracking, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
+> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database and with PostHog, the product analytics service that processes those events for us. No advertising, no cross-app tracking, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
 
 ---
 
@@ -46,7 +46,7 @@ GymBlock uses Sign in with Apple or Sign in with Google to create your account. 
 
 ### 1.4 Product Analytics
 
-GymBlock records how the App is used. This is **first-party** analytics: the events are written by the App to our own database (hosted by Supabase) and nowhere else. We do not use any third-party analytics, attribution, or advertising SDK. We want to be clear that this logging is extensive:
+GymBlock records how the App is used. The events are written by the App to our own database (hosted by Supabase), and the same events are also sent to **PostHog**, a product analytics service that processes them on our behalf (see Section 6). They are never sent to advertisers. We want to be clear that this logging is extensive:
 
 - **Screens:** every screen you view and how long you stay on it.
 - **Interactions:** every button tap, toggle, and choice you make, including the option you selected.
@@ -57,9 +57,9 @@ GymBlock records how the App is used. This is **first-party** analytics: the eve
 - **Account:** sign-in and sign-out.
 - **Errors:** failures the App detects.
 
-Each event carries a timestamp, the install ID, a session ID, your account ID when you are signed in, the App version, the device model, and the iOS version. Events are linked to your account so they can be deleted with it.
+Each event carries a timestamp, the install ID, a session ID, your account ID when you are signed in, the App version, the device model, and the iOS version. In PostHog the same events also carry your locale, time zone, and screen size, and PostHog receives your IP address when an event arrives; we configure PostHog not to work out your location from it. Events never include your name, your email address, or anything you type.
 
-We use these events to understand which parts of the App are used, where people get stuck, whether rests and alerts work as intended, and how to improve the App. We do **not** use them for advertising, do not share them with advertisers or data brokers, and do not combine them with data about you from other companies. There is no separate analytics switch inside the App at this time; you may object to this processing or ask us to delete your events at any time by emailing **admin@sodhera.com**, and deleting your account deletes the events linked to it.
+We use these events to understand which parts of the App are used, where people get stuck, whether rests and alerts work as intended, and how to improve the App. We do **not** use them for advertising, do not share them with advertisers or data brokers, and do not combine them with data about you from other companies. There is no separate analytics switch inside the App at this time; you may object to this processing or ask us to delete your events at any time by emailing **admin@sodhera.com**. Deleting your account deletes the events in our database; the copy held by PostHog is deleted when you ask us (see Section 9).
 
 ### 1.5 Information We Do NOT Collect
 
@@ -75,7 +75,7 @@ We want to be explicit about what GymBlock **does not** collect or access:
 - ❌ **Advertising identifier (IDFA)** — we do not read or use it, and we do not ask for App Tracking Transparency permission
 - ❌ **Payment card details** — payments are made to Apple; we never see your card number
 - ❌ **Browsing history** — the App does not track your activity outside the App
-- ❌ **Third-party analytics or advertising SDKs** — none are included in the App
+- ❌ **Advertising data** — nothing about you is shared with advertising networks, and our analytics provider never receives your name, email address, or anything you type
 
 ---
 
@@ -136,15 +136,16 @@ We share your data only with the service providers below, each acting on our ins
 |---|---|---|---|
 | **Supabase** | Processor. Authentication, database, and hosting | Everything in Sections 1 and 5: account, profile, settings, splits, workouts, sets, device records, subscription snapshot, and analytics events | [supabase.com/privacy](https://supabase.com/privacy) |
 | **RevenueCat** | Processor. Validates App Store purchases and reports whether GymBlock Pro is active | An app user ID (your account ID, not your name or email), App Store receipts and transaction identifiers, product identifiers, and entitlement status | [revenuecat.com/privacy](https://www.revenuecat.com/privacy) |
+| **PostHog** | Processor. Product analytics | The analytics events in Section 1.4, with the install ID, a session ID, your account ID when you are signed in, device model, iOS and App version, locale, time zone, screen size, and your IP address when an event arrives (not used to find your location). Never your name, email address, or anything you type | [posthog.com/privacy](https://posthog.com/privacy) |
 | **Apple** | Independent controller. Sign in with Apple and App Store billing | Your Apple Account and purchase records; Apple shares your name and email (or a relay address) with us at sign-in | [apple.com/legal/privacy](https://www.apple.com/legal/privacy/) |
 | **Google** | Independent controller. Sign in with Google, only if you choose it | Google shares your name and email with us at sign-in | [policies.google.com/privacy](https://policies.google.com/privacy) |
 
 ### 6.1 No Other Third Parties
 
-We do **not** integrate any of the following:
+We do **not** share your data with any of the following:
 
 - Advertising networks or ad mediation platforms
-- Third-party analytics, attribution, or crash-reporting SDKs
+- Attribution or crash-reporting services, or any analytics service other than PostHog
 - Social media SDKs (other than the sign-in providers above)
 - Data brokers
 
@@ -181,6 +182,7 @@ While we take reasonable measures to protect your data, no method of electronic 
 - **While your account exists:** we keep your account information, profile, settings, splits, workouts, sets, device records, subscription snapshot, and analytics events so the App can work and restore your data.
 - **Log out:** logging out ends your session on that iPhone but keeps your account and its data, and keeps the local copy on the device, so you can sign in again.
 - **Delete account:** Settings → Delete account in the App deletes your account and all of its data from our database **immediately** and wipes the local copy from that iPhone. You can also email **admin@sodhera.com** from the account's email address. See [User Data Deletion](user-data-deletion.md).
+- **Analytics in PostHog:** kept for as long as our PostHog plan retains them. Deleting your account in the App does not reach PostHog on its own; email **admin@sodhera.com** and we will delete the events linked to your account there within **30 days**.
 - **Backups:** encrypted database backups held by our hosting provider roll off within **30 days** after deletion.
 - **Aggregated statistics:** we may keep statistics that cannot identify anyone (for example, how many workouts were logged in a month).
 - **Legal records:** we may retain limited records where the law requires it, for example transaction records needed for tax or accounting.
@@ -196,13 +198,13 @@ While we take reasonable measures to protect your data, no method of electronic 
 - **Export:** email **admin@sodhera.com** for a machine-readable (JSON) copy of your data within 30 days.
 - **Notifications:** manage or turn off notifications and Live Activities in iOS Settings.
 - **Sign-in privacy:** Sign in with Apple lets you hide your email behind a private relay address.
-- **Analytics:** email us to object to, or request deletion of, the analytics events linked to you.
+- **Analytics:** email us to object to, or request deletion of, the analytics events linked to you, in our database and in PostHog.
 
 ### 10.2 European Economic Area, United Kingdom, and Switzerland
 
 If you are in the EEA, the UK, or Switzerland, you have rights under the General Data Protection Regulation (GDPR), the UK GDPR, and the Swiss Federal Act on Data Protection, including the rights to access, rectify, erase, restrict, port, and object to the processing of your personal data, and the right to lodge a complaint with your local data protection authority.
 
-**Legal bases for processing:** performance of our contract with you (providing the App and your subscription); our legitimate interests (understanding and improving the App through first-party analytics, securing our systems, and providing support), balanced against your rights; consent, where we ask for it (for example, iOS notification permission); and compliance with legal obligations.
+**Legal bases for processing:** performance of our contract with you (providing the App and your subscription); our legitimate interests (understanding and improving the App through product analytics, securing our systems, and providing support), balanced against your rights; consent, where we ask for it (for example, iOS notification permission); and compliance with legal obligations.
 
 **Automated decision-making (GDPR Article 22):** GymBlock does not make automated decisions that produce legal or similarly significant effects on you. Progress figures and estimates are informational calculations only.
 
@@ -276,9 +278,9 @@ The following summary aligns with Apple's App Store privacy label categories:
 | Contact Info (name, email address) | App Functionality |
 | Fitness (workouts, sets, exercises, height, weight) | App Functionality |
 | Identifiers (account ID, install ID) | App Functionality, Analytics |
-| Purchases (subscription status and transaction identifiers) | App Functionality |
+| Purchases (subscription status and transaction identifiers) | App Functionality, Analytics |
 | Usage Data (product interaction) | Analytics, App Functionality |
-| Diagnostics (error reports) | App Functionality |
+| Diagnostics (error reports) | App Functionality, Analytics |
 | Other Data (onboarding answers, splits, preferences) | App Functionality |
 
 ### Data Not Collected

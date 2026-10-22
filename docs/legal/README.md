@@ -1,6 +1,6 @@
 # GymBlock legal documents
 
-Markdown sources for the GymBlock legal documents. The published copies live in the company website repository (`orecci`, folder `gymblock/`) and are served from www.orecci.com. Effective October 8, 2026; Privacy Policy and Terms last updated October 14, 2026.
+Markdown sources for the GymBlock legal documents. The published copies live in the company website repository (`orecci`, folder `gymblock/`) and are served from www.orecci.com. Effective October 8, 2026; Privacy Policy last updated October 22, 2026 (PostHog added); Terms last updated October 14, 2026.
 
 | Document | Source in this repo | Public URL |
 |---|---|---|
@@ -20,4 +20,4 @@ The markdown here is the canonical text. When it changes:
 
 1. Update the "Last Updated" date in every affected file.
 2. Regenerate the HTML in `orecci/gymblock/` (same text inside the site's legal-document page frame) and copy the `.md` files alongside it.
-3. Keep the facts honest: app blocking is simulated, analytics are first-party only, subscriptions are billed by Apple, no HealthKit, camera, microphone, location, contacts or advertising identifier.
+3. Keep the facts honest: app blocking is simulated, analytics go only to our database and PostHog (TikTok's SDK ships switched off; switching it on needs this policy updated first), subscriptions are billed by Apple, no HealthKit, camera, microphone, location, contacts or advertising identifier.
