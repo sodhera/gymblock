@@ -24,6 +24,7 @@ enum OnboardingStep: String, CaseIterable {
     switch self {
     case .body, .gender, .height, .weight: return .trainingDays
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
+    case .gymTime: return .workoutTime  // No longer asked (28 Oct 2026).
     case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
          .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
       return .restNeed
@@ -47,23 +48,18 @@ enum OnboardingStep: String, CaseIterable {
 
 enum OnboardingRoute {
   /// The pages their answers lead to (docs/ONBOARDING-V8-PLAN.md): Rarely, or scrolling that fits
-  /// inside the rest, goes straight to how GymBlock works; answers that don't fit their gym time get
-  /// the per-rest promise only; under five minutes a workout gets the number and nothing more.
+  /// inside the rest, goes straight to how GymBlock works; an earlier gym-time answer their sets don't
+  /// fit gets the per-rest promise only.
   static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
     var steps: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed]
     let time = TimeBack(baseline)
-    if baseline.scrollFrequency == .no {
-      steps.append(.ahead)
-    } else {
-      steps += [.scrollMinutes, .perRest]
-      if time.lostPerRest != 0 {
-        steps += [.exerciseCount, .setCount, .gymTime]
-        switch time.outcome {
-        case .unfit: steps.append(.promise)
-        case .small: steps.append(.workoutTime)
-        default: steps += [.workoutTime, .yearTime, .promise]
-        }
-      }
+    // Every answer to "Be honest" goes on to the phone time (28 Oct 2026, the user's call).
+    steps += [.scrollMinutes, .perRest]
+    if time.lostPerRest != 0 {
+      // No gym-time question since 28 Oct 2026: the workout page sets their rests against the phone.
+      steps += [.exerciseCount, .setCount]
+      if time.perRestOnly { steps.append(.promise) }
+      else { steps += [.workoutTime] + (time.extraWorkouts >= 1 ? [.yearTime] : []) + [.promise] }
     }
     // Sulav's note sits after their own number, before how GymBlock works (20 Oct 2026; it was page 2).
     return steps + [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
@@ -121,6 +117,9 @@ struct OnboardingView: View {
   @MainActor private static var coverShown = false
   private var baseline: RoutineBaseline { store.profile.baseline ?? RoutineBaseline() }
   private var time: TimeBack { TimeBack(baseline, restSeconds: store.profile.restSeconds) }
+  /// The phone-time wheel's first value: a minute more than the rest they need, in whole minutes
+  /// (28 Oct 2026, at the user's request; 1.5 min of rest starts it at 3).
+  private var scrollFloor: Double { min(15, (time.restNeed + 1).rounded(.up)) }
   private var step: OnboardingStep { OnboardingStep.restored(store.profile) }
   private var route: [OnboardingStep] { OnboardingRoute.steps(baseline) }
 
@@ -212,7 +211,10 @@ struct OnboardingView: View {
     Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
       .multilineTextAlignment(.center).lineLimit(typeSize.isAccessibilitySize ? nil : 2).fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
       .frame(minHeight: 20).padding(.horizontal, 32)
-      .opacity(shown ? 1 : 0).offset(x: slide)
+      // The caption arrives with the page's button, never floating alone over the empty space where it
+      // will be (28 Oct 2026, at the user's request).
+      .opacity(shown && actionsShown ? 1 : 0).offset(x: slide)
+      .animation(.smooth(duration: 0.3), value: actionsShown)
       .accessibilityHidden(caption == nil)
     // The hold is taller than Continue; on a phone with no home indicator it keeps the same air below.
     actions.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
@@ -297,11 +299,6 @@ struct OnboardingView: View {
       if lost == 0 { return store.t("Then your phone time fits inside your rest.") }
       return String(format: store.t(time.share < 1 ? "That’s %@ lost each time you pick it up." : "That’s %@ lost. Every rest."), store.minutesWords(lost))
     case .workoutTime:
-      if time.outcome == .small {
-        let words = store.minutesWords(Double(max(1, time.shownLost)))
-        return name.isEmpty ? String(format: store.t("Your phone takes about %@ of your workout."), words)
-          : String(format: store.t("%@, your phone takes about %@ of your workout."), name, words)
-      }
       let lost = "\(time.shownLost)"
       // No name here (20 Oct 2026): with it the headline ran to three lines over a scene that shows it.
       // Two lines: the gym time is on the bars already.
@@ -313,7 +310,7 @@ struct OnboardingView: View {
       return String(format: store.t("That’s about %@ hours a year."), hours)
         .replacingOccurrences(of: hours + " ", with: hours + "\u{00A0}")
     case .promise:
-      if time.outcome == .unfit {
+      if time.perRestOnly {
         let lost = time.lostPerRest ?? 0
         return lost == 1 ? store.t("We’ll give you that minute back. Every rest.")
           : String(format: store.t("We’ll give you those %@ back. Every rest."), store.minutesWords(lost))
@@ -321,7 +318,8 @@ struct OnboardingView: View {
       return time.lostIsAnHour ? store.t("We’ll give you that hour back.")
         : String(format: store.t("We’ll give you those %@ back."), String(format: store.t("%@ minutes"), "\(time.shownLost)"))
     case .alerts:
-      return String(format: store.t("We’ll buzz you\nwhen your %@ is up."), clockString(store.profile.restSeconds ?? 90))
+      // "your rest", not their rest's clock time (28 Oct 2026, at the user's request).
+      return store.t("We’ll buzz you\nwhen your rest is up.")
     default: return nil
     }
   }
@@ -349,11 +347,13 @@ struct OnboardingView: View {
     case .gymTime: return "From walking in to walking out."
     case .workoutTime:
       let time = self.time
-      if time.outcome == .small { return "We’ll help you keep it that way." }
-      if time.fitted { return String(format: store.t("From your answers, fitted into your %@."), store.gymWords(time.gym ?? 60)) }
+      if time.fitted, time.gym != nil { return String(format: store.t("From your answers, fitted into your %@."), store.gymWords(time.gym ?? 60)) }
       let per = store.minutesWords(time.lostPerRest ?? 0)
       return String(format: store.t(time.share < 1 ? "From your answers: about half of %@ rests × %@." : "From your answers: %@ rests × %@."), "\(time.rests ?? 0)", per)
-    case .yearTime: return String(format: store.t(time.days == 1 ? "At %@ workout a week." : "At %@ workouts a week."), "\(time.days)")
+    // What a dot is, as the page's caption (28 Oct 2026, at the user's request).
+    case .yearTime:
+      let per = ExtraWorkoutsStage.perDot(time)
+      return per == 1 ? store.t("Each dot is one workout.") : String(format: store.t("Each dot is %@ workouts."), "\(per)")
     case .promise: return "And a better workout: every rest on time."
     case .alerts: return "One buzz, right when it’s time. Change it anytime."
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
@@ -396,7 +396,7 @@ struct OnboardingView: View {
     case .restNeed, .ahead:
       RestWatchStage(minutes: step == .ahead ? time.restNeed : restChoice.map { $0 == 0 ? TimeBack.unsureRest : $0 },
                      ahead: step == .ahead, done: step == .ahead ? sceneDone : {})
-    case .scrollMinutes: ScrollMinutesStage(minutes: $draft)
+    case .scrollMinutes: ScrollMinutesStage(minutes: $draft, from: Int(scrollFloor))
     // One strip either way: red past the rest, or the phone time inside it.
     case .perRest:
       if (time.lostPerRest ?? 0) > 0 { RestStripStage(time: time, done: sceneDone) } else { RestFitsStage(time: time, done: sceneDone) }
@@ -406,7 +406,7 @@ struct OnboardingView: View {
     case .workoutTime: WorkStripStage(time: time, done: sceneDone)
     case .yearTime: ExtraWorkoutsStage(time: time, done: sceneDone)
     case .promise:
-      if time.outcome == .unfit { PerRestStage(time: time, giveBack: true, done: sceneDone) }
+      if time.perRestOnly { PerRestStage(time: time, giveBack: true, done: sceneDone) }
       else { WorkStripStage(time: time, giveBack: true, done: sceneDone) }
     case .commit: PlanStage(done: sceneDone)
     case .shield: ShieldStage(done: sceneDone)
@@ -433,7 +433,9 @@ struct OnboardingView: View {
             option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
           }
         }.padding(.bottom, 14)
-        gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance))
+        // Continue comes with their answer, not the scene's end (28 Oct 2026, at the user's request).
+        gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance),
+              when: baseline.scrollFrequency != nil)
         Color.clear.frame(height: 44)
       case .trainingDays:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: trainingDays != nil, action: advance)
@@ -515,10 +517,17 @@ struct OnboardingView: View {
     }
   }
   /// Continue holds its place and fades in once the page's scene has played.
-  private func gated<Button: View>(_ button: Button) -> some View {
+  /// Whether the page's button is showing: on "Be honest" once they've answered, elsewhere once the
+  /// scene has finished (always, for VoiceOver). The caption follows it.
+  private var actionsShown: Bool {
+    if UIAccessibility.isVoiceOverRunning { return true }
+    return step == .scrolling ? baseline.scrollFrequency != nil : ready
+  }
+  /// Shows a page's button once `shown` (the scene has finished, unless the page says otherwise).
+  private func gated<Button: View>(_ button: Button, when shown: Bool? = nil) -> some View {
     // VoiceOver users get it straight away: the scene is described, and a button that appears
     // silently after it was never found (inspection, 20 Oct 2026).
-    let on = ready || UIAccessibility.isVoiceOverRunning
+    let on = (shown ?? ready) || UIAccessibility.isVoiceOverRunning
     return button.opacity(on ? 1 : 0).offset(y: on ? 0 : 8).allowsHitTesting(on).accessibilityHidden(!on)
       .animation(.smooth(duration: 0.3), value: on)
   }
@@ -550,9 +559,9 @@ struct OnboardingView: View {
   private func option(_ title: String, _ answer: HabitAnswer) -> some View {
     choice(title, id: "habit.scrolling.\(answer.rawValue)", selected: baseline.scrollFrequency == answer) {
       update {
+        // Kept for analytics only; it changes no number or page (28 Oct 2026).
         $0.scrollFrequency = answer; $0.scrollsBetweenSets = answer != .no
-        if answer == .no { $0.scrollingMinutes = 0; $0.minutesPerBreak = nil }
-        else if ($0.scrollingMinutes ?? 0) <= 0 { $0.scrollingMinutes = nil }
+        if ($0.scrollingMinutes ?? 0) <= 0 { $0.scrollingMinutes = nil }
       }
     }
   }
@@ -612,8 +621,8 @@ struct OnboardingView: View {
       weightKG = p.bodyWeightKG ?? bodyDefaults(p.gender).weight
       weightUnit = p.bodyWeightKG != nil ? (p.unit == "kg" ? 0 : 1) : heightUnit
     case .restNeed: restChoice = baseline.restNeedUnsure == true ? 0 : baseline.restNeedSeconds.map { Double($0) / 60 }
-    // The wheel starts at their own answer, or at one minute: no suggested number.
-    case .scrollMinutes: draft = min(15, max(1, (baseline.scrollingMinutes ?? 1).rounded()))
+    // The wheel starts at their own answer, or at its first value: no suggested number.
+    case .scrollMinutes: draft = min(15, max(scrollFloor, (baseline.scrollingMinutes ?? scrollFloor).rounded()))
     case .exerciseCount: exerciseChoice = baseline.exercises.map { min(7, max(3, $0)) }
     case .setCount: setChoice = baseline.sets.map { min(5, max(2, $0)) }
     case .gymTime: gymChoice = baseline.duration.map { d in [45, 60, 90, 120, 150].min { abs($0 - d) < abs($1 - d) } ?? 60 }

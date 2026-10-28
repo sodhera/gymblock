@@ -175,15 +175,14 @@ import XCTest
   func testRouteAsksMinutesOnlyWhenScrollingAndEndsWithSetupThenOffer() {
     var b = RoutineBaseline()
     b.scrollFrequency = .sometimes; b.restNeedSeconds = 90; b.scrollingMinutes = 4; b.exercises = 5; b.sets = 3; b.duration = 90
-    XCTAssertEqual(OnboardingRoute.steps(b), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
-                                              .exerciseCount, .setCount, .gymTime, .workoutTime, .yearTime, .promise,
-                                              .founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
+    let route: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
+                                   .exerciseCount, .setCount, .workoutTime, .yearTime, .promise,
+                                   .founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    XCTAssertEqual(OnboardingRoute.steps(b), route)  // No gym-time question since 28 Oct 2026.
+    // "Rarely" asks the minutes too: the "Be honest" answer changes nothing.
     b.scrollFrequency = .no
     b.scrollsBetweenSets = false
-    let noScroll = OnboardingRoute.steps(b)
-    XCTAssertFalse(noScroll.contains(.scrollMinutes))
-    XCTAssertEqual(Array(noScroll.prefix(7)), [.name, .trainingDays, .scrolling, .restNeed, .ahead, .founder, .shield])
-    XCTAssertEqual(Array(noScroll.suffix(7)), [.blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout])
+    XCTAssertEqual(OnboardingRoute.steps(b), route)
   }
   func testEndingEmptySessionCreatesNeitherHistoryNorSummary() {
     let domain = "EmptyV3.\(UUID())"

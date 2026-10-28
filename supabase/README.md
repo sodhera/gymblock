@@ -8,7 +8,7 @@ Everything the app needs from the dashboards, in the order to do it, with what i
 | 2. Apple provider | **Done** (enabled, client id `com.sodhera.gymblock`). Apple Developer capability: pending until the App ID exists. |
 | 3. Google provider | **Done**: Google Cloud project `gymblock` (org sodhera.com, account authuser=2), consent screen "GymBlock" (External, admin@sodhera.com), web client "GymBlock Supabase" with the Supabase callback; ID and secret saved in Supabase → Google. |
 | 3b. Redirect URL | **Done** (`gymblock://auth/callback`). |
-| 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock` with valid In-App Purchase key (34ZCA5L925) and App Store Connect API key (ZH27RWPG5Q), issuer `5f9e6892-8b98-4334-97fb-1c6ca8ad9229`; entitlement `pro`; offering `default` (`$rc_annual`, `$rc_monthly`). Since 10 Oct every build (Debug too) uses the App Store app's `appl_` key in `Secrets.xcconfig`; the Test Store is no longer used, and Debug purchases go through Apple's sandbox (Sandbox Apple Account on the device). Verified on the simulator: the offer loads the real products ($49.99 yearly with the 1-week trial, $4.99 monthly). |
+| 4. RevenueCat | **Done**: project GymBlock (65ed1e99), App Store app `com.sodhera.gymblock` with valid In-App Purchase key (34ZCA5L925) and App Store Connect API key (ZH27RWPG5Q), issuer `5f9e6892-8b98-4334-97fb-1c6ca8ad9229`; entitlement `pro`; offering `default` (`$rc_annual`, `$rc_monthly`, and since 28 Oct `$rc_weekly` → `com.sodhera.gymblock.pro.weekly`); paywall "GymBlock Pro" (`wfb627051e8de44707`, built in the dashboard 28 Oct, connected to `default`, published 28 Oct). Since 10 Oct every build (Debug too) uses the App Store app's `appl_` key in `Secrets.xcconfig`; the Test Store is no longer used, and Debug purchases go through Apple's sandbox (Sandbox Apple Account on the device). Verified on the simulator: the offer loads the real products ($49.99 yearly with the 1-week trial, $4.99 monthly). |
 | 5. App Store Connect | **Done except submission** (10 Oct): app "Gym Block" (Apple ID 6821339641, SKU `gymblock`, bundle `com.sodhera.gymblock`); subscription group "Gym Block Pro" (22461908) with `com.sodhera.gymblock.pro.yearly` (1 year, $49.99, 1-week free trial, Apple ID 6821340362) and `com.sodhera.gymblock.pro.monthly` (1 month, $4.99); all countries, App Store only, no multiseat; display name "Gym Block Pro"; review screenshot `screenshots/app-store-review/subscription-review-paywall.png`. The first subscriptions go to review with version 1.0 (tick them on the version page) — not "Add for Review" on their own. Paid Apps agreement, bank and tax are active; the EU Digital Services Act status is **Rejected**, so the EU is blocked until it's fixed under Business. |
 
 Until a step is done the app degrades honestly (sign-in reports the provider error, the offer page
@@ -63,7 +63,19 @@ https://app.revenuecat.com → the Sodhera project (or a new "GymBlock" project)
 2. Products → + New: `com.sodhera.gymblock.pro.monthly` and `com.sodhera.gymblock.pro.yearly`.
 3. Entitlements → + New: identifier `pro`, attach both products.
 4. Offerings → `default` → packages: `$rc_monthly` → monthly product, `$rc_annual` → yearly product.
-5. Apps → GymBlock → copy the *Public app-specific API key* (`appl_…`) into `Secrets.xcconfig`:
+5. Weekly plan (optional): add `com.sodhera.gymblock.pro.weekly` here, attach it to `pro`, and add a
+   `$rc_weekly` package to `default`. Only the dashboard paywall (below) shows it; the app's own
+   page shows monthly and yearly.
+6. Paywalls → + New → attach it to the `default` offering. From then on the app shows this paywall
+   instead of its own page, with no release: words, layout, colours and which packages appear are
+   changed here. Keep it a wall (no close button) with a "Sign out" button in the footer row whose action is the
+   deep link `gymblock://paywall/sign-out` (the app catches it in `RemotePaywall`), and include Restore, Terms (`https://www.orecci.com/gymblock/terms-of-service.html`) and
+   Privacy (`https://www.orecci.com/gymblock/privacy-policy.html`) links (App Review 3.1.2). Custom
+   variables the app passes, to define under the paywall's variables with fallbacks: `phone_minutes`
+   (only when their phone runs past their rest), `workout_minutes`, `gym_minutes`; use them as
+   `{{ custom.workout_minutes }}`. The headline is fixed text, "Get your time back.". Deleting the
+   paywall or detaching it brings the app's own page back.
+7. Apps → GymBlock → copy the *Public app-specific API key* (`appl_…`) into `Secrets.xcconfig`:
    `REVENUECAT_API_KEY = appl_…` — then rebuild. The key is public; commit it. Debug and Release use
    the same key; Debug purchases are sandbox purchases (Settings → Developer → Sandbox Apple Account).
 
@@ -73,6 +85,9 @@ https://app.revenuecat.com → the Sodhera project (or a new "GymBlock" project)
 2. Subscriptions → Subscription group "Gym Block Pro":
    - `com.sodhera.gymblock.pro.monthly` — 1 month — USD 4.99 (tier equivalent elsewhere)
    - `com.sodhera.gymblock.pro.yearly` — 1 year — USD 49.99, introductory offer: free, 1 week
+   - Optional: `com.sodhera.gymblock.pro.weekly` — 1 week. A new product goes to review with an app
+     version the first time. Prices are changed under each product's Subscription Prices, with no
+     review and no app change (the app reads every price from the store).
    - Purchase options: App Store only, no multiseat (it's a personal, account-bound subscription).
    - Review screenshot: `screenshots/app-store-review/subscription-review-paywall.png`.
    - Localised name "GymBlock Pro", description "Blocks the apps you choose while you train, times

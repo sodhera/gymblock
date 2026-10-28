@@ -241,13 +241,19 @@ struct BlockStage: View {
   @ViewBuilder private func tile(_ item: Item, locked: Bool) -> some View {
     switch item {
     case .app(let token):
-      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Self.tokenName(Label(token)) }
     case .category(let token):
-      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+      slot(locked: locked, id: "block.item") { Label(token).labelStyle(.iconOnly).scaleEffect(1.6) } name: { Self.tokenName(Label(token)) }
     case .site(let token):
       slot(locked: locked, id: "block.item") { Image(systemName: "globe").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text) }
-        name: { Label(token).labelStyle(.titleOnly).foregroundStyle(JourneyColor.text) }
+        name: { Self.tokenName(Label(token)) }
     }
+  }
+  /// Screen Time draws a token's name itself, at body size, whatever font it's given: it ran past its
+  /// tile as "Snapc…" (28 Oct 2026). Shrunk the way the icon is grown, centred under the tile.
+  private static func tokenName<L: View>(_ label: L) -> some View {
+    label.labelStyle(.titleOnly).foregroundStyle(JourneyColor.text).lineLimit(1)
+      .frame(width: 104).scaleEffect(0.66).frame(width: 70, height: 16)
   }
   private func sample(_ app: StoreShots.App) -> some View {
     slot(locked: true, id: "block.item") {

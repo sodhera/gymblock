@@ -248,12 +248,14 @@ struct FeedPhone: View {
 /// The feed keeps going above the wheel; the pill says how long they say they stay on it.
 struct ScrollMinutesStage: View {
   @Binding var minutes: Double
+  /// The first minute on the wheel (a minute more than the rest they need).
+  var from = 1
   @EnvironmentObject private var store: GymStore
   private func words(_ m: Double) -> String { m >= 15 ? "15+ " + store.t("min") : "\(Int(m)) " + store.t("min") }
   var body: some View {
     VStack(spacing: JourneyLayout.compact ? 6 : 10) {
       FeedPhone().frame(minHeight: 120, maxHeight: FeedPhone.size.height).frame(maxHeight: .infinity)
-      JourneyWheel(values: (1...15).map(Double.init), unit: store.t("min"), id: "baseline.scrollMinutes", value: $minutes,
+      JourneyWheel(values: (min(15, max(1, from))...15).map(Double.init), unit: store.t("min"), id: "baseline.scrollMinutes", value: $minutes,
                    format: words, label: store.t("Minutes on your phone"))
         .frame(height: JourneyLayout.compact ? 130 : 170)
         .clipped()  // The picker drew its rows under the caption on small phones.
@@ -882,12 +884,11 @@ struct GymClockStage: View {
 
 // MARK: - Pages 12 and 14: the workout, two bars
 
-/// Page 12 as one strip, after SleepBlock's night strip (20 Oct 2026, at the user's request): the
-/// strip is their whole time at the gym and the phone is a red bite out of its end, so the page states
-/// one subtraction instead of comparing two bars. It sweeps in left to right on the score's clock, the
-/// grey while the bars used to grow and the red as the count used to run, and then the good news lands
-/// in ink above it: their workout with rests on time. Rounded ends like the bars it replaced (the user's call
-/// over SleepBlock's square ones); no legend, no ticks. The headline already says the minutes lost.
+/// Page 12 as one strip, after SleepBlock's night strip (20 Oct 2026, at the user's request): since
+/// 28 Oct 2026 (no gym-time question; against a 2.5-hour visit "3 min" read as good news) the strip
+/// is their rests in one workout, page 8's strip at workout size: the grey the rest they need, the red
+/// the minutes past it. It sweeps in left to right on the score's clock. Rounded ends; no legend, no
+/// ticks. The headline already says the minutes lost.
 struct WorkStripStage: View {
   let time: TimeBack
   /// The promise page (page 14): the strip starts on page 12's last frame, the red slides out of it,
@@ -898,20 +899,24 @@ struct WorkStripStage: View {
   static let grow = WorkTimeStage.grow, fill = WorkTimeStage.fill
   static let wait = WorkTimeStage.wait, slide = WorkTimeStage.slide
   var body: some View {
-    let gym: Double = time.gym ?? 60, lost: Double = Double(time.shownLost)
-    let part: Double = max(0, min(1, (gym - lost) / max(1, gym)))
-    let gymPart: String = store.t("Your time at the gym") + ", " + store.gymWords(gym) + ". "
-    let workPart: String = store.t("Training") + " " + TimeWords.duration(time.workout) + ". "
-    let phonePart: String = store.t(giveBack ? "Back to you" : "On your phone") + " \(time.shownLost) " + store.t("min")
+    let need: Double = time.neededRest ?? 0, lost: Double = Double(time.shownLost)
+    let part: Double = max(0, min(1, need / max(0.01, need + lost)))
+    let restsPart: String = title + ". "
+    let needPart: String = store.t("Rest you need") + " " + RestStripStage.minutes(need, store) + ". "
+    let phonePart: String = store.t(giveBack ? "Back to you" : "Past your rest") + " \(time.shownLost) " + store.t("min")
     let duration: Double = giveBack ? Self.wait + Self.slide + 0.6 : Self.grow + Self.fill + 0.5
     let score = giveBack ? JourneyScores.giveBack(at: Self.wait, slide: Self.slide) : JourneyScores.lostCount(at: Self.grow, fill: Self.fill, heavy: true)
     SceneClock(duration: duration, score: score, done: done) { t in
-      frame(t, part: part, gym: gym)
+      frame(t, part: part, need: need)
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier(giveBack ? "promise.lanes" : "workout.lanes")
-    .accessibilityLabel(gymPart + workPart + phonePart)
+    .accessibilityLabel(restsPart + needPart + phonePart)
   }
-  private func frame(_ t: Double, part: Double, gym: Double) -> some View {
+  private var title: String {
+    let rests = time.rests ?? 0
+    return rests == 1 ? store.t("Your rest, every workout") : String(format: store.t("Your %@ rests, every workout"), "\(rests)")
+  }
+  private func frame(_ t: Double, part: Double, need: Double) -> some View {
     let grey: Double = giveBack ? part : part * Ease.out(Ease.seg(t, 0, Self.grow))
     let red: Double = giveBack ? 1 - part : (1 - part) * JourneyScores.easeInOut(Ease.seg(t, Self.grow, Self.grow + Self.fill))
     let sweep: Double = grey + red
@@ -920,11 +925,11 @@ struct WorkStripStage: View {
     let after: Double = giveBack ? Ease.out(Ease.seg(t, Self.wait + Self.slide - 0.2, Self.wait + Self.slide + 0.3)) : 0
     let labels: Double = giveBack ? 1 : Ease.out(Ease.seg(t, Self.grow + Self.fill, Self.grow + Self.fill + 0.4))
     let lost = "\(time.shownLost) " + store.t("min")
-    // The labels name the strip's parts, so there's nothing to work out: the whole is their time at
-    // the gym, the grey their workout, the end what the phone takes (or, on the promise, what's back).
+    // The labels name the strip's parts, so there's nothing to work out: the whole is their rests in a
+    // workout, the grey the rest they need, the end what the phone takes past it (or, on the promise, what's back).
     return VStack(alignment: .leading, spacing: 10) {
       Spacer(minLength: 0)
-      Text(String(format: store.t("Your %@ at the gym"), TimeWords.gymShort(gym))).font(.app(.subheadline, weight: .semibold))
+      Text(title).font(.app(.subheadline, weight: .semibold))
         .foregroundStyle(JourneyColor.text)
       GeometryReader { g in
         let w = g.size.width
@@ -942,8 +947,8 @@ struct WorkStripStage: View {
       .frame(height: 22)
       .clipShape(Capsule())
       StripLabels(part: part,
-                  left: (store.t("Training"), TimeWords.duration(time.workout), JourneyColor.text),
-                  right: (store.t("On your phone"), lost, JourneyColor.dangerText),
+                  left: (store.t("Rest you need"), RestStripStage.minutes(need, store), JourneyColor.text),
+                  right: (store.t("Past your rest"), lost, JourneyColor.dangerText),
                   swap: (store.t("Back to you"), lost, JourneyColor.signalText), swapped: after)
         .opacity(labels)
       Spacer(minLength: 0)
@@ -1013,32 +1018,32 @@ struct WorkTimeStage: View {
 
 // MARK: - Page 13: the year, as extra workouts
 
-/// The year's lost hours as workouts of their own length, one dot each, lighting on the score's
-/// ticks and landing on the plate drop.
+/// The year's lost hours as workouts like theirs, one dot each, lighting on the score's ticks and
+/// landing on the plate drop. Since 28 Oct 2026 a workout is sized from their sets and the rest they
+/// need (`TimeBack.ownWorkout`), unless an earlier gym-time answer says how long theirs are.
 struct ExtraWorkoutsStage: View {
   let time: TimeBack
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
   static let fill = 1.8
+  /// One dot a workout, so there's nothing to multiply (28 Oct 2026, at the user's request: "2 workouts a
+  /// dot, about 40 min each" was too much mental math). Only past 400 does a dot stand for several.
+  static func perDot(_ time: TimeBack) -> Int { max(1, Int((Double(max(1, time.extraWorkouts)) / 400).rounded(.up))) }
   var body: some View {
-    let workouts = max(1, time.extraWorkouts)
-    // Up to 120 workouts a dot each; past that each dot stands for several (rounded down, never more dots than workouts).
-    let perDot = max(1, Int((Double(workouts) / 120).rounded(.up))), dots = max(1, workouts / perDot)
+    let workouts = max(1, time.extraWorkouts), perDot = Self.perDot(time), dots = max(1, workouts / perDot)
+    let columns = dots <= 60 ? 10 : dots <= 150 ? 15 : 20
     SceneClock(duration: Self.fill + 0.45, score: JourneyScores.year(fill: Self.fill), done: done) { t in
       let meaning = Ease.out(Ease.seg(t, Self.fill, Self.fill + 0.4))
       VStack(spacing: 18) {
-        WorkoutDots(dots: dots, lit: Double(dots) * JourneyScores.easeInOut(t / Self.fill), columns: dots > 60 ? 12 : 10)
+        WorkoutDots(dots: dots, lit: Double(dots) * JourneyScores.easeInOut(t / Self.fill), columns: columns)
           .frame(maxWidth: JourneyLayout.compact ? 220 : 280).frame(minHeight: 60, maxHeight: .infinity)
           .accessibilityHidden(true)
-        VStack(spacing: 4) {
-          Text(String(format: store.t(time.extraWorkouts == 1 ? "= %@ extra workout" : "= %@ extra workouts"), "\(time.extraWorkouts)"))
-            .font(.app(JourneyLayout.compact ? .title2 : .title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
-            .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.7)
-            .accessibilityIdentifier("year.workouts")
-          Text(perDot == 1 ? String(format: store.t("Each dot is one workout of %@."), store.gymWords(time.gym ?? 60))
-               : String(format: store.t("Each dot is %@ workouts of %@."), "\(perDot)", store.gymWords(time.gym ?? 60)))
-            .font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
-        }.opacity(meaning).offset(y: 8 * (1 - meaning))
+        // What a dot is lives in the page's caption, which comes in with Continue.
+        Text(String(format: store.t(time.extraWorkouts == 1 ? "≈ %@ extra workout" : "≈ %@ extra workouts"), "\(time.extraWorkouts)"))
+          .font(.app(JourneyLayout.compact ? .title2 : .title, weight: .bold)).foregroundStyle(JourneyColor.text).monospacedDigit()
+          .multilineTextAlignment(.center).lineLimit(2).minimumScaleFactor(0.7)
+          .accessibilityIdentifier("year.workouts")
+          .opacity(meaning).offset(y: 8 * (1 - meaning))
       }
     }
   }
