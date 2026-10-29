@@ -1,5 +1,7 @@
 # GymBlock onboarding V8: time back
 
+> **28 Oct 2026 (the user's call):** page 11, "How long are you at the gym?", is gone. Page 12 and the promise show *their rests in one workout*: the rest they need in grey, the minutes past it in red (`WorkStripStage`), with no gym total and no cap. Page 13 is extra workouts again, each a workout like theirs: their sets at 40 s plus the rest they need, up to the nearest 5 min (`TimeBack.ownWorkout`). An earlier gym-time answer is ignored, so the plan page's workout length and the app's own offer bars no longer show. The phone-time wheel (page 7) starts a minute above the rest they need, rounded up. Continue on "Be honest" comes with their answer, not the scene's end. Lost minutes round down to the whole minute, not to 5: the page shows its working (rests × minutes past each, half for "Sometimes"), so 14 must read 14. The "Be honest" answer is recorded but changes nothing: every answer goes on to the phone time, and every rest counts (no half for "Sometimes").
+
 **20 Oct 2026 · Implemented.** Supersedes [ONBOARDING-V7-PLAN.md](ONBOARDING-V7-PLAN.md) for pages 5–14, the offer's headline and bars, the plan's last line and the rest-alert headline. Everything else in V7 is unchanged: the welcome, Sulav's note, the name and days questions, the stage, type, Liquid Glass, compact sizing, the account-before-offer order, the shield and apps pages, splits after the offer. The approved mockups are [docs/onboarding-mockups/time-back.html](onboarding-mockups/time-back.html) (round 2; round 1 is `time-back-round1.html`).
 
 ## Why

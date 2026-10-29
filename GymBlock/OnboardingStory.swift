@@ -233,7 +233,7 @@ struct FounderStage: View {
       Text(store.t("Hey, it’s Sulav."))
       Text(store.t("I used to grab my phone between sets for a “quick” look. Then I’d look up, 10 minutes gone, no idea what set I was on."))
       Text(store.t("I made GymBlock for me first. I still use it every single workout."))
-      Text(store.t("Anyway, hope it helps."))
+      Text(store.t("I hope it helps you too."))
       VStack(alignment: .leading, spacing: 2) {
         Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
         // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in
@@ -513,46 +513,72 @@ struct LockScreenRest: View {
 
 // MARK: - The plan
 
-/// Their answers as a plan: three lines on the paper (four when their workout with rests on time is
-/// known), and the hold to commit.
+/// Their answers as a plan, with one number in big type: their workout with rests on time (the
+/// signal), or how often they train when that isn't known. The rest of the plan sits in grey under
+/// it, then the apps blocked while they train: their real icons, drawn by iOS from the opaque Screen
+/// Time tokens, so GymBlock never learns which apps they are and nothing about them leaves the phone.
+/// With nothing chosen (or blocking left off) it says blocking isn't set up yet. Then the hold to commit.
 struct PlanStage: View {
   var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   @ObservedObject private var blocking = AppBlocking.shared
+  private var compact: Bool { JourneyLayout.compact }
   var body: some View {
-    // The last line finishes settling at 1.05 s (1.25 s with four); the hold appears after it.
-    SceneClock(duration: rows.count > 3 ? 1.3 : 1.1, done: done) { t in
-      VStack(spacing: 18) {
+    let baseline = store.profile.baseline ?? RoutineBaseline()
+    let days = String(format: store.t("%@ days a week"), "\(baseline.trainingDays ?? 4)")
+    let rests = String(format: store.t(store.profile.restAlerts == true ? "%@ rests, then a buzz" : "%@ rests"),
+                       clockString(store.profile.restSeconds ?? 90))
+    let time = TimeBack(baseline, restSeconds: store.profile.restSeconds)
+    // Their workout with rests on time is the one thing in the plan that's new: the signal.
+    // Only from an earlier gym-time answer: it's no longer asked (28 Oct 2026).
+    let workout = time.outcome == .full && time.gym != nil ? store.aboutLine(time.workout) : nil
+    let blocked = !StoreShots.apps.isEmpty || blocking.state(store.profile) == .on
+    // Each part settles in turn, the last at 1.05 s; the hold appears after it.
+    SceneClock(duration: 1.1, done: done) { t in
+      VStack(spacing: 0) {
         Spacer(minLength: 0)
-        VStack(spacing: 0) {
-          ForEach(Array(rows.enumerated()), id: \.offset) { i, row in
-            let k = Ease.out(Ease.seg(t, 0.15 + Double(i) * 0.2, 0.65 + Double(i) * 0.2))
-            VStack(alignment: .leading, spacing: 3) {
-              Text(row.0).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-              // Their workout with rests on time is the one thing in the plan that's new: the signal.
-              Text(row.1).font(.app(JourneyLayout.compact ? .title3 : .title2, weight: .semibold))
-                .foregroundStyle(i == 3 ? JourneyColor.signalText : JourneyColor.text).tracking(-0.3)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, JourneyLayout.compact ? 10 : 15)
-              .overlay(alignment: .top) { Rectangle().fill(JourneyColor.hairline).frame(height: 1) }
-              .opacity(k).offset(y: (1 - k) * 12)
-          }
-          Rectangle().fill(JourneyColor.hairline).frame(height: 1)
-        }
+        VStack(spacing: 4) {
+          Text(store.t(workout == nil ? "Training" : "Each workout")).font(JourneyType.label).foregroundStyle(JourneyColor.secondary)
+          Text(workout ?? days).font(JourneyType.display).tracking(-1).lineLimit(1).minimumScaleFactor(0.6)
+            .foregroundStyle(workout == nil ? JourneyColor.text : JourneyColor.signalText)
+        }.accessibilityElement(children: .combine)
+          .opacity(rise(0, t)).offset(y: (1 - rise(0, t)) * 12)
+        Text(workout == nil ? rests : days + " · " + rests).font(.app(.body)).foregroundStyle(JourneyColor.secondary)
+          .multilineTextAlignment(.center).padding(.top, compact ? 10 : 14)
+          .opacity(rise(1, t)).offset(y: (1 - rise(1, t)) * 12)
+        VStack(spacing: 12) {
+          if blocked { apps }
+          Text(store.t(blocked ? "Blocked while you train" : "Blocked while you train: not set up yet"))
+            .font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+        }.padding(.top, compact ? 36 : 56)
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(blocked ? store.t("Blocked while you train") + ": " + blockedSummary : store.t("Blocked while you train: not set up yet"))
+          .opacity(rise(2, t)).offset(y: (1 - rise(2, t)) * 12)
         Spacer(minLength: 0)
-      }
+      }.frame(maxWidth: .infinity)
     }.accessibilityIdentifier("journey.plan")
   }
-  private var rows: [(String, String)] {
-    let baseline = store.profile.baseline ?? RoutineBaseline()
-    let days = baseline.trainingDays ?? 4
-    let rest = clockString(store.profile.restSeconds ?? 90)
-    let locked = blocking.ready && store.profile.focusEnabled == true
-    let time = TimeBack(baseline, restSeconds: store.profile.restSeconds)
-    return [
-      (store.t("Training"), String(format: store.t("%@ days a week"), "\(days)")),
-      (store.t("While you train"), locked ? String(format: store.t("%@ locked"), blocking.summary(store.t)) : store.t("Rest timer and log")),
-      (store.t("Between sets"), String(format: store.t(store.profile.restAlerts == true ? "%@ rests, then a buzz" : "%@ rests"), rest)),
-    ] + (time.outcome == .full ? [(store.t("Each workout"), store.aboutLine(time.workout))] : [])
+  private func rise(_ i: Int, _ t: Double) -> Double { Ease.out(Ease.seg(t, 0.15 + Double(i) * 0.2, 0.65 + Double(i) * 0.2)) }
+  @ViewBuilder private var apps: some View {
+    let size: CGFloat = compact ? 26 : 30
+    Group {
+      if !StoreShots.apps.isEmpty {
+        // Development only (`-storeShots YES`): the six sample apps, as on the blocking page.
+        HStack(spacing: size * 0.25) {
+          ForEach(StoreShots.apps, id: \.self) { app in
+            Image(app.asset).resizable().scaledToFill().frame(width: size, height: size)
+              .clipShape(RoundedRectangle(cornerRadius: size * 0.235, style: .continuous))
+          }
+        }
+      } else if blocking.apps + blocking.categories > 0 {
+        BlockedIcons(size: size, limit: 6)
+      } else {
+        Text(blocking.summary(store.t)).foregroundStyle(JourneyColor.text)
+      }
+    }.font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+  }
+  private var blockedSummary: String {
+    StoreShots.apps.isEmpty ? blocking.summary(store.t) : "\(StoreShots.apps.count) " + store.t("apps")
   }
 }
 

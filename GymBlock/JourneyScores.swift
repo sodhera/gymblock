@@ -66,6 +66,11 @@ enum JourneyScores {
   static let suckedIn = JourneyScore(haptics: SuckedInStage.pieces.indices.map { .tap(SuckedInStage.swallowed($0), 0.3 + 0.12 * Double($0), 0.25) })
 
   /// A notification arriving on the phone-habit page: the message double tap, no sound.
+  /// A rest's end during a workout with the app open: three full-strength hits, each with a short
+  /// heavy rumble, about a second in all. Unmistakable through a pocket (28 Oct 2026, at the user's request).
+  static let workoutRestUp = JourneyScore(haptics: [0.0, 0.32, 0.64].flatMap { t -> [H] in
+    [.tap(t, 1, 0.7), .swell(t, 0.22, 1, 0.5, 0.35)]
+  })
   static func notification(strength: Double) -> JourneyScore { JourneyScore(haptics: ping(0, strength)) }
 
   /// Welcome: four notifications land, each with the Messages ding and the message double tap; the

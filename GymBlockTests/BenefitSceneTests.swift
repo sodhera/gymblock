@@ -10,24 +10,21 @@ import XCTest
   }
   func testEveryRouteTellsItsOwnStoryThenBlockingThenOffer() {
     let tail: [OnboardingStep] = [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    // Since 28 Oct 2026 the "Be honest" answer changes nothing, and there's no gym-time question.
+    let full: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
+                                  .exerciseCount, .setCount, .workoutTime, .yearTime, .promise]
     for answer in HabitAnswer.allCases {
       var b = example(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
-      XCTAssertEqual(Array(route.suffix(9)), tail)
-      XCTAssertEqual(Array(route.prefix(4)), [.name, .trainingDays, .scrolling, .restNeed])  // One question a page; Sulav's note comes later.
-      XCTAssertEqual(route.contains(.scrollMinutes), answer != .no)
-      XCTAssertEqual(route.contains(.ahead), answer == .no)
-      XCTAssertEqual(route.count, answer == .no ? 14 : 21)  // 22 and 15 pages with the welcome.
+      XCTAssertEqual(route, full + tail, "\(answer)")
+      XCTAssertFalse(route.contains(.gymTime)); XCTAssertFalse(route.contains(.ahead))
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
     XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .founder, .shield])
-    // Sets and the rest they need alone don't fit the gym time: only the per-rest promise.
-    var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
-    XCTAssertEqual(Array(OnboardingRoute.steps(unfit).dropFirst(9).prefix(3)), [.promise, .founder, .shield])
-    // Under five minutes a workout: the number, then on.
-    var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2; small.duration = 45
-    XCTAssertEqual(Array(OnboardingRoute.steps(small).dropFirst(9).prefix(3)), [.workoutTime, .founder, .shield])
+    // A small total still gets the workout, the year (as workouts like theirs) and the promise.
+    var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2
+    XCTAssertEqual(OnboardingRoute.steps(small), full + tail)
     XCTAssertEqual(OnboardingRoute.steps(RoutineBaseline()).last, .firstWorkout)
   }
   func testLogOutKeepsWorkoutsAndDeleteAccountErasesEverything() {
@@ -62,8 +59,10 @@ import XCTest
     let t = TimeBack(example())
     XCTAssertEqual(t.days, 4)
     XCTAssertEqual(t.yearHours, 35.0 * 4 * 52 / 60, accuracy: 0.001)  // 121.3 h
-    XCTAssertEqual(t.shownYear, 120)  // Down to the nearest 10.
-    XCTAssertEqual(t.extraWorkouts, 80)  // 121.3 h ÷ 1.5 h = 80.9, down to the nearest 5.
+    XCTAssertEqual(t.shownYear, 121)  // Down to the whole hour.
+    // A workout like theirs: 15 sets × 40 s + 14 rests × 1.5 min = 31 min, up to 35. The gym answer is ignored.
+    XCTAssertNil(t.gym); XCTAssertEqual(t.ownWorkout, 35)
+    XCTAssertEqual(t.extraWorkouts, 205)  // 121.3 h ÷ 35 min = 208, down to the nearest 5.
     XCTAssertEqual(t.monthHours, 10)
   }
   func testSplitTemplatesUseOnlyCatalogueExercises() {
@@ -123,46 +122,43 @@ import XCTest
     XCTAssertEqual(t.lostPerRest, 2.5)  // 4 − 1.5: the rest they need is never lost.
     XCTAssertEqual(t.sets, 15); XCTAssertEqual(t.rests, 14)
     XCTAssertEqual(t.lost!, 35, accuracy: 0.0001)  // 14 × 2.5
-    XCTAssertEqual(t.shownLost, 35); XCTAssertEqual(t.workout, 55); XCTAssertFalse(t.lostIsAnHour)
+    XCTAssertEqual(t.shownLost, 35); XCTAssertFalse(t.lostIsAnHour)
     XCTAssertEqual(t.outcome, .full); XCTAssertFalse(t.fitted)
-    // Sulav's case: 6 × 4 in 2 hours is "about an hour", back in about 1 h 5 min.
-    var sulav = example(); sulav.exercises = 6; sulav.sets = 4; sulav.duration = 120
+    // Sulav's case: 6 × 4 is "about an hour" (57.5, shown to the whole minute).
+    var sulav = example(); sulav.exercises = 6; sulav.sets = 4
     let s = TimeBack(sulav)
-    XCTAssertEqual(s.lost!, 57.5, accuracy: 0.0001); XCTAssertEqual(s.shownLost, 55); XCTAssertTrue(s.lostIsAnHour); XCTAssertEqual(s.workout, 65)
-    // Sometimes: half the rests.
-    var some = example(); some.scrollFrequency = .sometimes
-    XCTAssertEqual(TimeBack(some).lost!, 17.5, accuracy: 0.0001); XCTAssertEqual(TimeBack(some).shownLost, 15)
+    XCTAssertEqual(s.lost!, 57.5, accuracy: 0.0001); XCTAssertEqual(s.shownLost, 57); XCTAssertTrue(s.lostIsAnHour)
+    // "Be honest" changes nothing: Sometimes and Rarely count every rest too.
+    for answer in [HabitAnswer.sometimes, .no] {
+      var b = example(); b.scrollFrequency = answer
+      XCTAssertEqual(TimeBack(b).lost!, 35, accuracy: 0.0001); XCTAssertEqual(TimeBack(b).outcome, .full)
+    }
     // "Not sure" counts as 2 minutes; without an answer, their rest timer.
     var unsure = example(); unsure.restNeedUnsure = true
     XCTAssertEqual(TimeBack(unsure).restNeed, 2); XCTAssertEqual(TimeBack(unsure).lostPerRest, 2)
     var noAnswer = example(); noAnswer.restNeedSeconds = nil
     XCTAssertEqual(TimeBack(noAnswer, restSeconds: 60).restNeed, 1)
-    // Rarely, or scrolling inside the rest: ahead.
-    var rarely = example(); rarely.scrollFrequency = .no
-    XCTAssertEqual(TimeBack(rarely).outcome, .ahead)
+    // Scrolling inside the rest: ahead.
     var inside = example(); inside.scrollingMinutes = 1
     XCTAssertEqual(TimeBack(inside).lostPerRest, 0); XCTAssertEqual(TimeBack(inside).outcome, .ahead)
-    // Scrolling past the gym time is cut to fit, never more.
+    // An earlier gym-time answer is ignored: nothing is cut to fit it.
     var over = example(); over.scrollingMinutes = 8; over.duration = 60
     let o = TimeBack(over)
-    XCTAssertTrue(o.fitted); XCTAssertEqual(o.lost!, 60 - 10 - 21, accuracy: 0.0001)  // 60 − sets − the rest they need
-    // Sets and needed rest alone past the gym time: no total, never a guess.
-    var unfit = example(); unfit.exercises = 7; unfit.sets = 5; unfit.restNeedSeconds = 120; unfit.scrollingMinutes = 6; unfit.duration = 60
-    XCTAssertNil(TimeBack(unfit).lost); XCTAssertEqual(TimeBack(unfit).outcome, .unfit)
+    XCTAssertFalse(o.fitted); XCTAssertEqual(o.lost!, 14 * 6.5, accuracy: 0.0001)
     // Under ten minutes: small, rounded down (5 rests × ½ min = 2.5, shown as 2).
-    var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2; small.duration = 45
+    var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2
     XCTAssertEqual(TimeBack(small).outcome, .small); XCTAssertEqual(TimeBack(small).shownLost, 2)
     // 5 to 10 minutes is small too now (14 rests × ½ min = 7): no "we'll give you those 5 minutes back".
     var seven = example(); seven.scrollingMinutes = 2
     XCTAssertEqual(TimeBack(seven).outcome, .small); XCTAssertEqual(TimeBack(seven).shownLost, 7)
-    // Every later number comes from the minutes as shown, so the pages agree: 37.8 lost shows 35, and
-    // the year is 35 × 4 × 52, not 37.8 × 4 × 52.
+    // Every later number comes from the minutes as shown, so the pages agree: 37.8 lost shows 37, and
+    // the year is 37 × 4 × 52, not 37.8 × 4 × 52.
     var odd = example(); odd.scrollingMinutes = 4.2; odd.restNeedSeconds = 90
     let o2 = TimeBack(odd)
-    XCTAssertEqual(o2.shownLost, 35); XCTAssertEqual(o2.yearHours, 35.0 * 4 * 52 / 60, accuracy: 0.001); XCTAssertEqual(o2.workout, 55)
-    // Under an hour a month, nothing to round to.
+    XCTAssertEqual(o2.shownLost, 37); XCTAssertEqual(o2.yearHours, 37.0 * 4 * 52 / 60, accuracy: 0.001)
+    // Once a week: 14 rests × 1 min = 14 a workout, an hour a month.
     var once = example(); once.scrollingMinutes = 2.5; once.trainingDays = 1
-    XCTAssertEqual(TimeBack(once).shownLost, 10); XCTAssertEqual(TimeBack(once).monthHours, 0)
+    XCTAssertEqual(TimeBack(once).shownLost, 14); XCTAssertEqual(TimeBack(once).monthHours, 1)
     // Unanswered: open.
     XCTAssertEqual(TimeBack(RoutineBaseline()).outcome, .open)
   }

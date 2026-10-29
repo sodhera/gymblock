@@ -47,7 +47,6 @@ import SwiftUI
           if b.restNeedSeconds == nil { b.restNeedSeconds = 90; b.restNeedUnsure = false }
           if b.exercises == nil { b.exercises = 5 }
           if b.sets == nil { b.sets = 3 }
-          if b.duration == nil { b.duration = 90 }
           if b.trainingDays == nil { b.trainingDays = 4 }
           // Other paths: `-journeyFrequency no|sometimes`, `-journeyScroll 1`, `-journeyExercises 6`,
           // `-journeySets 4`, `-journeyGym 120`, `-journeyRest 120`.
@@ -103,7 +102,9 @@ import SwiftUI
     RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
       .tint(GymColor.ink).foregroundStyle(GymColor.ink)
       // Widget and control routes by host; the sign-in callback (gymblock://auth/callback) isn't one.
+      // The paywall's Sign out link is the paywall's own (RemotePaywall).
       .onOpenURL { url in
+        if url == AppConfig.paywallSignOut { return }
         if AppRoute(url: url) != nil { AppRouter.shared.openURL(url) } else { account.handle(url) }
       }
       .task { wire() }

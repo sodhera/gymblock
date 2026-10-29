@@ -106,10 +106,13 @@ struct TimeBack: Equatable {
   init(_ b: RoutineBaseline, restSeconds: Int? = nil) {
     if b.restNeedUnsure == true { restNeed = Self.unsureRest }
     else if let s = b.restNeedSeconds ?? restSeconds, s > 0 { restNeed = Double(s) / 60 }
-    share = b.scrollFrequency == .no ? 0 : b.scrollFrequency == .sometimes ? 0.5 : 1
-    scrolling = b.scrollFrequency == .no ? 0 : b.scrollingMinutes.flatMap { $0 > 0 ? $0 : nil }
+    // The "Be honest" answer changes nothing since 28 Oct 2026 (the user's call): every rest counts.
+    share = 1
+    scrolling = b.scrollingMinutes.flatMap { $0 > 0 ? $0 : nil }
     exercises = b.exercises; setsEach = b.sets
-    gym = b.duration.map(Double.init)
+    // An earlier gym-time answer is ignored since 28 Oct 2026, so everyone's numbers come from the same
+    // questions (`gym` stays nil; the code that used it is kept only behind that nil).
+    gym = nil
     days = min(7, max(1, b.trainingDays ?? 4))
   }
 
@@ -144,27 +147,32 @@ struct TimeBack: Equatable {
     guard let gym, let lifting, let neededRest else { return nil }
     return gym - lifting - neededRest
   }
-  /// Minutes lost a workout, never more than their gym time leaves room for.
+  /// Minutes lost a workout, never more than their gym time leaves room for. The gym time isn't asked
+  /// since 28 Oct 2026 (the user's call): without one it's their own answers multiplied out, uncapped.
   var lost: Double? {
-    guard let rawLost, let room, room > 0 else { return nil }
-    return min(rawLost, room)
+    guard let rawLost else { return nil }
+    guard let room else { return rawLost }
+    return room > 0 ? min(rawLost, room) : nil
   }
   /// Whether the answers ran past their gym time and the lost minutes were cut to fit.
   var fitted: Bool { (rawLost ?? 0) > (room ?? .infinity) + 1e-9 }
 
   var outcome: Outcome {
     if share == 0 || lostPerRest == 0 { return .ahead }
-    guard lostPerRest != nil, gym != nil, sets != nil else { return .open }
+    guard lostPerRest != nil, sets != nil else { return .open }
     guard let lost else { return .unfit }
     return lost < Self.smallLoss ? .small : .full
   }
   static let smallLoss = 10.0
+  /// Told per rest, not per workout: an earlier gym-time answer their sets and rest don't fit.
+  var perRestOnly: Bool { outcome == .unfit }
 
-  /// The lost minutes as shown: down to the nearest 5, or down to the whole minute (at least 1)
-  /// under 10. Every later number is multiplied from this one, so the pages agree.
+  /// The lost minutes as shown: down to the whole minute (at least 1), so the page's own working adds
+  /// up (28 Oct 2026, at the user's request: 14 rests × 2 min × ½ showed as 10, down to the nearest 5).
+  /// Every later number is multiplied from this one, so the pages agree.
   var shownLost: Int {
     guard let lost else { return 0 }
-    return lost < Self.smallLoss ? max(1, Int(lost)) : Int(lost / 5) * 5
+    return max(1, Int(lost))
   }
   /// "about an hour" reads truer than 55 or 65.
   var lostIsAnHour: Bool { (55...65).contains(shownLost) }
@@ -174,12 +182,21 @@ struct TimeBack: Equatable {
     return Int(((gym - Double(shownLost)) / 5 - 1e-9).rounded(.up)) * 5
   }
   var yearHours: Double { lost == nil ? 0 : Double(shownLost) * Double(days) * 52 / 60 }
-  /// Down to the nearest 10 hours from 20 up.
-  var shownYear: Int { yearHours >= 20 ? Int(yearHours / 10) * 10 : Int(yearHours.rounded(.down)) }
-  /// The year's lost hours as workouts of their own length, down to the nearest 5 from 20 up.
+  /// Down to the whole hour, like the minutes (28 Oct 2026; it was the nearest 10 from 20 up).
+  var shownYear: Int { Int(yearHours.rounded(.down)) }
+  /// A workout like theirs with every rest on time: their sets at the old 40 s each plus the rest they
+  /// need, up to the nearest 5 minutes so the extra workouts never come out more (28 Oct 2026: the gym
+  /// time that sized them isn't asked any more; warm-ups aren't counted).
+  var ownWorkout: Int? {
+    guard let lifting, let neededRest, lifting + neededRest > 0 else { return nil }
+    return max(5, Int(((lifting + neededRest) / 5).rounded(.up)) * 5)
+  }
+  /// How long the year's workouts are: one like theirs.
+  var workoutLength: Double? { gym ?? ownWorkout.map(Double.init) }
+  /// The year's lost hours as workouts of that length, down to the nearest 5 from 20 up.
   var extraWorkouts: Int {
-    guard let gym, gym > 0 else { return 0 }
-    let n = Int(yearHours * 60 / gym)
+    guard let length = workoutLength, length > 0 else { return 0 }
+    let n = Int(yearHours * 60 / length)
     return n >= 20 ? n / 5 * 5 : n
   }
   /// Hours back a month, down to the hour (0 says nothing: the offer leaves the line out).

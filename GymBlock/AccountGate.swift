@@ -1,3 +1,5 @@
+import RevenueCat
+import RevenueCatUI
 import SwiftUI
 import UserNotifications
 
@@ -100,7 +102,8 @@ struct AccountNoticeView: View {
 /// and a quiet row for Restore, the documents and Sign out. A wall by design — subscribing,
 /// restoring or signing out are the ways off it (Debug builds with no product configured get a
 /// labelled skip, never Release). Prices, the struck-through anchor and the saving all come from
-/// the store; nothing here is a pretend price.
+/// the store; nothing here is a pretend price. Once the current offering has a paywall built in
+/// RevenueCat's dashboard (28 Oct 2026, at the user's request), that shows instead (`RemotePaywall`).
 struct PaywallView: View {
   @ObservedObject var subscription: GymSubscription
   let skip: () -> Void
@@ -109,6 +112,32 @@ struct PaywallView: View {
   @Environment(\.dynamicTypeSize) private var typeSize
 
   var body: some View {
+    Group {
+      if subscription.remote == true {
+        RemotePaywall(subscription: subscription, variables: variables, signOut: account.user == nil ? nil : signOut)
+      } else if subscription.configured && subscription.remote == nil && subscription.message == nil {
+        // The store hasn't said which paywall yet: the bare stage, so neither one flashes.
+        DotGrid()
+      } else {
+        offer
+      }
+    }
+    .task { await subscription.load() }
+  }
+
+  /// The person's own numbers for the dashboard paywall's text: {{ custom.phone_minutes }},
+  /// {{ custom.workout_minutes }}, {{ custom.gym_minutes }}. Defined in the dashboard with fallbacks; phone
+  /// minutes only when their phone runs past their rest. No headline: the dashboard paywall always says
+  /// "Get your time back." (28 Oct 2026, at the user's request), so their name isn't sent either.
+  private var variables: [String: CustomVariableValue] {
+    var values: [String: CustomVariableValue] = [:]
+    // Gym time is no longer asked (28 Oct 2026): these come only from an earlier answer.
+    if let gym = time.gym { values["gym_minutes"] = .number(gym.rounded(.down)); values["workout_minutes"] = .number(Double(time.workout)) }
+    if time.outcome == .full || time.outcome == .small { values["phone_minutes"] = .number(Double(time.shownLost)) }
+    return values
+  }
+
+  private var offer: some View {
     ZStack {
       DotGrid()
       VStack(spacing: 0) {
@@ -122,7 +151,7 @@ struct PaywallView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
               Spacer(minLength: 20).frame(maxHeight: 32)
-              if time.outcome == .full {
+              if time.outcome == .full && time.gym != nil {
                 TwoWays(time: time)
                 Spacer(minLength: 20).frame(maxHeight: 32)
               }
@@ -151,7 +180,6 @@ struct PaywallView: View {
     }
     .foregroundStyle(JourneyColor.text)
     .animation(JourneyMotion.gentle, value: subscription.plans)
-    .task { await subscription.load() }
     .track(screen: "paywall")
   }
 
@@ -280,6 +308,59 @@ struct PaywallView: View {
       await subscription.identify(nil)
       store.deleteAccount()
     }
+  }
+}
+
+/// The offer as built in RevenueCat's dashboard (Paywalls): its words, layout and plans change there,
+/// without a release. Still a wall: no close button. Sign out, the way off for the wrong account, sits
+/// in the paywall's footer row beside Terms · Privacy · Restore as a deep link to
+/// `AppConfig.paywallSignOut`, caught here without iOS ever opening it (28 Oct 2026, at the user's
+/// request; it was overlaid in the top corner). Every purchase reports as the app's own page does.
+private struct RemotePaywall: View {
+  @ObservedObject var subscription: GymSubscription
+  let variables: [String: CustomVariableValue]
+  var signOut: (() -> Void)?
+  @EnvironmentObject private var store: GymStore
+  /// What Restore found when it found nothing, or failed: RevenueCat's newer paywalls say nothing, and a
+  /// silent button reads as broken (28 Oct 2026). A restore that finds Pro just opens the app.
+  @State private var restoreNote: String?
+  var body: some View {
+    RevenueCatUI.PaywallView(displayCloseButton: false)
+      .customPaywallVariables(variables)
+      .onPurchaseStarted { (package: Package) in subscription.remoteStarted(package) }
+      .onPurchaseCompleted { (_: StoreTransaction?, info: CustomerInfo) in subscription.remotePurchased(info) }
+      .onPurchaseCancelled { subscription.remoteCancelled() }
+      .onPurchaseFailure { subscription.remoteFailed($0) }
+      .onRestoreCompleted { info in
+        subscription.remoteRestored(info)
+        if !subscription.hasAccess { restoreNote = "No active GymBlock subscription was found." }
+      }
+      .onRestoreFailure { Analytics.error("restore", $0); restoreNote = "Could not restore purchases. Please try again." }
+      .alert(store.t("Restore purchases"), isPresented: Binding(get: { restoreNote != nil }, set: { if !$0 { restoreNote = nil } })) {
+        Button(store.t("OK"), role: .cancel) { JourneyHaptic.pressLight() }
+      } message: { Text(store.t(restoreNote ?? "")) }
+      // The app's haptics on the dashboard paywall too (28 Oct 2026, at the user's request): RevenueCat
+      // reports each tap. Only a plan change has a feedback of its own, iOS's faint selection tick, which
+      // neither the dashboard nor the SDK can turn off; the app's firmer tap lands with it.
+      .onPaywallInteraction { event in
+        typealias Kind = PaywallInteractionEvent.ComponentTypes
+        switch event.property(for: PaywallInteractionEvent.Keys.componentType) {
+        case Kind.purchaseButton: JourneyHaptic.press()
+        case Kind.package, Kind.tab, Kind.switch: JourneyHaptic.play(.selection, store.profile)
+        case Kind.carousel: JourneyHaptic.tick()  // Only a swipe of theirs, never the carousel's own turn.
+        case Kind.button, Kind.text: JourneyHaptic.pressLight()
+        default: break
+        }
+      }
+      // RevenueCat opens a button's link through `openURL`, so Sign out is caught here, before iOS would
+      // hand gymblock:// to whichever installed app claims the scheme (an older copy did, 28 Oct 2026).
+      .environment(\.openURL, OpenURLAction { url in
+        guard url == AppConfig.paywallSignOut else { return .systemAction }
+        Analytics.tap("subscription.signOut")
+        signOut?()
+        return .handled
+      })
+      .track(screen: "paywall.remote")
   }
 }
 

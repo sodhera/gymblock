@@ -210,6 +210,8 @@ struct LocalData: Codable {
   }
   private var scheduledRest: Date?
   private var scheduledIdle: Date?
+  private var scheduledBuzz: Date?
+  private var buzz: Task<Void, Never>?
   /// One pending "rest's up" notification, rescheduled whenever a rest starts or its length changes,
   /// and removed when it ends. A second one reminds you if a workout is left running.
   private func syncRestAlert() {
@@ -217,6 +219,23 @@ struct LocalData: Codable {
     // A paused rest never says "rest's up"; resuming reschedules it from the shifted start.
     let rest = profile.restAlerts == true && data.session?.stage == .rest && data.session?.pausedAt == nil
       ? data.session?.restStarted?.addingTimeInterval(target) : nil
+    // With the app open there's no notification, so the rest ending is felt here: a strong buzz, whether
+    // or not rest alerts are on (28 Oct 2026, at the user's request: it should feel strong).
+    let end = data.session?.stage == .rest && data.session?.pausedAt == nil
+      ? data.session?.restStarted?.addingTimeInterval(target) : nil
+    if end != scheduledBuzz {
+      scheduledBuzz = end
+      buzz?.cancel()
+      buzz = end.map { end in
+        Task { [weak self] in
+          let wait = end.timeIntervalSinceNow
+          guard wait > 0 else { return }
+          try? await Task.sleep(for: .seconds(wait))
+          guard !Task.isCancelled, let self, self.scheduledBuzz == end, UIApplication.shared.applicationState == .active else { return }
+          JourneyScorePlayer.shared.play(JourneyScores.workoutRestUp, profile: self.profile)
+        }
+      }
+    }
     if rest != scheduledRest {
       scheduledRest = rest
       if let rest {

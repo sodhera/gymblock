@@ -3,8 +3,10 @@ import RevenueCat
 import SwiftUI
 
 /// GymBlock Pro through RevenueCat, keyed to the Supabase account id so purchases follow the
-/// account. Two plans: monthly and yearly. Nothing here is faked: with no API key configured,
-/// the offer page shows that and the (Debug-only) skip, never a pretend price.
+/// account. When the current offering has a paywall built in RevenueCat's dashboard, that is the
+/// offer (any plans, changed without a release); otherwise the app's own page offers monthly and
+/// yearly. Nothing here is faked: with no API key configured, the offer page shows that and the
+/// (Debug-only) skip, never a pretend price.
 @MainActor final class GymSubscription: ObservableObject {
   struct Plan: Identifiable, Equatable {
     let id: String
@@ -31,10 +33,14 @@ import SwiftUI
   /// True once RevenueCat has answered for the signed-in account (not the anonymous one it starts as).
   /// The paywall gate waits for this, so a subscriber never sees the offer flash on launch.
   @Published private(set) var resolved = false
+  /// Whether the current offering has a dashboard paywall; nil until the store has answered.
+  @Published private(set) var remote: Bool?
   /// Called with each entitlement change (the cloud keeps a snapshot).
   var onEntitlement: ((CustomerInfo) -> Void)?
 
   private var packages: [String: Package] = [:]
+  /// The package the dashboard paywall is buying, from its start callback to its result.
+  private var pending: Package?
   private var stream: Task<Void, Never>?
   private var userID: UUID?
 
@@ -95,6 +101,7 @@ import SwiftUI
     do {
       let offerings = try await Purchases.shared.offerings()
       guard let current = offerings.current else { message = "The subscription is unavailable. Try again later."; return }
+      remote = current.hasPaywall
       var found: [Plan] = []
       var amounts: [String: Decimal] = [:]
       var formatters: [String: NumberFormatter] = [:]
@@ -160,18 +167,7 @@ import SwiftUI
       let result = try await Purchases.shared.purchase(package: package)
       apply(result.customerInfo)
       if result.userCancelled { Analytics.track("purchase_cancelled", ["product": plan.id]); return }
-      // RevenueCat's answer, not the plan's advert: someone who already had a trial pays at once.
-      let trial = result.customerInfo.entitlements[AppConfig.entitlement]?.periodType == .trial
-      Analytics.track(hasAccess ? "purchase_completed" : "purchase_unverified", ["product": plan.id, "trial": trial])
-      if hasAccess {
-        GymTikTok.reportPurchase(price: package.storeProduct.price, currency: package.storeProduct.currencyCode, trial: trial)
-      }
-      if hasAccess, plan.trialDays > 0 {
-        let spanish = GymStore.live?.profile.language == "es"
-        RestAlert.scheduleTrialReminder(trialDays: plan.trialDays, price: plan.price + (plan.yearly ? (spanish ? "/año" : "/year") : (spanish ? "/mes" : "/month")),
-                                        spanish: spanish)
-      }
-      if !hasAccess { message = "Your subscription could not be verified. Restore purchases to try again." }
+      completed(result.customerInfo, package: package)
     } catch {
       if let code = ErrorCode(rawValue: (error as NSError).code), code == .purchaseCancelledError {
         Analytics.track("purchase_cancelled", ["product": plan.id]); return
@@ -179,6 +175,59 @@ import SwiftUI
       Analytics.error("purchase", error)
       message = "The purchase could not be completed. Please try again."
     }
+  }
+
+  /// After a purchase from either paywall: the analytics, the TikTok event and the trial reminder.
+  private func completed(_ info: CustomerInfo, package: Package) {
+    apply(info)
+    let product = package.storeProduct
+    // RevenueCat's answer, not the plan's advert: someone who already had a trial pays at once.
+    let trial = info.entitlements[AppConfig.entitlement]?.periodType == .trial
+    Analytics.track(hasAccess ? "purchase_completed" : "purchase_unverified", ["product": product.productIdentifier, "trial": trial])
+    guard hasAccess else { message = "Your subscription could not be verified. Restore purchases to try again."; return }
+    GymTikTok.reportPurchase(price: product.price, currency: product.currencyCode, trial: trial)
+    if trial, let days = product.introductoryDiscount.flatMap({ $0.paymentMode == .freeTrial ? Self.days($0.subscriptionPeriod) : nil }),
+       days > 0, let period = product.subscriptionPeriod {
+      let spanish = GymStore.live?.profile.language == "es"
+      let price = product.priceFormatter?.string(from: product.price as NSDecimalNumber) ?? product.localizedPriceString
+      RestAlert.scheduleTrialReminder(trialDays: days, price: price + Self.per(period, spanish: spanish), spanish: spanish)
+    }
+  }
+
+  /// "/week", "/month", "/year" after a price, for whichever period the plan bills.
+  private static func per(_ period: SubscriptionPeriod, spanish: Bool) -> String {
+    switch period.unit {
+    case .day: return spanish ? "/día" : "/day"
+    case .week: return spanish ? "/semana" : "/week"
+    case .month: return spanish ? "/mes" : "/month"
+    case .year: return spanish ? "/año" : "/year"
+    @unknown default: return ""
+    }
+  }
+
+  // MARK: Dashboard paywall
+  // RevenueCatUI buys and restores by itself; these keep the same events as the app's own page.
+
+  func remoteStarted(_ package: Package) {
+    pending = package
+    Analytics.track("purchase_started", ["product": package.storeProduct.productIdentifier])
+  }
+  func remotePurchased(_ info: CustomerInfo) {
+    guard let package = pending else { apply(info); return }
+    pending = nil
+    completed(info, package: package)
+  }
+  func remoteCancelled() {
+    Analytics.track("purchase_cancelled", ["product": pending?.storeProduct.productIdentifier])
+    pending = nil
+  }
+  func remoteFailed(_ error: NSError) {
+    pending = nil
+    Analytics.error("purchase", error)
+  }
+  func remoteRestored(_ info: CustomerInfo) {
+    apply(info)
+    Analytics.track("restore", ["entitled": hasAccess])
   }
 
   func restore() async {

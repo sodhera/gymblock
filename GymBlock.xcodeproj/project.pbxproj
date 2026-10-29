@@ -58,6 +58,7 @@
 		62CBE6773A80A3BF81C2A9EB /* WidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AF874D37EAE2CE9D131821 /* WidgetSync.swift */; };
 		666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D599A2899F5D63D89F8AEF /* Navigation.swift */; };
 		68D56E6C4D6BF0A849BA9EA1 /* HomeScoreboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */; };
+		6A8784286D5937D02C6D4AC6 /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */; };
 		6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */; };
 		6EB48FEF58CDA08FE4A6B872 /* PaperPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D249BEACC2D4D01A2851C6 /* PaperPalette.swift */; };
 		6ED0D48C2E26181BAE08E20A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0491260DABCDC82C1A16CB7A /* PrivacyInfo.xcprivacy */; };
@@ -69,7 +70,7 @@
 		76ABAE6ED1815FC1EC449BE1 /* GymTikTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = D895630CACC99C3E69FB9E04 /* GymTikTok.swift */; };
 		78A8AB1188CDF53BBEBD5BDC /* KettlebellShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542B989D575193E1A499079C /* KettlebellShape.swift */; };
 		78E4F549B07E1041367B45B6 /* PassMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FC5D30A2F43C1253BB9C4A /* PassMonitor.swift */; };
-		7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */; };
+		7A16F3E362F742A9132C8C18 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 6E814F0487D730E22574775B /* PostHog */; };
 		7A8EE23A965C7414FAE60F22 /* AppFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13708927DF8625DAA082C6E0 /* AppFont.swift */; };
 		7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD5009E70EBA3A94854B117 /* JourneyArt.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
@@ -87,7 +88,7 @@
 		903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */; };
 		9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */; };
 		9794E2815C8B3767516E32C3 /* HeroFit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6299BDCE650025D0151AA37 /* HeroFit.swift */; };
-		9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 6E814F0487D730E22574775B /* PostHog */; };
+		9863FB3C2F09DAC82E691523 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = B589C9391DEDC819E9332959 /* RevenueCatUI */; };
 		9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */; };
 		A5175DB659262FC118796C43 /* StoreShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2130D53C7B23982C9EB33C3 /* StoreShots.swift */; };
 		A6457A9FEE6986E494012874 /* OnboardingJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */; };
@@ -336,8 +337,9 @@
 			files = (
 				CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */,
 				A882C6D05F1882A29FC8F39E /* RevenueCat in Frameworks */,
-				9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */,
-				7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */,
+				9863FB3C2F09DAC82E691523 /* RevenueCatUI in Frameworks */,
+				7A16F3E362F742A9132C8C18 /* PostHog in Frameworks */,
+				6A8784286D5937D02C6D4AC6 /* TikTokBusinessSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -717,6 +719,7 @@
 			packageProductDependencies = (
 				555664B1919E662754553AF5 /* Supabase */,
 				95E41EDD1C17E277943D7AA0 /* RevenueCat */,
+				B589C9391DEDC819E9332959 /* RevenueCatUI */,
 				6E814F0487D730E22574775B /* PostHog */,
 				D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */,
 			);
@@ -1060,14 +1063,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockShieldAction/GymBlockShieldAction.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockShieldAction/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sodhera.gymblock.shield-action";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1148,7 +1151,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				EXCLUDED_SOURCE_FILE_NAMES = StoreShots.xcassets;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GymBlock/Info.plist;
@@ -1158,7 +1161,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1169,14 +1172,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockLive/GymBlockLive.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockLive/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.live;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1189,14 +1192,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockShield/GymBlockShield.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockShield/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.shield;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1211,7 +1214,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = GymBlock/GymBlock.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = GymBlock/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GymBlock;
@@ -1220,7 +1223,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1231,14 +1234,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockShield/GymBlockShield.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockShield/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.shield;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1326,14 +1329,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockShieldAction/GymBlockShieldAction.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockShieldAction/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.sodhera.gymblock.shield-action";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1362,14 +1365,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockLive/GymBlockLive.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockLive/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.live;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1399,14 +1402,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockMonitor/GymBlockMonitor.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockMonitor/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.monitor;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1435,14 +1438,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = GymBlockMonitor/GymBlockMonitor.entitlements;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				INFOPLIST_FILE = GymBlockMonitor/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sodhera.gymblock.monitor;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -1577,6 +1580,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
+		};
+		B589C9391DEDC819E9332959 /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
 		};
 		D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */ = {
 			isa = XCSwiftPackageProductDependency;
