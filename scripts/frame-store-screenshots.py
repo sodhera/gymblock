@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Frames App Store screenshots for the 6.9-inch (1320x2868) and 6.3-inch (1206x2622) slots.
+"""Frames App Store screenshots for the 6.9-inch (1320x2868), 6.3-inch (1206x2622) and 6.1-inch
+(1179x2556) slots, one image per slide.
 
 Principles: the caption must read at search-result size (about a sixth of full size), so it is
-large, bold and at most two lines; one word per headline in red and no other colour; a deep blue
-stage so the app's light screens stand out; a thick phone with a titanium rim and side buttons so the
-device reads at a glance; the same phone size and position on every slide; the phone runs off the
+large, bold and at most two lines. Since 23 Oct 2026 (at the user's request: the blue stage and red
+words didn't match the icon) the slides wear the icon's colours: an ink stage (the kettlebell's black) with
+white type and one word in the keyhole's emerald, picked that day from ink, emerald and paper. The
+phone is Apple's own iPhone 18 Pro Max frame (see BEZEL_DIR), with a drawn phone as a fallback. The same phone size and position on every slide; the phone runs off the
 bottom edge, cut above each screen's bottom button.
 
     python3 scripts/frame-store-screenshots.py
     python3 scripts/frame-store-screenshots.py --custom-pages
 
-Reads screenshots/store-2026-10-20/, writes screenshots/store-final/6.9/ and store-final/6.3/.
-Both slots have the same shape, so the 6.3-inch set is the 6.9-inch frame scaled down.
+Reads screenshots/store-2026-10-20/ (and the newer captures named by path), writes
+screenshots/store-final/6.9/, 6.3/ and 6.1/. The 6.3-inch set is the 6.9-inch frame scaled down;
+the 6.1-inch one is scaled to its width and trimmed at the foot, where the phone runs off the edge.
 --custom-pages writes the custom product pages (docs/listing.md#custom-product-pages) instead: one
 folder per page under screenshots/store-cpp/, numbered in upload order, with an overview strip.
 """
@@ -26,22 +29,54 @@ SRC = os.path.join(ROOT, "screenshots", "store-2026-10-20")
 OUT = os.path.join(ROOT, "screenshots", "store-final")
 
 W, H = 1320, 2868
-STAGE_TOP = (20, 44, 92)
-STAGE_BOTTOM = (7, 17, 40)
-TEXT = (255, 255, 255)
-SECONDARY = (184, 202, 232)
-RED = (255, 77, 66)
-GLOW = (58, 120, 255)
-RIM = (92, 92, 98)
-RIM_EDGE = (140, 140, 146)
-BODY = (8, 8, 9)
+# Stages in the icon's colours (paper, ink, emerald). `top`/`bottom` are the stage's gradient, `glow`
+# the light behind the phone, then the headline, its one accent word, the second line and the shadow.
+STYLES = {
+    "paper": dict(top=(245, 243, 239), bottom=(245, 243, 239), glow=((255, 230, 190), 120), text=(20, 20, 22),
+                  accent=(15, 154, 107), sub=(110, 108, 104), shadow=((60, 50, 40), 0.28)),
+    # The kettlebell's ink, with the keyhole's emerald (brightened to read on black).
+    "ink": dict(top=(30, 30, 33), bottom=(8, 8, 9), glow=((15, 154, 107), 70), text=(255, 255, 255),
+                accent=(46, 214, 150), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    # The keyhole's emerald, deepened, with the icon's paper and ink.
+    "emerald": dict(top=(16, 128, 90), bottom=(5, 52, 37), glow=((90, 230, 170), 70), text=(255, 255, 255),
+                    accent=(20, 20, 22), sub=(196, 236, 218), shadow=((0, 20, 12), 0.5)),
+    # Yellow for the eye at search-result size (23 Oct 2026, trial): the gym's black and yellow.
+    "ink-yellow": dict(top=(30, 30, 33), bottom=(8, 8, 9), glow=((255, 214, 10), 34), text=(255, 255, 255),
+                       accent=(255, 214, 10), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    # The accent word in ink on a yellow highlighter swipe.
+    # Option 1 with the app's green in it (23 Oct 2026): an emerald glow behind the phone ...
+    "ink-yellow-glow": dict(top=(30, 30, 33), bottom=(8, 8, 9), glow=((15, 154, 107), 120), text=(255, 255, 255),
+                            accent=(255, 214, 10), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    # ... or the ink fading into deep emerald towards the foot, with the same glow.
+    "ink-yellow-deep": dict(top=(26, 28, 27), bottom=(3, 52, 36), glow=((15, 154, 107), 110), text=(255, 255, 255),
+                            accent=(255, 214, 10), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    "ink-highlight": dict(top=(30, 30, 33), bottom=(8, 8, 9), glow=((255, 214, 10), 34), text=(255, 255, 255),
+                          accent=(20, 20, 22), highlight=(255, 214, 10), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    "emerald-yellow": dict(top=(16, 128, 90), bottom=(5, 52, 37), glow=((255, 230, 120), 50), text=(255, 255, 255),
+                           accent=(255, 214, 10), sub=(196, 236, 218), shadow=((0, 20, 12), 0.5)),
+}
+STYLE = "ink-yellow-deep"  # chosen 23 Oct 2026: ink into emerald, a yellow word (after ink, emerald and paper)
 
-# Headline, the red word, second line, capture.
+# Apple's own iPhone frame (Bezel-iPhone-18.dmg from developer.apple.com/design/resources, under the
+# Apple Design Resources license: used here only to show the app, never redistributed, so the PNGs
+# are git-ignored in scripts/bezels/). Its screen opening is 1320 × 2868 at (75, 66), the captures'
+# own size, and it carries the Dynamic Island. Without the file, the drawn phone below stands in.
+BEZEL_DIR = os.path.join(ROOT, "scripts", "bezels")
+BEZEL_COLOUR = "Silver"
+BEZEL_SCREEN = (75, 66, 1320, 2868)
+RIM = (58, 58, 62)
+RIM_EDGE = (128, 128, 134)
+BODY = (6, 6, 7)
+
+# Headline, the accent word, second line (none since 23 Oct 2026, at the user's request), capture.
 SLIDES = [
-    # Slide 1 is onboarding's welcome (20 Oct 2026, at the user's request): the locked phone and the arm.
-    ("Stop scrolling in the gym", "scrolling", "Block apps", "0-welcome.png"),
-    ("Track your workouts", "workouts", "Time your rests", "2-workout-rest.png"),
-    ("Plan your progress", "progress", "Stay motivated", "3-home.png"),
+    # Slide 1 is real blocking (23 Oct 2026, at the user's request): Sulav's own Home Screen mid-workout,
+    # the chosen apps dimmed under Screen Time's hourglass, GymBlock bright, the rest in the Dynamic
+    # Island. Status bar cleaned to 9:41 and a full battery (store-2026-10-23/blocked-home-original.png
+    # is the untouched capture).
+    ("Stop scrolling in the gym", "scrolling", None, "../store-2026-10-23/blocked-home.png"),
+    ("Track your workouts", "workouts", None, "2-workout-rest.png"),
+    ("Plan your progress", "progress", None, "3-home.png"),
     ("Beat your record", "record", None, "4-squat-record.png"),
     ("Keep your streak alive", "streak", None, "5-profile-month.png"),
 ]
@@ -52,6 +87,9 @@ SLIDES = [
 # the activity's Start set button; the two Profile cards lift a different part of the screen.
 LOCK = "../store-2026-10-17/rest-lock-screen.png"
 NEW_SLIDES = {
+    # The shield iOS shows over a blocked app, GymBlock's design rebuilt for the simulator (`-shieldPreview TikTok`).
+    "shield": dict(headline="TikTok? Not mid-workout", accent="Not", sub=None,
+                   capture="../store-2026-10-22/shield-tiktok.png"),
     "reels": dict(headline="Block reels between sets", accent="reels", sub="Shorts and feeds too",
                   capture="1-blocking-apps.png"),
     "rest": dict(headline="Rest on your Lock Screen", accent="Rest", sub="No unlocking, no scrolling",
@@ -73,6 +111,25 @@ NEW_SLIDES = {
     "streak": dict(headline="Never miss gym day", accent="gym", sub="Your streak, week by week",
                    capture="5-profile-month.png", popout=((48, 440, 1272, 1130), 1.1)),
 }
+
+# The default page: real blocking, the shield, then the workout, plans, records and the streak.
+DEFAULT = [1, "shield", 2, 3, 4, 5]
+
+# Real cards lifted out of the phone, Bumble-style (23 Oct 2026, at the user's request), only where the
+# app has a self-contained card: the box in capture pixels. Drawn as a card of the screen's own colour,
+# a little wider than the phone, with padding, round corners and a soft shadow; the phone stays undimmed.
+# Behind a card the screen is blurred, so the card is the only sharp thing on the phone (23 Oct 2026).
+# A fifth number is the padding (default 44).
+CARDS = {
+    # The locked apps, as a pane of the Home Screen's own wallpaper (no padding: the wallpaper is the card).
+    1: (14, 222, 1165, 812, 0),
+    2: (40, 365, 1290, 1070),            # Bench press: a set done, the rest counting down, the next set
+    "shield": (60, 600, 1260, 1500),     # "You're mid-workout." and Back to training
+    3: (40, 805, 1290, 1390),            # the strength chart
+    4: (40, 505, 1280, 1060),            # before → after, +20 kg
+    5: (48, 450, 1272, 1120),            # the month of training days
+}
+USE_CARDS = True
 
 # Upload order per page: a NEW_SLIDES key, or a slide number from SLIDES. Most pages open with the
 # welcome (slide 1) and then their own card (20 Oct 2026, at the user's request); PR tracker, Rest
@@ -104,16 +161,38 @@ def font(size, weight):
 HEAD = font(196, "Bold")
 SUB = font(120, "Semibold")
 
-# Phone geometry: the screen keeps the capture's proportions; a thick black bezel inside a
-# titanium rim, with the side buttons standing proud of the rim.
+# Phone geometry, in an iPhone 17 Pro's proportions: the screen keeps the capture's shape, a thin
+# black bezel (about 2% of the width) inside a slim titanium rim, the side buttons standing proud.
 SCREEN_W = 1080
 SCREEN_H = round(SCREEN_W * 2868 / 1320)
-BEZEL = 40
-RIM_W = 12
+BEZEL = 22
+RIM_W = 11
 PHONE_W = SCREEN_W + 2 * (BEZEL + RIM_W)
 PHONE_TOP = 1010
-SCREEN_R = round(SCREEN_W * 0.128)
+SCREEN_R = round(SCREEN_W * 0.137)
 PHONE_R = SCREEN_R + BEZEL + RIM_W
+SS = 3  # shapes are drawn this many times larger, then scaled down: smooth, anti-aliased edges
+
+
+def squircle(w, h, r, n=5.0):
+    """A rounded rectangle with continuous corners, as Apple draws them: each corner a superellipse
+    a little larger than the circular radius it replaces, so the curve eases in instead of starting abruptly."""
+    import math
+    r = min(r * 1.22, w / 2, h / 2)
+    pts = []
+    for cx, cy, a0 in ((w - r, r, -90), (w - r, h - r, 0), (r, h - r, 90), (r, r, 180)):
+        for i in range(65):
+            t = math.radians(a0 + 90 * i / 64)
+            c, s_ = math.cos(t), math.sin(t)
+            pts.append((cx + r * math.copysign(abs(c) ** (2 / n), c), cy + r * math.copysign(abs(s_) ** (2 / n), s_)))
+    return pts
+
+
+def shape_mask(w, h, r):
+    """An anti-aliased squircle mask, w × h."""
+    m = Image.new("L", (w * SS, h * SS), 0)
+    ImageDraw.Draw(m).polygon(squircle(w * SS, h * SS, r * SS), fill=255)
+    return m.resize((w, h), Image.LANCZOS)
 
 
 def head_font(headline, draw):
@@ -176,13 +255,37 @@ def wrap(words, max_w, draw, f=HEAD):
 def draw_line(draw, words, accent, y, f=HEAD):
     text = " ".join(words)
     x = (W - draw.textlength(text, font=f)) / 2
+    st = STYLES[STYLE]
     for i, w in enumerate(words):
         piece = w + (" " if i < len(words) - 1 else "")
-        draw.text((x, y), piece, font=f, fill=RED if w.strip(".,") == accent else TEXT)
+        is_accent = w.strip(".,?") == accent
+        if is_accent and "highlight" in st:
+            # A marker swipe behind the word: a little wider than it, over its lower three quarters.
+            box = draw.textbbox((x, y), w, font=f)
+            pad = round(f.size * 0.09)
+            draw.rounded_rectangle((box[0] - pad, box[1] - pad * 0.6, box[2] + pad, box[3] + pad * 0.7), round(f.size * 0.08),
+                                   fill=st["highlight"])
+        draw.text((x, y), piece, font=f, fill=st["accent"] if is_accent else st["text"])
         x += draw.textlength(piece, font=f)
 
 
-def frame(headline, accent, sub, capture, phone=None, popout=None):
+_SCREEN_MASKS = {}
+
+
+def screen_mask(bezel_path, w, h):
+    """The frame's own screen shape, w × h: its transparent opening, traced by filling from the
+    middle of the screen, so the capture's square corners never show past the phone's rounded ones."""
+    key = (bezel_path, w, h)
+    if key not in _SCREEN_MASKS:
+        x0, y0, sw0, sh0 = BEZEL_SCREEN
+        alpha = Image.open(bezel_path).getchannel("A").crop((x0, y0, x0 + sw0, y0 + sh0))
+        opening = alpha.point(lambda v: 255 if v < 250 else 0)
+        ImageDraw.floodfill(opening, (sw0 // 2, sh0 // 2), 128)
+        _SCREEN_MASKS[key] = opening.point(lambda v: 255 if v == 128 else 0).resize((w, h), Image.LANCZOS)
+    return _SCREEN_MASKS[key]
+
+
+def frame(headline, accent, sub, capture, phone=None, popout=None, card=None):
     """`phone` = (top, screen width) moves and scales the phone for a capture whose subject sits
     lower than the cut, such as a Live Activity at the foot of the Lock Screen. `popout` = (box in
     capture pixels, scale) lifts that part of the screen out of the phone, enlarged, where it sits."""
@@ -193,16 +296,17 @@ def frame(headline, accent, sub, capture, phone=None, popout=None):
     pw = sw + 2 * (bezel + rim)
     sr = round(sw * 0.128)
     pr = sr + bezel + rim
-    # Deep blue stage: a vertical gradient and a brighter blue glow behind the top of the phone.
+    # The stage: a vertical gradient and a glow behind the top of the phone.
+    st = STYLES[STYLE]
     canvas = Image.new("RGB", (W, H))
     grad = ImageDraw.Draw(canvas)
     for y in range(H):
         t = y / (H - 1)
-        grad.line([(0, y), (W, y)], fill=tuple(round(a + (b - a) * t) for a, b in zip(STAGE_TOP, STAGE_BOTTOM)))
+        grad.line([(0, y), (W, y)], fill=tuple(round(a + (b - a) * t) for a, b in zip(st["top"], st["bottom"])))
     glow = Image.new("L", (W, H), 0)
-    ImageDraw.Draw(glow).ellipse((W * 0.5 - 700, phone_top - 260, W * 0.5 + 700, phone_top + 900), fill=110)
-    glow = glow.filter(ImageFilter.GaussianBlur(240))
-    canvas.paste(Image.new("RGB", (W, H), GLOW), (0, 0), glow)
+    ImageDraw.Draw(glow).ellipse((W * 0.5 - 650, phone_top - 300, W * 0.5 + 650, phone_top + 800), fill=st["glow"][1])
+    glow = glow.filter(ImageFilter.GaussianBlur(260))
+    canvas.paste(Image.new("RGB", (W, H), st["glow"][0]), (0, 0), glow)
 
     draw = ImageDraw.Draw(canvas)
     hf, lines = head_font(headline, draw)
@@ -215,54 +319,103 @@ def frame(headline, accent, sub, capture, phone=None, popout=None):
     if sub:
         y += 46
         sf = sub_font(sub, draw)
-        draw.text(((W - draw.textlength(sub, font=sf)) / 2, y), sub, font=sf, fill=SECONDARY)
-
-    px = (W - pw) // 2
-    bottom = H + 600
-    # Side buttons first, so the rim covers their inner edge: action and volume on the left, power on the right.
-    for side, top, height in (("l", 300, 110), ("l", 470, 200), ("l", 700, 200), ("r", 560, 300)):
-        top, height = round(top * k), round(height * k)
-        x0 = px - 9 if side == "l" else px + pw - 8
-        draw.rounded_rectangle((x0, phone_top + top, x0 + 17, phone_top + top + height), 6, fill=RIM)
-    # Rim with a lighter outer edge, then the black bezel, then the screen.
-    draw.rounded_rectangle((px, phone_top, px + pw, bottom), pr, fill=RIM_EDGE)
-    draw.rounded_rectangle((px + 3, phone_top + 3, px + pw - 3, bottom), pr - 3, fill=RIM)
-    draw.rounded_rectangle((px + rim, phone_top + rim, px + pw - rim, bottom), pr - rim, fill=BODY)
+        draw.text(((W - draw.textlength(sub, font=sf)) / 2, y), sub, font=sf, fill=st["sub"])
 
     full = Image.open(os.path.join(SRC, capture)).convert("RGB")
     shot = full.resize((sw, sh), Image.LANCZOS)
-    mask = Image.new("L", (sw, sh), 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, sw, sh), sr, fill=255)
-    sx, sy = px + rim + bezel, phone_top + rim + bezel
-    canvas.paste(shot, (sx, sy), mask)
+    bezel_path = os.path.join(BEZEL_DIR, f"iPhone 18 Pro Max - {BEZEL_COLOUR} - Portrait.png")
+    if os.path.exists(bezel_path):
+        # Apple's frame, scaled so its screen is `sw` wide, its top at `phone_top`: the capture behind,
+        # the frame (rim, buttons, corners, island) over it, and a soft shadow from its outline.
+        frame_img = Image.open(bezel_path).convert("RGBA")
+        kb = sw / BEZEL_SCREEN[2]
+        fw, fh = round(frame_img.width * kb), round(frame_img.height * kb)
+        frame_img = frame_img.resize((fw, fh), Image.LANCZOS)
+        fx, fy = (W - fw) // 2, phone_top
+        sx, sy = fx + round(BEZEL_SCREEN[0] * kb), fy + round(BEZEL_SCREEN[1] * kb)
+        shadow = Image.new("L", (W, H), 0)
+        shadow.paste(frame_img.getchannel("A"), (fx, fy + 36))
+        canvas.paste(Image.new("RGB", (W, H), st["shadow"][0]), (0, 0), shadow.filter(ImageFilter.GaussianBlur(48)).point(lambda v: v * st["shadow"][1]))
+        screen = screen_mask(bezel_path, sw, sh)
+        canvas.paste(shot, (sx, sy), screen)
+        canvas.paste(frame_img, (fx, fy), frame_img)
+    else:
+        px = (W - pw) // 2
+        ph = H + 600 - phone_top  # runs off the foot of the slide
+        # A soft shadow on the paper, then the side buttons (the rim covers their inner edge): action and
+        # volume on the left, the side button on the right.
+        shadow = Image.new("L", (W, H), 0)
+        shadow.paste(shape_mask(pw, ph, pr), (px, phone_top + 36))
+        canvas.paste(Image.new("RGB", (W, H), st["shadow"][0]), (0, 0), shadow.filter(ImageFilter.GaussianBlur(48)).point(lambda v: v * st["shadow"][1]))
+        for side, top, height in (("l", 300, 110), ("l", 470, 200), ("l", 700, 200), ("r", 560, 300)):
+            top, height = round(top * k), round(height * k)
+            bw, bx = round(14 * k), (px - round(6 * k) if side == "l" else px + pw - round(8 * k))
+            canvas.paste(Image.new("RGB", (bw, height), RIM), (bx, phone_top + top), shape_mask(bw, height, bw / 2))
+        # Rim with a lighter outer edge, then the black bezel, then the screen, each anti-aliased.
+        canvas.paste(Image.new("RGB", (pw, ph), RIM_EDGE), (px, phone_top), shape_mask(pw, ph, pr))
+        canvas.paste(Image.new("RGB", (pw - 6, ph), RIM), (px + 3, phone_top + 3), shape_mask(pw - 6, ph, pr - 3))
+        canvas.paste(Image.new("RGB", (pw - 2 * rim, ph), BODY), (px + rim, phone_top + rim), shape_mask(pw - 2 * rim, ph, pr - rim))
 
-    iw, ih = round(sw * 0.213), round(sh * 0.0375)
-    iy = sy + round(sh * 0.0150)
-    draw.rounded_rectangle((sx + (sw - iw) / 2, iy, sx + (sw + iw) / 2, iy + ih), ih / 2, fill=(0, 0, 0))
+        sx, sy = px + rim + bezel, phone_top + rim + bezel
+        screen = shape_mask(sw, sh, sr)
+        canvas.paste(shot, (sx, sy), screen)
+        # The Dynamic Island, for captures that don't carry one (older simulators leave it out). Measured on
+        # an iPhone 17 Pro Max capture: 28.5% of the screen's width, 8.3% tall, 3.2% from the top.
+        iw, ih, it = round(sw * 0.2848), round(sw * 0.0833), round(sw * 0.0318)
+        if sum(full.getpixel((full.width // 2, round(full.width * 0.0318 + full.width * 0.0833 / 2)))) > 60:
+            # A true pill (round ends), drawn large and scaled down so its edge is smooth.
+            pill = Image.new("L", (iw * SS, ih * SS), 0)
+            ImageDraw.Draw(pill).rounded_rectangle((0, 0, iw * SS - 1, ih * SS - 1), ih * SS / 2, fill=255)
+            canvas.paste(Image.new("RGB", (iw, ih), (0, 0, 0)), (sx + (sw - iw) // 2, sy + it), pill.resize((iw, ih), Image.LANCZOS))
 
     if popout:
         (x0, y0, x1, y1), scale = popout
         k_cap = sw / full.width
+        # No wider than the phone itself, so the card overhangs the screen but stays on the slide.
+        scale = min(scale, (W - 120) / ((x1 - x0) * k_cap))
         cw, ch = round((x1 - x0) * k_cap * scale), round((y1 - y0) * k_cap * scale)
+        # The rest of the screen dims, so the lifted card is the brightest thing on the phone.
+        canvas.paste(Image.new("RGB", (sw, sh), (0, 0, 0)), (sx, sy), screen.point(lambda v: round(v * 0.42)))
         card = full.crop((x0, y0, x1, y1)).resize((cw, ch), Image.LANCZOS)
         cx, cy = round((W - cw) / 2), round(sy + (y0 + y1) / 2 * k_cap - ch / 2)
         r = round(40 * scale)
         shadow = Image.new("L", (W, H), 0)
-        ImageDraw.Draw(shadow).rounded_rectangle((cx, cy + 30, cx + cw, cy + ch + 30), r, fill=150)
+        ImageDraw.Draw(shadow).rounded_rectangle((cx, cy + 30, cx + cw, cy + ch + 30), r, fill=round(255 * min(1, st["shadow"][1] + 0.2)))
         canvas.paste(Image.new("RGB", (W, H), (0, 0, 0)), (0, 0), shadow.filter(ImageFilter.GaussianBlur(40)))
-        mask = Image.new("L", (cw, ch), 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, cw - 1, ch - 1), r, fill=255)
-        canvas.paste(card, (cx, cy), mask)
+        canvas.paste(card, (cx, cy), shape_mask(cw, ch, r / 1.22))  # anti-aliased, continuous corners
+    if card:
+        x0, y0, x1, y1 = card[:4]
+        k_cap = sw / full.width
+        cw, pad = W - 100, (card[4] if len(card) > 4 else 44)
+        inner_w = cw - 2 * pad
+        inner_h = round((y1 - y0) * inner_w / (x1 - x0))
+        ch = inner_h + 2 * pad
+        sheet = Image.new("RGB", (cw, ch), full.getpixel((x0 + 6, y0 + 6)))
+        sheet.paste(full.crop((x0, y0, x1, y1)).resize((inner_w, inner_h), Image.LANCZOS), (pad, pad))
+        cx, cy = (W - cw) // 2, round(sy + (y0 + y1) / 2 * k_cap - ch / 2)
+        # Blur below the status bar only: blurring it smeared the Dynamic Island into a dark halo.
+        below = screen.copy()
+        ImageDraw.Draw(below).rectangle((0, 0, sw, round(sh * 0.066)), fill=0)
+        canvas.paste(shot.filter(ImageFilter.GaussianBlur(16)), (sx, sy), below.filter(ImageFilter.GaussianBlur(6)))
+        shadow = Image.new("L", (W, H), 0)
+        shadow.paste(shape_mask(cw, ch, 46), (cx, cy + 34))
+        canvas.paste(Image.new("RGB", (W, H), (0, 0, 0)), (0, 0), shadow.filter(ImageFilter.GaussianBlur(46)).point(lambda v: round(v * 0.55)))
+        canvas.paste(sheet, (cx, cy), shape_mask(cw, ch, 46))
     return canvas
 
 
-SIZES = {"6.9": (1320, 2868), "6.3": (1206, 2622)}
+SIZES = {"6.9": (1320, 2868), "6.3": (1206, 2622), "6.1": (1179, 2556)}
 
 
 def save(slide, folder, name):
-    for slot, size in SIZES.items():
+    for slot, (w, h) in SIZES.items():
         os.makedirs(os.path.join(folder, slot), exist_ok=True)
-        (slide if size == (W, H) else slide.resize(size, Image.LANCZOS)).save(os.path.join(folder, slot, name))
+        if (w, h) == (W, H):
+            out = slide
+        else:
+            # Scale to the slot's width; the 6.1-inch slot is a touch shorter, so trim its foot.
+            out = slide.resize((w, round(H * w / W)), Image.LANCZOS).crop((0, 0, w, h))
+        out.save(os.path.join(folder, slot, name))
 
 
 def slug(headline):
@@ -270,10 +423,14 @@ def slug(headline):
 
 
 def main():
-    for i, (headline, accent, sub, capture) in enumerate(SLIDES, 1):
-        check_fits(headline, sub)
-        name = f"{i}-{slug(headline)}.png"
-        save(frame(headline, accent, sub, capture), OUT, name)
+    shutil.rmtree(OUT, ignore_errors=True)
+    for i, key in enumerate(DEFAULT, 1):
+        slide = NEW_SLIDES.get(key) or dict(zip(("headline", "accent", "sub", "capture"), SLIDES[key - 1]))
+        if USE_CARDS and key in CARDS:
+            slide = dict(slide, card=CARDS[key])
+        check_fits(slide["headline"], slide["sub"])
+        name = f"{i}-{slug(slide['headline'])}.png"
+        save(frame(**slide), OUT, name)
         print(name)
     overview(OUT, os.path.join(ROOT, "screenshots", "store-final-overview.png"))
 

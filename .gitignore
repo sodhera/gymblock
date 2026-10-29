@@ -7,3 +7,7 @@ xcuserdata/
 *.xcuserstate
 build-log.txt
 Secrets.local.xcconfig
+
+# Apple product bezels (Apple Design Resources license: not for redistribution). Download
+# Bezel-iPhone-18.dmg from developer.apple.com/design/resources and copy the Pro Max PNGs here.
+scripts/bezels/
