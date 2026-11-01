@@ -16,7 +16,7 @@ struct PreferencesView: View {
   @ObservedObject private var blocking = AppBlocking.shared
   @State private var renaming = false
   @State private var draftName = ""
-  @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+  @AppStorage(Appearance.key) private var appearance = Appearance.standard.rawValue
   /// Strict mode lives with the blocked apps on this iPhone (the App Group), where the shield reads it.
   @AppStorage(BlockingPass.strictKey, store: BlockingPass.defaults) private var strict = true
   var body: some View {
@@ -67,7 +67,7 @@ struct PreferencesView: View {
         }
 
         SettingsLabel(store.t("App"))
-        SettingMenu(title: store.t("Appearance"), value: store.t(Appearance(rawValue: appearance)?.title ?? "System"), id: "settings.appearance") {
+        SettingMenu(title: store.t("Appearance"), value: store.t((Appearance(rawValue: appearance) ?? .standard).title), id: "settings.appearance") {
           Picker(store.t("Appearance"), selection: $appearance) {
             ForEach(Appearance.allCases, id: \.self) { Text(store.t($0.title)).tag($0.rawValue) }
           }

@@ -20,6 +20,7 @@
 		24A23E76643CA0A4D5A8DC5E /* GymBlockFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01F36AF90BEFC089EC199AD3 /* GymBlockFlowTests.swift */; };
 		26E302FF83882C09A69885AC /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA97052542A6CE2655EB31D4 /* Model.swift */; };
 		28E63A5C8EE3E5BA2E71E2BD /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = B951846726741284DB93304B /* CloudSync.swift */; };
+		2AE5C7F78867CCD4CA7CC726 /* JourneyLanguageV9.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAC62B09F6529250696C78D9 /* JourneyLanguageV9.swift */; };
 		2BAE5ECDCF8FA72B795785A6 /* OnboardingAccessibilityAuditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335D530A89C0757383CF0E87 /* OnboardingAccessibilityAuditUITests.swift */; };
 		2BDBC01FB8E6F4A75235949A /* GymBlockApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95245B0AE197664243A1DF54 /* GymBlockApp.swift */; };
 		2D09659903930D73A573D8C0 /* HeroFit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6299BDCE650025D0151AA37 /* HeroFit.swift */; };
@@ -50,6 +51,7 @@
 		5273CA1544C79E7050D666EF /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A47DB6D4EDE7DD26FB9CACD /* WidgetSnapshot.swift */; };
 		5344BF389B159F48B1698803 /* advance.wav in Resources */ = {isa = PBXBuildFile; fileRef = 6C25C3FE16037D11BD08D732 /* advance.wav */; };
 		534BBBC44D49763E2DB309B3 /* JourneyLanguageV8.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60437EC8770D458C1C5F42AD /* JourneyLanguageV8.swift */; };
+		535070E82F051679E6E1CB56 /* OnboardingV9.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A06397B9CEF2D6B89F39491 /* OnboardingV9.swift */; };
 		540990EDCABF9D2F8F2066F3 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C32DC47F5228BD30518BAB /* Typography.swift */; };
 		568A0F4C4DBC449F40D8D809 /* gb-plate-medium.caf in Resources */ = {isa = PBXBuildFile; fileRef = 7B4E14CDE73C4C011540AEF6 /* gb-plate-medium.caf */; };
 		5B36CD8D5448E7C1D2A16483 /* OnboardingControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5029EB289FB5CF493FAF16 /* OnboardingControls.swift */; };
@@ -58,7 +60,6 @@
 		62CBE6773A80A3BF81C2A9EB /* WidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04AF874D37EAE2CE9D131821 /* WidgetSync.swift */; };
 		666CB2C1E5848D15E4CBE330 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D599A2899F5D63D89F8AEF /* Navigation.swift */; };
 		68D56E6C4D6BF0A849BA9EA1 /* HomeScoreboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F5DA960821D0AC9262FAF8 /* HomeScoreboard.swift */; };
-		6A8784286D5937D02C6D4AC6 /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */; };
 		6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DFD1D637BDEC64CEC1EFB2 /* OpenGymBlockIntent.swift */; };
 		6EB48FEF58CDA08FE4A6B872 /* PaperPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D249BEACC2D4D01A2851C6 /* PaperPalette.swift */; };
 		6ED0D48C2E26181BAE08E20A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0491260DABCDC82C1A16CB7A /* PrivacyInfo.xcprivacy */; };
@@ -70,7 +71,7 @@
 		76ABAE6ED1815FC1EC449BE1 /* GymTikTok.swift in Sources */ = {isa = PBXBuildFile; fileRef = D895630CACC99C3E69FB9E04 /* GymTikTok.swift */; };
 		78A8AB1188CDF53BBEBD5BDC /* KettlebellShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542B989D575193E1A499079C /* KettlebellShape.swift */; };
 		78E4F549B07E1041367B45B6 /* PassMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76FC5D30A2F43C1253BB9C4A /* PassMonitor.swift */; };
-		7A16F3E362F742A9132C8C18 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 6E814F0487D730E22574775B /* PostHog */; };
+		7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */ = {isa = PBXBuildFile; productRef = D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */; };
 		7A8EE23A965C7414FAE60F22 /* AppFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13708927DF8625DAA082C6E0 /* AppFont.swift */; };
 		7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD5009E70EBA3A94854B117 /* JourneyArt.swift */; };
 		7F62FEAFF43CE040AB48ABA5 /* ProgressData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 371A20BA1E826DCB4E3FE9C3 /* ProgressData.swift */; };
@@ -88,7 +89,7 @@
 		903292014823B9D907E65705 /* GymNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */; };
 		9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */; };
 		9794E2815C8B3767516E32C3 /* HeroFit.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6299BDCE650025D0151AA37 /* HeroFit.swift */; };
-		9863FB3C2F09DAC82E691523 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = B589C9391DEDC819E9332959 /* RevenueCatUI */; };
+		9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 6E814F0487D730E22574775B /* PostHog */; };
 		9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */; };
 		A5175DB659262FC118796C43 /* StoreShots.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2130D53C7B23982C9EB33C3 /* StoreShots.swift */; };
 		A6457A9FEE6986E494012874 /* OnboardingJourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D156B824D5A01A306438BDA9 /* OnboardingJourneyTests.swift */; };
@@ -109,11 +110,13 @@
 		BDF13E619E1E9B1972D35490 /* AccountSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFE37AE609926AAAA2F6258E /* AccountSettings.swift */; };
 		C1482DA19EAF76DB7DDD790A /* WidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4230C67E8D5558BD5157EF27 /* WidgetViews.swift */; };
 		C15DEF32F96E362DC22D20DA /* WorkoutStepIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFDB647737C5A706E73A728E /* WorkoutStepIntent.swift */; };
+		C4281462866A0ED4318221EB /* JourneyLanguageV10.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B73C63FB7E6ADF5CF82738C /* JourneyLanguageV10.swift */; };
 		C583421E9AA5778429A9B768 /* GymPostHog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D068C60FD1802769E384B6C /* GymPostHog.swift */; };
 		C6D4040CE436591D59D0B1A8 /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E7FF985920923737A724E8B /* AppRoute.swift */; };
 		C7CE0DCE83D73AF2A9288DAF /* WorkoutShieldAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AB514BE747F607CA6E12C00 /* WorkoutShieldAction.swift */; };
 		CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 555664B1919E662754553AF5 /* Supabase */; };
 		CCDA787E895E557D4DE31B7E /* OnboardingPremium.swift in Sources */ = {isa = PBXBuildFile; fileRef = 008F01AA301B4482E1045797 /* OnboardingPremium.swift */; };
+		CE0597FC24D68504DFA2BE07 /* OnboardingV10.swift in Sources */ = {isa = PBXBuildFile; fileRef = B31517DE6A84F79F7B7EA02D /* OnboardingV10.swift */; };
 		CE2F3617C1B8E08733D970D1 /* GymBlockShieldAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 6AAD0535255FB7A0DBAB3743 /* GymBlockShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		D01C42A5DCD9D577C3320ABB /* BlockingPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05B2B7905EC084D2E5BDBAD /* BlockingPass.swift */; };
 		D194B8D30A3E5782E8679ABC /* WorkoutFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11589EBCA36DC3039523368 /* WorkoutFlowTests.swift */; };
@@ -213,6 +216,7 @@
 		04AF874D37EAE2CE9D131821 /* WidgetSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSync.swift; sourceTree = "<group>"; };
 		08DD8CF995195334FE9F09B1 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		0A1DD9FDD89A9EDFB6EEE557 /* WorkoutLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLogic.swift; sourceTree = "<group>"; };
+		0B73C63FB7E6ADF5CF82738C /* JourneyLanguageV10.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLanguageV10.swift; sourceTree = "<group>"; };
 		1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13708927DF8625DAA082C6E0 /* AppFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFont.swift; sourceTree = "<group>"; };
 		18BD74A4F712847C40F46201 /* GymStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymStoreTests.swift; sourceTree = "<group>"; };
@@ -286,6 +290,7 @@
 		91D599A2899F5D63D89F8AEF /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		95245B0AE197664243A1DF54 /* GymBlockApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockApp.swift; sourceTree = "<group>"; };
 		98B5D990D481A25862BBE4AF /* GymNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymNavigationTests.swift; sourceTree = "<group>"; };
+		9A06397B9CEF2D6B89F39491 /* OnboardingV9.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingV9.swift; sourceTree = "<group>"; };
 		9A5029EB289FB5CF493FAF16 /* OnboardingControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingControls.swift; sourceTree = "<group>"; };
 		A00423AA0AB15C75A8BDC2E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A10D2BB59DFBE6963E3865A3 /* gb-plate-drop.caf */ = {isa = PBXFileReference; path = "gb-plate-drop.caf"; sourceTree = "<group>"; };
@@ -297,6 +302,7 @@
 		B2AADA0F5079411E82C77E97 /* StoreShots.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = StoreShots.xcassets; sourceTree = "<group>"; };
 		B2ABF151E5EC6B91003FABCB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		B2C5227C408B63E9CF1B2C87 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		B31517DE6A84F79F7B7EA02D /* OnboardingV10.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingV10.swift; sourceTree = "<group>"; };
 		B5C32DC47F5228BD30518BAB /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		B6817695A3563DA20102935E /* Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Summary.swift; sourceTree = "<group>"; };
 		B951846726741284DB93304B /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSync.swift; sourceTree = "<group>"; };
@@ -320,6 +326,7 @@
 		E2528ACFD31D70E2DEAC5D7E /* gb-plate-heavy.caf */ = {isa = PBXFileReference; path = "gb-plate-heavy.caf"; sourceTree = "<group>"; };
 		E284951026C66EE16AB43906 /* GymBlockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymBlockWidgets.swift; sourceTree = "<group>"; };
 		E82467CEFE08FB24CAA6906A /* ProgressAndSplitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressAndSplitTests.swift; sourceTree = "<group>"; };
+		EAC62B09F6529250696C78D9 /* JourneyLanguageV9.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyLanguageV9.swift; sourceTree = "<group>"; };
 		EFE37AE609926AAAA2F6258E /* AccountSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettings.swift; sourceTree = "<group>"; };
 		F11589EBCA36DC3039523368 /* WorkoutFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutFlowTests.swift; sourceTree = "<group>"; };
 		F1C23F4F4C175A9CE78D7C7A /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
@@ -337,9 +344,8 @@
 			files = (
 				CA9DDC790C5885B5A404A18E /* Supabase in Frameworks */,
 				A882C6D05F1882A29FC8F39E /* RevenueCat in Frameworks */,
-				9863FB3C2F09DAC82E691523 /* RevenueCatUI in Frameworks */,
-				7A16F3E362F742A9132C8C18 /* PostHog in Frameworks */,
-				6A8784286D5937D02C6D4AC6 /* TikTokBusinessSDK in Frameworks */,
+				9863FB3C2F09DAC82E691523 /* PostHog in Frameworks */,
+				7A16F3E362F742A9132C8C18 /* TikTokBusinessSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -457,6 +463,8 @@
 				2182B63B8ED2F45B3E4DBD12 /* JourneyLanguage.swift */,
 				61B8CB1AAC1BF4331CE291AD /* JourneyLanguageV7.swift */,
 				60437EC8770D458C1C5F42AD /* JourneyLanguageV8.swift */,
+				EAC62B09F6529250696C78D9 /* JourneyLanguageV9.swift */,
+				0B73C63FB7E6ADF5CF82738C /* JourneyLanguageV10.swift */,
 				2020D39FD36092AF8E5B49E1 /* JourneyMetrics.swift */,
 				65CA5E9AF764F147406661FE /* JourneyScore.swift */,
 				5EA16493F6FC82E097EA5393 /* JourneyScores.swift */,
@@ -472,6 +480,8 @@
 				7DB88A6ED672C6F821374324 /* OnboardingSplits.swift */,
 				6BE69075901DBCB7CCCE1C36 /* OnboardingStory.swift */,
 				892976F05C0ABE2658D93B19 /* OnboardingTimeBack.swift */,
+				9A06397B9CEF2D6B89F39491 /* OnboardingV9.swift */,
+				B31517DE6A84F79F7B7EA02D /* OnboardingV10.swift */,
 				1333B56698B71BBDBB3BECEA /* PrivacyInfo.xcprivacy */,
 				61737D64AB2427868DBA6FAC /* Profile.swift */,
 				258A16A247D69006A1651F96 /* Progress.swift */,
@@ -719,7 +729,6 @@
 			packageProductDependencies = (
 				555664B1919E662754553AF5 /* Supabase */,
 				95E41EDD1C17E277943D7AA0 /* RevenueCat */,
-				B589C9391DEDC819E9332959 /* RevenueCatUI */,
 				6E814F0487D730E22574775B /* PostHog */,
 				D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */,
 			);
@@ -966,8 +975,10 @@
 				759B615EBC3B5A70E5D828B3 /* HomeStats.swift in Sources */,
 				7B78FD71604A12A4BD7CDA14 /* JourneyArt.swift in Sources */,
 				16CCC16D448DB518587A0EC3 /* JourneyLanguage.swift in Sources */,
+				C4281462866A0ED4318221EB /* JourneyLanguageV10.swift in Sources */,
 				E9F8E256752ED2DFD9419D48 /* JourneyLanguageV7.swift in Sources */,
 				534BBBC44D49763E2DB309B3 /* JourneyLanguageV8.swift in Sources */,
+				2AE5C7F78867CCD4CA7CC726 /* JourneyLanguageV9.swift in Sources */,
 				3AF97B35DD77E25887526EF9 /* JourneyMetrics.swift in Sources */,
 				113BFA56F7CB3DE809198C4F /* JourneyScore.swift in Sources */,
 				D79CA6E735B6B2BEFD2AF71F /* JourneyScores.swift in Sources */,
@@ -984,6 +995,8 @@
 				4E13B1EE61AE6E2E2939ABFC /* OnboardingSplits.swift in Sources */,
 				9583C3EA6DCEA19B9E28D8F1 /* OnboardingStory.swift in Sources */,
 				9B6DE6DE72E823C3B4B51AD6 /* OnboardingTimeBack.swift in Sources */,
+				CE0597FC24D68504DFA2BE07 /* OnboardingV10.swift in Sources */,
+				535070E82F051679E6E1CB56 /* OnboardingV9.swift in Sources */,
 				6BF699E7E11945B3A9BF24EF /* OpenGymBlockIntent.swift in Sources */,
 				6EB48FEF58CDA08FE4A6B872 /* PaperPalette.swift in Sources */,
 				2DDE9AE21905208FFEE59D50 /* Profile.swift in Sources */,
@@ -1580,11 +1593,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
-		};
-		B589C9391DEDC819E9332959 /* RevenueCatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = F330280EEB50C78E49C641EE /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-			productName = RevenueCatUI;
 		};
 		D062125B9187B93EFD95B5E7 /* TikTokBusinessSDK */ = {
 			isa = XCSwiftPackageProductDependency;

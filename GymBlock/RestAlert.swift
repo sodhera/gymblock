@@ -7,6 +7,11 @@ enum RestAlert {
   static func requestPermission() async -> Bool {
     (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
   }
+  /// What iOS has recorded: the prompt shows only while this is `.notDetermined`.
+  static func status() async -> UNAuthorizationStatus {
+    await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+  }
+  static func granted(_ s: UNAuthorizationStatus) -> Bool { [.authorized, .provisional, .ephemeral].contains(s) }
   static func schedule(at date: Date, seconds: Int, spanish: Bool) {
     let wait = date.timeIntervalSinceNow
     guard wait > 1 else { return }
@@ -42,15 +47,28 @@ enum RestAlert {
     UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [idleID])
   }
   static let trialID = "gymblock.trial"
+  static let trialKey = "gymblock.trial.reminder"
   /// The paywall's promise: two days before a free trial turns into a paid plan, a reminder. Only
-  /// delivered if notifications were allowed; never asks for permission by itself.
+  /// delivered if notifications were allowed; never asks for permission by itself. Kept, so it can
+  /// be added again once they allow notifications on the page after the price (1 Nov 2026).
   static func scheduleTrialReminder(trialDays: Int, price: String, spanish: Bool) {
     guard trialDays > 2 else { return }
-    let content = UNMutableNotificationContent()
-    content.title = spanish ? "Tu prueba gratis termina en 2 días" : "Your free trial ends in 2 days"
-    content.body = (spanish ? "Después, %@. Puedes cancelar en Ajustes antes de esa fecha." : "Then it’s %@. You can cancel in Settings before then.")
+    let title = spanish ? "Tu prueba gratis termina en 2 días" : "Your free trial ends in 2 days"
+    let body = (spanish ? "Después, %@. Puedes cancelar en Ajustes antes de esa fecha." : "Then it’s %@. You can cancel in Settings before then.")
       .replacingOccurrences(of: "%@", with: price)
-    let wait = Double(trialDays - 2) * 86_400
+    let fire = Date().addingTimeInterval(Double(trialDays - 2) * 86_400)
+    UserDefaults.standard.set(["title": title, "body": body, "fire": fire.timeIntervalSince1970], forKey: trialKey)
+    addTrialReminder()
+  }
+  /// Adds the kept reminder (the same identifier replaces it), while its day is still ahead.
+  static func addTrialReminder() {
+    guard let saved = UserDefaults.standard.dictionary(forKey: trialKey), let title = saved["title"] as? String,
+          let body = saved["body"] as? String, let fire = saved["fire"] as? Double else { return }
+    let wait = Date(timeIntervalSince1970: fire).timeIntervalSinceNow
+    guard wait > 60 else { return }
+    let content = UNMutableNotificationContent()
+    content.title = title
+    content.body = body
     let request = UNNotificationRequest(identifier: trialID, content: content,
                                         trigger: UNTimeIntervalNotificationTrigger(timeInterval: wait, repeats: false))
     UNUserNotificationCenter.current().add(request)

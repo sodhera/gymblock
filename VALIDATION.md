@@ -1,5 +1,11 @@
 # Validation — 8 October 2026
 
+
+## The app's own paywall, finished (1 November 2026)
+
+- Continuing the other session's in-app paywall (`PaywallView`, AccountGate.swift), matched to what was tuned on the dashboard one: the Yearly tile says "7 days free" while they can still have the trial (else the price a week), Continue reads "Start free trial" for a plan with a trial, the terms line keeps a two-line height so switching plans moves nothing, the review carousel turns every 4 s (only a swipe ticks), and Restore or a failed purchase says so in an alert instead of nothing. RevenueCatUI and the dashboard-paywall hooks (`remote*`, the Sign-out deep link) are gone.
+- Checked on the iPhone 17 Pro simulator, signed in with a sandbox account: US prices ($0.99 / $29.99 with "7 days free" / $3.99), Yearly preselected, the carousel turning by itself, Monthly selected with the button and tiles at the same pixel rows as with Yearly, Restore's "No active GymBlock subscription was found." **Not checked:** a purchase, a long currency (prices shrink to fit on one line), haptics.
+
 ## Onboarding: no gym-time question (28 October 2026)
 
 - At the user's request: Continue on "Be honest" appears with their answer, not when the scene ends; the phone-time wheel starts a minute above the rest they need (whole minutes, rounded up); the gym-time question is gone. The per-workout page and the promise now show their rests in one workout (rest they need in grey, minutes past it in red), so a small number reads against the rest it runs past, not a 2.5-hour visit (the old strip showed "Training 2 h 30 min" + "3 min", which added up to more than the visit). The year page is an hour a dot. Saved progress on the gym page resumes at the workout page; an earlier gym answer is ignored. Page 13 is extra workouts, each sized from their sets (40 s each) plus the rest they need, up to 5 min.

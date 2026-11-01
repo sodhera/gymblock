@@ -93,6 +93,8 @@ enum JourneyColor {
   /// The primary action's colour and the label on it.
   static var button: Color { theme.button }
   static var onButton: Color { theme.onButton }
+  /// The primary action while it can't be tapped: a solid mid grey under its white label.
+  static var disabledButton: Color { .dynamic(UIColor(red: 0.70, green: 0.69, blue: 0.67, alpha: 1), UIColor(red: 0.38, green: 0.38, blue: 0.40, alpha: 1)) }
   /// The colour that fills the hold-to-commit button.
   static var commitFill: Color { theme.signal }
   /// Muscle tint: cool grey → light → signal.
@@ -387,6 +389,8 @@ extension EnvironmentValues {
 struct JourneyButton: View {
   let title: String
   var symbol: String? = nil
+  /// A symbol after the title, for a button that leads on (an arrow).
+  var trailingSymbol: String? = nil
   var id = ""
   var enabled = true
   /// A spinner in place of the label, at the same size, while the tap is being answered.
@@ -397,18 +401,22 @@ struct JourneyButton: View {
       HStack(spacing: 8) {
         if let symbol { Image(systemName: symbol).font(.system(.headline, weight: .semibold)).accessibilityHidden(true) }
         Text(title).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+        if let trailingSymbol { Image(systemName: trailingSymbol).font(.system(.headline, weight: .semibold)).accessibilityHidden(true) }
       }.opacity(loading ? 0 : 1)
       if loading { ProgressView().tint(JourneyColor.onButton) }
     }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
     let tapped = { JourneyHaptic.press(); Analytics.tap(id); action() }
     Group {
-      if #available(iOS 26.0, *) {
+      // Disabled, it stays a solid button in grey (1 Nov 2026, at the user's request: at 38% it was a
+      // ghost on the paper), as Cal AI draws it. Drawn as our own capsule, not glass: the glass style
+      // dims itself when disabled and left the bottom of the page looking empty (1 Nov 2026).
+      if #available(iOS 26.0, *), enabled {
         Button(action: tapped) { label }.buttonStyle(.glassProminent).tint(JourneyColor.button)
       } else {
-        Button(action: tapped) { label.frame(minHeight: 50).background(Capsule().fill(JourneyColor.button)) }.buttonStyle(JourneyPressStyle())
+        Button(action: tapped) { label.frame(minHeight: 50).background(Capsule().fill(enabled ? JourneyColor.button : JourneyColor.disabledButton)) }.buttonStyle(JourneyPressStyle())
       }
     }.controlSize(.large).buttonBorderShape(.capsule)
-      .disabled(!enabled).opacity(enabled ? 1 : 0.38)
+      .disabled(!enabled)
       .animation(.smooth(duration: 0.45), value: enabled)
       .accessibilityIdentifier(id)
   }
@@ -487,7 +495,8 @@ struct JourneyProgress: View {
     GeometryReader { g in
       ZStack(alignment: .leading) {
         Capsule().fill(JourneyColor.ink(0.12))
-        Capsule().fill(JourneyColor.ink(0.9)).frame(width: max(3, g.size.width * value))
+        // Emerald, the app's colour (1 Nov 2026, at the user's request; it was ink).
+        Capsule().fill(JourneyColor.signal).frame(width: max(3, g.size.width * value))
       }
     }.frame(height: 3).animation(.smooth(duration: 0.7), value: value)
       // The 3-pt line sits in a full-height row, so it isn't a 3-pt element to VoiceOver.

@@ -319,6 +319,8 @@ struct FingerprintHold: View {
   let onComplete: () -> Void
   /// What VoiceOver says a double tap does.
   var hint = "Double-tap to commit."
+  /// Drawn in white, for the emerald flood behind it (the commit page, 1 Nov 2026).
+  var light = false
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.scenePhase) private var scenePhase
   @State private var fill = 0.0
@@ -329,24 +331,25 @@ struct FingerprintHold: View {
   private let print: CGFloat = JourneyLayout.compact ? 64 : 76
   private var ring: CGFloat { print + 40 }
   private var progress: Double { committed ? 1 : fill }
+  private var accent: Color { light ? .white : JourneyColor.signal }
   var body: some View {
     VStack(spacing: 10) {
       ZStack {
-        Circle().fill(JourneyColor.ink(holding ? 0.09 : 0.05)).frame(width: print + 22, height: print + 22)
-          .overlay(Circle().strokeBorder(JourneyColor.hairline, lineWidth: 1))
+        Circle().fill(light ? Color.white.opacity(holding ? 0.22 : 0.16) : JourneyColor.ink(holding ? 0.09 : 0.05)).frame(width: print + 22, height: print + 22)
+          .overlay(Circle().strokeBorder(light ? Color.white.opacity(0.3) : JourneyColor.hairline, lineWidth: 1))
         Circle().trim(from: 0, to: progress)
-          .stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+          .stroke(accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
           .frame(width: ring - 6, height: ring - 6).rotationEffect(.degrees(-90))
         if committed {
-          Image(systemName: "checkmark").font(.system(size: print * 0.42, weight: .light)).foregroundStyle(JourneyColor.signal)
+          Image(systemName: "checkmark").font(.system(size: print * 0.42, weight: .light)).foregroundStyle(accent)
             .transition(.scale(scale: 0.6).combined(with: .opacity))
         } else {
-          mark(JourneyColor.ink(0.28))
-          mark(JourneyColor.signal).mask(alignment: .bottom) { Rectangle().frame(height: print * progress) }
+          mark(light ? Color.white.opacity(0.4) : JourneyColor.ink(0.28))
+          mark(accent).mask(alignment: .bottom) { Rectangle().frame(height: print * progress) }
           // The scan line rides the top of the fill.
           if progress > 0.02 && progress < 0.99 {
-            Capsule().fill(JourneyColor.signal).frame(width: print * 0.9, height: 1.5)
-              .shadow(color: JourneyColor.signal.opacity(0.7), radius: 4)
+            Capsule().fill(accent).frame(width: print * 0.9, height: 1.5)
+              .shadow(color: accent.opacity(0.7), radius: 4)
               .offset(y: print / 2 - print * progress)
           }
         }
@@ -358,7 +361,7 @@ struct FingerprintHold: View {
       .overlay {
         // One outward pulse, on success only.
         if committed && !reduceMotion {
-          Circle().stroke(JourneyColor.signal.opacity(pulse ? 0 : 0.45), lineWidth: 2)
+          Circle().stroke(accent.opacity(pulse ? 0 : 0.45), lineWidth: 2)
             .scaleEffect(pulse ? 1.45 : 1).frame(width: ring, height: ring).allowsHitTesting(false)
         }
       }
@@ -371,7 +374,7 @@ struct FingerprintHold: View {
         }
         .onEnded { _ in release() })
       Text(committed ? doneTitle : holding ? holdingTitle : title)
-        .font(JourneyType.label).foregroundStyle(committed ? JourneyColor.signal : JourneyColor.secondary)
+        .font(JourneyType.label).foregroundStyle(light ? Color.white : committed ? JourneyColor.signal : JourneyColor.secondary)
         .contentTransition(.opacity).animation(.easeInOut(duration: 0.2), value: committed)
     }
     .frame(maxWidth: .infinity)

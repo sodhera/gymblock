@@ -18,9 +18,9 @@ final class OnboardingAccessibilityAuditUITests: XCTestCase {
   }
 
   func testAuditEveryOnboardingPage() throws {
-    let pages = ["welcome", "founder", "name", "trainingDays", "scrolling", "restNeed", "scrollMinutes", "perRest",
-                 "exerciseCount", "setCount", "gymTime", "workoutTime", "yearTime", "promise", "shield", "blocking",
-                 "alerts", "commit", "account", "subscription", "splits", "firstWorkout", "ahead"]
+    let pages = ["welcome", "name", "trainingDays", "source", "scrolling", "cost", "restNeed", "scrollMinutes", "perRest",
+                 "exerciseCount", "setCount", "workoutTime", "age", "yearDots", "yearPhone", "life", "tried", "whyFails", "shield", "promise", "words",
+                 "founder", "alerts", "commit", "account", "trial1", "trial2", "subscription", "splits", "firstWorkout"]
     for page in pages {
       let app = XCUIApplication()
       app.launchArguments = ["--ui-reset", "-journeyStep", page] + (page == "ahead" ? ["-journeyFrequency", "no"] : [])

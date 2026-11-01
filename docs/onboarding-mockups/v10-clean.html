@@ -1,0 +1,504 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GymBlock onboarding V10</title><style>
+@font-face { font-family: "GB Sans"; src: url("../../GymBlock/Fonts/DMSans.ttf") format("truetype"); font-weight: 100 1000; }
+:root { --paper:#F5F3EF; --ink:#141417; --muted:#6B6964; --line:rgba(20,20,23,.12); --glass:rgba(255,255,255,.72); --em:#0F9A6B; --emt:#087A53; --red:#DB4036; --redt:#C22E25; --board:#1E1E22; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--board); color:#ECEAE5; font-family:"GB Sans","DM Sans",-apple-system,"SF Pro Text","Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased }
+header { padding:28px 28px 8px; display:grid; gap:6px }
+header h1 { margin:0; font-size:22px; font-weight:700; letter-spacing:-.02em }
+header p { margin:0; color:#A9A7A1; font-size:14px; max-width:110ch }
+header .legend { display:flex; gap:14px; font-size:12.5px; color:#A9A7A1; margin-top:4px }
+.grid { display:grid; grid-template-columns:repeat(auto-fill, 301px); gap:22px 20px; padding:18px 28px 60px; justify-content:start }
+figure { margin:0; width:301px }
+figcaption { color:#A9A7A1; font-size:13px; margin-top:8px; display:flex; gap:8px; align-items:center }
+figcaption b { color:#ECEAE5 }
+.tag { font-size:11px; padding:2px 7px; border-radius:6px; background:rgba(255,255,255,.08) }
+.tag.new { color:#3CC28E; background:rgba(15,154,107,.18) }
+.tag.dash { color:#E7B45A; background:rgba(214,160,30,.16) }
+.tag.app { color:#9FB7FF; background:rgba(90,130,255,.16) }
+.lifeline { margin:-10px 0 0; font-size:20px; color:var(--muted); line-height:1.3 }
+.wordsbig { font-size:64px; font-weight:700; letter-spacing:-2px; line-height:1; margin:40px 0 16px }
+.wordsrest { font-size:17px; color:var(--muted) }
+.hold.tall { margin-top:150px }
+.homeh { font-size:28px; font-weight:700; letter-spacing:-.3px; margin-top:6px }
+.week { display:flex; gap:8px; align-items:center; margin-top:6px } .week i { width:9px; height:9px; border-radius:50%; background:rgba(20,20,23,.18) } .week span { margin-left:6px; font-size:13px; color:var(--muted) }
+.homecard { margin-top:34px; border-radius:20px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:18px; display:flex; flex-direction:column; gap:6px } .homecard b { font-size:18px } .homecard small { font-size:14px; color:var(--muted); line-height:1.35 }
+.hbtn { margin-top:12px; height:44px; border-radius:22px; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:600; font-size:15px }
+.upnext { margin-top:auto; display:flex; flex-direction:column; gap:2px; padding-bottom:10px } .upnext small { font-size:13px; color:var(--muted) } .upnext b { font-size:30px; font-weight:700; letter-spacing:-.5px } .upnext span { font-size:14px; color:var(--muted) }
+.phone { width:301px; height:652px; border-radius:40px; background:#0B0B0D; padding:5px; box-shadow:0 8px 30px rgba(0,0,0,.5) }
+.screen { position:relative; width:291px; height:642px; border-radius:36px; overflow:hidden; background:var(--paper); color:var(--ink);
+  background-image: radial-gradient(60% 40% at 50% 42%, rgba(255,205,170,.22), transparent 70%), radial-gradient(rgba(20,20,23,.07) .6px, transparent .7px); background-size:auto, 10px 10px; font-size:11.4px }
+/* Everything inside is designed at 390 wide and scaled to 291 */
+.screen > * { transform-origin: top left }
+.status { position:absolute; top:0; left:0; width:390px; transform:scale(.7462); display:flex; justify-content:space-between; padding:14px 30px 0; font-weight:600; font-size:15px }
+.status .sig { font-size:11px; letter-spacing:-.5px }
+.topbar { position:absolute; top:40px; left:0; width:390px; transform:scale(.7462); display:flex; align-items:center; gap:12px; padding:0 16px; height:44px }
+.back { width:36px; height:36px; border-radius:18px; background:var(--glass); box-shadow:0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.06); display:grid; place-items:center; font-size:22px; line-height:1; padding-bottom:3px }
+.spacer { width:36px; height:36px }
+.prog { flex:1; height:3px; border-radius:2px; background:rgba(20,20,23,.12); overflow:hidden }
+.prog i { display:block; height:100%; background:rgba(20,20,23,.9); min-width:3px }
+.content { position:absolute; top:79px; left:0; width:390px; height:600px; transform:scale(.7462); padding:0 24px; display:flex; flex-direction:column; gap:10px }
+h2 { margin:0; font-size:28px; line-height:1.14; letter-spacing:-.3px; font-weight:700 }
+.sub { margin:0; color:var(--muted); font-size:15px; line-height:1.35 }
+.rows { display:flex; flex-direction:column; gap:10px; margin-top:12px }
+.row { height:52px; border-radius:18px; background:var(--glass); box-shadow:0 0 0 1px var(--line), 0 1px 2px rgba(0,0,0,.04); display:flex; align-items:center; justify-content:space-between; padding:0 18px; font-size:17px; font-weight:500 }
+.row.on { box-shadow:0 0 0 1.5px rgba(20,20,23,.55), 0 1px 2px rgba(0,0,0,.04); background:rgba(255,255,255,.92) }
+.row small { display:block; color:var(--muted); font-size:12.5px; font-weight:400 }
+.chk { width:20px; height:20px; border-radius:10px; opacity:0 }
+.chk.on { opacity:1; background:var(--em); position:relative }
+.chk.on::after { content:""; position:absolute; left:6.5px; top:3.5px; width:5px; height:9px; border:solid #fff; border-width:0 2.2px 2.2px 0; transform:rotate(45deg) }
+.actions { position:absolute; left:0; top:528px; width:390px; transform:scale(.7462); padding:0 24px; display:flex; flex-direction:column; gap:4px; align-items:stretch }
+.cap { margin:0 0 8px; text-align:center; color:var(--muted); font-size:13px; min-height:18px }
+.cap.muted { color:var(--muted) }
+.btn { height:50px; border-radius:25px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:17px; font-weight:600 }
+.btn.ink { background:var(--ink); color:#fff }
+.btn.dim { background:var(--ink); color:#fff; opacity:.38 }
+.btn.white { background:rgba(255,255,255,.9); color:var(--ink); box-shadow:0 0 0 1px var(--line); margin-top:10px }
+.tbtn { height:44px; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:15px; font-weight:500 }
+.home { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); width:100px; height:4px; border-radius:2px; background:rgba(20,20,23,.85) }
+.field { margin-top:28px; border-bottom:2px solid var(--ink); padding:8px 2px; font-size:26px; color:rgba(20,20,23,.3) }
+.wordmark { font-weight:700; font-size:17px; text-align:center; color:var(--muted); margin:-6px 0 6px }
+.pshot { align-self:center; width:186px; height:380px; border-radius:30px; background:#0B0B0D; padding:5px; margin-top:4px; box-shadow:0 10px 24px rgba(0,0,0,.18) }
+.pscreen { width:100%; height:100%; border-radius:26px; background:var(--paper); padding:22px 12px 12px; display:flex; flex-direction:column; gap:8px; font-size:11px }
+.ptop { display:flex; justify-content:space-between; font-weight:600; color:var(--muted) }
+.lockchip { color:var(--emt); font-weight:600 }
+.pex { font-size:14px; font-weight:700; margin-top:6px } .pex span { display:block; font-size:11px; font-weight:400; color:var(--muted) }
+.pring { margin:10px auto; width:112px; height:112px; border-radius:56px; border:8px solid var(--em); border-right-color:rgba(15,154,107,.2); display:grid; place-items:center; align-content:center }
+.ringv { font-size:26px; font-weight:700; font-variant-numeric:tabular-nums } .ringl { font-size:10px; color:var(--muted); margin-top:-4px }
+.prow { display:flex; justify-content:space-between; color:var(--muted) } .prow b { color:var(--ink) }
+.pbtn { margin-top:auto; height:34px; border-radius:17px; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:600; font-size:12px }
+.shield { margin:18px 8px 0; border-radius:22px; background:#111114; color:#fff; padding:34px 22px 22px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center }
+.sicon { width:54px; height:54px; border-radius:14px; background:#2a2a2e; display:grid; place-items:center; font-size:26px }
+.stitle { font-size:19px; font-weight:700 } .sline { font-size:13.5px; color:rgba(255,255,255,.72); line-height:1.35 }
+.sbtn { margin-top:10px; width:100%; height:44px; border-radius:22px; background:#fff; color:#111; display:grid; place-items:center; font-weight:600; font-size:15px }
+.big { font-size:72px; font-weight:700; letter-spacing:-2px; line-height:1; margin:38px 0 26px; font-variant-numeric:tabular-nums } .big small { font-size:24px; letter-spacing:0; margin-left:8px; font-weight:600 }
+.big.red { color:var(--red) }
+.strip { display:flex; height:22px; border-radius:11px; overflow:hidden; background:rgba(20,20,23,.06) } .strip i { display:block } .strip .g { background:rgba(20,20,23,.5) } .strip .r { background:var(--red) }
+.striplabels { display:flex; justify-content:space-between; margin-top:10px } .striplabels div { display:flex; flex-direction:column } .striplabels small { font-size:13px; color:var(--muted) } .striplabels b { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums } .striplabels .r b { color:var(--redt) } .striplabels .r { text-align:right }
+.dots { display:grid; gap:9px; margin:30px 10px 0 } .dots i { aspect-ratio:1; border-radius:50%; background:var(--red) }
+.why { margin-top:14px; border-radius:18px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:14px 16px; display:flex; flex-direction:column; gap:10px }
+.whyh { font-size:13px; font-weight:600; color:var(--muted) }
+.wl { display:flex; gap:10px; align-items:flex-start; font-size:15px; line-height:1.3 } .wl i { font-style:normal; font-weight:700; width:18px; flex:none } .wl.bad i { color:var(--redt) } .wl.good i { color:var(--emt) }
+.lanes { margin-top:34px; display:flex; flex-direction:column; gap:26px } .lane small { font-size:13px; color:var(--muted); display:block; margin-bottom:8px }
+.bar { display:flex; height:22px; border-radius:11px; overflow:hidden; background:rgba(20,20,23,.06); gap:0 } .bar i { display:block } .bar .g { background:rgba(20,20,23,.5) } .bar .r { background:var(--red) } .bar .back { background:transparent; border:1.5px dashed var(--em); border-radius:0 11px 11px 0 }
+.lane .em { display:block; margin-top:8px; color:var(--emt); font-size:17px; text-align:right }
+.letter { font-size:17px; line-height:1.4; color:rgba(20,20,23,.86); margin-top:8px } .letter p { margin:0 0 14px } .sig { font-family:"Snell Roundhand","Brush Script MT",cursive; font-size:30px; margin-top:6px } .sig small { display:block; font-family:inherit; font-size:12px; color:var(--muted); font-style:normal }
+.tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:34px } .tile { aspect-ratio:1; border-radius:16px; background:var(--glass); box-shadow:0 0 0 1px var(--line); display:grid; place-items:center; font-size:26px; color:var(--muted) }
+.la { margin-top:30px; border-radius:20px; background:rgba(255,255,255,.9); box-shadow:0 0 0 1px var(--line); padding:14px 16px; display:flex; flex-direction:column; gap:4px }
+.lahead { display:flex; gap:8px; align-items:center; font-size:12px; color:var(--muted) } .lalogo { width:18px; height:18px; border-radius:5px; background:var(--ink); color:#fff; font-size:9px; display:grid; place-items:center; font-weight:700 } .lanow { margin-left:auto }
+.latitle { font-size:17px; font-weight:700 } .laline { font-size:13.5px; color:var(--muted) } .labtn { margin-top:8px; height:34px; border-radius:17px; background:var(--em); color:#fff; display:grid; place-items:center; font-weight:600; font-size:14px }
+.sys { margin:18px 30px 0; border-radius:14px; background:rgba(245,245,247,.98); box-shadow:0 10px 30px rgba(0,0,0,.18); padding:16px 14px 0; text-align:center }
+.systitle { font-size:15px; font-weight:600 } .sysline { font-size:12px; color:#555; margin:4px 0 10px } .sysbtns { display:flex; border-top:1px solid #ccc } .sysbtns span { flex:1; padding:10px; color:#0A60FF; font-size:15px } .sysbtns .b { font-weight:600; border-left:1px solid #ccc }
+.loader { margin-top:40px; display:flex; flex-direction:column; gap:18px } .pct { font-size:64px; font-weight:700; letter-spacing:-2px; line-height:1 } .lbar { height:6px; border-radius:3px; background:rgba(20,20,23,.1); overflow:hidden } .lbar i { display:block; height:100%; width:100%; background:var(--em) }
+.llist { display:flex; flex-direction:column; gap:12px; font-size:15px } .llist div { display:flex; justify-content:space-between } .llist b { color:var(--emt) }
+.plan { margin-top:18px; border-radius:20px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:18px 18px 8px; display:flex; flex-direction:column; gap:12px }
+.plank { font-size:13px; color:var(--muted); font-weight:500 } .planv { font-size:44px; font-weight:700; color:var(--emt); letter-spacing:-1px; line-height:1; margin:-6px 0 8px }
+.planrow { display:flex; justify-content:space-between; font-size:15px; padding:10px 0; border-top:1px solid var(--line) } .planrow span { color:var(--muted) } .planrow b { font-weight:600; display:flex; align-items:center; gap:4px }
+.mini { width:16px; height:16px; border-radius:4px; background:linear-gradient(135deg,#f58529,#dd2a7b); display:inline-block } .mini:nth-child(2) { background:#000 } .mini:nth-child(3) { background:#ff0000 }
+.hold { margin-top:auto; display:flex; flex-direction:column; align-items:center; gap:8px; padding-bottom:12px } .fp { width:96px; height:96px; border-radius:48px; background:var(--glass); box-shadow:0 0 0 1px var(--line); display:grid; place-items:center; font-size:40px; color:var(--muted) } .holdl { font-size:15px; color:var(--muted); font-weight:500 }
+.apl { display:inline-block; width:16px; height:18px; background:#fff; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170'%3E%3Cpath d='M150 130c-3 7-6 13-10 19-6 8-11 14-14 17-6 6-12 9-19 9-5 0-11-1-18-4-7-3-13-4-19-4-6 0-13 1-20 4-7 3-13 4-17 5-7 0-13-3-20-10-4-3-9-9-15-18-7-10-12-21-16-34-5-14-7-27-7-40 0-15 3-28 10-38 5-8 12-15 20-20 8-5 17-7 27-8 5 0 12 2 21 5 9 3 14 5 17 5 2 0 8-2 19-6 10-3 18-5 25-4 19 2 33 9 42 23-17 10-25 24-25 42 0 14 5 26 15 35 5 4 10 8 15 10-1 4-2 7-4 11zM107 4c0 11-4 21-12 31-9 11-21 18-33 17v-4c0-10 4-21 12-30 4-5 9-9 15-12 6-3 12-5 17-5 1 1 1 2 1 3z'/%3E%3C/svg%3E") center/contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 170 170'%3E%3Cpath d='M150 130c-3 7-6 13-10 19-6 8-11 14-14 17-6 6-12 9-19 9-5 0-11-1-18-4-7-3-13-4-19-4-6 0-13 1-20 4-7 3-13 4-17 5-7 0-13-3-20-10-4-3-9-9-15-18-7-10-12-21-16-34-5-14-7-27-7-40 0-15 3-28 10-38 5-8 12-15 20-20 8-5 17-7 27-8 5 0 12 2 21 5 9 3 14 5 17 5 2 0 8-2 19-6 10-3 18-5 25-4 19 2 33 9 42 23-17 10-25 24-25 42 0 14 5 26 15 35 5 4 10 8 15 10-1 4-2 7-4 11zM107 4c0 11-4 21-12 31-9 11-21 18-33 17v-4c0-10 4-21 12-30 4-5 9-9 15-12 6-3 12-5 17-5 1 1 1 2 1 3z'/%3E%3C/svg%3E") center/contain no-repeat }
+.goo { font-weight:700; color:#4285F4; font-size:18px }
+.nopay { margin:0 0 10px; text-align:center; font-size:14px; font-weight:600; color:var(--emt) }
+.bell { margin:70px auto 0; font-size:110px; position:relative; width:140px; text-align:center } .badge { position:absolute; top:-6px; right:-2px; width:40px; height:40px; border-radius:20px; background:var(--red); color:#fff; font-size:20px; font-weight:700; display:grid; place-items:center }
+.plans { display:flex; flex-direction:column; gap:12px; margin-top:22px }
+.plan-opt { border-radius:18px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:16px 16px; display:flex; justify-content:space-between; align-items:center; position:relative }
+.plan-opt.on { box-shadow:0 0 0 2px var(--ink); background:rgba(255,255,255,.95); padding-top:22px }
+.ribbon { position:absolute; top:-10px; left:14px; background:var(--em); color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; letter-spacing:.03em }
+.po b { font-size:16px; display:block } .po span { font-size:12.5px; color:var(--muted) } .pp { font-size:17px; font-weight:700; font-variant-numeric:tabular-nums } .pp small { font-size:12px; font-weight:500; color:var(--muted) }
+.terms { margin:8px 0 0; text-align:center; font-size:11.5px; color:var(--muted); line-height:1.4 }
+.prev { margin-top:14px; border-radius:18px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:12px 16px; font-weight:600; font-size:15px } .prev small { display:block; color:var(--muted); font-weight:400; font-size:13px }
+.exl { margin-top:16px; border-radius:20px; background:var(--glass); box-shadow:0 0 0 1px var(--line); padding:6px 18px; font-size:16px; font-weight:500 } .exl div { padding:11px 0; border-top:1px solid var(--line) } .exl div:first-child { border-top:0 } .exl .more { color:var(--muted); font-weight:400 }
+</style></head><body>
+<header><h1>GymBlock onboarding V10 — proposed, 1 Nov 2026</h1>
+<p>A clean-slate flow in Cal AI’s grammar (a left-aligned question, one grey line, plain rows, a thin progress line, nothing moving while you answer, the product in interstitials, a loader, a plan card, two trial pages before the price) in GymBlock’s own paper, ink and emerald, with its own numbers. Sample answers: 4 days, every rest, 1½-minute rests, 4-minute scrolls, 5 × 3. Revised after Sulav’s five points: the shield follows the why page as its proof; the year is a life number (an age question before it, Brainrot’s “more months of…” after the promise); only the lock answers “why those didn’t hold”; the apps picker moves into the app after the paywall; no loader, no plan: the hold, then the account and the trial. Rarely, or a phone that fits inside the rest, skips 10–14 and 18 reads “Keep every rest on time.”</p>
+<div class="legend"><span class="tag new">new</span> page or layout new in V10 · <span class="tag">kept</span> as today, in the new frame · <span class="tag dash">RevenueCat dashboard</span> built there, needs Sulav · <span class="tag app">in the app</span> Home, after the paywall</div></header>
+<div class="grid"><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+
+<div class="content">
+<h2>Focused workouts.</h2>
+<p class="sub">Your apps lock from your first set to your last.</p>
+<div class="pshot"><div class="pscreen">
+<div class="ptop"><span>Push</span><span class="lockchip">● 3 apps locked</span></div>
+<div class="pex">Bench press <span>set 2 of 3</span></div>
+<div class="pring"><div class="ringv">1:12</div><div class="ringl">Rest</div></div>
+<div class="prow"><span>Last time</span><b>60 kg × 8</b></div>
+<div class="pbtn">Start set</div>
+</div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Get started</div><div class="tbtn">Already have an account? Sign in</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>1</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:4%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>What should we call you?</h2>
+<p class="sub">It’s how we’ll greet you in the app.</p>
+<div class="field">Your name</div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn dim">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>2</b> <span class="tag kept">kept</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:8%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>How many days a week do you train?</h2>
+<p class="sub">We’ll set your weekly goal from this.</p>
+<div class="rows"><div class="row"><div><span>2 days</span></div><span class="chk"></span></div><div class="row"><div><span>3 days</span></div><span class="chk"></span></div><div class="row on"><div><span>4 days</span></div><span class="chk on"></span></div><div class="row"><div><span>5 days</span></div><span class="chk"></span></div><div class="row"><div><span>6 or more</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>3</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:12%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Where did you hear about us?</h2>
+
+<div class="rows"><div class="row on"><div><span>TikTok</span></div><span class="chk on"></span></div><div class="row"><div><span>Instagram</span></div><span class="chk"></span></div><div class="row"><div><span>YouTube</span></div><span class="chk"></span></div><div class="row"><div><span>App Store</span></div><span class="chk"></span></div><div class="row"><div><span>A friend</span></div><span class="chk"></span></div><div class="row"><div><span>Somewhere else</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>4</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:16%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Do you check your phone between sets?</h2>
+<p class="sub">No judgement. We did too.</p>
+<div class="rows"><div class="row on"><div><span>Every rest</span></div><span class="chk on"></span></div><div class="row"><div><span>Sometimes</span></div><span class="chk"></span></div><div class="row"><div><span>Rarely</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>5</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:20%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>And what does that cost you?</h2>
+<p class="sub">Pick all that apply.</p>
+<div class="rows"><div class="row on"><div><span>My workouts run long</span></div><span class="chk on"></span></div><div class="row"><div><span>I lose focus between sets</span></div><span class="chk"></span></div><div class="row on"><div><span>I get home late</span></div><span class="chk on"></span></div><div class="row"><div><span>Not much, honestly</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>6</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:24%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>How long do you rest between sets?</h2>
+<p class="sub">This becomes your rest timer.</p>
+<div class="rows"><div class="row"><div><span>1 minute</span></div><span class="chk"></span></div><div class="row on"><div><span>1.5 minutes</span></div><span class="chk on"></span></div><div class="row"><div><span>2 minutes</span></div><span class="chk"></span></div><div class="row"><div><span>3 minutes</span></div><span class="chk"></span></div><div class="row"><div><span>Not sure</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>7</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:28%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>How long are you on your phone each time?</h2>
+<p class="sub">Once you pick it up. Your best guess is fine.</p>
+<div class="rows"><div class="row"><div><span>About 2 minutes</span></div><span class="chk"></span></div><div class="row"><div><span>About 3 minutes</span></div><span class="chk"></span></div><div class="row on"><div><span>About 4 minutes</span></div><span class="chk on"></span></div><div class="row"><div><span>About 6 minutes</span></div><span class="chk"></span></div><div class="row"><div><span>About 8 minutes</span></div><span class="chk"></span></div><div class="row"><div><span>10 minutes or more</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>8</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:32%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>That’s 2.5 minutes lost. Every rest.</h2>
+<p class="sub">The first 1.5 were rest you’d take anyway.</p>
+<div class="big red">2.5<small>min</small></div><div class="strip"><i class="g" style="flex:1.5"></i><i class="r" style="flex:2.5"></i></div><div class="striplabels"><div class="g"><small>Rest you need</small><b>1:30</b></div><div class="r"><small>Past it</small><b>2:30</b></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>9</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:36%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>How many exercises per workout?</h2>
+
+<div class="rows"><div class="row"><div><span>3 or fewer</span></div><span class="chk"></span></div><div class="row"><div><span>4</span></div><span class="chk"></span></div><div class="row on"><div><span>5</span></div><span class="chk on"></span></div><div class="row"><div><span>6</span></div><span class="chk"></span></div><div class="row"><div><span>7 or more</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>10</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:40%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>And how many sets of each?</h2>
+<p class="sub">15 sets, so 14 rests.</p>
+<div class="rows"><div class="row"><div><span>2</span></div><span class="chk"></span></div><div class="row on"><div><span>3</span></div><span class="chk on"></span></div><div class="row"><div><span>4</span></div><span class="chk"></span></div><div class="row"><div><span>5 or more</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>11</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:44%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>35 minutes of every workout go to your phone.</h2>
+<p class="sub">From your answers: 14 rests × 2.5 minutes.</p>
+<div class="big red">35<small>min</small></div><div class="strip"><i class="g" style="flex:21"></i><i class="r" style="flex:35"></i></div><div class="striplabels"><div class="g"><small>Rests you need</small><b>21 min</b></div><div class="r"><small>On your phone</small><b>35 min</b></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>12</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:48%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>How old are you?</h2>
+<p class="sub">For one more number.</p>
+<div class="rows"><div class="row"><div><span>Under 18</span></div><span class="chk"></span></div><div class="row"><div><span>18–24</span></div><span class="chk"></span></div><div class="row on"><div><span>25–34</span></div><span class="chk on"></span></div><div class="row"><div><span>35–44</span></div><span class="chk"></span></div><div class="row"><div><span>45–54</span></div><span class="chk"></span></div><div class="row"><div><span>55 or over</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>13</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:52%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>That’s 5 months of your life.</h2>
+<p class="sub">At 4 workouts a week until you’re 65. Your numbers, multiplied out.</p>
+<div class="big red">5<small>months</small></div><p class="lifeline">of your life on your phone, between sets.</p>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>14</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:56%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>What have you tried?</h2>
+<p class="sub">Pick all that apply.</p>
+<div class="rows"><div class="row"><div><span>Phone in the locker</span></div><span class="chk"></span></div><div class="row on"><div><span>Screen Time limits</span></div><span class="chk on"></span></div><div class="row"><div><span>Do Not Disturb</span></div><span class="chk"></span></div><div class="row on"><div><span>Just willpower</span></div><span class="chk on"></span></div><div class="row"><div><span>Nothing yet</span></div><span class="chk"></span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>15</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:60%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Here’s why those didn’t hold.</h2>
+
+<div class="why"><div class="whyh">What you tried</div><div class="wl bad"><i>✕</i><span>Screen Time limits: Ignore Limit is one tap away</span></div><div class="wl bad"><i>✕</i><span>Just willpower: every rest is a fight</span></div></div><div class="why"><div class="whyh">With GymBlock</div><div class="wl good"><i>✓</i><span>Locked from your first set to your last. No Ignore button.</span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>16</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:64%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>This is what you’ll see instead.</h2>
+<p class="sub">A locked app, mid-workout.</p>
+<div class="shield">
+<div class="sicon">♪</div>
+<div class="stitle">You’re mid-workout.</div>
+<div class="sline">TikTok opens when you finish your workout in GymBlock.</div>
+<div class="sbtn">Back to training</div>
+</div>
+</div>
+<div class="actions"><p class="cap">It lifts the moment you finish.</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>17</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:68%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>We’ll give you those 35 minutes back.</h2>
+<p class="sub">Home 35 minutes earlier.</p>
+<div class="lanes"><div class="lane"><small>Today</small><div class="bar"><i class="g" style="flex:21"></i><i class="r" style="flex:35"></i></div></div><div class="lane"><small>With GymBlock</small><div class="bar"><i class="g" style="flex:21"></i><i class="back" style="flex:35"></i></div><b class="em">35 min back</b></div></div>
+</div>
+<div class="actions"><p class="cap">Every workout.</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>18</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:72%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>5 more months of</h2>
+
+<div class="wordsbig">Living</div><div class="wordsrest">Reading · Sleeping · Cooking · Lifting</div>
+</div>
+<div class="actions"><p class="cap">One word at a time, on a loop.</p><div class="btn ink">Let’s do this</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>19</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:76%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>A note from Sulav.</h2>
+
+<div class="letter"><p>Hey, it’s Sulav.</p><p>I used to grab my phone between sets for a “quick” look. Then I’d look up, 10 minutes gone, no idea what set I was on.</p><p>I made GymBlock for me first. I still use it every single workout.</p><p>I hope it helps you too.</p><div class="sig">Sulav<small>Founder, GymBlock</small></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>20</b> <span class="tag kept">kept</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:80%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>We’ll buzz you when your rest is up.</h2>
+<p class="sub">One buzz, right when it’s time. Change it anytime.</p>
+<div class="la"><div class="lahead"><span class="lalogo">GB</span><span>GymBlock</span><span class="lanow">now</span></div>
+<div class="latitle">Rest’s up · Push</div><div class="laline">Next: Bench press · set 3 of 3</div><div class="labtn">Start set</div></div>
+<div class="sys"><div class="systitle">“GymBlock” Would Like to Send You Notifications</div><div class="sysline">Notifications may include alerts, sounds and icon badges.</div><div class="sysbtns"><span>Don’t Allow</span><span class="b">Allow</span></div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink">Continue</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>21</b> <span class="tag kept">kept</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:84%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Ready to get your time back?</h2>
+<p class="sub">Hold the button.</p>
+<div class="hold tall"><div class="fp">◉</div><div class="holdl">Hold to commit</div></div>
+</div>
+<div class="actions"><p class="cap">Then: “Let’s go. You’re committed.”</p></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>22</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:88%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Save your progress.</h2>
+<p class="sub">Every workout syncs to your account and comes back on any iPhone.</p>
+
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><div class="btn ink"><b class=apl></b>Sign in with Apple</div><div class="btn white"><b class=goo>G</b>Sign in with Google</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>23</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:92%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Try GymBlock free for 7 days.</h2>
+<p class="sub">Every workout, every rest, your apps locked.</p>
+<div class="pshot"><div class="pscreen">
+<div class="ptop"><span>Push</span><span class="lockchip">● 3 apps locked</span></div>
+<div class="pex">Bench press <span>set 2 of 3</span></div>
+<div class="pring"><div class="ringv">0:00</div><div class="ringl">Rest</div></div>
+<div class="prow"><span>Last time</span><b>60 kg × 8</b></div>
+<div class="pbtn">Start set</div>
+</div></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><p class="nopay">✓ No payment due now</p><div class="btn ink">Try for free</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>24</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=back>‹</div><div class="prog"><i style="width:96%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>We’ll remind you before your trial ends.</h2>
+<p class="sub">As long as notifications are on.</p>
+<div class="bell">🔔<span class="badge">1</span></div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><p class="nopay">✓ No payment due now</p><div class="btn ink">Continue for free</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>25</b> <span class="tag new">new</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=spacer></div><div class="prog"><i style="width:100%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Start your 7-day free trial</h2>
+
+<div class="plans">
+<div class="plan-opt on"><div class="ribbon">7 DAYS FREE · SAVE 17%</div><div class="po"><b>Yearly</b><span>7 days free, then $4.17/mo</span></div><div class="pp">$49.99<small>/year</small></div></div>
+<div class="plan-opt"><div class="po"><b>Monthly</b><span>No free trial</span></div><div class="pp">$4.99<small>/month</small></div></div>
+<div class="plan-opt"><div class="po"><b>Weekly</b><span>No free trial</span></div><div class="pp">$0.99<small>/week</small></div></div>
+</div>
+</div>
+<div class="actions"><p class="cap">&nbsp;</p><p class="nopay">✓ No payment due now</p><div class="btn ink">Start my free trial</div><p class="terms">7 days free, then $49.99 per year. Cancel anytime.<br>Terms · Privacy · Restore · Sign out</p></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>26</b> <span class="tag dash">RevenueCat dashboard</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+
+<div class="content">
+
+
+<div class="homeh">Good morning, Sirish</div><div class="week"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span>Week 1</span></div>
+<div class="homecard"><b>Lock your apps while you train</b><small>Pick the ones that pull you in. Ending your workout lifts it.</small><div class="hbtn">Choose apps</div></div>
+<div class="upnext"><small>Up next ⌄</small><b>Push</b><span>Bench press, Incline dumbbell press and 4 more</span></div>
+</div>
+<div class="actions"><p class="cap">Blocking isn’t set up yet</p><div class="btn ink">▶ Start workout</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>27</b> <span class="tag app">in the app, after the paywall</span></figcaption>
+</figure><figure>
+<div class="phone"><div class="screen">
+<div class="status"><span>9:41</span><span class="sig">●●●● ᯤ ▮</span></div>
+<div class="topbar"><div class=spacer></div><div class="prog"><i style="width:100%"></i></div><div class="spacer"></div></div>
+<div class="content">
+<h2>Ready? Your first workout is Push.</h2>
+
+<div class="exl"><div>Bench press</div><div>Incline dumbbell press</div><div>Shoulder press</div><div>Lateral raise</div><div>Triceps pushdown</div><div class="more">+ 1 more</div></div>
+</div>
+<div class="actions"><p class="cap">Starting it locks your apps until you finish.</p><div class="btn ink">▶ Start workout</div><div class="tbtn">I’m not at the gym yet</div></div>
+<div class="home"></div>
+</div></div>
+<figcaption><b>28</b> <span class="tag kept">kept</span></figcaption>
+</figure></div></body></html>

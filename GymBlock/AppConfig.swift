@@ -8,8 +8,6 @@ enum AppConfig {
   static let supabaseKey = "sb_publishable_nIHOrgL5YE6qXiKCjQ7-Yg_Sj4w5z9e"
   /// Where the Google sign-in sheet returns to (registered in Supabase → Authentication → URL configuration).
   static let authCallback = URL(string: "gymblock://auth/callback")!
-  /// The dashboard paywall's "Sign out" link (a deep link); RemotePaywall acts on it, nothing else does.
-  static let paywallSignOut = URL(string: "gymblock://paywall/sign-out")!
   /// RevenueCat's public SDK key, injected from Secrets.xcconfig; empty until the app is created there.
   static let revenueCatKey = infoString("RevenueCatAPIKey")
   /// PostHog's project key and host (Secrets.xcconfig); empty key, nothing sent. The host comes without

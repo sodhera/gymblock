@@ -59,6 +59,13 @@ struct RoutineBaseline: Codable {
   /// timer), and whether they chose "Not sure", which counts as 2 minutes.
   var restNeedSeconds: Int?
   var restNeedUnsure: Bool?
+  /// Onboarding V9 (1 Nov 2026): what the phone costs them and what they've tried (`CostAnswer`,
+  /// `TriedAnswer` in JourneyMetrics.swift), in the order the questions list them.
+  var costs: [CostAnswer]?
+  var tried: [TriedAnswer]?
+  /// Onboarding V10 (1 Nov 2026): their age band and where they heard of us.
+  var age: AgeAnswer?
+  var source: SourceAnswer?
   var breakCount: Int? { totalSets.map { max(0, $0 - 1) } }
   var effectiveScrollingBreaks: Int? { scrollingBreaks ?? breakCount }
   var breakAssumptionValid: Bool {

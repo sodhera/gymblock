@@ -3,18 +3,21 @@ import RevenueCat
 import SwiftUI
 
 /// GymBlock Pro through RevenueCat, keyed to the Supabase account id so purchases follow the
-/// account. When the current offering has a paywall built in RevenueCat's dashboard, that is the
-/// offer (any plans, changed without a release); otherwise the app's own page offers monthly and
-/// yearly. Nothing here is faked: with no API key configured, the offer page shows that and the
+/// account. The app's own paywall offers weekly, yearly and monthly (1 Nov 2026; RevenueCat's
+/// dashboard paywall is no longer shown). Nothing here is faked: with no API key configured, the offer page shows that and the
 /// (Debug-only) skip, never a pretend price.
 @MainActor final class GymSubscription: ObservableObject {
+  enum Period: String { case weekly, monthly, yearly }
   struct Plan: Identifiable, Equatable {
     let id: String
-    let yearly: Bool
+    let period: Period
+    var yearly: Bool { period == .yearly }
     /// The billed amount for the plan's own period, in the store's currency.
     let price: String
     /// Yearly only: the same amount spread over twelve months, for comparison.
     let perMonth: String?
+    /// Yearly only: the same amount a week ("US$0.67/wk" on the app's paywall, 1 Nov 2026).
+    var perWeek: String? = nil
     let trialDays: Int
     /// Yearly only: twelve months at the monthly price, struck through beside the yearly one.
     var anchor: String? = nil
@@ -33,14 +36,10 @@ import SwiftUI
   /// True once RevenueCat has answered for the signed-in account (not the anonymous one it starts as).
   /// The paywall gate waits for this, so a subscriber never sees the offer flash on launch.
   @Published private(set) var resolved = false
-  /// Whether the current offering has a dashboard paywall; nil until the store has answered.
-  @Published private(set) var remote: Bool?
   /// Called with each entitlement change (the cloud keeps a snapshot).
   var onEntitlement: ((CustomerInfo) -> Void)?
 
   private var packages: [String: Package] = [:]
-  /// The package the dashboard paywall is buying, from its start callback to its result.
-  private var pending: Package?
   private var stream: Task<Void, Never>?
   private var userID: UUID?
 
@@ -101,7 +100,6 @@ import SwiftUI
     do {
       let offerings = try await Purchases.shared.offerings()
       guard let current = offerings.current else { message = "The subscription is unavailable. Try again later."; return }
-      remote = current.hasPaywall
       var found: [Plan] = []
       var amounts: [String: Decimal] = [:]
       var formatters: [String: NumberFormatter] = [:]
@@ -110,7 +108,9 @@ import SwiftUI
         let product = package.storeProduct
         let yearly = package.packageType == .annual || product.productIdentifier == AppConfig.yearlyProductID
         let monthly = package.packageType == .monthly || product.productIdentifier == AppConfig.monthlyProductID
-        guard yearly || monthly else { continue }
+        let weekly = package.packageType == .weekly
+        guard yearly || monthly || weekly else { continue }
+        let period: Period = yearly ? .yearly : monthly ? .monthly : .weekly
         // The product's own formatter carries the store's currency; never the phone's locale.
         let perMonth = yearly ? product.pricePerMonth.flatMap { price -> String? in
           if let formatter = product.priceFormatter { return formatter.string(from: price) }
@@ -123,13 +123,19 @@ import SwiftUI
         if trial > 0, await Purchases.shared.checkTrialOrIntroDiscountEligibility(product: product) == .ineligible { trial = 0 }
         // One formatter for the price and the struck-through anchor, so both read alike ("US$59.99", not "USD 59.99" beside "US$71.88").
         let price = product.priceFormatter?.string(from: product.price as NSDecimalNumber) ?? product.localizedPriceString
-        let plan = Plan(id: product.productIdentifier, yearly: yearly, price: price, perMonth: perMonth, trialDays: trial)
+        var plan = Plan(id: product.productIdentifier, period: period, price: price, perMonth: perMonth, trialDays: trial)
+        if yearly, let formatter = product.priceFormatter {
+          // Up to the cent, so it never claims less than the yearly price works out to.
+          var raw = product.price / 52, week = Decimal()
+          NSDecimalRound(&week, &raw, 2, .up)
+          plan.perWeek = formatter.string(from: week as NSDecimalNumber)
+        }
         found.append(plan); packages[plan.id] = package
         amounts[plan.id] = product.price
         formatters[plan.id] = product.priceFormatter
       }
       // The comparison is the stores' own prices, never an invented "was" price.
-      if let monthly = found.first(where: { !$0.yearly }), let month = amounts[monthly.id],
+      if let monthly = found.first(where: { $0.period == .monthly }), let month = amounts[monthly.id],
          let index = found.firstIndex(where: { $0.yearly }), let year = amounts[found[index].id] {
         let twelve = month * 12
         if twelve > year {
@@ -139,8 +145,10 @@ import SwiftUI
           if percent >= 1 { found[index].savings = Int(percent.rounded(.down)) }
         }
       }
-      plans = found.sorted { $0.yearly && !$1.yearly }
-      if selected == nil || !plans.contains(where: { $0.id == selected }) { selected = plans.first?.id }
+      // Weekly, yearly, monthly: the yearly in the middle, as the app's paywall lays them out.
+      let order: [Period] = [.weekly, .yearly, .monthly]
+      plans = found.sorted { (order.firstIndex(of: $0.period) ?? 9) < (order.firstIndex(of: $1.period) ?? 9) }
+      if selected == nil || !plans.contains(where: { $0.id == selected }) { selected = plans.first(where: \.yearly)?.id ?? plans.first?.id }
       message = plans.isEmpty ? "The subscription is unavailable. Try again later." : nil
       Analytics.track("paywall_loaded", ["plans": plans.count])
     } catch {
@@ -203,31 +211,6 @@ import SwiftUI
     case .year: return spanish ? "/año" : "/year"
     @unknown default: return ""
     }
-  }
-
-  // MARK: Dashboard paywall
-  // RevenueCatUI buys and restores by itself; these keep the same events as the app's own page.
-
-  func remoteStarted(_ package: Package) {
-    pending = package
-    Analytics.track("purchase_started", ["product": package.storeProduct.productIdentifier])
-  }
-  func remotePurchased(_ info: CustomerInfo) {
-    guard let package = pending else { apply(info); return }
-    pending = nil
-    completed(info, package: package)
-  }
-  func remoteCancelled() {
-    Analytics.track("purchase_cancelled", ["product": pending?.storeProduct.productIdentifier])
-    pending = nil
-  }
-  func remoteFailed(_ error: NSError) {
-    pending = nil
-    Analytics.error("purchase", error)
-  }
-  func remoteRestored(_ info: CustomerInfo) {
-    apply(info)
-    Analytics.track("restore", ["entitled": hasAccess])
   }
 
   func restore() async {

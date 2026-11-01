@@ -153,7 +153,8 @@ final class JourneyV5UITests: XCTestCase {
     // The offer is a wall, as in SleepBlock: no way back into the questions, none into the app.
     XCTAssertFalse(app.buttons["onboarding.back"].exists)
     XCTAssertFalse(app.buttons["home.start"].exists)
-    tap("subscription.debugSkip"); page("You’re in. How do you split your training?")
+    tap("subscription.debugSkip")
+    XCTAssertTrue(app.buttons["Set up my account"].waitForExistence(timeout: 8))  // You're in, after the price.
     XCTAssertFalse(app.buttons["onboarding.back"].isHittable)  // Past the offer there is no going back to it.
   }
 

@@ -83,9 +83,6 @@ targets:
         product: Supabase
       - package: RevenueCat
         product: RevenueCat
-      # The dashboard-built paywall (AccountGate.swift), changeable without a release.
-      - package: RevenueCat
-        product: RevenueCatUI
       - package: PostHog
         product: PostHog
       - package: TikTokBusinessSDK

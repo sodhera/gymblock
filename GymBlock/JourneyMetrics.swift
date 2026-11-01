@@ -1,6 +1,87 @@
 import Foundation
 
 enum HabitAnswer: String, Codable, CaseIterable { case yes, sometimes, no }
+/// Onboarding V9 (1 Nov 2026, docs/ONBOARDING-V9-PLAN.md): what the phone costs them, in their own
+/// words, and what they've tried against it. Fixed answers, never free text.
+enum CostAnswer: String, Codable, CaseIterable {
+  case runLong, loseFocus, loseTrack, skipSets, homeLate, other
+  /// Offered until 1 Nov 2026; kept so saved answers decode, never shown.
+  case notMuch
+  /// The rows, in order.
+  static let offered: [CostAnswer] = [.runLong, .loseFocus, .loseTrack, .skipSets, .homeLate, .other]
+}
+enum TriedAnswer: String, Codable, CaseIterable { case locker, limits, doNotDisturb, willpower, nothing }
+/// Onboarding V10 (1 Nov 2026): their age band (for the number in life) and where they heard of us.
+enum AgeAnswer: String, Codable, CaseIterable {
+  case under18, from18, from25, from35, from45, from55
+  /// The top of the band, so the years to 65 round down; 55 or over counts from 60.
+  var top: Int {
+    switch self {
+    case .under18: return 18
+    case .from18: return 24
+    case .from25: return 34
+    case .from35: return 44
+    case .from45: return 54
+    case .from55: return 60
+    }
+  }
+}
+enum SourceAnswer: String, Codable, CaseIterable { case tiktok, instagram, youtube, appStore, google, friend, other }
+
+/// Onboarding V10: the number in life. Their lost minutes a workout, at their days a week, for the
+/// years from the top of their age band to 65 (so it rounds down), against their time at the gym over
+/// the same years. Never a prediction about them: their answers, multiplied out, with the assumption said.
+extension TimeBack {
+  static let lifeEnd = 65
+  func lifeYears(_ age: AgeAnswer?) -> Int { max(1, Self.lifeEnd - (age ?? .from25).top) }
+  /// Hours on the phone past the rest, over their training life.
+  func lifeLostHours(_ age: AgeAnswer?) -> Double { yearHours * Double(lifeYears(age)) }
+  /// Hours at the gym over the same years: today's workout (the sets, the rest they need, the phone past it).
+  func lifeGymHours(_ age: AgeAnswer?) -> Double? {
+    guard let lifting, let neededRest, lost != nil else { return nil }
+    return (lifting + neededRest + Double(shownLost)) * Double(days) * 52 * Double(lifeYears(age)) / 60
+  }
+  /// The year dots (LifeDotsStage): one dot a workout for the next year at their days a week, and the
+  /// share of them the phone takes (the lost minutes over today's whole session), as whole dots, down.
+  /// A lifter counts workouts; "a day at the gym" meant nothing (1 Nov 2026, the user).
+  var yearWorkouts: Int { days * 52 }
+  /// Today's session: the sets, the rest they need, the phone past it.
+  var sessionMinutes: Double? {
+    guard let lifting, let neededRest, lost != nil else { return nil }
+    return lifting + neededRest + Double(shownLost)
+  }
+  var yearPhoneWorkouts: Int {
+    guard let session = sessionMinutes, session > 0 else { return 0 }
+    return min(yearWorkouts, Int(Double(yearWorkouts) * Double(shownLost) / session))
+  }
+}
+
+/// "1,440 hours", "2 years": hours of life as people feel them (1 Nov 2026, the user: "2 months"
+/// sounded small). Hours, down to the nearest ten, until two years; then years, down.
+enum LifeWords {
+  static func span(hours: Double) -> (text: String, unit: String, one: Bool) {
+    if hours < 17_520 {
+      let tens = max(10, Int(hours / 10) * 10)
+      return (tens.formatted(.number.grouping(.automatic)), "hours", false)
+    }
+    let years = Int(hours / 8760)
+    return ("\(years)", years == 1 ? "year" : "years", years == 1)
+  }
+}
+
+extension RoutineBaseline {
+  /// The cost the later pages speak to, one of their picks: home late first (the most felt), then the
+  /// long workout, then focus. "Not much", or nothing picked, gives nil.
+  var spokenCost: CostAnswer? {
+    guard let costs else { return nil }
+    return [CostAnswer.homeLate, .runLong, .skipSets, .loseTrack, .loseFocus].first { costs.contains($0) }
+  }
+  /// What they tried that didn't hold, in the order the question lists them.
+  var triedThatFailed: [TriedAnswer] {
+    let picks = tried ?? []
+    return TriedAnswer.allCases.filter { $0 != .nothing && picks.contains($0) }
+  }
+}
 enum LoggingHabit: String, Codable, CaseIterable { case review, logOnly, neither }
 
 extension RoutineBaseline {

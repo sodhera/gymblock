@@ -142,6 +142,11 @@ enum JourneyScores {
 
   /// The shield locks: a latch and the iPhone's lock click as it covers the app (ShieldStage).
   static let shield = JourneyScore(haptics: latch(ShieldStage.lands, 0.8), sounds: [cue(ShieldStage.lands, .lock, 0.45)])
+  /// The trial page's story: a tick as the set is logged, then the latch and the lock click as the
+  /// shield lands, after the prologue.
+  static let logThenShield = JourneyScore(
+    haptics: tick(ShieldStage.logTap, 0.45) + latch(ShieldStage.lands + ShieldStage.logLength, 0.8),
+    sounds: [cue(ShieldStage.logTap, .tink, 0.35), cue(ShieldStage.lands + ShieldStage.logLength, .lock, 0.45)])
 
   /// Rest alerts: the Live Activity's digits change every `countdownStep` from 0:05, each second a
   /// light, crisp tick like a watch's, silently; on 0:00 the real thing: the double buzz and the
@@ -153,7 +158,30 @@ enum JourneyScores {
     return JourneyScore(haptics: ticks + [.tap(zero, 0.9, 0.6), .tap(zero + 0.13, 0.7, 0.6)], sounds: [cue(zero, .alert, 0.35)])
   }()
 
+  /// What they tried, and why it didn't hold (WhyFailsStage): a falter as each line lands, with
+  /// Health's "reading failed" quietly under it, then the latch and the lock click as GymBlock's line lands.
+  static func whyFails(rows: [Double], lock: Double) -> JourneyScore {
+    JourneyScore(haptics: rows.flatMap { falter($0, 0.5) } + latch(lock, 0.8),
+                 sounds: rows.map { cue(max(0, $0 - failAttack), .readingFail, 0.22) } + [cue(lock, .lock, 0.4)])
+  }
+
+  /// The life dots (LifeDotsStage): crisp ticks following the dots as they light, each a touch
+  /// firmer; the grey ones end on a tick, the red ones on a heavy thud and the plate drop.
+  static func dots(count: Int, over: Double, heavy: Bool) -> JourneyScore {
+    let n = min(16, max(1, count / 6))
+    let times = (1...n).map { over * easeInOutTime(Double($0) / Double(n + 1)) }
+    let land: [H] = heavy ? thud(over, 1) : tick(over, 0.45)
+    return JourneyScore(haptics: times.enumerated().flatMap { tick($0.element, 0.15 + 0.2 * Double($0.offset) / Double(max(1, n - 1))) } + land,
+                        sounds: times.map { cue($0, .tock, 0.3) } + (heavy ? [cue(over, .plateDrop, 0.55)] : [cue(over, .tink, 0.4)]))
+  }
+
   /// Committed: a heavy thud and the clank of a plate going back on the rack.
+  /// You're in: the mark lands with the plate's thud, the keyhole locks with the iPhone's click,
+  /// the confetti fires on the Activity ring's chime, and each line ticks in.
+  static let youreIn = JourneyScore(
+    haptics: thud(YoureInStage.land, 0.9) + latch(YoureInStage.lock, 0.7) + ring(YoureInStage.burst + ringAttack)
+      + (0..<YoureInStage.rows.count).flatMap { tick(YoureInStage.row($0) + 0.05, 0.45) },
+    sounds: [cue(YoureInStage.land, .plateHeavy, 0.45), cue(YoureInStage.lock, .lock, 0.3), cue(YoureInStage.burst, .goalAttained, 0.6)])
   static let committed = JourneyScore(haptics: thud(0, 0.9), sounds: [cue(0, .plateHeavy, 0.5)])
 
   /// Start workout, at the end of onboarding: the apps lock with a latch.

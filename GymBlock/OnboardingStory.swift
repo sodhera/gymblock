@@ -58,12 +58,15 @@ struct SceneClock<Content: View>: View {
 struct DesignFit<Content: View>: View {
   let size: CGSize
   var maxScale: CGFloat = 1.15
+  /// Pinned to the top of the space rather than its middle.
+  var top = false
   @ViewBuilder let content: () -> Content
   var body: some View {
     GeometryReader { g in
       let s = min(maxScale, min(g.size.width / size.width, g.size.height / size.height))
       content().frame(width: size.width, height: size.height).scaleEffect(s)
         .frame(width: g.size.width, height: g.size.height)
+        .offset(y: top ? -max(0, g.size.height - size.height * s) / 2 : 0)
     }
   }
 }
@@ -308,21 +311,34 @@ struct TrainingDaysStage: View {
 /// blocking only runs on a real iPhone.
 struct ShieldStage: View {
   let done: () -> Void
+  /// The first trial page's version (1 Nov 2026, at the user's request): first a set is logged on
+  /// GymBlock's workout screen and the rest starts, then the phone goes home and the lock plays.
+  var logFirst = false
+  /// The trial page's size: about 60% of the screen's width, Brainrot's.
+  var small = false
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var start: Date?
   @State private var still = false
   /// The tap, the app open and the shield landing; the loop's length.
   static let press = 1.0, open = 1.2, lands = 2.25, period = 6.4
+  /// The prologue: the tap on Log set, and how long the workout screen stays before the phone goes home.
+  static let logTap = 1.4, logLength = 3.6
+  private var offset: Double { logFirst ? Self.logLength : 0 }
   static let screen = CGSize(width: 300, height: 650)
   /// TikTok's icon on the home screen (third row, second column).
   static let icon = CGPoint(x: 114, y: 292)
   var body: some View {
-    DesignFit(size: CGSize(width: Self.screen.width + 16, height: Self.screen.height + 16), maxScale: 1) {
+    // On the trial page the phone sits at the top of its space, under the title (1 Nov 2026).
+    // On the trial page the phone is Brainrot's size: about 60% of the screen's width, air around it.
+    DesignFit(size: CGSize(width: Self.screen.width + 16, height: Self.screen.height + 16), maxScale: small ? UIScreen.main.bounds.width * 0.6 / (Self.screen.width + 16) : 1) {
       TimelineView(.animation(paused: start == nil || still)) { context in
-        let t = still ? Self.lands + 1 : start.map { max(0, context.date.timeIntervalSince($0) + JourneyScores.displayLead).truncatingRemainder(dividingBy: Self.period) } ?? 0
+        let t = still ? Self.lands + 1 + offset : start.map { max(0, context.date.timeIntervalSince($0) + JourneyScores.displayLead).truncatingRemainder(dividingBy: Self.period + offset) } ?? 0
         phone(t)
       }
+      // One layer, so the page fading in fades the phone as a whole and the screens under the
+      // workout don't show through.
+      .compositingGroup()
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("blocking.shieldPreview")
     .accessibilityLabel(store.t("Illustration: TikTok is tapped mid-workout and GymBlock’s lock screen covers it."))
@@ -332,25 +348,32 @@ struct ShieldStage: View {
     if JourneyMotion.reduced(systemReduceMotion) { still = true; done(); return }
     try? await Task.sleep(for: .seconds(JourneyMotion.settle))
     guard !Task.isCancelled else { return }
-    let begin = JourneyScorePlayer.shared.play(JourneyScores.shield, profile: store.profile)
+    let begin = JourneyScorePlayer.shared.play(logFirst ? JourneyScores.logThenShield : JourneyScores.shield, profile: store.profile)
     start = begin
     // A beat to read the shield before Continue.
-    try? await Task.sleep(for: .seconds(max(0, begin.timeIntervalSinceNow) + Self.lands + 1))
+    try? await Task.sleep(for: .seconds(max(0, begin.timeIntervalSinceNow) + Self.lands + offset + 1))
     guard !Task.isCancelled else { return }
     done()
   }
 
-  private func phone(_ t: Double) -> some View {
+  private func phone(_ time: Double) -> some View {
+    // The prologue runs on its own clock; the lock's clock starts when the phone goes home.
+    let t = time - offset
     let open = Ease.out(Ease.seg(t, Self.open, Self.open + 0.35))
     let shield = Ease.out(Ease.seg(t, Self.lands - 0.22, Self.lands))
     let away = Ease.inOut(Ease.seg(t, Self.period - 0.7, Self.period - 0.15))
     let anchor = UnitPoint(x: Self.icon.x / Self.screen.width, y: Self.icon.y / Self.screen.height)
+    // The workout screen leaves (shrinks away, as an app does) over the prologue's last 0.3 s.
+    let leave = logFirst ? Ease.inOut(Ease.seg(time, Self.logLength - 0.3, Self.logLength)) : 1
     return ZStack {
       home(t)
       app.clipShape(RoundedRectangle(cornerRadius: 72 - 28 * open, style: .continuous))
         .scaleEffect(0.17 + 0.83 * open, anchor: anchor).opacity(t < Self.open ? 0 : min(1, open * 3) * (1 - away))
       shieldScreen(t).scaleEffect(1.03 - 0.03 * shield).opacity(shield * (1 - away))
-      statusBar(ink: shield > 0.5 && away < 0.5)
+      if logFirst && time < Self.logLength {
+        workout(time).scaleEffect(1 - 0.9 * leave).opacity(1 - leave)
+      }
+      statusBar(ink: (shield > 0.5 && away < 0.5) || (logFirst && time < Self.logLength - 0.15))
       Capsule().fill(.black).frame(width: 86, height: 25).frame(maxHeight: .infinity, alignment: .top).padding(.top, 9)
     }
     .frame(width: Self.screen.width, height: Self.screen.height)
@@ -360,14 +383,11 @@ struct ShieldStage: View {
     .shadow(color: .black.opacity(0.18), radius: 18, y: 12)
   }
 
-  private static let apps: [(name: String, symbol: String, color: Color)] = [
-    ("Messages", "message.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("Photos", "camera.macro", Color(red: 0.9, green: 0.42, blue: 0.54)),
-    ("Camera", "camera.fill", Color(white: 0.45)), ("Mail", "envelope.fill", Color(red: 0.2, green: 0.5, blue: 0.95)),
-    ("Clock", "clock.fill", Color(white: 0.12)), ("Maps", "map.fill", Color(red: 0.3, green: 0.7, blue: 0.45)),
-    ("Notes", "note.text", Color(red: 0.95, green: 0.75, blue: 0.2)), ("Settings", "gear", Color(white: 0.55)),
-    ("Instagram", "camera", Color(red: 0.84, green: 0.36, blue: 0.55)), ("TikTok", "", .black),
-    ("YouTube", "play.fill", Color(red: 0.9, green: 0.28, blue: 0.23)), ("GymBlock", "", Color(red: 0.961, green: 0.953, blue: 0.937)),
-  ]
+  /// The home screen's apps, by their real icons (1 Nov 2026, at the user's request, as Cal AI
+  /// ships them): Apple's taken from the simulator's home screen, the others the icons the store
+  /// screenshots use, now in the shipping catalog (`app.*` in Assets).
+  private static let apps: [String] = ["Calendar", "Photos", "Reminders", "News", "Maps", "Health", "Wallet", "Settings", "Instagram", "TikTok", "YouTube", "GymBlock"]
+  private static let dock: [String] = ["Safari", "Messages", "X"]
   private func home(_ t: Double) -> some View {
     let press = Ease.bump(t, Self.press - 0.12, 0.3)
     let finger = Ease.seg(t, Self.press - 0.45, Self.press - 0.2) * (1 - Ease.seg(t, Self.press + 0.15, Self.press + 0.35))
@@ -376,16 +396,13 @@ struct ShieldStage: View {
                      startPoint: .topLeading, endPoint: .bottom)
       ForEach(Array(Self.apps.enumerated()), id: \.offset) { i, app in
         VStack(spacing: 5) {
-          tile(app).scaleEffect(app.name == "TikTok" ? 1 - 0.12 * press : 1)
-          Text(app.name).font(.system(size: 9.5, weight: .medium)).foregroundStyle(.white).lineLimit(1).fixedSize()
+          tile(app).scaleEffect(app == "TikTok" ? 1 - 0.12 * press : 1)
+          Text(app).font(.system(size: 9.5, weight: .medium)).foregroundStyle(.white).lineLimit(1).fixedSize()
         }
         .position(x: 42 + Double(i % 4) * 72, y: 108 + Double(i / 4) * 96)
       }
       HStack(spacing: 22) {
-        ForEach([("phone.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("safari", Color(red: 0.2, green: 0.5, blue: 0.95)),
-                 ("message.fill", Color(red: 0.2, green: 0.78, blue: 0.35)), ("music.note", Color(red: 0.95, green: 0.3, blue: 0.4))], id: \.0) { symbol, color in
-          tile((name: "", symbol: symbol, color: color))
-        }
+        ForEach(Self.dock, id: \.self) { tile($0) }
       }
       .padding(12).background(RoundedRectangle(cornerRadius: 30, style: .continuous).fill(.white.opacity(0.28)))
       .position(x: Self.screen.width / 2, y: Self.screen.height - 62)
@@ -395,27 +412,21 @@ struct ShieldStage: View {
     }
     .frame(width: Self.screen.width, height: Self.screen.height)
   }
-  private func tile(_ app: (name: String, symbol: String, color: Color)) -> some View {
-    RoundedRectangle(cornerRadius: 12, style: .continuous).fill(app.color).frame(width: 52, height: 52)
-      .overlay {
-        switch app.name {
-        case "TikTok": note(size: 26)
-        case "GymBlock": BrandMark(size: 34)
-        default: Image(systemName: app.symbol).font(.system(size: 23, weight: .medium)).foregroundStyle(.white)
-        }
+  private func tile(_ app: String) -> some View {
+    let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
+    return Group {
+      if app == "GymBlock" {
+        shape.fill(Color(red: 0.961, green: 0.953, blue: 0.937)).overlay { BrandMark(size: 34) }
+      } else {
+        Image("app." + app.lowercased()).resizable().scaledToFill().clipShape(shape)
       }
-  }
-  /// A stand-in for TikTok's note, as in SleepBlock: a white note with its cyan and pink edges.
-  private func note(size: CGFloat) -> some View {
-    Text("♪").font(.system(size: size, weight: .bold)).foregroundStyle(.white)
-      .shadow(color: .cyan, radius: 0, x: -size / 14, y: -size / 28)
-      .shadow(color: .pink, radius: 0, x: size / 14, y: size / 18)
+    }.frame(width: 52, height: 52)
   }
   private var app: some View {
     ZStack {
       Color.black
-      VStack(spacing: 14) {
-        note(size: 64)
+      VStack(spacing: 16) {
+        Image("app.tiktok").resizable().scaledToFit().frame(width: 96, height: 96).clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         Text("TikTok").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
       }
     }.frame(width: Self.screen.width, height: Self.screen.height)
@@ -438,6 +449,70 @@ struct ShieldStage: View {
         Spacer().frame(height: 52)
       }
     }.frame(width: Self.screen.width, height: Self.screen.height)
+  }
+  /// The prologue: GymBlock's workout screen. Set 2 of bench press, the weight and reps ready, a tap
+  /// on Log set; the set ticks into the log under set 1 and the rest starts counting.
+  private func workout(_ time: Double) -> some View {
+    let press = Ease.bump(time, Self.logTap - 0.12, 0.3)
+    let finger = Ease.seg(time, Self.logTap - 0.45, Self.logTap - 0.2) * (1 - Ease.seg(time, Self.logTap + 0.15, Self.logTap + 0.35))
+    let logged = Ease.out(Ease.seg(time, Self.logTap, Self.logTap + 0.4))
+    let rest = max(0, 90 - (time - Self.logTap))
+    let weight = store.profile.unit == "lb" ? "135 lb" : "60 kg"
+    return ZStack(alignment: .topLeading) {
+      Color(red: 0.961, green: 0.953, blue: 0.937)
+      VStack(alignment: .leading, spacing: 0) {
+        HStack {
+          Text(store.t("Push")).font(.system(size: 15, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+          Spacer()
+          Label(String(format: store.t("%@ apps locked"), "3"), systemImage: "lock.fill").font(.system(size: 12, weight: .semibold)).foregroundStyle(JourneyColor.signalText)
+        }.padding(.top, 62)
+        Text(store.t("Bench press")).font(.system(size: 26, weight: .bold)).foregroundStyle(JourneyColor.text).padding(.top, 22)
+        Text(String(format: store.t("Set %@ of %@"), logged > 0.5 ? "3" : "2", "3")).font(.system(size: 14)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
+        // The log so far: set 1, then set 2 landing under it.
+        VStack(spacing: 8) {
+          logRow(1, weight)
+          logRow(2, weight).opacity(logged).offset(y: (1 - logged) * 14)
+        }.padding(.top, 18)
+        // The rest, once the set is logged.
+        HStack(spacing: 10) {
+          ZStack {
+            Circle().stroke(JourneyColor.signal.opacity(0.2), lineWidth: 5)
+            Circle().trim(from: 0, to: rest / 90).stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
+          }.frame(width: 44, height: 44)
+          VStack(alignment: .leading, spacing: 1) {
+            Text(TimeWords.clock(rest / 60)).font(.system(size: 20, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+            Text(store.t("Rest")).font(.system(size: 12)).foregroundStyle(JourneyColor.secondary)
+          }
+        }.padding(.top, 22).opacity(logged)
+        Spacer()
+        // The next set's numbers and the button, before the tap.
+        HStack(spacing: 10) {
+          field(weight); field("8 " + store.t("reps"))
+        }.opacity(1 - logged)
+        Text(store.t("Log set")).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white)
+          .frame(maxWidth: .infinity, minHeight: 46).background(Capsule().fill(JourneyColor.button))
+          .scaleEffect(1 - 0.05 * press).padding(.top, 10).opacity(1 - logged * 0.0)
+        Spacer().frame(height: 52)
+      }.padding(.horizontal, 22)
+      Circle().fill(.white.opacity(0.35)).overlay(Circle().strokeBorder(.white.opacity(0.85), lineWidth: 2))
+        .frame(width: 36, height: 36).scaleEffect(1 - 0.15 * press).opacity(finger)
+        .position(x: Self.screen.width / 2 + 10, y: Self.screen.height - 52 - 23 + 8)
+    }.frame(width: Self.screen.width, height: Self.screen.height)
+  }
+  private func logRow(_ n: Int, _ weight: String) -> some View {
+    HStack {
+      Text(String(format: store.t("Set %@"), "\(n)")).font(.system(size: 14, weight: .medium)).foregroundStyle(JourneyColor.text)
+      Spacer()
+      Text(weight + " × 8").font(.system(size: 14, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+      Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(JourneyColor.signalText)
+    }
+    .padding(.horizontal, 14).frame(height: 40)
+    .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.white.opacity(0.75)))
+  }
+  private func field(_ text: String) -> some View {
+    Text(text).font(.system(size: 18, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+      .frame(maxWidth: .infinity, minHeight: 48)
+      .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.white.opacity(0.75)))
   }
   private func statusBar(ink: Bool) -> some View {
     VStack {
@@ -529,9 +604,9 @@ struct PlanStage: View {
     let rests = String(format: store.t(store.profile.restAlerts == true ? "%@ rests, then a buzz" : "%@ rests"),
                        clockString(store.profile.restSeconds ?? 90))
     let time = TimeBack(baseline, restSeconds: store.profile.restSeconds)
-    // Their workout with rests on time is the one thing in the plan that's new: the signal.
-    // Only from an earlier gym-time answer: it's no longer asked (28 Oct 2026).
-    let workout = time.outcome == .full && time.gym != nil ? store.aboutLine(time.workout) : nil
+    // The one thing in the plan that's new, in the signal colour: the minutes back each workout (V9,
+    // 1 Nov 2026; before it, the workout length, which only an earlier gym-time answer gave).
+    let workout = time.outcome == .full ? String(format: store.t("%@ min back"), "\(time.shownLost)") : nil
     let blocked = !StoreShots.apps.isEmpty || blocking.state(store.profile) == .on
     // Each part settles in turn, the last at 1.05 s; the hold appears after it.
     SceneClock(duration: 1.1, done: done) { t in
@@ -614,13 +689,55 @@ enum SplitTemplate: String, CaseIterable, Identifiable {
                             ("Arms", ["barbell-curl", "curl", "hammer", "triceps", "pushdown"])]
     }
   }
+  /// The row's grey line: how many workouts it rotates through and what's in them.
+  var detail: String {
+    switch self {
+    case .keep: return ""
+    case .pushPullLegs: return "3 workouts · bench, rows, squats"
+    case .upperLower: return "2 workouts · bench, rows, squats"
+    case .fullBody: return "1 workout · squats, bench, rows"
+    case .bodyPart: return "5 workouts · chest, back, legs"
+    case .none: return "Pick exercises as you go"
+    }
+  }
+  /// Each split it sets up gets its own colour, in this order, so Home's week line shows the rotation.
+  static let colors: [SplitColor] = [.emerald, .blue, .orange, .purple, .pink]
   static func exercises(_ ids: [String]) -> [Exercise] { ids.compactMap { id in Exercise.catalog.first { $0.id == id } } }
 }
 
+/// A row's mark: one dot per workout in the rotation, in the colours the splits will wear (as on
+/// Home's week line); a hollow ring for no fixed plan.
+struct SplitDotsIcon: View {
+  let colors: [Color]
+  var body: some View {
+    Canvas { c, size in
+      guard !colors.isEmpty else {
+        c.stroke(Path(ellipseIn: CGRect(x: 7, y: 7, width: size.width - 14, height: size.height - 14)), with: .color(JourneyColor.ink(0.35)), lineWidth: 1.5)
+        return
+      }
+      let d: CGFloat = colors.count == 1 ? 12 : colors.count >= 5 ? 8 : 10
+      let points: [CGPoint]
+      switch colors.count {
+      case 1: points = [CGPoint(x: 0.5, y: 0.5)]
+      case 2: points = [CGPoint(x: 0.3, y: 0.5), CGPoint(x: 0.7, y: 0.5)]
+      case 3: points = [CGPoint(x: 0.5, y: 0.25), CGPoint(x: 0.27, y: 0.7), CGPoint(x: 0.73, y: 0.7)]
+      case 4: points = [CGPoint(x: 0.3, y: 0.3), CGPoint(x: 0.7, y: 0.3), CGPoint(x: 0.3, y: 0.7), CGPoint(x: 0.7, y: 0.7)]
+      default: points = [CGPoint(x: 0.2, y: 0.2), CGPoint(x: 0.8, y: 0.2), CGPoint(x: 0.5, y: 0.5), CGPoint(x: 0.2, y: 0.8), CGPoint(x: 0.8, y: 0.8)]
+      }
+      for (p, color) in zip(points, colors) {
+        c.fill(Path(ellipseIn: CGRect(x: p.x * size.width - d / 2, y: p.y * size.height - d / 2, width: d, height: d)), with: .color(color))
+      }
+    }
+    .frame(width: 30, height: 30)
+    .accessibilityHidden(true)
+  }
+}
+
 /// One tap on the split most people run, or build your own in the split editor (name, exercises,
-/// order). Splits you build are kept and selected; build as many as you like. On small screens the
-/// preview card doesn't fit beside the options, so the line above Continue says what we'll set up
-/// (`summary`); if the page still runs over (large text, longer Spanish), it scrolls.
+/// order). Splits you build are kept and selected; build as many as you like. Each row says what's
+/// in it and shows its rotation as dots in the splits' colours (1 Nov 2026, at the user's request:
+/// the bare names under an empty band read hollow). On small screens the line above Continue also
+/// says what we'll set up (`summary`); if the page runs over (large text, longer Spanish), it scrolls.
 struct SplitTemplateStage: View {
   @Binding var choice: SplitTemplate?
   @EnvironmentObject private var store: GymStore
@@ -646,14 +763,13 @@ struct SplitTemplateStage: View {
     }
   }
   private var list: some View {
-    VStack(spacing: compact ? 10 : 14) {
-      Spacer(minLength: 0)
-      if !compact { preview.animation(JourneyMotion.gentle, value: choice) }
+    VStack(spacing: compact ? 10 : 16) {
       JourneyGlassGroup(spacing: compact ? 8 : 10) {
         VStack(spacing: compact ? 8 : 10) {
           ForEach(options) { option in
-            JourneyOption(title: option == .keep ? keepTitle : store.t(option.title),
-                          selected: choice == option, id: "splits.template." + option.rawValue) {
+            JourneyIconOption(title: option == .keep ? keepTitle : store.t(option.title), detail: detail(option),
+                              selected: choice == option, id: "splits.template." + option.rawValue,
+                              icon: SplitDotsIcon(colors: dots(option))) {
               withAnimation(JourneyMotion.gentle) { choice = option }
               JourneyHaptic.play(.selection, store.profile)
             }
@@ -661,13 +777,22 @@ struct SplitTemplateStage: View {
         }
       }
       Button { building = true } label: {
-        Label(store.t(store.data.workouts.isEmpty ? "Build my own split" : "Build another split"), systemImage: "plus")
-          .font(JourneyType.option).foregroundStyle(JourneyColor.text)
-          .frame(maxWidth: .infinity, minHeight: compact ? 44 : 52)
-          .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-          .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-            .strokeBorder(JourneyColor.ink(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [5, 5])))
+        Label(store.t(store.data.workouts.isEmpty ? "Build my own" : "Build another split"), systemImage: "plus")
+          .font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.text)
+          .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
       }.buttonStyle(JourneyPressStyle()).accessibilityIdentifier("splits.build")
+      Spacer(minLength: 0)
+    }
+  }
+  private func detail(_ option: SplitTemplate) -> String {
+    guard option == .keep else { return store.t(option.detail) }
+    return store.data.workouts.map(\.name).joined(separator: " · ")
+  }
+  private func dots(_ option: SplitTemplate) -> [Color] {
+    switch option {
+    case .keep: return store.data.workouts.prefix(5).map { $0.splitColor.paper.light.color }
+    case .none: return []
+    default: return SplitTemplate.colors.prefix(option.splits.count).map { $0.paper.light.color }
     }
   }
   /// What we'll set up, in one or two lines: the compact page's caption in place of the card.
@@ -691,33 +816,6 @@ struct SplitTemplateStage: View {
   private var keepTitle: String {
     let n = store.data.workouts.count
     return n == 1 ? store.t("Keep my split") : String(format: store.t("Keep my %@ splits"), "\(n)")
-  }
-  @ViewBuilder private var preview: some View {
-    let rows: [(String, String, Int)] = {
-      switch choice {
-      case .keep?: return store.data.workouts.prefix(3).map { ($0.name, $0.exercises.map { store.t($0.name) }.joined(separator: ", "), $0.exercises.count) }
-      case let template?: return template.splits.prefix(3).map { (store.t($0.0), SplitTemplate.exercises($0.1).map { store.t($0.name) }.joined(separator: ", "), $0.1.count) }
-      default: return []
-      }
-    }()
-    if !rows.isEmpty {
-      VStack(alignment: .leading, spacing: 0) {
-        Text(store.t(choice == .keep ? "Your splits" : "We’ll set up")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).padding(.bottom, 6)
-        ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-          HStack(spacing: 10) {
-            Text(row.0).font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.text).frame(width: 74, alignment: .leading).lineLimit(1)
-            Text(row.1).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
-            Spacer(minLength: 4)
-            Text("\(row.2)").font(.app(.footnote)).monospacedDigit().foregroundStyle(JourneyColor.secondary)
-          }.padding(.vertical, 6)
-        }
-      }.padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
-        .journeySurface().transition(.opacity)
-    } else if choice == SplitTemplate.none {
-      Text(store.t("Every workout starts free: pick exercises as you go. You can save one as a split later."))
-        .font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
-        .padding(.horizontal, 12).transition(.opacity)
-    }
   }
 }
 

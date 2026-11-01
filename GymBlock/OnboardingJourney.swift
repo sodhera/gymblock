@@ -1,11 +1,16 @@
 import FamilyControls
 import SwiftUI
 
-/// Onboarding: one question or one idea per page, on a fixed grid —
-/// progress line, headline box, stage, caption, actions. See docs/ONBOARDING-V8-PLAN.md.
+/// Onboarding V10 (docs/ONBOARDING-V10-PLAN.md, 1 Nov 2026): one frame on every page — a round
+/// glass Back and a thin progress line, the question left-aligned, one grey line under it, the
+/// content in the middle, the one ink Continue at the bottom. Nothing animates while they answer;
+/// the pictures live on the interstitials. The numbers and the words are theirs (`TimeBack`).
 enum OnboardingStep: String, CaseIterable {
-  case welcome, founder, name, trainingDays, scrolling, restNeed, scrollMinutes, perRest, ahead, exerciseCount, setCount, gymTime
-  case workoutTime, yearTime, promise, shield, blocking, alerts, commit, account, subscription, splits, firstWorkout
+  case welcome, name, trainingDays, source, scrolling, cost, restNeed, scrollMinutes, perRest
+  case exerciseCount, setCount, workoutTime, age, yearDots, yearPhone, life, tried, whyFails, shield, promise, words
+  case founder, alerts, commit, account, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
+  // V8/V9 pages (20 Oct–1 Nov 2026) replaced by V10; saved progress on them resumes at the nearest page.
+  case yearTime, blocking, ahead, gymTime
   // V7's pages (17 Oct 2026), replaced on 20 Oct 2026 by time back; saved progress on them resumes
   // at the rest question.
   case phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB
@@ -25,6 +30,9 @@ enum OnboardingStep: String, CaseIterable {
     case .body, .gender, .height, .weight: return .trainingDays
     case .duration, .reps, .sets, .exercises, .routine: return .scrolling
     case .gymTime: return .workoutTime  // No longer asked (28 Oct 2026).
+    case .yearTime: return .age         // The year became the life number (V10).
+    case .blocking: return .alerts      // The apps picker moved to Home (V10), then after the price.
+    case .ahead: return .perRest
     case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
          .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
       return .restNeed
@@ -32,37 +40,46 @@ enum OnboardingStep: String, CaseIterable {
     }
   }
   /// The account step or later: the answers are worth keeping in the account from here on.
-  var reachedAccount: Bool { [.account, .subscription, .splits, .firstWorkout].contains(current) }
+  var reachedAccount: Bool { [.account, .trial1, .trial2, .subscription, .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .scrolling, .perRest, .ahead, .workoutTime, .yearTime, .promise, .shield, .alerts, .commit].contains(self) }
+  var animated: Bool { [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .youreIn].contains(self) }
+  /// Pages that answer on rows in the middle of the screen.
+  var question: Bool { [.trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .age, .tried].contains(self) }
+  /// Pages whose headline and content are centred (the interstitials), as Cal AI's are.
+  var centred: Bool { [.yearDots, .yearPhone, .life, .words, .commit, .trial1, .trial2, .youreIn].contains(self) }
   /// Pages sharing a stage keep their visual in place; only the words change.
   var stage: String {
     switch self {
-    case .scrolling: return "notify"
-    // Rarely's "already ahead" keeps the stopwatch from the rest question in place.
-    case .restNeed, .ahead: return "watch"
+    case .yearDots, .yearPhone: return "year"
     default: return rawValue
     }
   }
 }
 
 enum OnboardingRoute {
-  /// The pages their answers lead to (docs/ONBOARDING-V8-PLAN.md): Rarely, or scrolling that fits
-  /// inside the rest, goes straight to how GymBlock works; an earlier gym-time answer their sets don't
-  /// fit gets the per-rest promise only.
-  static func steps(_ baseline: RoutineBaseline) -> [OnboardingStep] {
-    var steps: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed]
+  /// The pages their answers lead to (docs/ONBOARDING-V10-PLAN.md). A phone that fits inside the
+  /// rest skips the workout, the age and the life pages; answers that don't fit an earlier gym time
+  /// get the per-rest promise only. The second trial page needs notifications on.
+  static func steps(_ baseline: RoutineBaseline, restAlerts: Bool = false, screenTime: Bool = false, appsChosen: Bool = false) -> [OnboardingStep] {
+    var steps: [OnboardingStep] = [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest]
     let time = TimeBack(baseline)
-    // Every answer to "Be honest" goes on to the phone time (28 Oct 2026, the user's call).
-    steps += [.scrollMinutes, .perRest]
+    let why: [OnboardingStep] = baseline.triedThatFailed.isEmpty ? [] : [.whyFails]
     if time.lostPerRest != 0 {
-      // No gym-time question since 28 Oct 2026: the workout page sets their rests against the phone.
       steps += [.exerciseCount, .setCount]
-      if time.perRestOnly { steps.append(.promise) }
-      else { steps += [.workoutTime] + (time.extraWorkouts >= 1 ? [.yearTime] : []) + [.promise] }
+      if !time.perRestOnly { steps += [.workoutTime, .age, .yearDots, .yearPhone, .life] }
+      // The good news right after the bad (Brainrot's order): the promise, what the time is for, then
+      // what they've tried, why it didn't hold, and the shield as the proof.
+      steps += [.promise] + (time.perRestOnly ? [] : [.words]) + [.tried] + why + [.shield]
+    } else {
+      steps += [.promise, .tried] + why + [.shield]
     }
-    // Sulav's note sits after their own number, before how GymBlock works (20 Oct 2026; it was page 2).
-    return steps + [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    // The wall: the trial page, the reminder page, the price (Brainrot's three; 1 Nov 2026).
+    // Notifications are asked before the commit; allowed there (or already, on a reinstall), they
+    // aren't asked again after the price. As SleepBlock's primers (1 Nov 2026), after the price:
+    // notifications if still off, then Screen Time and the apps, each left out once iOS has the answer.
+    let alerts: [OnboardingStep] = restAlerts ? [] : [.alerts]
+    let permissions: [OnboardingStep] = (restAlerts ? [] : [.notifications]) + (screenTime ? [] : [.screenTime]) + (appsChosen ? [] : [.chooseApps])
+    return steps + [.founder] + alerts + [.commit, .account, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
   }
 }
 
@@ -74,30 +91,26 @@ struct OnboardingView: View {
   @EnvironmentObject private var account: Account
   /// "I already have an account": the standalone sign-in, which RootView shows.
   var onSignIn: () -> Void = {}
-  /// Minutes a scroll lasts, on the wheel.
-  @State private var draft = 1.0
   /// The rows' choices before Continue saves them. A rest of 0 is "Not sure".
   @State private var restChoice: Double?
+  @State private var scrollChoice: Double?
   @State private var exerciseChoice: Int?
   @State private var setChoice: Int?
-  @State private var gymChoice: Int?
-  @ObservedObject private var blocking = AppBlocking.shared
-  /// The system app picker, its working copy, and a note when Screen Time access is refused.
-  @State private var picking = false
-  /// iOS has been asked for Screen Time access on this page (App Review 5.1.1(iv), 17 Oct 2026: the
-  /// page may only be left once the system request has shown).
-  @State private var askedScreenTime = false
-  @State private var pickDraft = FamilyActivitySelection()
-  @State private var blockMessage: String?
-  @State private var locking = false
+  @State private var ageChoice: AgeAnswer?
+  @State private var sourceChoice: SourceAnswer?
+  @State private var costChoice: Set<CostAnswer> = []
+  @State private var triedChoice: Set<TriedAnswer> = []
   @State private var nameDraft = ""
   @State private var trainingDays: Int?
   @State private var template: SplitTemplate?
-  @State private var gender: String?
-  @State private var heightUnit = BodyUnits.defaultMetric ? 0 : 1
-  @State private var weightUnit = BodyUnits.defaultMetric ? 0 : 1
-  @State private var heightCM = 175.0
-  @State private var weightKG = 75.0
+  @ObservedObject private var blocking = AppBlocking.shared
+  @State private var requestingScreenTime = false
+  @State private var picking = false
+  @State private var pickDraft = FamilyActivitySelection()
+  @State private var setupSteps: [OnboardingStep] = []
+  /// iOS's own answer, read on appear and on every return: the saved setting can be stale (synced
+  /// from another iPhone, or kept after a reinstall reset the permission), so it never hides the ask.
+  @State private var notificationsAllowed: Bool?
   @State private var covered = true
   @State private var ready = true
   /// When the current page appeared, for the minimum time before Continue.
@@ -108,45 +121,78 @@ struct OnboardingView: View {
   @State private var moving = false
   @State private var finished = false
   @Environment(\.dynamicTypeSize) private var typeSize
+  /// Back from Settings on the alerts page: if notifications were turned on there, move on.
+  @Environment(\.scenePhase) private var scenePhase
   /// VoiceOver lands on the new question after each page change.
   @AccessibilityFocusState private var questionFocused: Bool
   /// Pages slide a little in the direction of travel as they fade, so Back feels like going back.
   @State private var slide: CGFloat = 0
   @State private var pledged = 0
   @State private var committed = false
+  /// The commit page's hold, 0 to 1, and where the fingerprint sits: an emerald circle grows from it
+  /// with the hold and floods the page (Brainrot's commit, 1 Nov 2026, at the user's request).
+  /// Driven as one animation (0 → 1 over the hold's length, back on release), so the render server
+  /// draws every frame: fed from the hold's 40 ms ticks it drew in steps (1 Nov 2026, the user).
+  @State private var holdProgress = 0.0
+  @State private var holdCenter: CGPoint?
+  @State private var flooding = false
+  /// The flood is under way: the print draws white, since the flood grows from it.
+  private var printFlooded: Bool { step == .commit && (committed || flooding) }
   @MainActor private static var coverShown = false
   private var baseline: RoutineBaseline { store.profile.baseline ?? RoutineBaseline() }
   private var time: TimeBack { TimeBack(baseline, restSeconds: store.profile.restSeconds) }
-  /// The phone-time wheel's first value: a minute more than the rest they need, in whole minutes
-  /// (28 Oct 2026, at the user's request; 1.5 min of rest starts it at 3).
-  private var scrollFloor: Double { min(15, (time.restNeed + 1).rounded(.up)) }
   private var step: OnboardingStep { OnboardingStep.restored(store.profile) }
-  private var route: [OnboardingStep] { OnboardingRoute.steps(baseline) }
+  @State private var wallForward = true
+  private var route: [OnboardingStep] {
+    OnboardingRoute.steps(baseline, restAlerts: notificationsAllowed ?? (store.profile.restAlerts == true), screenTime: blocking.authorized, appsChosen: !blocking.isEmpty)
+  }
 
   var body: some View {
     ZStack {
       DotGrid()
+      if step == .commit, let holdCenter {
+        CommitFlood(progress: committed ? 1 : holdProgress, center: holdCenter)
+      }
+      // The price page, warmed up off screen from the wall's first page: RevenueCat's view loads its
+      // paywall and images when it's made, and made at the moment of the slide it stalled it (1 Nov 2026).
+      if onWall && step != .subscription {
+        PaywallView(subscription: subscription, skip: {}, inOnboarding: true)
+          .opacity(0).allowsHitTesting(false).accessibilityHidden(true)
+      }
       VStack(spacing: 0) {
-        topBar.frame(height: 44).padding(.horizontal, 12)
-        if scrolls {
-          // Accessibility text sizes: the page scrolls and its scene keeps a usable height, instead of
-          // squeezing the scene to nothing and pushing the top into the status bar (inspection, 20 Oct 2026).
-          ScrollView { VStack(spacing: 0) { page(fixed: false) } }.scrollIndicators(.hidden).scrollBounceBehavior(.basedOnSize)
-        } else {
-          page(fixed: true)
+        // Above the page, so the paywall can run up under it with no band of its own.
+        topBar.frame(height: 44).padding(.horizontal, 12).zIndex(1)
+        // On the wall the pages slide sideways as a pager (1 Nov 2026, at the user's request); the
+        // dots above stay put. Elsewhere a page fades and nudges, as before.
+        ZStack {
+          Group {
+            if step == .subscription {
+              // The price: RevenueCat's page (or the app's own), the wall's last page, under the dots.
+              PaywallView(subscription: subscription, skip: { move(.youreIn) }, inOnboarding: true)
+                .padding(.top, -44)  // Up under the Back button: no bar on the price (1 Nov 2026).
+            } else if scrolls {
+              // Accessibility text sizes: the page scrolls and its content keeps a usable height.
+              ScrollView { VStack(spacing: 0) { page(fixed: false) } }.scrollIndicators(.hidden).scrollBounceBehavior(.basedOnSize)
+            } else {
+              VStack(spacing: 0) { page(fixed: true) }
+            }
+          }
+          .id(onWall ? "wall." + step.rawValue : "page")
+          .transition(.asymmetric(insertion: .move(edge: wallForward ? .trailing : .leading), removal: .move(edge: wallForward ? .leading : .trailing)))
         }
       }
       // Nothing on a page that's leaving can be tapped (a second tap used to change a saved answer).
       .allowsHitTesting(!moving)
-      // The launch screen is the same dark stage: the first page simply rises into it.
+      // The launch screen is the same stage: the first page simply rises into it.
       .opacity(covered ? 0 : 1).offset(y: covered && !reduceMotion ? 10 : 0)
     }
+    .coordinateSpace(name: "onboarding")
+    .onPreferenceChange(HoldCenterKey.self) { holdCenter = $0 }
     .foregroundStyle(JourneyColor.text)
     .preferredColorScheme(JourneyColor.theme.scheme)
     // Continue waits for the page's animation to finish. Safety net, well past the longest
-    // sequence: it still appears if one is interrupted.
-    // Leaving the page cancels this task. The sleep's cancellation is swallowed by `try?`, so it must
-    // be checked, or the next page would get its Continue the moment it opened.
+    // sequence: it still appears if one is interrupted. Leaving the page cancels this task; the
+    // sleep's cancellation is swallowed by `try?`, so it must be checked.
     .task(id: step) {
       let page = step
       guard !ready else { return }
@@ -155,12 +201,43 @@ struct OnboardingView: View {
       markReady(page)
     }
     .environment(\.journeyPress, true)
+    // The apps picker as a half sheet, so setup stays in view behind it (as SleepBlock's).
+    .sheet(isPresented: $picking, onDismiss: appsPicked) {
+      NavigationStack {
+        FamilyActivityPicker(headerText: store.t("Most people lock Instagram, TikTok and YouTube."), selection: $pickDraft)
+          .navigationTitle(store.t("Choose apps")).navigationBarTitleDisplayMode(.inline)
+          .toolbar { ToolbarItem(placement: .confirmationAction) { Button(store.t("Done")) { picking = false } } }
+      }
+      .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+    }
+    .onChange(of: step) { old, _ in if old == .youreIn { setupSteps = Array(route.drop { $0 != .youreIn }.dropFirst()) } }
     .onChange(of: step) { old, new in Analytics.leave("onboarding." + old.rawValue); Analytics.enter("onboarding." + new.rawValue, ["step": stepIndex(new)]) }
     .onAppear { Analytics.enter("onboarding." + step.rawValue, ["step": stepIndex(step)]) }
     .onDisappear { Analytics.leave("onboarding." + step.rawValue) }
-    .familyActivityPicker(headerText: store.t("Choose what to block from Start workout to Finish."), isPresented: $picking, selection: $pickDraft)
-    .onChange(of: pickDraft) { _, chosen in blocking.choose(chosen) }
+    // Back from iOS Settings: its answer may have changed either way.
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active, step != .alerts && step != .notifications else { return }
+      Task { @MainActor in notificationsAllowed = RestAlert.granted(await RestAlert.status()) }
+    }
+    .onChange(of: scenePhase) { _, phase in
+      guard phase == .active, step == .alerts || step == .notifications else { return }
+      Task { @MainActor in
+        if RestAlert.granted(await RestAlert.status()) {
+          Analytics.track("onboarding_alerts", ["choice": "settings", "granted": true])
+          store.updateProfile { $0.restAlerts = true }
+          notificationsAllowed = true
+          RestAlert.addTrialReminder()
+          leaveNotifications()
+        }
+      }
+    }
     .onAppear {
+      // What iOS already knows: allowed on a reinstall means the alerts page has nothing to ask.
+      Task { @MainActor in
+        let allowed = RestAlert.granted(await RestAlert.status())
+        notificationsAllowed = allowed
+        if allowed, store.profile.restAlerts != true { store.updateProfile { $0.restAlerts = true } }
+      }
       if reduceMotion || Self.coverShown { covered = false } else {
         Self.coverShown = true
         withAnimation(.easeOut(duration: 0.6)) { covered = false }
@@ -174,11 +251,11 @@ struct OnboardingView: View {
         $0.onboardingStepID = step.rawValue
         // V7 no longer asks body weight, so kg or lb comes from the phone's region the first time.
         if ($0.onboardingVersion ?? 0) < 10 && $0.onboardingStepID == nil { $0.unit = BodyUnits.defaultMetric ? "kg" : "lb" }
-        $0.onboardingVersion = 11
+        $0.onboardingVersion = 12
         if $0.focusEnabled == nil { $0.focusEnabled = false }
         if $0.language.isEmpty {
           // The phone's preferred language: Locale.current says English here, because the app doesn't
-          // declare a Spanish localization (a phone set to Spanish got English; inspection, 20 Oct 2026).
+          // declare a Spanish localization.
           $0.language = Locale.preferredLanguages.first?.hasPrefix("es") == true ? "es" : "en"
         }
       }
@@ -188,31 +265,27 @@ struct OnboardingView: View {
   // MARK: Grid
 
   /// Pages that scroll: at accessibility text sizes, and on a small phone from the second-largest
-  /// standard size up, where the workout and plan pages ran into the status bar (the welcome, Sulav's
-  /// note and the splits page fit or scroll on their own).
+  /// standard size up (the welcome, Sulav's note and the splits page fit or scroll on their own).
   private var scrolls: Bool {
-    (typeSize.isAccessibilitySize || (JourneyLayout.compact && typeSize >= .xxLarge)) && ![.welcome, .founder, .splits].contains(step)
+    (typeSize.isAccessibilitySize || (JourneyLayout.compact && typeSize >= .xxLarge)) && ![.welcome, .founder, .youreIn, .notifications, .screenTime, .chooseApps, .splits].contains(step)
   }
   @ViewBuilder private func page(fixed: Bool) -> some View {
-    // The welcome scene carries its own words; every other page has the headline box.
-    if step != .welcome {
-      headline.padding(.horizontal, JourneyLayout.compact ? 24 : 28).padding(.top, JourneyLayout.compact ? 6 : 14)
+    // The welcome scene and You're in carry their own words; every other page has the headline and its line.
+    if step != .welcome && step != .youreIn {
+      headline.padding(.horizontal, 24).padding(.top, JourneyLayout.compact ? 6 : 12)
         .opacity(shown ? 1 : 0).offset(x: slide)
     }
     ZStack {
       stage.id(step.stage).transition(.identity)
     }.frame(maxWidth: .infinity, minHeight: fixed ? nil : 300, maxHeight: fixed ? .infinity : nil)
-      // Small screens keep a margin around every scene instead of filling the screen edge to edge.
-      // (Sulav's note is text, so it keeps the usual margin.)
-      .padding(.horizontal, JourneyLayout.compact && step != .founder ? 32 : (JourneyLayout.compact ? 18 : 24))
-      .padding(.vertical, JourneyLayout.compact ? 14 : 12)
+      .padding(.horizontal, step == .founder ? (JourneyLayout.compact ? 18 : 24) : 24)
+      .padding(.vertical, 12)
       // A stage shared by two pages stays put; only a new stage fades and slides.
       .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
-    Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(JourneyColor.secondary)
+    Text(caption.map(store.t) ?? " ").font(JourneyType.caption).foregroundStyle(captionColor)
       .multilineTextAlignment(.center).lineLimit(typeSize.isAccessibilitySize ? nil : 2).fixedSize(horizontal: false, vertical: typeSize.isAccessibilitySize)
       .frame(minHeight: 20).padding(.horizontal, 32)
-      // The caption arrives with the page's button, never floating alone over the empty space where it
-      // will be (28 Oct 2026, at the user's request).
+      // The caption arrives with the page's button, never floating alone over the empty space.
       .opacity(shown && actionsShown ? 1 : 0).offset(x: slide)
       .animation(.smooth(duration: 0.3), value: actionsShown)
       .accessibilityHidden(caption == nil)
@@ -220,18 +293,55 @@ struct OnboardingView: View {
     actions.padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 6)
       .opacity(shown ? 1 : 0).offset(x: slide * 0.5)
   }
+  /// "No payment due now" under the trial pages is the signal; every other caption is grey.
+  private var captionColor: Color { [.trial1, .trial2].contains(step) ? JourneyColor.signalText : JourneyColor.secondary }
 
+  /// The pages after the account that lead to the price: one wall, as Brainrot's (1 Nov 2026, at
+  /// the user's request). No Back from the first of them, and page dots in place of the line.
+  private var wall: [OnboardingStep] { route.filter { [.trial1, .trial2, .subscription].contains($0) } }
+  /// Three dots on the wall: the trial page, the price… and a third the price's own page counts as
+  /// (Brainrot's three; the reminder page is out, so the paywall takes dots two and three).
+  private var onWall: Bool { wall.contains(step) }
   private var topBar: some View {
     ZStack {
-      HStack(spacing: 8) {
-        // Past the offer there is no going back to it.
-        JourneyBackButton(label: store.t("Go back"), action: back).disabled(locking || account.busy)
-          .opacity(step == .splits || step == .firstWorkout ? 0 : 1).allowsHitTesting(step != .splits && step != .firstWorkout)
-        JourneyProgress(value: progress, label: store.t("Progress")).padding(.horizontal, 8)
-        Color.clear.frame(width: 36, height: 36).accessibilityHidden(true)
-      }.opacity(step == .welcome ? 0 : 1).allowsHitTesting(step != .welcome)
+      // After the price the line starts again, for the setup alone (1 Nov 2026, at the user's
+      // request): none on You're in, then one step per page to the first workout. There's no Back
+      // there, so it runs the page's full width, edge to edge with the content.
+      if let setupProgress {
+        JourneyProgress(value: setupProgress, label: store.t("Progress")).padding(.horizontal, 12)
+      } else {
+        HStack(spacing: 8) {
+          // The wall's first page has no way back to the account; inside the wall, Back steps to its
+          // first page (as Brainrot's does, 1 Nov 2026).
+          let noBack = step == wall.first || paid
+          JourneyBackButton(label: store.t("Go back"), action: back).disabled(account.busy)
+            .opacity(noBack ? 0 : 1).allowsHitTesting(!noBack)
+          if !onWall && !paid { JourneyProgress(value: progress, label: store.t("Progress")).padding(.horizontal, 8) } else { Spacer() }
+          Color.clear.frame(width: 36, height: 36).accessibilityHidden(true)
+        }.opacity(step == .welcome ? 0 : 1).allowsHitTesting(step != .welcome)
+      }
+      // The dots on the bar's own centre (between the Back slot and the spacer they sat a few points
+      // off), and up near the top, as Brainrot's.
+      // Not on the price itself (1 Nov 2026, at the user's request): only the trial pages show them.
+      if onWall && step != .subscription {
+        WallDots(count: 3, index: wall.firstIndex(of: step) ?? 0).offset(y: -10)
+          .accessibilityLabel(String(format: store.t("Page %@ of %@"), "\((wall.firstIndex(of: step) ?? 0) + 1)", "3"))
+      }
       Wordmark().opacity(step == .welcome ? 1 : 0)
     }
+  }
+  /// The pages after the price: no way back to it, and the setup's own progress line.
+  private var paid: Bool { [.youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(step) }
+  /// The setup pages after You're in, as the route stood when they left it (a page iOS answers
+  /// drops out of the route, which would make the line jump back).
+  /// The page on screen always keeps its place, even when iOS has already answered it.
+  private var setup: [OnboardingStep] {
+    let base = setupSteps.isEmpty ? Array(route.drop { $0 != .youreIn }.dropFirst()) : setupSteps
+    return [OnboardingStep.notifications, .screenTime, .chooseApps, .splits, .firstWorkout].filter { base.contains($0) || $0 == step }
+  }
+  private var setupProgress: Double? {
+    guard paid, let i = setup.firstIndex(of: step) else { return nil }
+    return Double(i + 1) / Double(setup.count)
   }
   private var progress: Double {
     let all = [OnboardingStep.welcome] + route
@@ -239,23 +349,56 @@ struct OnboardingView: View {
   }
   private func stepIndex(_ step: OnboardingStep) -> Int { ([OnboardingStep.welcome] + route).firstIndex(of: step) ?? 0 }
 
-  /// A box that always reserves two lines, so every page's content starts at the same height;
-  /// a one-line headline sits in the middle of it rather than above a hole.
+  /// The question and its line. The box always reserves two headline lines and one line under them,
+  /// so every page's content starts at the same height; the words sit at the top of it, the line
+  /// right under the question (a one-line question used to float in the middle, half a line off its
+  /// subtitle). Left-aligned, centred on the interstitials.
   private var headline: some View {
-    ZStack(alignment: .center) {
-      Text("A\nB").font(headlineFont).hidden().accessibilityHidden(true)
-      headlineText.id(step).transition(.identity)
+    headlineBlock(white: false)
+      // The commit page: the same words in white, seen only where the flood is, so they turn white
+      // exactly as its edge passes them.
+      .overlay {
+        if step == .commit, let holdCenter {
+          GeometryReader { g in
+            let f = g.frame(in: .named("onboarding"))
+            headlineBlock(white: true).frame(width: g.size.width, height: g.size.height)
+              .mask { CommitFloodCircle(progress: committed ? 1 : holdProgress, pageCenter: holdCenter, center: CGPoint(x: holdCenter.x - f.minX, y: holdCenter.y - f.minY)) }
+          }.accessibilityHidden(true)
+        }
+      }
+  }
+  private func headlineBlock(white: Bool) -> some View {
+    let centred = step.centred
+    let subtitleFont = Font.app(.subheadline)
+    return ZStack(alignment: centred ? .top : .topLeading) {
+      // The box reserves two lines and a subtitle, except on the first trial page: one line and no
+      // subtitle, so the phone under it gets the same air above as below (1 Nov 2026).
+      VStack(alignment: .leading, spacing: 6) {
+        Text(step == .trial1 ? "A" : "A\nB").font(headlineFont)
+        if step != .trial1 && step != .trial2 { Text("A").font(subtitleFont) }
+      }.hidden().accessibilityHidden(true)
+      VStack(alignment: centred ? .center : .leading, spacing: 6) {
+        headlineText.id(step).transition(.identity).foregroundStyle(white ? Color.white : JourneyColor.text)
+        if let subtitle {
+          Text(store.t(subtitle)).font(subtitleFont).foregroundStyle(white ? Color.white.opacity(0.85) : JourneyColor.secondary)
+            .multilineTextAlignment(centred ? .center : .leading).lineLimit(typeSize.isAccessibilitySize ? nil : 2)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+      }.frame(maxWidth: .infinity, alignment: centred ? .center : .leading)
     }.frame(maxWidth: .infinity)
   }
   private var headlineText: some View {
     Group {
-      if let personal {
+      if step == .trial1 {
+        // Brainrot's title, with the free part in the signal colour (1 Nov 2026, at the user's request).
+        Text(store.t("Try GymBlock ")) + Text(store.t("for free")).foregroundColor(JourneyColor.signalText)
+      } else if let personal {
         Text(personal)
       } else {
         Text(store.t(headlineCopy))
       }
-    }.font(headlineFont).tracking(-0.3).multilineTextAlignment(.center)
-      .lineLimit(typeSize.isAccessibilitySize ? nil : [.workoutTime, .promise].contains(step) ? 3 : 2)
+    }.font(headlineFont).tracking(-0.3).multilineTextAlignment(step.centred ? .center : .leading)
+      .lineLimit(typeSize.isAccessibilitySize ? nil : [.workoutTime, .promise, .yearDots, .yearPhone, .life].contains(step) ? 3 : 2)
       .minimumScaleFactor(typeSize.isAccessibilitySize ? 1 : 0.7).fixedSize(horizontal: false, vertical: true)
       .accessibilityAddTraits(.isHeader).accessibilityIdentifier("onboarding.question")
       .accessibilityFocused($questionFocused)
@@ -264,62 +407,61 @@ struct OnboardingView: View {
   private var headlineFont: Font { JourneyLayout.compact ? Font.app(.title2, design: .default, weight: .bold) : JourneyType.headline }
   private var headlineCopy: String {
     switch step {
-    case .name: return "First, what should we call you?"
-    case .gender: return "What’s your gender?"
-    case .height: return "How tall are you?"
-    case .weight: return "How much do you weigh?"
-    case .alerts: return "We’ll buzz you\nwhen rest is up."
-    case .scrolling: return "Be honest. Do you check your phone between sets?"
-    case .restNeed: return "How long do you need to rest between sets?"
+    case .name: return "What should we call you?"
+    case .trainingDays: return "How many days a week do you train?"
+    case .source: return "Where did you hear about us?"
+    case .scrolling: return "Do you check your phone between sets?"
+    case .cost: return "And what does that cost you?"
+    case .restNeed: return "How long do you rest between sets?"
     case .scrollMinutes: return "How long are you on your phone each time?"
-    case .ahead: return "Then you’re already ahead."
-    case .exerciseCount: return "How many exercises per workout?"
-    case .setCount: return "And how many sets of each?"
-    case .gymTime: return "How long are you at the gym?"
-    case .commit: return "Here’s your plan."
-    case .shield: return "Open a locked app mid-workout and you’ll see this."
-    case .blocking: return "Which apps should we lock?"
-    case .account: return "Let’s save your plan."
-    case .splits: return "You’re in. How do you split your training?"
-    case .founder: return "Why I built GymBlock."
-    case .trainingDays: return "How many days a week do you work out?"
+    case .exerciseCount: return "How many exercises do you do per workout?"
+    case .setCount: return "And how many sets of each exercise?"
+    case .age: return "How old are you?"
+    case .yearDots: return "This is your next year at the gym."
+    case .tried: return "What have you tried?"
+    case .shield: return "This is what you’ll see with GymBlock."
+    case .founder: return "A note from Sulav."
+    case .alerts, .notifications: return "We’ll buzz you when your rest is up."
+    case .screenTime: return "Lock your apps while you train."
+    case .chooseApps: return "Now choose what to lock."
+    case .commit: return "Ready to get your time back?"
+    case .account: return "Save your progress."
+    case .trial1: return "Try GymBlock free for 7 days."
+    case .trial2: return "We’ll remind you before your trial ends."
+    case .splits: return "Let’s set up your training."
     case .firstWorkout: return firstWorkoutHeadline
     default: return "Stay focused with GymBlock."
     }
   }
   /// Headlines built from their name and their own numbers (already translated).
   private var personal: String? {
-    let name = store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines)
     let time = self.time
     switch step {
-    case .trainingDays where !name.isEmpty: return String(format: store.t("Hi %@. How many days a week do you work out?"), name)
-    case .commit where !name.isEmpty: return name + ", " + store.t("here’s your plan.")
     case .perRest:
       guard let lost = time.lostPerRest else { return nil }
-      if lost == 0 { return store.t("Then your phone time fits inside your rest.") }
-      return String(format: store.t(time.share < 1 ? "That’s %@ lost each time you pick it up." : "That’s %@ lost. Every rest."), store.minutesWords(lost))
+      // The number is the page's big number, so the headline leads into it (one 28, not four).
+      return store.t(lost == 0 ? "Then your phone time fits inside your rest." : "Every rest, you lose this much.")
     case .workoutTime:
-      let lost = "\(time.shownLost)"
-      // No name here (20 Oct 2026): with it the headline ran to three lines over a scene that shows it.
-      // Two lines: the gym time is on the bars already.
-      if time.lostIsAnHour { return store.t("About an hour goes to your phone, every workout.") }
-      return String(format: store.t("%@ minutes go to your phone, every workout."), lost)
-    case .yearTime:
-      // The number keeps its unit on the same line ("120 hours", never "120 / hours").
-      let hours = "\(time.shownYear)"
-      return String(format: store.t("That’s about %@ hours a year."), hours)
-        .replacingOccurrences(of: hours + " ", with: hours + "\u{00A0}")
+      return store.t("Every workout, your phone takes this much.")
+    case .yearPhone:
+      return String(format: store.t("%@ of them go to your phone."), "\(time.yearPhoneWorkouts)")
+    case .life:
+      return String(format: store.t("That’s %@ of your life."), store.lifeWords(time.lifeLostHours(baseline.age)))
+    case .whyFails:
+      return store.t(baseline.triedThatFailed.count == 1 ? "Here’s why that didn’t hold." : "Here’s why those didn’t hold.")
     case .promise:
+      if (time.lostPerRest ?? 0) == 0 { return store.t("Keep every rest on time.") }
       if time.perRestOnly {
         let lost = time.lostPerRest ?? 0
         return lost == 1 ? store.t("We’ll give you that minute back. Every rest.")
           : String(format: store.t("We’ll give you those %@ back. Every rest."), store.minutesWords(lost))
       }
-      return time.lostIsAnHour ? store.t("We’ll give you that hour back.")
-        : String(format: store.t("We’ll give you those %@ back."), String(format: store.t("%@ minutes"), "\(time.shownLost)"))
-    case .alerts:
-      // "your rest", not their rest's clock time (28 Oct 2026, at the user's request).
-      return store.t("We’ll buzz you\nwhen your rest is up.")
+      // Right after "That's 5 months of your life.": the same months, given back.
+      let span = LifeWords.span(hours: time.lifeLostHours(baseline.age))
+      return String(format: store.t(span.one ? "We’ll give you that %@ back." : "We’ll give you those %@ back."), store.lifeWords(time.lifeLostHours(baseline.age)))
+    case .words:
+      let span = LifeWords.span(hours: time.lifeLostHours(baseline.age))
+      return String(format: store.t("%@ more %@ of"), span.text, store.t(span.unit))
     default: return nil
     }
   }
@@ -327,40 +469,51 @@ struct OnboardingView: View {
     let split = store.data.workouts.first { $0.id == store.profile.preferredSplitID } ?? store.data.workouts.first
     return split.map { String(format: store.t("Ready? Your first workout is %@."), $0.name) } ?? "Ready? Start your first workout."
   }
-  private var caption: String? {
+  /// The grey line under the question.
+  private var subtitle: String? {
+    let time = self.time
     switch step {
     case .name: return "It’s how we’ll greet you in the app."
     case .trainingDays: return "We’ll set your weekly goal from this."
-    case .scrolling: return "No judgement. We did too."
-    case .restNeed: return restChoice == 0 ? "We’ll start you at 2 minutes." : "We’ll time your rests to this."
+    case .cost, .tried: return "Pick all that apply."
     case .scrollMinutes: return "Your best guess is fine."
+    case .age: return "For one more number."
+    case .yearDots:
+      return String(format: store.t("Each dot is one workout: %@."), "\(time.yearWorkouts)")
+    case .yearPhone:
+      guard let session = time.sessionMinutes else { return nil }
+      return String(format: store.t("%@ of every %@ minutes, between sets."), "\(time.shownLost)", "\(Int(session))")
+    case .life:
+      return String(format: store.t("At %@ workouts a week until you’re 65."), "\(time.days)")
+    case .promise:
+      if (time.lostPerRest ?? 0) == 0 { return "Your phone fits inside your rest. We’ll help you keep it that way." }
+      if time.perRestOnly { return store.promiseLine(time, baseline: baseline) ?? "Every rest." }
+      return time.lostIsAnHour ? "About an hour back, every workout." : String(format: store.t("%@ minutes back, every workout."), "\(time.shownLost)")
+    case .alerts, .notifications: return "One buzz, right when it’s time. Change it anytime."
+    case .screenTime: return "GymBlock needs Screen Time to lock them. Calls always work."
+    case .chooseApps: return "Pick the apps that pull you in. They stay locked from your first set to your last."
+    case .commit: return "Here’s what you’re signing."
+    case .account: return account.message ?? "Every workout syncs to your account and comes back on any iPhone."
+    case .splits: return "Pick one. Change it anytime."
+    default: return nil
+    }
+  }
+  /// The small line above the button, where a page has one.
+  private var caption: String? {
+    let time = self.time
+    switch step {
     case .perRest:
-      let need = time.restNeed
       if time.lostPerRest == 0 { return "We’ll help you keep it that way." }
-      return need == 1 ? store.t("The first minute was rest you’d take anyway.")
-        : String(format: store.t("The first %@ were rest you’d take anyway."), store.minutesWords(need))
-    case .ahead: return "We’ll help you keep it that way."
-    case .setCount:
-      guard let setChoice else { return nil }
-      let sets = (baseline.exercises ?? 5) * setChoice
-      return String(format: store.t("%@ sets, so %@ rests."), "\(sets)", "\(max(0, sets - 1))")
-    case .gymTime: return "From walking in to walking out."
+      return time.restNeed == 1 ? store.t("The first minute was rest you’d take anyway.")
+        : String(format: store.t("The first %@ were rest you’d take anyway."), store.minutesWords(time.restNeed))
     case .workoutTime:
-      let time = self.time
-      if time.fitted, time.gym != nil { return String(format: store.t("From your answers, fitted into your %@."), store.gymWords(time.gym ?? 60)) }
-      let per = store.minutesWords(time.lostPerRest ?? 0)
-      return String(format: store.t(time.share < 1 ? "From your answers: about half of %@ rests × %@." : "From your answers: %@ rests × %@."), "\(time.rests ?? 0)", per)
-    // What a dot is, as the page's caption (28 Oct 2026, at the user's request).
-    case .yearTime:
-      let per = ExtraWorkoutsStage.perDot(time)
-      return per == 1 ? store.t("Each dot is one workout.") : String(format: store.t("Each dot is %@ workouts."), "\(per)")
-    case .promise: return "And a better workout: every rest on time."
-    case .alerts: return "One buzz, right when it’s time. Change it anytime."
+      return String(format: store.t("From your answers: %@ rests × %@."), "\(time.rests ?? 0)", store.minutesWords(time.lostPerRest ?? 0))
+    case .yearPhone: return "Your numbers, multiplied out."
+    case .life: return "Your numbers, multiplied out."
+    case .promise: return time.perRestOnly ? nil : store.promiseLine(time, baseline: baseline)
+    case .trial1, .trial2: return "✓ No payment due now"
     case .firstWorkout: return store.profile.focusEnabled == true && AppBlocking.shared.ready ? "Starting it locks your apps until you finish." : "Every set is saved as you go."
-    case .shield: return "It lifts the moment you finish."
-    case .blocking: return blockMessage ?? "Uses Apple’s Screen Time. Ending your workout lifts it."
-    case .account: return account.message ?? "Your workouts sync to your account and come back on any iPhone."
-    case .splits: return (JourneyLayout.compact ? SplitTemplateStage.summary(template, store: store) : nil) ?? "Change them anytime."
+    case .splits: return JourneyLayout.compact ? SplitTemplateStage.summary(template, store: store) : nil
     default: return nil
     }
   }
@@ -368,53 +521,74 @@ struct OnboardingView: View {
   @ViewBuilder private var stage: some View {
     switch step {
     case .welcome: WelcomeScene(done: sceneDone)
-    case .trainingDays: TrainingDaysStage(days: $trainingDays) { n in
-      withAnimation(JourneyMotion.gentle) { trainingDays = n }
-      JourneyHaptic.play(.selection, store.profile)
-    }
-    case .founder: FounderStage()
-    case .scrolling: SuckedInStage(done: sceneDone)
     case .name: NameStage(name: $nameDraft) { if canSaveName { advance() } }
-    case .gender: GenderStage(gender: gender) { value in
-      withAnimation(JourneyMotion.gentle) { gender = value }
-      JourneyHaptic.play(.selection, store.profile)
-    }
-    case .height:
-      MeasureStage(values: heightUnit == 0 ? (120...220).map(Double.init) : (48...90).map(Double.init),
-                   unit: heightUnit == 0 ? "cm" : "", id: "profile.height",
-                   value: Binding(get: { heightUnit == 0 ? heightCM.rounded() : min(90, max(48, (heightCM / 2.54).rounded())) },
-                                  set: { heightCM = heightUnit == 0 ? $0 : $0 * 2.54 }),
-                   format: heightUnit == 0 ? nil : BodyUnits.feet, units: ["cm", "ft · in"], unitIndex: $heightUnit)
-    case .weight:
-      MeasureStage(values: weightUnit == 0 ? (30...200).map(Double.init) : (66...440).map(Double.init),
-                   unit: weightUnit == 0 ? "kg" : "lb", id: "profile.weight",
-                   value: Binding(get: { weightUnit == 0 ? weightKG.rounded() : min(440, max(66, (weightKG * 2.20462).rounded())) },
-                                  set: { weightKG = weightUnit == 0 ? $0 : $0 / 2.20462 }),
-                   units: ["kg", "lb"], unitIndex: $weightUnit)
-    case .alerts: LockScreenRest(done: sceneDone)
-    // One stopwatch for the rest question and Rarely's "already ahead", so it stays in place.
-    case .restNeed, .ahead:
-      RestWatchStage(minutes: step == .ahead ? time.restNeed : restChoice.map { $0 == 0 ? TimeBack.unsureRest : $0 },
-                     ahead: step == .ahead, done: step == .ahead ? sceneDone : {})
-    case .scrollMinutes: ScrollMinutesStage(minutes: $draft, from: Int(scrollFloor))
-    // One strip either way: red past the rest, or the phone time inside it.
+    case .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .age, .tried: questionStage
     case .perRest:
-      if (time.lostPerRest ?? 0) > 0 { RestStripStage(time: time, done: sceneDone) } else { RestFitsStage(time: time, done: sceneDone) }
-    case .exerciseCount: RackStage(count: exerciseChoice)
-    case .setCount: LogTallyStage(exercises: baseline.exercises ?? 5, sets: setChoice)
-    case .gymTime: GymClockStage(minutes: gymChoice)
-    case .workoutTime: WorkStripStage(time: time, done: sceneDone)
-    case .yearTime: ExtraWorkoutsStage(time: time, done: sceneDone)
+      if (time.lostPerRest ?? 0) > 0 { BigNumberStage(.perRest(time)) } else { RestFitsStage(time: time, done: {}) }
+    case .workoutTime: BigNumberStage(.workout(time))
+    case .yearDots, .yearPhone: LifeDotsStage(time: time, phase: step == .yearPhone ? .phone : .gym, done: sceneDone)
+    case .life: LifeNumberStage(hours: time.lifeLostHours(baseline.age))
+    case .whyFails: WhyStage(tried: baseline.triedThatFailed, done: sceneDone)
+    // The same film as the first trial page: a set logged, then the lock (1 Nov 2026, at the user's request).
+    case .shield: ShieldStage(done: sceneDone, logFirst: true)
     case .promise:
-      if time.perRestOnly { PerRestStage(time: time, giveBack: true, done: sceneDone) }
+      if (time.lostPerRest ?? 0) == 0 { RestFitsStage(time: time, done: sceneDone) }
+      else if time.perRestOnly { PerRestStage(time: time, giveBack: true, done: sceneDone) }
       else { WorkStripStage(time: time, giveBack: true, done: sceneDone) }
-    case .commit: PlanStage(done: sceneDone)
-    case .shield: ShieldStage(done: sceneDone)
-    case .blocking: BlockStage(locking: locking, choose: chooseApps)
-    case .account: AccountStage()
+    case .words: WordsStage()
+    case .founder: FounderStage()
+    // The same page in the sign-up and, if they didn't allow it there, again after the price.
+    case .alerts, .notifications:
+      VStack(spacing: 0) {
+        Spacer(minLength: 0)
+        MockPermissionDialog(glyph: "bell.badge", title: store.t("“GymBlock” Would Like to Send You Notifications"),
+                             confirm: store.t("Allow"), deny: store.t("Don’t Allow"), denyColor: JourneyColor.tertiary, confirmLeading: false,
+                             confirmID: "alerts.on", denyID: "alerts.notNow", onConfirm: allowNotifications, onDeny: {
+          Analytics.track("onboarding_alerts", ["choice": "notNow", "granted": false])
+          store.updateProfile { $0.restAlerts = false }
+          step == .alerts ? next() : moveOn(from: .notifications)
+        })
+        Spacer(minLength: 0)
+      }
+    case .screenTime:
+      VStack(spacing: 0) {
+        Spacer(minLength: 0)
+        MockPermissionDialog(glyph: "hourglass", title: store.t("“GymBlock” Would Like to Access Screen Time"),
+                             confirm: store.t("Continue"), deny: store.t("Don’t Allow"), busy: requestingScreenTime,
+                             confirmID: "screenTime.continue", denyID: "screenTime.notNow", onConfirm: allowScreenTime, onDeny: {
+          Analytics.track("onboarding_screen_time", ["choice": "notNow", "granted": false])
+          move(.splits)
+        })
+        Spacer(minLength: 0)
+      }
+    case .chooseApps: PickerPreview()
+    case .commit: CommitPledgeStage(time: time, baseline: baseline, name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), committed: committed)
+    case .account:
+      // Cal AI's "Save your progress": the buttons in the middle of the page, nothing else.
+      VStack(spacing: 0) {
+        Spacer(minLength: 0)
+        AccountButtons(intent: .signUp, skip: { move(.trial1) }) { found in
+          if found != .profile(onboarded: true) { move(.trial1) }
+        }
+        Spacer(minLength: 0)
+      }
+    // The first trial page shows the thing itself: the blocking, played on the phone as on the shield page (1 Nov 2026, at the user's request).
+    case .trial1: ShieldStage(done: {}, logFirst: true, small: true)
+    case .trial2: TrialBellStage()
+    case .youreIn: YoureInStage(name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), done: sceneDone)
     case .splits: SplitTemplateStage(choice: $template)
     case .firstWorkout: FirstWorkoutStage()
     default: Color.clear
+    }
+  }
+  /// The question pages' answers: glass rows in the middle of the screen, as Cal AI lays them out.
+  private var questionStage: some View {
+    VStack(spacing: 0) {
+      Spacer(minLength: 0)
+      JourneyGlassGroup(spacing: JourneyLayout.compact ? 8 : 10) {
+        VStack(spacing: JourneyLayout.compact ? 8 : 10) { questionRows }
+      }
+      Spacer(minLength: 0)
     }
   }
 
@@ -427,83 +601,69 @@ struct OnboardingView: View {
   @ViewBuilder private var actionContent: some View {
     VStack(spacing: 4) {
       switch step {
-      case .scrolling:
-        JourneyGlassGroup(spacing: 10) {
-          VStack(spacing: 10) {
-            option("Every rest", .yes); option("Sometimes", .sometimes); option("Rarely", .no)
-          }
-        }.padding(.bottom, 14)
-        // Continue comes with their answer, not the scene's end (28 Oct 2026, at the user's request).
-        gated(JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: baseline.scrollFrequency != nil, action: advance),
-              when: baseline.scrollFrequency != nil)
-        Color.clear.frame(height: 44)
-      case .trainingDays:
-        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: trainingDays != nil, action: advance)
-        Color.clear.frame(height: 44)
-      case .restNeed, .exerciseCount, .setCount, .gymTime:
-        JourneyGlassGroup(spacing: JourneyLayout.compact ? 8 : 10) {
-          VStack(spacing: JourneyLayout.compact ? 8 : 10) { questionRows }
-        }.padding(.bottom, 14)
-        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: questionAnswered, action: advance)
-        Color.clear.frame(height: 44)
-      case .alerts:
-        // App Review 5.1.1(iv) (17 Oct 2026): a page that explains a permission always goes on to the
-        // system request, so Continue is the only way on and iOS's own prompt is where to say no.
-        gated(JourneyButton(title: store.t("Continue"), id: "alerts.on", enabled: ready) {
-          Task { @MainActor in
-            let granted = await RestAlert.requestPermission()
-            Analytics.track("onboarding_alerts", ["choice": "asked", "granted": granted])
-            store.updateProfile { $0.restAlerts = granted }
-            if step == .alerts { next() }
-          }
-        })
-        Color.clear.frame(height: 44)
-      case .name:
-        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
-        Color.clear.frame(height: 44)
       case .welcome:
         gated(JourneyButton(title: store.t("Get started"), id: "onboarding.continue", enabled: ready) { move(.name) })
         JourneyTextButton(title: store.t("I already have an account"), id: "welcome.signIn", action: onSignIn)
           .opacity(ready ? 1 : 0).allowsHitTesting(ready).accessibilityHidden(!ready)
+      case .name:
+        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: canSaveName, action: advance)
+        Color.clear.frame(height: 44)
+      case .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .age, .tried:
+        JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: questionAnswered, action: advance)
+        Color.clear.frame(height: 44)
+      case .alerts, .notifications, .screenTime:
+        // The drawn prompt's own buttons carry the page (1 Nov 2026, at the user's request); the
+        // footprint stays so the page's bottom matches the others. (App Review 5.1.1(iv), 17 Oct 2026,
+        // wanted the system request to be the only way on; Not now skips it.)
+        Color.clear.frame(height: 50)
+        Color.clear.frame(height: 44)
       case .account:
-        // The last step of sign-up. An account that turns out to exist already is RootView's
-        // notice to give; anything else carries on to the offer, which RootView shows.
-        AccountButtons(intent: .signUp, skip: { move(.subscription) }) { found in
-          if found != .profile(onboarded: true) { move(.subscription) }
-        }
+        // The buttons are on the stage; the footprint stays, so the page's bottom matches the others.
+        Color.clear.frame(height: 50)
+        Color.clear.frame(height: 44)
       case .commit:
-        gated(FingerprintHold(title: store.t("Hold to commit"), holdingTitle: store.t("Keep holding…"), doneTitle: store.t("Committed"), committed: committed,
-                   onProgress: { p in
-                     let next = min(3, Int(p * 3 + 0.001))
-                     if next != pledged { withAnimation(.spring(duration: 0.3)) { pledged = next } }
-                   },
-                   onComplete: commit, hint: store.t("Double-tap to commit.")))
-      case .blocking:
-        // App Review 5.1.1(iv) (17 Oct 2026): until iOS has asked for Screen Time access, Choose apps
-        // (which asks first) is the only way on. Once it has asked, choosing apps can wait; a refusal
-        // carries on, with iOS Settings one tap away.
-        let asked = askedScreenTime || blocking.status != .notDetermined || StoreShots.on
-        let refused = asked && !blocking.authorized && !StoreShots.on
-        if blocking.ready || StoreShots.on {
-          gated(JourneyButton(title: store.t("Turn on blocking"), id: "blocking.on", enabled: !locking, action: turnOnBlocking))
-        } else if refused {
-          gated(JourneyButton(title: store.t("Continue"), id: "blocking.continue") { skipBlocking() })
-        } else {
-          gated(JourneyButton(title: store.t("Choose apps"), id: "blocking.choose", action: chooseApps))
-        }
-        if refused {
-          JourneyTextButton(title: store.t("Open Settings"), id: "blocking.settings") {
-            Analytics.track("blocking_settings_opened")
-            if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-          }
-        } else if asked {
-          JourneyTextButton(title: store.t("Not now"), id: "blocking.later") { skipBlocking() }
-        } else {
-          Color.clear.frame(height: 44)
-        }
+        FingerprintHold(title: store.t("Hold to sign"), holdingTitle: store.t("Keep holding…"), doneTitle: store.t("Signed"), committed: committed,
+                        onProgress: { p in
+                          let next = min(3, Int(p * 3 + 0.001))
+                          if next != pledged { withAnimation(.spring(duration: 0.3)) { pledged = next } }
+                          // One animation per hold, the print's own length; let go and it rewinds with the print.
+                          if p == 0 {
+                            flooding = false
+                            withAnimation(.easeOut(duration: 0.4)) { holdProgress = 0 }
+                          } else if !flooding {
+                            flooding = true
+                            withAnimation(.linear(duration: FingerprintHold.duration)) { holdProgress = 1 }
+                          }
+                        },
+                        onComplete: commit, hint: store.t("Double-tap to sign."), light: printFlooded)
+          .background(GeometryReader { g in
+            Color.clear.preference(key: HoldCenterKey.self, value: CGPoint(x: g.frame(in: .named("onboarding")).midX, y: g.frame(in: .named("onboarding")).minY + (JourneyLayout.compact ? 52 : 58)))
+          })
+      case .words:
+        gated(JourneyButton(title: store.t("Let’s do this"), id: "onboarding.continue", enabled: ready, action: advance))
+        Color.clear.frame(height: 44)
+      // The wall's pages have no secondary, so the button sits lower, in its slot (1 Nov 2026, at the user's request).
+      case .trial1:
+        // "Try for $0.00", as Brainrot's, always (1 Nov 2026, the user's call: not the store's currency, not a fallback).
+        JourneyButton(title: store.t("Try for $0.00"), id: "trial.try", action: advance).padding(.bottom, 8)
+      case .trial2:
+        JourneyButton(title: store.t("Continue for free"), id: "trial.continue", action: advance).padding(.bottom, 8)
       case .subscription:
         // RootView shows the offer in place of this page.
         EmptyView()
+      case .youreIn:
+        gated(JourneyButton(title: store.t("Set up my account"), trailingSymbol: "arrow.right", id: "onboarding.continue", enabled: ready, action: advance))
+        Color.clear.frame(height: 44)
+      case .chooseApps:
+        JourneyButton(title: store.t("Choose apps"), id: "apps.choose") {
+          Analytics.track("onboarding_apps", ["choice": "open"])
+          pickDraft = blocking.selection
+          picking = true
+        }
+        JourneyTextButton(title: store.t("Not now"), id: "apps.notNow") {
+          Analytics.track("onboarding_apps", ["choice": "notNow"])
+          move(.splits)
+        }
       case .splits:
         JourneyButton(title: store.t("Continue"), id: "onboarding.continue", enabled: template != nil) { applyTemplate() }
         Color.clear.frame(height: 44)
@@ -516,23 +676,20 @@ struct OnboardingView: View {
       }
     }
   }
-  /// Continue holds its place and fades in once the page's scene has played.
-  /// Whether the page's button is showing: on "Be honest" once they've answered, elsewhere once the
+  /// Whether the page's button is showing: on a question once they've answered, elsewhere once the
   /// scene has finished (always, for VoiceOver). The caption follows it.
   private var actionsShown: Bool {
     if UIAccessibility.isVoiceOverRunning { return true }
-    return step == .scrolling ? baseline.scrollFrequency != nil : ready
+    return step.question ? questionAnswered : ready
   }
   /// Shows a page's button once `shown` (the scene has finished, unless the page says otherwise).
   private func gated<Button: View>(_ button: Button, when shown: Bool? = nil) -> some View {
     // VoiceOver users get it straight away: the scene is described, and a button that appears
-    // silently after it was never found (inspection, 20 Oct 2026).
+    // silently after it was never found.
     let on = (shown ?? ready) || UIAccessibility.isVoiceOverRunning
     return button.opacity(on ? 1 : 0).offset(y: on ? 0 : 8).allowsHitTesting(on).accessibilityHidden(!on)
       .animation(.smooth(duration: 0.3), value: on)
   }
-  /// A scene has finished. Continue still waits a beat after it, and until the page has been up a
-  /// minimum time, so nobody taps through before the point lands.
   /// A page's scene has ended: its Continue fades in. Only that page's own signal counts; a late one
   /// from a page already left never reveals the next page's button.
   private func markReady(_ page: OnboardingStep) {
@@ -547,30 +704,45 @@ struct OnboardingView: View {
 
   private func commit() {
     guard !committed else { return }
-    withAnimation(JourneyMotion.gentle) { committed = true; pledged = 3 }
+    withAnimation(JourneyMotion.gentle) { committed = true; pledged = 3; holdProgress = 1 }
     Analytics.track("onboarding_committed", ["hold_ms": Int(Date().timeIntervalSince(pageShownAt) * 1000)])
     store.updateProfile { $0.onboardingStoryStage = 1 }
     JourneyScorePlayer.shared.play(JourneyScores.committed, profile: store.profile)
     Task { @MainActor in
-      try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 900))
+      // Long enough to see the signature written and read it (1 Nov 2026).
+      try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 1900))
       if step == .commit { move(.account) }
     }
   }
-  private func option(_ title: String, _ answer: HabitAnswer) -> some View {
-    choice(title, id: "habit.scrolling.\(answer.rawValue)", selected: baseline.scrollFrequency == answer) {
-      update {
-        // Kept for analytics only; it changes no number or page (28 Oct 2026).
-        $0.scrollFrequency = answer; $0.scrollsBetweenSets = answer != .no
-        if ($0.scrollingMinutes ?? 0) <= 0 { $0.scrollingMinutes = nil }
-      }
-    }
-  }
-  /// The time-back questions' rows (docs/ONBOARDING-V8-PLAN.md). Selecting only selects.
+
+  /// The rows, one question at a time. Selecting only selects; Continue moves on.
   @ViewBuilder private var questionRows: some View {
     switch step {
+    case .trainingDays:
+      ForEach(DaysRange.allCases, id: \.self) { r in
+        iconChoice(r.title, detail: r.detail, id: "days.\(r.days)", selected: trainingDays == r.days, icon: DotsIcon(count: r.dots)) { trainingDays = r.days }
+      }
+    case .source:
+      ForEach(SourceAnswer.allCases, id: \.self) { s in
+        iconChoice(s.title, detail: nil, id: "source.\(s.rawValue)", selected: sourceChoice == s, icon: SourceIcon(source: s)) { sourceChoice = s }
+      }
+    case .scrolling:
+      ForEach(HabitAnswer.allCases, id: \.self) { a in
+        choice(a == .yes ? "Every rest" : a == .sometimes ? "Sometimes" : "Rarely", id: "habit.scrolling.\(a.rawValue)", selected: baseline.scrollFrequency == a) {
+          update { $0.scrollFrequency = a; $0.scrollsBetweenSets = a != .no }
+        }
+      }
+    case .cost:
+      ForEach(CostAnswer.offered, id: \.self) { a in
+        choice(a.title, id: "cost.\(a.rawValue)", selected: costChoice.contains(a)) { costChoice = Self.toggled(costChoice, a, none: .notMuch) }
+      }
     case .restNeed:
-      ForEach([(1.0, "1 min"), (1.5, "1.5 min"), (2.0, "2 min"), (3.0, "3 min"), (0.0, "Not sure")], id: \.0) { value, title in
+      ForEach([(1.0, "1 minute"), (1.5, "1.5 minutes"), (2.0, "2 minutes"), (3.0, "3 minutes"), (0.0, "Not sure")], id: \.0) { value, title in
         choice(title, id: "rest.\(value)", selected: restChoice == value) { restChoice = value }
+      }
+    case .scrollMinutes:
+      ForEach(scrollRows, id: \.0) { value, title in
+        choice(title, id: "scroll.\(Int(value))", selected: scrollChoice == value) { scrollChoice = value }
       }
     case .exerciseCount:
       ForEach([(3, "3 or fewer"), (4, "4"), (5, "5"), (6, "6"), (7, "7 or more")], id: \.0) { value, title in
@@ -580,21 +752,46 @@ struct OnboardingView: View {
       ForEach([(2, "2"), (3, "3"), (4, "4"), (5, "5 or more")], id: \.0) { value, title in
         choice(title, id: "sets.\(value)", selected: setChoice == value) { setChoice = value }
       }
-    case .gymTime:
-      ForEach([(45, "45 min"), (60, "1 hour"), (90, "1.5 hours"), (120, "2 hours"), (150, "2.5 hours or more")], id: \.0) { value, title in
-        choice(title, id: "gym.\(value)", selected: gymChoice == value) { gymChoice = value }
+    case .age:
+      ForEach(AgeAnswer.allCases, id: \.self) { a in
+        choice(a.title, id: "age.\(a.rawValue)", selected: ageChoice == a) { ageChoice = a }
+      }
+    case .tried:
+      ForEach(TriedAnswer.allCases, id: \.self) { a in
+        choice(a.title, id: "tried.\(a.rawValue)", selected: triedChoice.contains(a)) { triedChoice = Self.toggled(triedChoice, a, none: .nothing) }
       }
     default: EmptyView()
     }
   }
+  /// The phone-minute rows start a whole minute above the rest they picked (28 Oct 2026, the user's
+  /// rule for the wheel; 1.5 minutes of rest starts them at 3), so no row can fit inside the rest.
+  private var scrollRows: [(Double, String)] {
+    let all: [(Double, String)] = [(2, "About 2 minutes"), (3, "About 3 minutes"), (4, "About 4 minutes"), (6, "About 6 minutes"), (8, "About 8 minutes"), (10, "10 minutes or more")]
+    let floor = min(10, (time.restNeed + 1).rounded(.up))
+    return all.filter { $0.0 >= floor }
+  }
   private var questionAnswered: Bool {
     switch step {
+    case .trainingDays: return trainingDays != nil
+    case .source: return sourceChoice != nil
+    case .scrolling: return baseline.scrollFrequency != nil
+    case .cost: return !costChoice.isEmpty
     case .restNeed: return restChoice != nil
+    case .scrollMinutes: return scrollChoice != nil
     case .exerciseCount: return exerciseChoice != nil
     case .setCount: return setChoice != nil
-    case .gymTime: return gymChoice != nil
+    case .age: return ageChoice != nil
+    case .tried: return !triedChoice.isEmpty
     default: return true
     }
+  }
+  /// A multi-select tap: the pick toggles; the "none" answer clears the rest and is cleared by them.
+  private static func toggled<A: Hashable>(_ set: Set<A>, _ a: A, none: A) -> Set<A> {
+    var picks = set
+    if picks.contains(a) { picks.remove(a); return picks }
+    if a == none { return [a] }
+    picks.remove(none); picks.insert(a)
+    return picks
   }
   /// Selecting only selects. Continue moves on — nothing jumps away mid-thought.
   private func choice(_ title: String, id: String, selected: Bool, apply: @escaping () -> Void) -> some View {
@@ -603,31 +800,28 @@ struct OnboardingView: View {
       JourneyHaptic.play(.selection, store.profile)
     }
   }
-  /// Typical starting values for the wheels.
-  private func bodyDefaults(_ gender: String?) -> (height: Double, weight: Double) {
-    gender == "male" ? (178, 80) : gender == "female" ? (165, 65) : (170, 72)
+  private func iconChoice<Icon: View>(_ title: String, detail: String?, id: String, selected: Bool, icon: Icon, apply: @escaping () -> Void) -> some View {
+    JourneyIconOption(title: store.t(title), detail: detail.map(store.t), selected: selected, id: id, icon: icon) {
+      withAnimation(JourneyMotion.gentle) { apply() }
+      JourneyHaptic.play(.selection, store.profile)
+    }
   }
   private var canSaveName: Bool { !nameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
   private func prepare() {
     switch step {
     case .name: nameDraft = store.profile.name
-    case .trainingDays: trainingDays = baseline.trainingDays.map { min(7, max(1, $0)) }
+    case .trainingDays: trainingDays = baseline.trainingDays.flatMap { d in DaysRange.allCases.first { $0.days == d }?.days }
+    case .source: sourceChoice = baseline.source
     case .splits: template = store.data.workouts.isEmpty ? nil : .keep
-    case .gender: gender = store.profile.gender
-    case .height: heightCM = store.profile.heightCM ?? bodyDefaults(store.profile.gender).height
-    case .weight:
-      let p = store.profile
-      weightKG = p.bodyWeightKG ?? bodyDefaults(p.gender).weight
-      weightUnit = p.bodyWeightKG != nil ? (p.unit == "kg" ? 0 : 1) : heightUnit
     case .restNeed: restChoice = baseline.restNeedUnsure == true ? 0 : baseline.restNeedSeconds.map { Double($0) / 60 }
-    // The wheel starts at their own answer, or at its first value: no suggested number.
-    case .scrollMinutes: draft = min(15, max(scrollFloor, (baseline.scrollingMinutes ?? scrollFloor).rounded()))
+    case .scrollMinutes: scrollChoice = baseline.scrollingMinutes.flatMap { m in scrollRows.contains { $0.0 == m } ? m : nil }
     case .exerciseCount: exerciseChoice = baseline.exercises.map { min(7, max(3, $0)) }
     case .setCount: setChoice = baseline.sets.map { min(5, max(2, $0)) }
-    case .gymTime: gymChoice = baseline.duration.map { d in [45, 60, 90, 120, 150].min { abs($0 - d) < abs($1 - d) } ?? 60 }
-    case .commit: pledged = 0; committed = false
-    case .blocking: blockMessage = nil
+    case .age: ageChoice = baseline.age
+    case .cost: costChoice = Set(baseline.costs ?? [])
+    case .tried: triedChoice = Set(baseline.tried ?? [])
+    case .commit: pledged = 0; committed = false; holdProgress = 0; flooding = false
     default: break
     }
   }
@@ -641,11 +835,8 @@ struct OnboardingView: View {
       dismissKeyboard()
     }
     if step == .trainingDays { guard let trainingDays else { return }; update { $0.trainingDays = trainingDays } }
-    if step == .gender { guard gender != nil else { return }; store.updateProfile { $0.gender = gender } }
-    if step == .height { store.updateProfile { $0.heightCM = heightCM.rounded() } }
-    if step == .weight {
-      store.updateProfile { $0.bodyWeightKG = (weightKG * 10).rounded() / 10; $0.unit = weightUnit == 0 ? "kg" : "lb" }
-    }
+    if step == .source { guard let sourceChoice else { return }; update { $0.source = sourceChoice } }
+    if step == .cost { guard !costChoice.isEmpty else { return }; update { $0.costs = CostAnswer.allCases.filter(costChoice.contains) } }
     if step == .restNeed {
       guard let restChoice else { return }
       let unsure = restChoice == 0
@@ -654,32 +845,33 @@ struct OnboardingView: View {
       update { $0.restNeedSeconds = seconds; $0.restNeedUnsure = unsure }
       store.updateProfile { $0.restSeconds = seconds }
     }
-    if step == .scrollMinutes { update { $0.scrollingMinutes = draft; $0.minutesPerBreak = nil } }
+    if step == .scrollMinutes { guard let scrollChoice else { return }; update { $0.scrollingMinutes = scrollChoice; $0.minutesPerBreak = nil } }
     if step == .exerciseCount { guard let exerciseChoice else { return }; update { $0.exercises = exerciseChoice } }
     if step == .setCount { guard let setChoice else { return }; update { $0.sets = setChoice } }
-    if step == .gymTime { guard let gymChoice else { return }; update { $0.duration = gymChoice } }
+    if step == .age { guard let ageChoice else { return }; update { $0.age = ageChoice } }
+    if step == .tried { guard !triedChoice.isEmpty else { return }; update { $0.tried = TriedAnswer.allCases.filter(triedChoice.contains) } }
     trackAnswer()
     next()
   }
-  /// What each question page was answered with. Never the name itself; body measures in 5-unit bands.
+  /// What each question page was answered with. Never the name itself.
   private func trackAnswer() {
     var props: [String: Any?] = ["question": step.rawValue]
     switch step {
     case .name: props["answered"] = true
     case .trainingDays: props["value"] = trainingDays
-    case .gender: props["value"] = gender
-    case .height: props["cm_band"] = Int((heightCM / 5).rounded()) * 5; props["unit"] = heightUnit == 0 ? "cm" : "ft_in"
-    case .weight: props["kg_band"] = Int((weightKG / 5).rounded()) * 5; props["unit"] = weightUnit == 0 ? "kg" : "lb"
+    case .source: props["value"] = sourceChoice?.rawValue
     case .scrolling: props["value"] = baseline.scrollFrequency?.rawValue
+    case .cost: props["value"] = CostAnswer.allCases.filter(costChoice.contains).map(\.rawValue).joined(separator: ",")
     case .restNeed: props["rest_seconds"] = restChoice.map { Int((($0 == 0 ? TimeBack.unsureRest : $0) * 60).rounded()) }; props["unsure"] = restChoice == 0
-    case .scrollMinutes: props["minutes_per_scroll"] = draft
+    case .scrollMinutes: props["minutes_per_scroll"] = scrollChoice
     case .exerciseCount: props["value"] = exerciseChoice
     case .setCount: props["value"] = setChoice
-    case .gymTime: props["minutes"] = gymChoice
-    case .perRest, .workoutTime, .yearTime, .promise:
+    case .age: props["value"] = ageChoice?.rawValue
+    case .tried: props["value"] = TriedAnswer.allCases.filter(triedChoice.contains).map(\.rawValue).joined(separator: ",")
+    case .perRest, .workoutTime, .life, .promise:
       let time = self.time
       props["lost_per_rest"] = time.lostPerRest; props["lost_per_workout"] = time.shownLost; props["outcome"] = "\(time.outcome)"
-      props["year_hours"] = time.shownYear; props["extra_workouts"] = time.extraWorkouts
+      props["life_hours"] = Int(time.lifeLostHours(baseline.age)); props["life_years"] = time.lifeYears(baseline.age)
     default: return
     }
     Analytics.track("onboarding_answer", props)
@@ -688,45 +880,10 @@ struct OnboardingView: View {
     if let index = route.firstIndex(of: step), index + 1 < route.count { move(route[index + 1]) }
   }
   private func back() {
-    guard !locking else { return }
+    // The wall's first page has no way back (its button is hidden; this covers a swipe).
+    guard step != wall.first, !paid else { return }
     if step == .name { dismissKeyboard(); move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
-  }
-  /// Apple's picker only returns a choice once Screen Time access is granted, so tapping Choose apps
-  /// asks for it first (iOS asks once). Choosing never advances the page.
-  private func chooseApps() {
-    guard !locking, !picking else { return }
-    Task { @MainActor in
-      let granted = await blocking.requestAccess()
-      askedScreenTime = true
-      guard granted else {
-        blockMessage = "Screen Time access is off. You can allow it in Settings anytime."
-        return
-      }
-      blockMessage = nil
-      pickDraft = blocking.selection
-      picking = true
-    }
-  }
-  /// On without blocking: after iOS has asked, whatever the answer.
-  private func skipBlocking() {
-    guard !locking else { return }
-    Analytics.track("onboarding_blocking", ["choice": "later", "chosen": blocking.ready, "authorized": blocking.authorized])
-    store.updateProfile { $0.focusEnabled = false }
-    next()
-  }
-  private func turnOnBlocking() {
-    guard !locking, blocking.ready else { return }
-    Analytics.track("onboarding_blocking", ["choice": "on", "apps": blocking.apps, "categories": blocking.categories, "sites": blocking.sites])
-    store.updateProfile { $0.focusEnabled = true }
-    locking = true
-    let wait = reduceMotion ? 0.25 : 0.14 * Double(min(6, blocking.apps + blocking.categories)) + 0.7
-    Task { @MainActor in
-      try? await Task.sleep(for: .seconds(wait))
-      JourneyHaptic.play(.success, store.profile)
-      if step == .blocking { next() }
-      locking = false
-    }
   }
   private func move(_ next: OnboardingStep) {
     guard !moving else { return }
@@ -742,6 +899,22 @@ struct OnboardingView: View {
                                         "index": stepIndex(next), "total": all.count,
                                         "dwell_ms": Int(Date().timeIntervalSince(pageShownAt) * 1000)])
     if step == .welcome && forward { OnboardingAnalytics.started() }
+    // Within the wall: one sideways slide, the old page leaving as the new one arrives.
+    if wall.contains(step) && wall.contains(next) && !reduceMotion {
+      wallForward = forward
+      withAnimation(.spring(duration: 0.35, bounce: 0)) {
+        ready = !next.animated
+        pageShownAt = Date()
+        store.updateProfile { $0.onboardingStepID = next.rawValue; $0.onboardingStoryStage = 0 }
+        prepare()
+      }
+      Task { @MainActor in
+        try? await Task.sleep(for: .seconds(0.35))
+        moving = false
+        if UIAccessibility.isVoiceOverRunning { questionFocused = true }
+      }
+      return
+    }
     let travel: CGFloat = reduceMotion ? 0 : 18
     withAnimation(.easeIn(duration: out)) { shown = false; slide = forward ? -travel : travel }
     Task { @MainActor in
@@ -767,16 +940,72 @@ struct OnboardingView: View {
       $0.baseline = baseline; $0.onboardingPreviewTarget = nil
     }
   }
+  /// The permission pages in order; from one, the next still in the route (one iOS has already
+  /// answered drops out of it), else the splits.
+  private func moveOn(from page: OnboardingStep) {
+    let order: [OnboardingStep] = [.notifications, .screenTime, .chooseApps, .splits]
+    let later = order.drop { $0 != page }.dropFirst()
+    move(later.first { route.contains($0) } ?? .splits)
+  }
+  private func allowNotifications() {
+    Task { @MainActor in
+      let status = await RestAlert.status()
+      switch status {
+      case .notDetermined:
+        let granted = await RestAlert.requestPermission()
+        Analytics.track("onboarding_alerts", ["choice": "asked", "granted": granted])
+        store.updateProfile { $0.restAlerts = granted }
+        notificationsAllowed = granted
+        // The trial reminder was set at the purchase, before notifications were allowed.
+        if granted { RestAlert.addTrialReminder() }
+        granted ? leaveNotifications() : (step == .alerts ? next() : moveOn(from: .notifications))
+      case .denied:
+        // iOS won't ask again: Settings is the only place to turn it on. The page waits for them.
+        Analytics.track("onboarding_alerts", ["choice": "settings", "granted": false])
+        if let url = URL(string: UIApplication.openSettingsURLString) { _ = await UIApplication.shared.open(url) }
+      default:
+        store.updateProfile { $0.restAlerts = true }
+        notificationsAllowed = true
+        RestAlert.addTrialReminder()
+        leaveNotifications()
+      }
+    }
+  }
+  /// Allowed: the page leaves the route, so the next page is named rather than looked up.
+  private func leaveNotifications() {
+    if step == .alerts { move(.commit) } else if step == .notifications { moveOn(from: .notifications) }
+  }
+  /// Screen Time first, then the apps, as two asks (SleepBlock's lesson: the picker appearing the
+  /// moment access landed never said what it was for). Declined, the splits; Home keeps the card.
+  private func allowScreenTime() {
+    guard !requestingScreenTime else { return }
+    requestingScreenTime = true
+    Task { @MainActor in
+      let granted = await blocking.requestAccess()
+      requestingScreenTime = false
+      Analytics.track("onboarding_screen_time", ["choice": "asked", "granted": granted])
+      if step == .screenTime { move(granted ? .chooseApps : .splits) }
+    }
+  }
+  /// The picker closed: whatever they ticked is kept and turns blocking on, then the splits.
+  private func appsPicked() {
+    let first = blocking.isEmpty
+    blocking.choose(pickDraft)
+    if first, !blocking.isEmpty { store.updateProfile { $0.focusEnabled = true } }
+    Analytics.track("onboarding_apps", ["choice": "closed", "apps": blocking.apps, "categories": blocking.categories])
+    if step == .chooseApps { move(.splits) }
+  }
+
   /// After the offer: the chosen template becomes splits (existing ones are kept), then the first workout.
   private func applyTemplate() {
     guard !moving else { return }
     guard let template else { return }
     if template != .keep {
-      for (name, ids) in template.splits {
+      for (i, (name, ids)) in template.splits.enumerated() {
         let exercises = SplitTemplate.exercises(ids)
         let localized = store.t(name)
         guard !store.data.workouts.contains(where: { $0.name.localizedCaseInsensitiveCompare(localized) == .orderedSame }) else { continue }
-        _ = store.saveSplit(id: UUID(), name: localized, exercises: exercises)
+        _ = store.saveSplit(id: UUID(), name: localized, exercises: exercises, color: SplitTemplate.colors[i % SplitTemplate.colors.count])
       }
     }
     if let first = store.data.workouts.first, template != SplitTemplate.none { store.updateProfile { $0.preferredSplitID = first.id } }
@@ -806,5 +1035,53 @@ struct OnboardingView: View {
     }
     // Let the last sound finish, then the engines sleep.
     Task { @MainActor in try? await Task.sleep(for: .seconds(1.5)); JourneyScorePlayer.shared.shutDown() }
+  }
+}
+
+/// Where the commit page's fingerprint is, in the page's coordinate space.
+struct HoldCenterKey: PreferenceKey {
+  static var defaultValue: CGPoint? = nil
+  static func reduce(value: inout CGPoint?, nextValue: () -> CGPoint?) { value = nextValue() ?? value }
+}
+
+/// The emerald that floods the commit page as they hold: a circle growing from the fingerprint,
+/// wide enough at 1 to cover the far corners. Behind the words and the card; the words turn white
+/// once it reaches them.
+struct CommitFlood: View {
+  let progress: Double
+  let center: CGPoint
+  var body: some View {
+    CommitFloodCircle(progress: progress, pageCenter: center, center: center).foregroundStyle(JourneyColor.signal)
+      .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
+  }
+}
+
+/// The flood's circle: `pageCenter` sizes it (the far corners of the screen from the fingerprint),
+/// `center` places it in whatever view draws it. Its frame animates, so a hold is one smooth sweep.
+struct CommitFloodCircle: View {
+  let progress: Double
+  let pageCenter: CGPoint
+  let center: CGPoint
+  var body: some View {
+    let s = UIScreen.main.bounds.size
+    let reach = 2 * hypot(max(pageCenter.x, s.width - pageCenter.x), max(pageCenter.y, s.height - pageCenter.y)) + 40
+    let d = reach * min(1, max(0, progress))
+    Circle().frame(width: d, height: d).position(center)
+  }
+}
+
+/// The wall's page dots: the current page a short ink bar, the others small grey dots.
+struct WallDots: View {
+  let count: Int
+  let index: Int
+  var body: some View {
+    HStack(spacing: 7) {
+      ForEach(0..<max(1, count), id: \.self) { i in
+        Capsule().fill(i == index ? JourneyColor.text : JourneyColor.ink(0.2))
+          .frame(width: i == index ? 22 : 7, height: 7)
+      }
+    }
+    .animation(.smooth(duration: 0.3), value: index)
+    .accessibilityElement()
   }
 }

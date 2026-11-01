@@ -176,6 +176,8 @@ struct HomeView: View {
       // The week and its streak on top (12 Oct 2026, decluttered: no greeting or carousel), then one
       // exercise's progress, or the empty chart that says how it fills in.
       WeekLine(stats: store.homeStats()).padding(.top, 24).reveal(appeared, 0)
+      // No apps card here (1 Nov 2026, at the user's request): onboarding asks for them after the
+      // price, and the plan's line under Let's go offers them until they're chosen.
       Spacer(minLength: 28)
       progressSection.reveal(appeared, 1)
       Spacer(minLength: 28)
@@ -281,7 +283,8 @@ struct BlockingLine: View {
         Image(systemName: "lock.fill").font(.system(size: 13, weight: .semibold)).foregroundStyle(JourneyColor.tertiary)
         BlockedIcons(size: 22, limit: 6).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
       case .noAccess:
-        Text(store.t("Apps won’t be blocked")).foregroundStyle(JourneyColor.tertiary)
+        // The "won't" in red (1 Nov 2026, at the user's request), so the line reads as a warning.
+        Text(warning).foregroundStyle(JourneyColor.tertiary)
         Button(store.t("Allow Screen Time")) { JourneyHaptic.pressLight()
           Analytics.track("blocking_unavailable", ["choice": "allow", "where": "plan"])
           Task { @MainActor in _ = await blocking.allow() }
@@ -297,6 +300,12 @@ struct BlockingLine: View {
     .frame(maxWidth: .infinity)
     .accessibilityElement(children: state == .on ? .ignore : .contain)
     .accessibilityLabel(state == .on ? blocking.summary(store.t) + ", " + store.t("blocked while you train") : "")
+  }
+  /// "Apps won't be blocked" with its negative word in red, in either language.
+  private var warning: AttributedString {
+    var text = AttributedString(store.t("Apps won’t be blocked"))
+    if let range = text.range(of: store.profile.language == "es" ? "no" : "won’t") { text[range].foregroundColor = JourneyColor.dangerText }
+    return text
   }
 }
 

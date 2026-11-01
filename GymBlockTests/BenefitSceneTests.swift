@@ -9,10 +9,14 @@ import XCTest
     return b
   }
   func testEveryRouteTellsItsOwnStoryThenBlockingThenOffer() {
-    let tail: [OnboardingStep] = [.founder, .shield, .blocking, .alerts, .commit, .account, .subscription, .splits, .firstWorkout]
+    // V10 (1 Nov 2026): the shield sits with the why page; the apps picker is on Home; the trial pages before the price.
+    // After the price (1 Nov 2026): You're in, then the permissions iOS hasn't answered, then the splits.
+    let tail: [OnboardingStep] = [.founder, .alerts, .commit, .account, .trial1, .trial2, .subscription,
+                                  .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout]
     // Since 28 Oct 2026 the "Be honest" answer changes nothing, and there's no gym-time question.
-    let full: [OnboardingStep] = [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest,
-                                  .exerciseCount, .setCount, .workoutTime, .yearTime, .promise]
+    // V9 (1 Nov 2026): the cost question after "Be honest", and what they've tried before the promise.
+    let full: [OnboardingStep] = [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest,
+                                  .exerciseCount, .setCount, .workoutTime, .age, .yearDots, .yearPhone, .life, .promise, .words, .tried, .shield]
     for answer in HabitAnswer.allCases {
       var b = example(); b.scrollFrequency = answer; b.scrollsBetweenSets = answer != .no
       let route = OnboardingRoute.steps(b)
@@ -21,7 +25,22 @@ import XCTest
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
-    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(8)), [.name, .trainingDays, .scrolling, .restNeed, .scrollMinutes, .perRest, .founder, .shield])
+    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(12)), [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest, .promise, .tried, .shield, .founder])
+    XCTAssertFalse(OnboardingRoute.steps(fits).contains(.words))
+    // V9: what they tried that didn't hold gets its why right before the promise; "Nothing yet" doesn't.
+    var tried = example(); tried.tried = [.limits, .willpower]
+    let why = OnboardingRoute.steps(tried)
+    XCTAssertEqual(why.firstIndex(of: .whyFails), why.firstIndex(of: .shield)! - 1)
+    XCTAssertEqual(why.firstIndex(of: .tried), why.firstIndex(of: .shield)! - 2)
+    // The wall is always three pages: the trial page, the reminder page, the price.
+    XCTAssertTrue(OnboardingRoute.steps(tried, restAlerts: true).contains(.trial2))
+    // Allowed at sign-up, notifications aren't asked again after the price; iOS's answers drop the rest.
+    let answered = OnboardingRoute.steps(tried, restAlerts: true, screenTime: true, appsChosen: true)
+    XCTAssertFalse(answered.contains(.alerts) || answered.contains(.notifications) || answered.contains(.screenTime) || answered.contains(.chooseApps))
+    XCTAssertTrue(OnboardingRoute.steps(tried).contains(.trial2))
+    tried.tried = [.nothing]
+    XCTAssertFalse(OnboardingRoute.steps(tried).contains(.whyFails))
+    XCTAssertEqual(tried.triedThatFailed, [])
     // A small total still gets the workout, the year (as workouts like theirs) and the promise.
     var small = example(); small.scrollingMinutes = 2; small.exercises = 3; small.sets = 2
     XCTAssertEqual(OnboardingRoute.steps(small), full + tail)
@@ -71,9 +90,9 @@ import XCTest
     }
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
-    for step: OnboardingStep in [.perRest, .workoutTime, .yearTime, .promise, .ahead, .scrolling, .commit, .alerts] { XCTAssertTrue(step.animated, "\(step)") }
+    for step: OnboardingStep in [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise] { XCTAssertTrue(step.animated, "\(step)") }
     // Questions: Continue is there as soon as there's an answer.
-    for step: OnboardingStep in [.name, .trainingDays, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .gymTime] { XCTAssertFalse(step.animated, "\(step)") }
+    for step: OnboardingStep in [.name, .trainingDays, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .perRest, .workoutTime, .alerts, .commit, .words] { XCTAssertFalse(step.animated, "\(step)") }
   }
   func testSoundsAndTapsLandOnTheSameBeat() {
     func taps(_ score: JourneyScore) -> [Double] { score.haptics.compactMap { if case let .tap(t, _, _) = $0 { t } else { nil } } }
@@ -113,7 +132,7 @@ import XCTest
     for (k, t) in taps(JourneyScores.restUp).prefix(5).enumerated() { XCTAssertEqual(t, Double(k + 1) * JourneyScores.countdownStep, accuracy: 0.0001) }
   }
   func testTheStopwatchStaysForRarelysAheadPage() {
-    XCTAssertEqual(OnboardingStep.restNeed.stage, OnboardingStep.ahead.stage)
+    XCTAssertEqual(OnboardingStep.yearDots.stage, OnboardingStep.yearPhone.stage)  // V10: the two year pages share the dots.
     XCTAssertNotEqual(OnboardingStep.welcome.stage, OnboardingStep.scrolling.stage)  // V7: the welcome is its own scene.
     XCTAssertNotEqual(OnboardingStep.workoutTime.stage, OnboardingStep.perRest.stage)
   }

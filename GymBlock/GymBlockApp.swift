@@ -48,8 +48,12 @@ import SwiftUI
           if b.exercises == nil { b.exercises = 5 }
           if b.sets == nil { b.sets = 3 }
           if b.trainingDays == nil { b.trainingDays = 4 }
+          if b.costs == nil { b.costs = [.runLong, .homeLate] }
+          if b.tried == nil { b.tried = [.limits, .willpower] }
+          if b.age == nil { b.age = .from25 }
+          if b.source == nil { b.source = .tiktok }
           // Other paths: `-journeyFrequency no|sometimes`, `-journeyScroll 1`, `-journeyExercises 6`,
-          // `-journeySets 4`, `-journeyGym 120`, `-journeyRest 120`.
+          // `-journeySets 4`, `-journeyGym 120`, `-journeyRest 120`, `-journeyCosts loseFocus`, `-journeyTried nothing`.
           let d = UserDefaults.standard
           if let f = d.string(forKey: "journeyFrequency").flatMap(HabitAnswer.init(rawValue:)) {
             b.scrollFrequency = f; b.scrollsBetweenSets = f != .no; if f == .no { b.scrollingMinutes = 0 }
@@ -59,6 +63,10 @@ import SwiftUI
           if d.object(forKey: "journeySets") != nil { b.sets = d.integer(forKey: "journeySets") }
           if d.object(forKey: "journeyGym") != nil { b.duration = d.integer(forKey: "journeyGym") }
           if d.object(forKey: "journeyRest") != nil { b.restNeedSeconds = d.integer(forKey: "journeyRest") }
+          if let picks = d.string(forKey: "journeyCosts") { b.costs = picks.split(separator: ",").compactMap { CostAnswer(rawValue: String($0)) } }
+          if let picks = d.string(forKey: "journeyTried") { b.tried = picks.split(separator: ",").compactMap { TriedAnswer(rawValue: String($0)) } }
+          if let age = d.string(forKey: "journeyAge").flatMap(AgeAnswer.init(rawValue:)) { b.age = age }
+          if let source = d.string(forKey: "journeySource").flatMap(SourceAnswer.init(rawValue:)) { b.source = source }
           $0.baseline = b; $0.restSeconds = b.restNeedSeconds
         }
       }
@@ -102,9 +110,7 @@ import SwiftUI
     RootView().environmentObject(store).environmentObject(account).environmentObject(subscription)
       .tint(GymColor.ink).foregroundStyle(GymColor.ink)
       // Widget and control routes by host; the sign-in callback (gymblock://auth/callback) isn't one.
-      // The paywall's Sign out link is the paywall's own (RemotePaywall).
       .onOpenURL { url in
-        if url == AppConfig.paywallSignOut { return }
         if AppRoute(url: url) != nil { AppRouter.shared.openURL(url) } else { account.handle(url) }
       }
       .task { wire() }
@@ -140,12 +146,12 @@ struct RootView: View {
   @State private var visible = true
   /// The lock animation plays once per launch before anything else appears.
   @State private var splashDone = false
-  /// System, Light or Dark (Settings → Appearance), kept on this iPhone.
-  @AppStorage(Appearance.key) private var appearance = Appearance.system.rawValue
+  /// System, Light or Dark (Settings → Appearance), kept on this iPhone; Light until they choose.
+  @AppStorage(Appearance.key) private var appearance = Appearance.standard.rawValue
   /// The app follows the appearance; onboarding, sign-in and the offer stay on paper, as drawn.
   private var colorScheme: ColorScheme? {
     switch shown {
-    case .app, .launch: return Appearance(rawValue: appearance)?.colorScheme ?? nil
+    case .app, .launch: return (Appearance(rawValue: appearance) ?? .standard).colorScheme
     default: return .light
     }
   }
@@ -165,7 +171,9 @@ struct RootView: View {
     // A sign-in that went somewhere unexpected is said before anything else moves on.
     if let notice = account.notice { return .notice(notice) }
     if store.profile.onboarded { return needsOffer ? .paywall : .app }
-    if atOffer { return passedOffer ? .onboarding : .paywall }
+    // The offer is a page of onboarding (its wall slides as one pager, 1 Nov 2026); the root's
+    // paywall is only the gate for an onboarded account without Pro.
+    if atOffer { return .onboarding }
     if signingIn { return .signIn }
     return .onboarding
   }
@@ -195,10 +203,10 @@ struct RootView: View {
         switch base {
         case .launch: Color.clear
         case .onboarding: OnboardingView(onSignIn: openSignIn).transition(.opacity)
+        case .paywall: PaywallView(subscription: subscription, skip: { skippedOffer = true }).transition(.opacity)
         case .signIn: SignInView(back: { signingIn = false; account.message = nil }, signedIn: signedIn).transition(.opacity)
         case .notice(let notice): AccountNoticeView(notice: notice, primary: { noticePrimary(notice) },
                                                     secondary: notice == .notFound ? retrySignIn : nil).transition(.opacity)
-        case .paywall: PaywallView(subscription: subscription) { skippedOffer = true }.transition(.opacity)
         case .app: GymNavigationView().transition(.opacity)
         }
       }
@@ -267,7 +275,7 @@ struct RootView: View {
   }
   private func advancePastOffer() {
     guard atOffer, passedOffer else { return }
-    store.updateProfile { $0.onboardingStepID = OnboardingStep.splits.rawValue }
+    store.updateProfile { $0.onboardingStepID = OnboardingStep.youreIn.rawValue }
   }
   private func openSignIn() {
     account.message = nil
@@ -304,10 +312,13 @@ struct RootView: View {
   }
 }
 
-/// The app's appearance (11 Oct 2026): follow the system, or always light or dark.
+/// The app's appearance (11 Oct 2026): always light (the default), always dark, or follow the system.
 enum Appearance: String, CaseIterable {
   case system, light, dark
   static let key = "gymblock.appearance"
+  /// Light until they choose otherwise, whatever the iPhone's own setting (1 Nov 2026, at the
+  /// user's request: the paper stage is the app's look).
+  static let standard = Appearance.light
   var colorScheme: ColorScheme? { self == .light ? .light : self == .dark ? .dark : nil }
   var title: String { self == .system ? "System" : self == .light ? "Light" : "Dark" }
 }
