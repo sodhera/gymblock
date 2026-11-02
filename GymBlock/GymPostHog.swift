@@ -4,8 +4,8 @@ import Supabase
 
 /// PostHog gets the same events as `gb_events`, already cleaned by `Analytics` (fixed keys,
 /// bounded values: never a name, a free-text answer or an email). Nothing is captured on its own:
-/// no autocapture, no screen swizzling, no lifecycle events, no session replay, no surveys, no
-/// push hooks and no location from the IP address. The account is the Supabase user id, with no
+/// no autocapture, no rage clicks, no screen swizzling, no lifecycle events, no session replay, no
+/// surveys, no push hooks, no crash reports and no location from the IP address. The account is the Supabase user id, with no
 /// person properties beyond the SDK's device defaults. A silent no-op with no key and in
 /// development runs (`AppConfig.offline`).
 @MainActor enum GymPostHog {
@@ -22,6 +22,10 @@ import Supabase
     config.capturePushNotificationOpened = false
     config.preloadFeatureFlags = false
     config.disableGeoIp = true
+    // On by default since posthog-ios 3.x: a `$rageclick` with the tapped view and its text, which
+    // could be a name being typed. Off, with element text as a second guard (2 Nov 2026).
+    config.rageClickConfig.enabled = false
+    config.captureAutocaptureElementText = false
     PostHogSDK.shared.setup(config)
     registerInstall()
     return true
