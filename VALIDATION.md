@@ -1,6 +1,10 @@
 # Validation — 8 October 2026
 
 
+## App Store 1.0.3 build 8 (2 November 2026)
+
+1.0.2 (7) is live, so this is 1.0.3 (8), from `eeef87a`: onboarding V10, the app's own paywall, TikTok on (the patched SDK), the Live Activity on paper with the mark in the Dynamic Island, and the other session's workout changes. Unit tests: 101 run, 1 skipped, 0 failures (the first run of V10's rewritten route tests). Archived in Release from a clean worktree of that commit with this Mac's `Secrets.local.xcconfig` copied in, exported for App Store Connect and the exported IPA checked: every bundle 1.0.3 (8), Apple Distribution (6LYZDNCM4M), `get-task-allow` false, `com.apple.developer.family-controls` in the app and the three Screen Time extensions (not Live); `TikTokAppID`, `TikTokAccessToken`, `AppleAppID`, `PostHogAPIKey` and `RevenueCatAPIKey` set. Uploaded with `xcodebuild -exportArchive` (destination upload) on 2 November (it needed Xcode signed in to the Sodhera account; with none, the export fails with "No Accounts"). Before it: the privacy policy with TikTok published on orecci.com (orecci `d345a9c`), and App Privacy updated in App Store Connect by the user. The user ran sign-up and a sandbox trial on their iPhone before this build. **Not checked:** this build on a device, and Registration, StartTrial and Subscribe reaching TikTok.
+
 ## The app's own paywall, finished (1 November 2026)
 
 - Continuing the other session's in-app paywall (`PaywallView`, AccountGate.swift), matched to what was tuned on the dashboard one: the Yearly tile says "7 days free" while they can still have the trial (else the price a week), Continue reads "Start free trial" for a plan with a trial, the terms line keeps a two-line height so switching plans moves nothing, the review carousel turns every 4 s (only a swipe ticks), and Restore or a failed purchase says so in an alert instead of nothing. RevenueCatUI and the dashboard-paywall hooks (`remote*`, the Sign-out deep link) are gone.
