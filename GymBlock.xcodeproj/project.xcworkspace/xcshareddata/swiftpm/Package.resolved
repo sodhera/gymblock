@@ -1,105 +1,97 @@
 {
-  "originHash" : "bdd04a2e759e0dbbcddc2dd4c5b3f985ddcfb3bad595a63a92e16f42a1df4cb6",
-  "pins" : [
-    {
-      "identity" : "posthog-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/PostHog/posthog-ios",
-      "state" : {
-        "revision" : "835f624c2618d72d73650d0ed0029325232f5b0a",
-        "version" : "3.92.0"
+  "object": {
+    "pins": [
+      {
+        "package": "posthog-ios",
+        "repositoryURL": "https://github.com/PostHog/posthog-ios",
+        "state": {
+          "branch": null,
+          "revision": "835f624c2618d72d73650d0ed0029325232f5b0a",
+          "version": "3.92.0"
+        }
+      },
+      {
+        "package": "purchases-ios-spm",
+        "repositoryURL": "https://github.com/RevenueCat/purchases-ios-spm",
+        "state": {
+          "branch": null,
+          "revision": "e6e49ad362d79da59c0cc66e5960917d6999036f",
+          "version": "5.93.0"
+        }
+      },
+      {
+        "package": "supabase-swift",
+        "repositoryURL": "https://github.com/supabase/supabase-swift",
+        "state": {
+          "branch": null,
+          "revision": "9c8c9d283b13a369f52cc78d8639648d8a17f5d3",
+          "version": "2.55.3"
+        }
+      },
+      {
+        "package": "swift-asn1",
+        "repositoryURL": "https://github.com/apple/swift-asn1.git",
+        "state": {
+          "branch": null,
+          "revision": "3b6410f7dee09eb33cdd26260c5fd47fda19b0e2",
+          "version": "1.7.3"
+        }
+      },
+      {
+        "package": "swift-clocks",
+        "repositoryURL": "https://github.com/pointfreeco/swift-clocks",
+        "state": {
+          "branch": null,
+          "revision": "82440fa0a8b1c381a6d1e8e0fc7bbba53ec63204",
+          "version": "1.1.1"
+        }
+      },
+      {
+        "package": "swift-concurrency-extras",
+        "repositoryURL": "https://github.com/pointfreeco/swift-concurrency-extras",
+        "state": {
+          "branch": null,
+          "revision": "5fa253428866f2360c3754e88537f700ed2656b5",
+          "version": "1.4.1"
+        }
+      },
+      {
+        "package": "swift-crypto",
+        "repositoryURL": "https://github.com/apple/swift-crypto.git",
+        "state": {
+          "branch": null,
+          "revision": "da9d28d69ebe3894b18376c8f2395c2f37b8448f",
+          "version": "4.5.2"
+        }
+      },
+      {
+        "package": "swift-http-types",
+        "repositoryURL": "https://github.com/apple/swift-http-types.git",
+        "state": {
+          "branch": null,
+          "revision": "bff4b6903cdc99dda49649dd52f46c11cfd3ed50",
+          "version": "1.8.0"
+        }
+      },
+      {
+        "package": "swift-issue-reporting",
+        "repositoryURL": "https://github.com/pointfreeco/swift-issue-reporting",
+        "state": {
+          "branch": null,
+          "revision": "b23bb4493c439d3e05152bc167014235ba3d47fc",
+          "version": "2.1.2"
+        }
+      },
+      {
+        "package": "xctest-dynamic-overlay",
+        "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
+        "state": {
+          "branch": null,
+          "revision": "d9308ad679143c26a30dec52daefe82f54af2b82",
+          "version": "1.13.1"
+        }
       }
-    },
-    {
-      "identity" : "purchases-ios-spm",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/RevenueCat/purchases-ios-spm",
-      "state" : {
-        "revision" : "e6e49ad362d79da59c0cc66e5960917d6999036f",
-        "version" : "5.93.0"
-      }
-    },
-    {
-      "identity" : "supabase-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/supabase/supabase-swift",
-      "state" : {
-        "revision" : "9c8c9d283b13a369f52cc78d8639648d8a17f5d3",
-        "version" : "2.55.3"
-      }
-    },
-    {
-      "identity" : "swift-asn1",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-asn1.git",
-      "state" : {
-        "revision" : "3b6410f7dee09eb33cdd26260c5fd47fda19b0e2",
-        "version" : "1.7.3"
-      }
-    },
-    {
-      "identity" : "swift-clocks",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-clocks",
-      "state" : {
-        "revision" : "82440fa0a8b1c381a6d1e8e0fc7bbba53ec63204",
-        "version" : "1.1.1"
-      }
-    },
-    {
-      "identity" : "swift-concurrency-extras",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-concurrency-extras",
-      "state" : {
-        "revision" : "5fa253428866f2360c3754e88537f700ed2656b5",
-        "version" : "1.4.1"
-      }
-    },
-    {
-      "identity" : "swift-crypto",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-crypto.git",
-      "state" : {
-        "revision" : "da9d28d69ebe3894b18376c8f2395c2f37b8448f",
-        "version" : "4.5.2"
-      }
-    },
-    {
-      "identity" : "swift-http-types",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-http-types.git",
-      "state" : {
-        "revision" : "bff4b6903cdc99dda49649dd52f46c11cfd3ed50",
-        "version" : "1.8.0"
-      }
-    },
-    {
-      "identity" : "swift-issue-reporting",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-issue-reporting",
-      "state" : {
-        "revision" : "b23bb4493c439d3e05152bc167014235ba3d47fc",
-        "version" : "2.1.2"
-      }
-    },
-    {
-      "identity" : "tiktok-business-ios-sdk",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tiktok/tiktok-business-ios-sdk",
-      "state" : {
-        "revision" : "2a3a35560c2c0547f74869c58160946e29c0932c",
-        "version" : "1.7.2"
-      }
-    },
-    {
-      "identity" : "xctest-dynamic-overlay",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
-      "state" : {
-        "revision" : "d9308ad679143c26a30dec52daefe82f54af2b82",
-        "version" : "1.13.1"
-      }
-    }
-  ],
-  "version" : 3
+    ]
+  },
+  "version": 1
 }

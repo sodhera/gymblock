@@ -109,6 +109,8 @@ struct PaywallView: View {
   /// Shown as a page of onboarding (under its top bar, with its Back and dots; 1 Nov 2026), or as
   /// the root's gate for an onboarded account without Pro.
   var inOnboarding = false
+  /// False for onboarding's hidden warm-up copy, so only the price page they see counts as a view.
+  var tracked = true
   @EnvironmentObject private var store: GymStore
   @EnvironmentObject private var account: Account
   @Environment(\.dynamicTypeSize) private var typeSize
@@ -170,7 +172,8 @@ struct PaywallView: View {
                                                          set: { if !$0 { subscription.message = nil } })) {
       Button(store.t("OK"), role: .cancel) { JourneyHaptic.pressLight() }
     } message: { Text(store.t(subscription.message ?? "")) }
-    .track(screen: "paywall")
+    .onAppear { if tracked { Analytics.enter("paywall") } }
+    .onDisappear { if tracked { Analytics.leave("paywall") } }
   }
 
   // MARK: Reviews

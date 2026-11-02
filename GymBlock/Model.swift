@@ -5,6 +5,12 @@ struct Exercise: Codable, Identifiable, Hashable {
   var name: String
   var area: String
   var timed: Bool = false
+  /// The lifter's own note for this exercise in this split ("seat at 4, slow negatives"), shown
+  /// whenever it's done again (1 Nov 2026). Free text: kept on the split and synced with it,
+  /// never sent to analytics. Not part of equality, so a note never makes it a different exercise.
+  var note: String? = nil
+  static func == (a: Exercise, b: Exercise) -> Bool { a.id == b.id && a.name == b.name && a.area == b.area && a.timed == b.timed }
+  func hash(into h: inout Hasher) { h.combine(id); h.combine(name); h.combine(area); h.combine(timed) }
   var icon: String { timed ? "figure.run" : "dumbbell.fill" }
   static let catalog: [Exercise] = [
     .init(id: "curl", name: "Dumbbell curl", area: "Arms"),
@@ -299,6 +305,26 @@ struct LocalData: Codable {
     data.session = session
     Analytics.track("workout_started", ["split": workout?.id, "exercises": workout?.exercises.count ?? 0, "free": workout == nil])
     if let first = workout?.exercises.first { chooseExercise(first) } else { persist() }
+  }
+  /// The note on an exercise in the running workout, saved on its split too so it comes back next
+  /// time. Empty clears it.
+  func setNote(_ text: String, exerciseID: String) {
+    guard data.session != nil else { return }
+    let clean = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    let note: String? = clean.isEmpty ? nil : String(clean.prefix(300))
+    if let i = data.session?.exercises.firstIndex(where: { $0.id == exerciseID }) {
+      data.session?.exercises[i].note = note
+    } else if let exercise = (data.session?.selected?.id == exerciseID ? data.session?.selected : nil) {
+      var noted = exercise; noted.note = note
+      data.session?.exercises.append(noted)
+    }
+    if data.session?.selected?.id == exerciseID { data.session?.selected?.note = note }
+    if let id = data.session?.splitID, let w = data.workouts.firstIndex(where: { $0.id == id }),
+       let e = data.workouts[w].exercises.firstIndex(where: { $0.id == exerciseID }) {
+      data.workouts[w].exercises[e].note = note
+    }
+    Analytics.track("exercise_note", ["has_note": note != nil])
+    persist()
   }
   func chooseWorkout(_ workout: Workout?) {
     guard data.session != nil else { return }

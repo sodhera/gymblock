@@ -25,7 +25,9 @@ import Foundation
       restSeconds: store.restTarget, setNumber: done + 1, setTarget: target, next: next,
       restUp: store.t("Rest’s up"), restLabel: store.t("Rest"), setLabel: store.t("Set time"),
       readyLabel: store.t("Ready"),
+      // Past the target, an extra set is just "Set 4", never "Set 4 of 3".
       progress: done >= target && phase != .set ? "\(done) " + store.t("of") + " \(target) " + store.t("done")
+        : done >= target ? store.t("Set") + " \(done + 1)"
         : store.t("Set") + " \(done + 1) " + store.t("of") + " \(target)",
       action: session.pausedAt != nil ? store.t("Resume") : phase == .set ? store.t("Finish set")
         : !exercise.timed && session.weightIsSet == false ? ""

@@ -90,7 +90,9 @@
 		</dict>
 	</array>
 	<!-- False, and it has to stay true to life: no ATT prompt (so no IDFA), no TikTokBusiness.identify
-	     (no hashed email or phone leaves the phone), attribution through SKAdNetwork only. -->
+	     (no hashed email or phone leaves the phone), and our patched TikTok SDK (Vendor/…/GYMBLOCK-PATCHES.md)
+	     never reads or sends the boot time or its other device report. TikTok's own manifest isn't
+	     bundled by SPM; with the patch it needs only UserDefaults, declared above. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 </dict>

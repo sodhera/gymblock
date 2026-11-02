@@ -16,6 +16,11 @@ struct SummaryView: View {
   private var gains: [Improvement] { Array(store.improvements(in: session).prefix(3)) }
   private var canSaveSplit: Bool { session.splitID == nil && !session.completedSets.isEmpty && !saved }
   private var first: Bool { store.data.history.filter { !$0.completedSets.isEmpty }.count <= 1 }
+  /// The workout's colour, as on its workout page: its split's, emerald for a free workout (1 Nov
+  /// 2026, at the user's request: the summary had none).
+  private var accent: Color {
+    Color.paper((store.data.workouts.first { $0.id == session.splitID }?.splitColor ?? .emerald).paper)
+  }
   private var exercises: [Exercise] {
     var seen = Set<String>()
     return session.sets.map(\.exercise).filter { seen.insert($0.id).inserted }
@@ -77,12 +82,15 @@ struct SummaryView: View {
     }
     let date = (session.ended ?? session.started).formatted(.dateTime.month(.abbreviated).day())
     return VStack(alignment: .leading, spacing: 4) {
-      Text((first ? store.t("First workout") : store.t(session.name)) + " · " + date)
-        .font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
-        .foregroundStyle(JourneyColor.secondary).accessibilityIdentifier("summary.title")
+      HStack(spacing: 8) {
+        Circle().fill(accent).frame(width: 8, height: 8).accessibilityHidden(true)
+        Text((first ? store.t("First workout") : store.t(session.name)) + " · " + date)
+          .font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
+          .foregroundStyle(accent).accessibilityIdentifier("summary.title")
+      }
       HStack(alignment: .firstTextBaseline, spacing: 8) {
         Text("\(minutes)").font(.app(size: 80, weight: .bold)).tracking(-2).monospacedDigit()
-          .foregroundStyle(JourneyColor.text).lineLimit(1).minimumScaleFactor(0.5)
+          .foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.5)
         Text(store.t("min")).font(.app(.title2, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
       }.accessibilityElement(children: .combine).accessibilityIdentifier("summary.time")
       Text(figures.joined(separator: "  ·  ")).font(.app(.body)).monospacedDigit().foregroundStyle(JourneyColor.secondary)

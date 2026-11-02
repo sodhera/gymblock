@@ -2,13 +2,13 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** October 22, 2026
+**Last Updated:** November 2, 2026
 
 Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**") operates the GymBlock application for iPhone (the "**App**"). GymBlock helps you keep your phone away between sets, time your rests, log your sets, and see like-for-like strength progress. This Privacy Policy explains what information we collect when you use the App, why we collect it, where it is stored, who processes it on our behalf, and the choices you have. By using GymBlock, you agree to the practices described in this Privacy Policy.
 
 We are committed to transparency and to safeguarding your personal data. Please read this Privacy Policy carefully. If you do not agree with any part of it, please do not use the App.
 
-> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database and with PostHog, the product analytics service that processes those events for us. No advertising, no cross-app tracking, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
+> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database and with PostHog, the product analytics service that processes those events for us. We advertise GymBlock on TikTok, so the App tells TikTok when it is installed and opened and when an account, a free trial, or a subscription starts, to measure those ads (Section 1.5); never your name, email address, workouts, or anything you type. There are no ads in the App, we never use the advertising identifier, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
 
 ---
 
@@ -42,11 +42,12 @@ GymBlock uses Sign in with Apple or Sign in with Google to create your account. 
 | **Device record** | Device model, iOS version, App version, locale, time zone, and the install ID | Support, compatibility, and understanding which devices and versions are in use |
 | **Subscription status snapshot** | Whether GymBlock Pro is active, the plan (monthly or yearly), expiry and renewal state, and Apple transaction identifiers | Unlock Pro features, restore purchases, and resolve billing questions |
 | **Product analytics events** | Described in Section 1.4 | Understand how the App is used and improve it |
+| **Ad measurement events** | Described in Section 1.5 | Measure and improve our ads on TikTok |
 | **Error reports** | The type of error, where in the App it happened, and the device and version information above | Find and fix bugs |
 
 ### 1.4 Product Analytics
 
-GymBlock records how the App is used. The events are written by the App to our own database (hosted by Supabase), and the same events are also sent to **PostHog**, a product analytics service that processes them on our behalf (see Section 6). They are never sent to advertisers. We want to be clear that this logging is extensive:
+GymBlock records how the App is used. The events are written by the App to our own database (hosted by Supabase), and the same events are also sent to **PostHog**, a product analytics service that processes them on our behalf (see Section 6). They are never sent to TikTok or any other advertiser; TikTok receives only the short list in Section 1.5. We want to be clear that this logging is extensive:
 
 - **Screens:** every screen you view and how long you stay on it.
 - **Interactions:** every button tap, toggle, and choice you make, including the option you selected.
@@ -61,7 +62,20 @@ Each event carries a timestamp, the install ID, a session ID, your account ID wh
 
 We use these events to understand which parts of the App are used, where people get stuck, whether rests and alerts work as intended, and how to improve the App. We do **not** use them for advertising, do not share them with advertisers or data brokers, and do not combine them with data about you from other companies. There is no separate analytics switch inside the App at this time; you may object to this processing or ask us to delete your events at any time by emailing **admin@sodhera.com**. Deleting your account deletes the events in our database; the copy held by PostHog is deleted when you ask us (see Section 9).
 
-### 1.5 Information We Do NOT Collect
+### 1.5 Advertising Measurement (TikTok)
+
+We advertise GymBlock on TikTok. To learn which of those ads lead to people installing and subscribing, the App includes TikTok's Business SDK, which sends the following to **TikTok**:
+
+- **Events:** the App was installed, opened, or opened again on a later day; a new GymBlock account was created (not when you sign back in); a free trial started; a paid subscription started, with its price and currency.
+- **With each event:** the identifier Apple gives our apps on your iPhone (the "identifier for vendor," which is the same only across our own apps), your IP address, the device model, iOS and App version, your language and region setting, and a technical description of the App and device (user agent).
+
+TikTok does **not** receive your name, your email address, your account ID, your workouts or answers, the apps you block, anything you type, or the analytics events in Section 1.4. We do not read the advertising identifier (IDFA) and do not ask for App Tracking Transparency permission, so TikTok never receives it. We have also switched off the parts of TikTok's SDK that would report device details such as when your iPhone was last restarted, read text on screen, observe purchases on their own, or send crash reports.
+
+Installs from TikTok ads are also reported through **SKAdNetwork**, Apple's attribution system, which tells TikTok that an ad led to an install without telling TikTok or us who you are.
+
+TikTok uses these events to measure our ads and to show them to people more likely to find GymBlock useful. It handles them under its own [privacy policy](https://www.tiktok.com/legal/privacy-policy) and business terms.
+
+### 1.6 Information We Do NOT Collect
 
 We want to be explicit about what GymBlock **does not** collect or access:
 
@@ -75,7 +89,7 @@ We want to be explicit about what GymBlock **does not** collect or access:
 - ❌ **Advertising identifier (IDFA)** — we do not read or use it, and we do not ask for App Tracking Transparency permission
 - ❌ **Payment card details** — payments are made to Apple; we never see your card number
 - ❌ **Browsing history** — the App does not track your activity outside the App
-- ❌ **Advertising data** — nothing about you is shared with advertising networks, and our analytics provider never receives your name, email address, or anything you type
+- ❌ **Ads in the App** — GymBlock shows no ads; the only advertising network that receives anything is TikTok, and only the events in Section 1.5. Neither TikTok nor our analytics provider ever receives your name, email address, or anything you type
 
 ---
 
@@ -88,9 +102,10 @@ We use the information we collect for the following purposes:
 3. **Showing progress:** like-for-like progress is calculated from the sets you log, comparing the same exercise within the same split with reps or load held constant. The "time on your phone" figure is calculated from your onboarding answers. These are calculations from what you entered, not measurements of you.
 4. **Subscriptions:** confirming whether GymBlock Pro is active and restoring purchases.
 5. **Understanding and improving the App:** the product analytics described in Section 1.4.
-6. **Support, security, and legal obligations:** answering your questions, verifying requests, protecting accounts and systems, complying with applicable law, and enforcing our [Terms of Service](terms-of-service.md).
+6. **Measuring our ads:** the TikTok events described in Section 1.5.
+7. **Support, security, and legal obligations:** answering your questions, verifying requests, protecting accounts and systems, complying with applicable law, and enforcing our [Terms of Service](terms-of-service.md).
 
-We do **not** use your data for advertising, do not sell it, do not rent it, and do not share it with third parties for their own marketing. We do not make decisions about you that have legal or similarly significant effects.
+We do **not** show ads in the App, sell your data, or rent it. Apart from the TikTok events in Section 1.5, which measure our own ads, we do not share it with third parties for advertising or marketing. We do not make decisions about you that have legal or similarly significant effects.
 
 ---
 
@@ -137,6 +152,7 @@ We share your data only with the service providers below, each acting on our ins
 | **Supabase** | Processor. Authentication, database, and hosting | Everything in Sections 1 and 5: account, profile, settings, splits, workouts, sets, device records, subscription snapshot, and analytics events | [supabase.com/privacy](https://supabase.com/privacy) |
 | **RevenueCat** | Processor. Validates App Store purchases and reports whether GymBlock Pro is active | An app user ID (your account ID, not your name or email), App Store receipts and transaction identifiers, product identifiers, and entitlement status | [revenuecat.com/privacy](https://www.revenuecat.com/privacy) |
 | **PostHog** | Processor. Product analytics | The analytics events in Section 1.4, with the install ID, a session ID, your account ID when you are signed in, device model, iOS and App version, locale, time zone, screen size, and your IP address when an event arrives (not used to find your location). Never your name, email address, or anything you type | [posthog.com/privacy](https://posthog.com/privacy) |
+| **TikTok** | Measures our ads on TikTok, and uses the events under its own terms | The events in Section 1.5, with the identifier for vendor, IP address, device model, iOS and App version, language and region, and user agent; the price and currency of a paid subscription. Never your name, email address, account ID, workouts, or anything you type | [tiktok.com/legal/privacy-policy](https://www.tiktok.com/legal/privacy-policy) |
 | **Apple** | Independent controller. Sign in with Apple and App Store billing | Your Apple Account and purchase records; Apple shares your name and email (or a relay address) with us at sign-in | [apple.com/legal/privacy](https://www.apple.com/legal/privacy/) |
 | **Google** | Independent controller. Sign in with Google, only if you choose it | Google shares your name and email with us at sign-in | [policies.google.com/privacy](https://policies.google.com/privacy) |
 
@@ -144,8 +160,8 @@ We share your data only with the service providers below, each acting on our ins
 
 We do **not** share your data with any of the following:
 
-- Advertising networks or ad mediation platforms
-- Attribution or crash-reporting services, or any analytics service other than PostHog
+- Advertising networks or ad mediation platforms other than TikTok, as described in Section 1.5
+- Attribution or crash-reporting services other than TikTok's ad measurement, or any analytics service other than PostHog
 - Social media SDKs (other than the sign-in providers above)
 - Data brokers
 
@@ -183,6 +199,7 @@ While we take reasonable measures to protect your data, no method of electronic 
 - **Log out:** logging out ends your session on that iPhone but keeps your account and its data, and keeps the local copy on the device, so you can sign in again.
 - **Delete account:** Settings → Delete account in the App deletes your account and all of its data from our database **immediately** and wipes the local copy from that iPhone. You can also email **admin@sodhera.com** from the account's email address. See [User Data Deletion](user-data-deletion.md).
 - **Analytics in PostHog:** kept for as long as our PostHog plan retains them. Deleting your account in the App does not reach PostHog on its own; email **admin@sodhera.com** and we will delete the events linked to your account there within **30 days**.
+- **Ad measurement events at TikTok:** kept by TikTok under its own retention rules. They are not linked to your account, so deleting your account does not reach them; the identifier for vendor they carry changes once GymBlock and any other apps of ours are deleted from your iPhone.
 - **Backups:** encrypted database backups held by our hosting provider roll off within **30 days** after deletion.
 - **Aggregated statistics:** we may keep statistics that cannot identify anyone (for example, how many workouts were logged in a month).
 - **Legal records:** we may retain limited records where the law requires it, for example transaction records needed for tax or accounting.
@@ -199,18 +216,19 @@ While we take reasonable measures to protect your data, no method of electronic 
 - **Notifications:** manage or turn off notifications and Live Activities in iOS Settings.
 - **Sign-in privacy:** Sign in with Apple lets you hide your email behind a private relay address.
 - **Analytics:** email us to object to, or request deletion of, the analytics events linked to you, in our database and in PostHog.
+- **Ad measurement:** the App never asks to track you, and TikTok never receives the advertising identifier. To object to the TikTok events in Section 1.5, email us; for data TikTok already holds, you can also contact TikTok through its privacy policy.
 
 ### 10.2 European Economic Area, United Kingdom, and Switzerland
 
 If you are in the EEA, the UK, or Switzerland, you have rights under the General Data Protection Regulation (GDPR), the UK GDPR, and the Swiss Federal Act on Data Protection, including the rights to access, rectify, erase, restrict, port, and object to the processing of your personal data, and the right to lodge a complaint with your local data protection authority.
 
-**Legal bases for processing:** performance of our contract with you (providing the App and your subscription); our legitimate interests (understanding and improving the App through product analytics, securing our systems, and providing support), balanced against your rights; consent, where we ask for it (for example, iOS notification permission); and compliance with legal obligations.
+**Legal bases for processing:** performance of our contract with you (providing the App and your subscription); our legitimate interests (understanding and improving the App through product analytics, measuring our own ads on TikTok, securing our systems, and providing support), balanced against your rights; consent, where we ask for it (for example, iOS notification permission); and compliance with legal obligations.
 
 **Automated decision-making (GDPR Article 22):** GymBlock does not make automated decisions that produce legal or similarly significant effects on you. Progress figures and estimates are informational calculations only.
 
 ### 10.3 California Residents (CCPA / CPRA)
 
-If you are a California resident, you have the right to know what personal information we collect, use, and disclose; the right to delete it; the right to correct inaccurate information; the right to opt out of its sale or sharing; and the right not to be discriminated against for exercising these rights. We do **not** sell or share (for cross-context behavioral advertising) your personal information, and we do not use or disclose sensitive personal information for purposes that require a right to limit.
+If you are a California resident, you have the right to know what personal information we collect, use, and disclose; the right to delete it; the right to correct inaccurate information; the right to opt out of its sale or sharing; and the right not to be discriminated against for exercising these rights. We do **not** sell your personal information. Sending the events in Section 1.5 to TikTok to measure and improve our ads may count as "sharing" for cross-context behavioral advertising under California law; you may opt out of it by emailing **admin@sodhera.com**. We do not use or disclose sensitive personal information for purposes that require a right to limit.
 
 ### 10.4 India
 
@@ -269,7 +287,7 @@ The following summary aligns with Apple's App Store privacy label categories:
 
 ### Data Used to Track You
 
-- **None.** We do not track you across other companies' apps or websites and do not use the advertising identifier.
+- **None.** We do not use the advertising identifier or ask for App Tracking Transparency permission, and TikTok receives no identifier that is shared with other companies' apps (Section 1.5).
 
 ### Data Linked to You
 
@@ -277,9 +295,9 @@ The following summary aligns with Apple's App Store privacy label categories:
 |---|---|
 | Contact Info (name, email address) | App Functionality |
 | Fitness (workouts, sets, exercises, height, weight) | App Functionality |
-| Identifiers (account ID, install ID) | App Functionality, Analytics |
-| Purchases (subscription status and transaction identifiers) | App Functionality, Analytics |
-| Usage Data (product interaction) | Analytics, App Functionality |
+| Identifiers (account ID, install ID, identifier for vendor) | App Functionality, Analytics, Developer's Advertising or Marketing |
+| Purchases (subscription status and transaction identifiers; trial and paid subscription events) | App Functionality, Analytics, Developer's Advertising or Marketing |
+| Usage Data (product interaction; install, open, and new account events) | Analytics, App Functionality, Developer's Advertising or Marketing |
 | Diagnostics (error reports) | App Functionality, Analytics |
 | Other Data (onboarding answers, splits, preferences) | App Functionality |
 

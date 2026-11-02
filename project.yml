@@ -20,10 +20,10 @@ packages:
   PostHog:
     url: https://github.com/PostHog/posthog-ios
     majorVersion: 3.0.0
-  # TikTok ad attribution (GymTikTok.swift): SKAdNetwork only, never an ATT prompt.
+  # TikTok ad attribution (GymTikTok.swift): SKAdNetwork only, never an ATT prompt. Our copy of
+  # 1.7.2 with its device report and crash monitor patched out (Vendor/…/GYMBLOCK-PATCHES.md).
   TikTokBusinessSDK:
-    url: https://github.com/tiktok/tiktok-business-ios-sdk
-    majorVersion: 1.7.0
+    path: Vendor/tiktok-business-ios-sdk
 targets:
   GymBlock:
     type: application

@@ -99,6 +99,7 @@ extension Spanish {
     "Welcome to GymBlock Pro.": "Bienvenido a GymBlock Pro.",
     "Let’s set up your training.": "Preparemos tu entrenamiento.", "Pick one. Change it anytime.": "Elige una. Cámbiala cuando quieras.",
     "Build my own": "Crear la mía",
+    "Add note": "Añadir nota", "Note": "Nota", "Seat height, grip, cues…": "Altura del asiento, agarre, claves…",
     "Set up my account": "Configurar mi cuenta", "Tap %@": "Toca %@", "Don’t Allow": "No permitir",
     "“GymBlock” Would Like to Access Screen Time": "“GymBlock” quiere acceder a Tiempo de uso",
     "Lock your apps while you train.": "Bloquea tus apps mientras entrenas.",

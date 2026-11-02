@@ -19,6 +19,9 @@ struct WorkoutView: View {
   /// Screen Time access was turned off during the workout, so the apps came unblocked.
   @State private var accessLost = false
   @State private var pendingExercise: Exercise?
+  /// The exercise whose note is being written, and the words so far.
+  @State private var noting: Exercise?
+  @State private var noteDraft = ""
   @State private var weightText = ""
   @State private var repsText = ""
   /// What the open field showed before you tapped it: its placeholder while you type, kept if you don't.
@@ -52,6 +55,11 @@ struct WorkoutView: View {
   /// The very first workout, before its first set: two one-line hints show, then never again.
   private var firstEver: Bool { session.sets.isEmpty && store.data.history.allSatisfy { $0.completedSets.isEmpty } }
   /// The workout's exercises in order: the split's, then any added along the way.
+  /// The workout's own colour: its split's (1 Nov 2026, at the user's request: the page had none),
+  /// emerald for a free workout. It marks what's up now and what's done; the rest stays ink and grey.
+  private var accent: Color {
+    Color.paper((store.data.workouts.first { $0.id == session.splitID }?.splitColor ?? .emerald).paper)
+  }
   private var exercises: [Exercise] {
     var seen = Set<String>()
     return (session.exercises + session.sets.map(\.exercise) + [exercise].compactMap { $0 }).filter { seen.insert($0.id).inserted }
@@ -101,11 +109,11 @@ struct WorkoutView: View {
         } else {
           ToolbarItem(placement: .topBarTrailing) { workoutClock }
         }
-        ToolbarItem(placement: .topBarTrailing) {
-          // Until the first set is logged there's nothing to keep: Cancel throws the workout away
-          // (no summary, nothing in Profile) and unlocks the apps. After that it's End.
-          Button(store.t(session.sets.isEmpty && !active ? "Cancel" : "End")) { JourneyHaptic.pressLight(); end() }
-            .accessibilityIdentifier("session.finish")
+        // Quiet, as the clock beside it (1 Nov 2026, at the user's request): grey words, no glass bubble.
+        if #available(iOS 26, *) {
+          ToolbarItem(placement: .topBarTrailing) { endButton }.sharedBackgroundVisibility(.hidden)
+        } else {
+          ToolbarItem(placement: .topBarTrailing) { endButton }
         }
       }
     }
@@ -148,6 +156,13 @@ struct WorkoutView: View {
       if had && !has && store.profile.focusEnabled == true { field = nil; accessLost = true }
       // Allowed again in iOS Settings while the question was up: nothing left to ask.
       if has && accessLost { accessLost = false }
+    }
+    .alert(store.t("Note"), isPresented: Binding(get: { noting != nil }, set: { if !$0 { noting = nil } })) {
+      TextField(store.t("Seat height, grip, cues…"), text: $noteDraft)
+      Button(store.t("Save")) { if let item = noting { store.setNote(noteDraft, exerciseID: item.id) } }
+      Button(store.t("Cancel"), role: .cancel) {}
+    } message: {
+      Text(noting.map { store.t($0.name) } ?? "")
     }
     .alert(store.t("Apps aren’t blocked"), isPresented: $accessLost) {
       Button(store.t("Allow Screen Time")) { JourneyHaptic.pressLight()
@@ -222,7 +237,7 @@ struct WorkoutView: View {
     return VStack(alignment: .leading, spacing: 2) {
       HStack(alignment: .center, spacing: 8) {
         Text(store.t(item.name)).font(.app(.caption, weight: .semibold)).tracking(1.4).textCase(.uppercase)
-          .foregroundStyle(current ? JourneyColor.text : JourneyColor.secondary).lineLimit(1)
+          .foregroundStyle(current ? accent : JourneyColor.secondary).lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .leading)
           .accessibilityIdentifier(current ? "set.exercise" : "")
         if !current && !logged.isEmpty && finished, let time = store.exerciseTime(logged) {
@@ -243,6 +258,7 @@ struct WorkoutView: View {
       .accessibilityElement(children: .contain).accessibilityAddTraits(.isHeader)
       .accessibilityHint(current ? "" : store.t("Switch to this exercise"))
       .accessibilityIdentifier("exercise.section.\(item.id)")
+      noteLine(item, current: current)
       ForEach(Array(logged.enumerated()), id: \.element.id) { index, set in loggedRow(set, number: index + 1) }
       // In the order things happen: the set just done, then its rest (then, same exercise, the next set).
       // The rest stays with the set that started it, so moving on to the next exercise doesn't look
@@ -255,7 +271,7 @@ struct WorkoutView: View {
           .padding(.leading, 32).padding(.bottom, 4).accessibilityIdentifier("hint.type")
       }
       ForEach(0..<remaining, id: \.self) { i in
-        plannedRow(number: logged.count + (live ? 2 : 1) + i, value: plan)
+        plannedRow(item, number: logged.count + (live ? 2 : 1) + i, value: plan)
       }
     }
   }
@@ -354,6 +370,10 @@ struct WorkoutView: View {
         Text(setValue(set, store: store)).font(.app(.title3)).monospacedDigit()
           .foregroundStyle(set.unsuccessful == true ? JourneyColor.secondary : JourneyColor.text).lineLimit(1)
         Spacer(minLength: 0)
+        // Done, ticked in the workout's colour.
+        if set.unsuccessful != true {
+          Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundStyle(accent).accessibilityHidden(true)
+        }
       }.frame(minHeight: 40).contentShape(Rectangle())
     }.buttonStyle(.hapticPlain)
       .accessibilityLabel(store.t("Set") + " \(number), " + setValue(set, store: store))
@@ -364,7 +384,7 @@ struct WorkoutView: View {
   /// number turns emerald while the set runs; a running set can be cancelled from here.
   private func liveRow(number n: Int) -> some View {
     HStack(alignment: .center, spacing: 12) {
-      setNumber(n, color: active && !paused ? JourneyColor.signal : JourneyColor.text)
+      setNumber(n, color: paused ? JourneyColor.text : accent)
       if timed {
         Text(store.t(active ? "Tap Finish when you stop." : "The clock times this exercise.")).font(.app(.body))
           .foregroundStyle(JourneyColor.secondary).lineLimit(2)
@@ -414,13 +434,36 @@ struct WorkoutView: View {
     return now.timeIntervalSince(session.restStarted ?? now)
   }
 
-  /// A set still to come: last time's numbers, in grey.
-  private func plannedRow(number n: Int, value: String) -> some View {
+  /// The exercise's note under its name, grey; on the exercise that's up, "Add note" when there's
+  /// none (only there, so the page stays quiet). Tapping it opens the note to write.
+  @ViewBuilder private func noteLine(_ item: Exercise, current: Bool) -> some View {
+    let note = item.note ?? ""
+    if !note.isEmpty || current {
+      Button { field = nil; noteDraft = note; noting = item } label: {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+          if note.isEmpty { Image(systemName: "plus").font(.system(size: 11, weight: .semibold)).accessibilityHidden(true) }
+          Text(note.isEmpty ? store.t("Add note") : note).multilineTextAlignment(.leading).lineLimit(3)
+        }
+        .font(.app(.footnote)).foregroundStyle(note.isEmpty ? JourneyColor.tertiary : JourneyColor.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 6).contentShape(Rectangle())
+      }.buttonStyle(.hapticPlain)
+        .accessibilityLabel(note.isEmpty ? store.t("Add note") : store.t("Note") + ": " + note)
+        .accessibilityIdentifier("exercise.note.\(item.id)")
+    }
+  }
+
+  /// A set still to come: last time's numbers, in grey. Tapping it goes to that exercise (as its name does) and opens the weight to
+  /// type (1 Nov 2026: someone who did another exercise than the one up tapped its rows and nothing
+  /// happened).
+  private func plannedRow(_ item: Exercise, number n: Int, value: String) -> some View {
     HStack(alignment: .firstTextBaseline, spacing: 14) {
       setNumber(n, color: JourneyColor.tertiary)
       Text(value).font(.app(.title3)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
       Spacer(minLength: 0)
-    }.frame(minHeight: 40).accessibilityElement(children: .combine)
+    }.frame(minHeight: 40).contentShape(Rectangle())
+      .onTapGesture { JourneyHaptic.pressLight(); switchTo(item, typing: true) }
+      .accessibilityElement(children: .combine).accessibilityAddTraits(.isButton)
+      .accessibilityHint(item.id == exercise?.id ? "" : store.t("Switch to this exercise"))
   }
 
   private func setNumber(_ n: Int, color: Color) -> some View {
@@ -432,7 +475,7 @@ struct WorkoutView: View {
     let bodyweight = !weightMissing && session.weightKG == 0
     let unit = store.profile.unit + (exercise?.perDumbbell == true ? " " + store.t("each") : "")
     return TextField(field == .weight && !editingFrom.isEmpty ? editingFrom : weightMissing ? "—" : bodyweight ? "" : "0", text: $weightText)
-      .keyboardType(.decimalPad).focused($field, equals: .weight).tint(JourneyColor.signal)
+      .keyboardType(.decimalPad).focused($field, equals: .weight).tint(accent)
       .font(.app(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
       .foregroundStyle(JourneyColor.text).minimumScaleFactor(0.6)
       .overlay {
@@ -441,17 +484,17 @@ struct WorkoutView: View {
             .allowsHitTesting(false).accessibilityHidden(true)
         }
       }
-      .modifier(InputBox(focused: field == .weight, signal: weightMissing && stage != .exercise, width: 78))
+      .modifier(InputBox(focused: field == .weight, signal: weightMissing && stage != .exercise, width: 78, tint: accent))
       .accessibilityLabel(store.t("Weight")).accessibilityIdentifier("set.weight")
       .accessibilityValue(weightMissing ? store.t("Not set") : bodyweight ? store.t("Bodyweight") : weightText + " " + unit)
   }
 
   private var repsField: some View {
     TextField(field == .reps && !editingFrom.isEmpty ? editingFrom : "—", text: $repsText)
-      .keyboardType(.numberPad).focused($field, equals: .reps).tint(JourneyColor.signal)
+      .keyboardType(.numberPad).focused($field, equals: .reps).tint(accent)
       .font(.app(.title3, weight: .semibold)).monospacedDigit().multilineTextAlignment(.center)
       .foregroundStyle(JourneyColor.text).minimumScaleFactor(0.6)
-      .modifier(InputBox(focused: field == .reps, signal: false, width: 58))
+      .modifier(InputBox(focused: field == .reps, signal: false, width: 58, tint: accent))
       .accessibilityLabel(store.t("Reps")).accessibilityIdentifier("set.reps")
   }
 
@@ -545,17 +588,38 @@ struct WorkoutView: View {
   }
 
   private var workoutTitle: some View {
-    Text(store.t(session.name)).font(.app(size: 28, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
-      .lineLimit(1).fixedSize().accessibilityAddTraits(.isHeader).accessibilityIdentifier("session.title")
+    // The split's dot beside its name, as on Home's week line.
+    HStack(alignment: .center, spacing: 10) {
+      Text(store.t(session.name)).font(.app(size: 28, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+        .lineLimit(1).fixedSize().accessibilityAddTraits(.isHeader).accessibilityIdentifier("session.title")
+      Circle().fill(accent).frame(width: 10, height: 10).accessibilityHidden(true)
+    }
+  }
+
+  /// Until the first set is logged there's nothing to keep: Cancel throws the workout away (no
+  /// summary, nothing in Profile) and unlocks the apps. After that it's End.
+  private var endButton: some View {
+    Button { JourneyHaptic.pressLight(); end() } label: {
+      Text(store.t(session.sets.isEmpty && !active ? "Cancel" : "End")).font(.app(.body))
+        .foregroundStyle(JourneyColor.secondary).padding(.leading, 8).frame(minHeight: 44).contentShape(Rectangle())
+    }.buttonStyle(.plain)
+      .accessibilityIdentifier("session.finish")
   }
 
   /// The whole workout so far. Pauses don't count, and it stands still while paused, as the Live Activity's does.
   private var workoutClock: some View {
-    Text(timerInterval: session.started.addingTimeInterval(session.pausedSeconds ?? 0)...Date.distantFuture,
-         pauseTime: session.pausedAt, countsDown: false)
-      .font(.app(.body, weight: .semibold)).monospacedDigit()
-      .foregroundStyle(JourneyColor.secondary)
-      .accessibilityLabel(store.t("Workout time")).accessibilityIdentifier("session.clock")
+    // The bar measures its items once, but the timer's text grows ("0:04", "5:00", "1:02:00") and was
+    // cut to "5:…" (1 Nov 2026): the widest time it can show holds the room, the clock sits at its right.
+    ZStack(alignment: .trailing) {
+      Text(verbatim: "0:00:00").hidden().accessibilityHidden(true)
+      Text(timerInterval: session.started.addingTimeInterval(session.pausedSeconds ?? 0)...Date.distantFuture,
+           pauseTime: session.pausedAt, countsDown: false)
+        .multilineTextAlignment(.trailing)
+    }
+    .font(.app(.body, weight: .semibold)).monospacedDigit().lineLimit(1).fixedSize()
+    .foregroundStyle(JourneyColor.secondary)
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel(store.t("Workout time")).accessibilityIdentifier("session.clock")
   }
 
   /// The running set as a large clock with "Set time" beside it.
@@ -605,7 +669,9 @@ struct WorkoutView: View {
         let left = Double(store.restTarget) - restElapsed(at: context.date)
         Text(left > 0 ? clockString(Int(left.rounded(.up))) : "+" + clockString(Int(-left))).monospacedDigit()
           .font(.app(.title3, weight: .semibold))
-          .foregroundStyle(left > 0 ? JourneyColor.text : JourneyColor.secondary)
+          // Past the rest, the extra time counts up in red (1 Nov 2026, at the user's request): the
+          // app's colour for time spent past the rest you need.
+          .foregroundStyle(left > 0 ? JourneyColor.text : JourneyColor.dangerText)
           .accessibilityIdentifier("rest.elapsed")
           .accessibilityLabel(left > 0 ? store.t("Rest") + ", " + clockString(Int(left.rounded(.up))) : store.t("Rest’s up"))
       }.frame(minHeight: 44).contentShape(Rectangle())
@@ -735,12 +801,19 @@ struct WorkoutView: View {
   }
 
   /// Tap another exercise's name to move to it; mid-set it asks what to do with the running set first.
-  private func switchTo(_ item: Exercise) {
+  /// From a set's row (`typing`), the weight opens once the exercise is up, ready to type.
+  private func switchTo(_ item: Exercise, typing: Bool = false) {
     field = nil
-    guard item.id != exercise?.id else { return }
-    if active { pendingExercise = item; confirmSwitch = true } else {
+    if item.id != exercise?.id {
+      if active { pendingExercise = item; confirmSwitch = true; return }
       store.chooseExercise(item)
       JourneyHaptic.play(.selection, store.profile)
+    }
+    guard typing, !active, !item.timed else { return }
+    // The live row's fields exist only after the switch has drawn.
+    Task { @MainActor in
+      try? await Task.sleep(for: .milliseconds(150))
+      if exercise?.id == item.id, !active { field = .weight }
     }
   }
 
@@ -777,11 +850,14 @@ private struct InputBox: ViewModifier {
   let focused: Bool
   let signal: Bool
   let width: CGFloat
+  /// The workout's colour, as the edge while typing. The box itself stays a neutral grey (a wash of
+  /// the colour went muddy on the paper; 1 Nov 2026).
+  var tint: Color = JourneyColor.signal
   func body(content: Content) -> some View {
     content.frame(width: width, height: 40)
       .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.ink(0.05)))
       .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-        .strokeBorder(focused ? JourneyColor.text : signal ? JourneyColor.signal : .clear, lineWidth: 1.5))
+        .strokeBorder(focused ? tint : signal ? JourneyColor.signal : .clear, lineWidth: 1.5))
   }
 }
 

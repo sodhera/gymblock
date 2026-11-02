@@ -156,7 +156,7 @@ struct OnboardingView: View {
       // The price page, warmed up off screen from the wall's first page: RevenueCat's view loads its
       // paywall and images when it's made, and made at the moment of the slide it stalled it (1 Nov 2026).
       if onWall && step != .subscription {
-        PaywallView(subscription: subscription, skip: {}, inOnboarding: true)
+        PaywallView(subscription: subscription, skip: {}, inOnboarding: true, tracked: false)
           .opacity(0).allowsHitTesting(false).accessibilityHidden(true)
       }
       VStack(spacing: 0) {
