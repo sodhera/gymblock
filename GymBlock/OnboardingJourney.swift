@@ -8,9 +8,11 @@ import SwiftUI
 enum OnboardingStep: String, CaseIterable {
   case welcome, name, trainingDays, source, scrolling, cost, restNeed, scrollMinutes, perRest
   case exerciseCount, setCount, workoutTime, age, yearDots, yearPhone, life, tried, whyFails, shield, promise, words
-  case founder, alerts, commit, account, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
+  case alerts, commit, account, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
   // V8/V9 pages (20 Oct–1 Nov 2026) replaced by V10; saved progress on them resumes at the nearest page.
   case yearTime, blocking, ahead, gymTime
+  // Sulav's note, removed on 5 Nov 2026 at the user's request; saved progress on it resumes at the rest alerts.
+  case founder
   // V7's pages (17 Oct 2026), replaced on 20 Oct 2026 by time back; saved progress on them resumes
   // at the rest question.
   case phoneMinutes, reveal, days, mindA, mindB, restA, restB, logA, logB
@@ -32,6 +34,7 @@ enum OnboardingStep: String, CaseIterable {
     case .gymTime: return .workoutTime  // No longer asked (28 Oct 2026).
     case .yearTime: return .age         // The year became the life number (V10).
     case .blocking: return .alerts      // The apps picker moved to Home (V10), then after the price.
+    case .founder: return .alerts       // Sulav's note, removed (5 Nov 2026).
     case .ahead: return .perRest
     case .minutes, .breaks, .frequency, .restHabits, .loggingHabits, .setTiming, .mindMuscle, .restStory, .progressStory, .ready,
          .phoneMinutes, .reveal, .days, .mindA, .mindB, .restA, .restB, .logA, .logB:
@@ -79,7 +82,7 @@ enum OnboardingRoute {
     // notifications if still off, then Screen Time and the apps, each left out once iOS has the answer.
     let alerts: [OnboardingStep] = restAlerts ? [] : [.alerts]
     let permissions: [OnboardingStep] = (restAlerts ? [] : [.notifications]) + (screenTime ? [] : [.screenTime]) + (appsChosen ? [] : [.chooseApps])
-    return steps + [.founder] + alerts + [.commit, .account, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
+    return steps + alerts + [.commit, .account, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
   }
 }
 
@@ -265,9 +268,9 @@ struct OnboardingView: View {
   // MARK: Grid
 
   /// Pages that scroll: at accessibility text sizes, and on a small phone from the second-largest
-  /// standard size up (the welcome, Sulav's note and the splits page fit or scroll on their own).
+  /// standard size up (the welcome and the splits page fit or scroll on their own).
   private var scrolls: Bool {
-    (typeSize.isAccessibilitySize || (JourneyLayout.compact && typeSize >= .xxLarge)) && ![.welcome, .founder, .youreIn, .notifications, .screenTime, .chooseApps, .splits].contains(step)
+    (typeSize.isAccessibilitySize || (JourneyLayout.compact && typeSize >= .xxLarge)) && ![.welcome, .youreIn, .notifications, .screenTime, .chooseApps, .splits].contains(step)
   }
   @ViewBuilder private func page(fixed: Bool) -> some View {
     // The welcome scene and You're in carry their own words; every other page has the headline and its line.
@@ -278,7 +281,7 @@ struct OnboardingView: View {
     ZStack {
       stage.id(step.stage).transition(.identity)
     }.frame(maxWidth: .infinity, minHeight: fixed ? nil : 300, maxHeight: fixed ? .infinity : nil)
-      .padding(.horizontal, step == .founder ? (JourneyLayout.compact ? 18 : 24) : 24)
+      .padding(.horizontal, 24)
       .padding(.vertical, 12)
       // A stage shared by two pages stays put; only a new stage fades and slides.
       .opacity(shown || !stageLeaving ? 1 : 0).offset(x: stageLeaving ? slide : 0)
@@ -420,7 +423,6 @@ struct OnboardingView: View {
     case .yearDots: return "This is your next year at the gym."
     case .tried: return "What have you tried?"
     case .shield: return "This is what you’ll see with GymBlock."
-    case .founder: return "A note from Sulav."
     case .alerts, .notifications: return "We’ll buzz you when your rest is up."
     case .screenTime: return "Lock your apps while you train."
     case .chooseApps: return "Now choose what to lock."
@@ -536,7 +538,6 @@ struct OnboardingView: View {
       else if time.perRestOnly { PerRestStage(time: time, giveBack: true, done: sceneDone) }
       else { WorkStripStage(time: time, giveBack: true, done: sceneDone) }
     case .words: WordsStage()
-    case .founder: FounderStage()
     // The same page in the sign-up and, if they didn't allow it there, again after the price.
     case .alerts, .notifications:
       VStack(spacing: 0) {

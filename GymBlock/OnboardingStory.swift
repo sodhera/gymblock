@@ -202,58 +202,6 @@ struct LockPhone: View {
   }
 }
 
-// MARK: - Founder's note
-
-/// Sulav's note: the voice for everything after it. Set on the paper like a letter, no card, no
-/// animation, no sound. Short enough to read in ten seconds.
-struct FounderStage: View {
-  @EnvironmentObject private var store: GymStore
-  @Environment(\.dynamicTypeSize) private var typeSize
-  var body: some View {
-    // The larger setting where it fits, the body size on small screens, scrolling only as a last
-    // resort (the largest accessibility sizes).
-    ViewThatFits(in: .vertical) {
-      letter(.app(.title2), spacing: 18)
-      letter(.app(.title3), spacing: 16)
-      // Between title 3 and body: on the largest phones the body size left an empty band under the note.
-      letter(.app(size: 18.5, relativeTo: .body), spacing: 14)
-      letter(.app(.body), spacing: 12)
-      letter(.app(.callout), spacing: 9, signature: 26)
-      // Small screens: the callout setting, scaled down just enough to fit. Accessibility sizes scroll
-      // instead, so their text stays large.
-      if typeSize.isAccessibilitySize {
-        ScrollView { letter(.app(.body), spacing: 12) }.scrollIndicators(.hidden)
-      } else {
-        ScaleToFit { letter(.app(.callout), spacing: 9, signature: 26) }
-      }
-    }
-    .accessibilityElement(children: .combine).accessibilityIdentifier("founder.note")
-  }
-  private func letter(_ font: Font, spacing: CGFloat, signature: CGFloat = 32) -> some View {
-    VStack(alignment: .leading, spacing: spacing) {
-      // Written the way Sulav talks (20 Oct 2026: the tidy version read as AI): short, a bit loose,
-      // one real moment, no moral. No quote, no pump, the phone rather than scrolling.
-      Text(store.t("Hey, it’s Sulav."))
-      Text(store.t("I used to grab my phone between sets for a “quick” look. Then I’d look up, 10 minutes gone, no idea what set I was on."))
-      Text(store.t("I made GymBlock for me first. I still use it every single workout."))
-      Text(store.t("I hope it helps you too."))
-      VStack(alignment: .leading, spacing: 2) {
-        Rectangle().fill(JourneyColor.hairline).frame(width: 48, height: 1).padding(.bottom, 8)
-        // Sulav's own signature (18 Oct 2026, from Preview), drawn in the text colour so it reads in
-        // light and dark; about as tall as the typed name it replaced was large.
-        Image("FounderSignature").renderingMode(.template).resizable().scaledToFit()
-          .frame(height: signature * 1.5).foregroundStyle(JourneyColor.text)
-          .accessibilityLabel("Sulav")
-        Text(store.t("Founder, GymBlock")).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary)
-      }.padding(.top, 2)
-    }
-    .font(font).foregroundStyle(JourneyColor.text.opacity(0.86)).lineSpacing(3)
-    .fixedSize(horizontal: false, vertical: true)
-    .padding(.horizontal, 6)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-  }
-}
-
 // MARK: - Days a week
 
 /// How many days a week they lift, on a slider from once a week to every day (18 Oct 2026, at the

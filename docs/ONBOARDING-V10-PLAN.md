@@ -10,7 +10,7 @@
 - **Their numbers stay, as big numbers.** The per-rest and per-workout results are a 72-pt red number with a one-line strip under it, the same arithmetic as V8 (`TimeBack`), the same rounding down, the same one-line qualifier. Then their age, and the number in life ("5 months of your life"), and after the promise what those months are for (Brainrot's pivot).
 - **Their words stay** (V9): the cost they named comes back as the promise's caption and the plan's number; what they tried gets its why.
 - **The last stretch is Brainrot's then Cal AI's:** the hold ("Ready to get your time back?"), "Save your progress" with Apple and Google, then two trial pages ("Try GymBlock free for 7 days" with the product, "We'll remind you before your trial ends") before the price, each with "No payment due now". No loader, no plan.
-- **Paper, ink, emerald, red for time on the phone.** No coloured backgrounds, no mascot, no invented counts or reviews, no tracking prompt. The founder's note is the proof.
+- **Paper, ink, emerald, red for time on the phone.** No coloured backgrounds, no mascot, no invented counts or reviews, no tracking prompt.
 
 ## Revised the same day, on Sulav's five points
 
@@ -43,7 +43,7 @@
 | 17 | The shield | "This is what you'll see with GymBlock." / "A locked app, mid-workout." the real shield card. "It lifts the moment you finish." | Continue |
 | 18 | Promise | "We'll give you those 35 minutes back." caption in their words; Today's bar against With GymBlock's, "35 min back" | Continue |
 | 19 | Life back | "5 more months of" + Living · Reading · Sleeping · Cooking · Lifting, one word at a time on a loop | Let's do this |
-| 20 | Sulav's note | As today, in the new frame | Continue |
+| 20 | ~~Sulav's note~~ | Removed on 5 Nov 2026 at the user's request: the shield goes straight to the rest alerts | |
 | 21 | Rest alerts | "We'll buzz you when your rest is up." iOS's prompt, drawn, with working buttons and an arrow bobbing under Allow (1 Nov 2026): Allow brings the real request while iOS hasn't been asked; once refused it opens Settings and the page waits for them to come back; already allowed (a reinstall) the page isn't shown at all, since there's nothing to ask. Not now moves on without it. No Continue | Allow · Not now |
 | 22 | Commit | "Ready to get your time back?" / "Here's what you're signing." A pledge in their numbers on a card ("I rest 1:30, then lift." · "My apps stay locked, first set to last." · "I get 35 minutes back, every workout." · "3,760 hours of my life, back." in emerald) with a signature line; "Hold to sign" signs it: as they hold, emerald floods the page from the fingerprint (Brainrot's commit), driven as one linear animation the hold's length so the render server draws every frame (fed from the hold's 40 ms ticks it stuttered; a simulator recording showed dropped frames every fifth frame before and none after), and the words turn white exactly where the edge passes them (a white twin masked by the same circle); the checks go emerald and their name lands on the line (1 Nov 2026: the mark alone was empty) | Hold |
 | 23 | Account | "Save your progress." / "Every workout syncs to your account and comes back on any iPhone." | Sign in with Apple · Google |

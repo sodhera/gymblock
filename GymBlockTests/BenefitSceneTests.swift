@@ -11,7 +11,7 @@ import XCTest
   func testEveryRouteTellsItsOwnStoryThenBlockingThenOffer() {
     // V10 (1 Nov 2026): the shield sits with the why page; the apps picker is on Home; the trial pages before the price.
     // After the price (1 Nov 2026): You're in, then the permissions iOS hasn't answered, then the splits.
-    let tail: [OnboardingStep] = [.founder, .alerts, .commit, .account, .trial1, .trial2, .subscription,
+    let tail: [OnboardingStep] = [.alerts, .commit, .account, .trial1, .trial2, .subscription,
                                   .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout]
     // Since 28 Oct 2026 the "Be honest" answer changes nothing, and there's no gym-time question.
     // V9 (1 Nov 2026): the cost question after "Be honest", and what they've tried before the promise.
@@ -25,7 +25,7 @@ import XCTest
     }
     // Scrolling that fits inside the rest: the per-rest page says so, then how GymBlock works.
     var fits = example(); fits.scrollingMinutes = 1
-    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(12)), [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest, .promise, .tried, .shield, .founder])
+    XCTAssertEqual(Array(OnboardingRoute.steps(fits).prefix(12)), [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest, .promise, .tried, .shield, .alerts])
     XCTAssertFalse(OnboardingRoute.steps(fits).contains(.words))
     // V9: what they tried that didn't hold gets its why right before the promise; "Nothing yet" doesn't.
     var tried = example(); tried.tried = [.limits, .willpower]

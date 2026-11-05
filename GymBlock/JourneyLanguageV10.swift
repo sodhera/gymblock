@@ -59,7 +59,6 @@ extension Spanish {
     "%@ more %@ of": "%@ %@ más de",
     "Family time": "Tiempo en familia", "Learning guitar": "Aprender guitarra", "Hiking": "Senderismo", "Your kids": "Tus hijos", "Dancing": "Bailar", "Sports": "Deportes", "Friends": "Amigos",
     "Let’s do this": "Vamos",
-    "A note from Sulav.": "Una nota de Sulav.",
     "We’ll buzz you when your rest is up.": "Te avisaremos cuando acabe tu descanso.",
     "“GymBlock” Would Like to Send You Notifications": "“GymBlock” quiere enviarte notificaciones",
     "Notifications may include alerts, sounds and icon badges. These can be configured in Settings.": "Las notificaciones pueden incluir alertas, sonidos y globos. Puedes configurarlas en Ajustes.",

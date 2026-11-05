@@ -21,7 +21,6 @@ extension Spanish {
     "Keeps an honest record of every set. You’ll always know what you actually did last time, and what to beat today.":
       "Guarda un registro honesto de cada serie. Siempre sabrás lo que hiciste de verdad la última vez y qué superar hoy.",
     "Little things, done right, every session.": "Pequeñas cosas, bien hechas, en cada sesión.",
-    "Founder, GymBlock": "Fundador de GymBlock",
     "In the gym, we grow by being honest and consistent. That goes for the sets, and for the minutes between them.":
       "En el gimnasio crecemos siendo honestos y constantes. Eso vale para las series y para los minutos entre ellas.",
     "Mine kept slipping into my phone. One quick scroll became ten, and by the time I picked the weight back up, my focus and my pump were gone.":
