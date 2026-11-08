@@ -109,6 +109,8 @@ struct WeekProvider: GlanceProvider {
 /// text; and the one tap target. No `Link`, no buttons.
 private struct GlanceChrome: ViewModifier {
   let url: URL
+  /// A card in place of paper, where the widget has one (Streak's emerald).
+  var card: (WidgetTone) -> Color? = { _ in nil }
   @Environment(\.widgetFamily) private var family
   @Environment(\.widgetRenderingMode) private var mode
   @Environment(\.showsWidgetContainerBackground) private var background
@@ -119,7 +121,7 @@ private struct GlanceChrome: ViewModifier {
       .environment(\.widgetTone, tone)
       .containerBackground(for: .widget) {
         switch family {
-        case .systemSmall, .systemMedium: tone.stage
+        case .systemSmall, .systemMedium: card(tone) ?? tone.stage
         case .accessoryCircular: AccessoryWidgetBackground()
         default: Color.clear
         }
@@ -170,6 +172,16 @@ struct WeekEntryView: View {
   }
 }
 
+/// Opens Profile, where the weeks are.
+struct StreakEntryView: View {
+  let entry: GlanceEntry
+  @Environment(\.widgetFamily) private var family
+  var body: some View {
+    StreakView(snapshot: entry.snapshot, date: entry.date, medium: family == .systemMedium)
+      .modifier(GlanceChrome(url: AppRoute.url(.profile, from: "streak"), card: StreakView.card))
+  }
+}
+
 /// CarPlay has nothing to open, so there the gallery files the widgets under Other (iOS 26).
 enum WidgetPlacement {
   static var disfavored: [WidgetLocation] {
@@ -208,6 +220,17 @@ struct WeekWidget: Widget {
       .description("The days you trained this week.")
       .supportedFamilies([.accessoryCircular])
       .disfavoredLocations(WidgetPlacement.disfavored, for: [.systemSmall])
+  }
+}
+
+/// The weeks in a row, as one big number. Same midnights as This week: a week only breaks once it's over.
+struct StreakWidget: Widget {
+  var body: some WidgetConfiguration {
+    StaticConfiguration(kind: WidgetKind.streak, provider: WeekProvider()) { StreakEntryView(entry: $0) }
+      .configurationDisplayName("Streak")
+      .description("The weeks in a row you've trained.")
+      .supportedFamilies([.systemSmall, .systemMedium])
+      .disfavoredLocations(WidgetPlacement.disfavored, for: [.systemSmall, .systemMedium])
   }
 }
 

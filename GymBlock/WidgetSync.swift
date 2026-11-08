@@ -102,6 +102,7 @@ extension GymStore {
     if s.daysKey != reloadedDays?.daysKey {
       reload(WidgetKind.month)
       reload(WidgetKind.week)
+      reload(WidgetKind.streak)
       reloadedDays = s
     }
     if s.controlKey != reloadedControl?.controlKey {

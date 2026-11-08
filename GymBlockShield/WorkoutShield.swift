@@ -22,7 +22,7 @@ final class WorkoutShield: ShieldConfigurationDataSource {
     make(webDomain.domain)
   }
 
-  private static let paper = UIColor(red: 0.961, green: 0.953, blue: 0.937, alpha: 1)
+  private static let paper = UIColor.white
   private static let ink = UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1)
   private static let secondary = UIColor(red: 0.40, green: 0.40, blue: 0.42, alpha: 1)
   private static let spanish = Locale.preferredLanguages.first?.hasPrefix("es") == true

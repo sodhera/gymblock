@@ -410,3 +410,69 @@ struct WeekCircularView: View {
     return n > 1 ? week + ", \(n) " + l.weekStreak : n == 1 ? week + ", " + l.weekStreakOne : week
   }
 }
+
+/// Streak, systemSmall and systemMedium (8 Nov 2026, at the user's request, after Duolingo's streak
+/// card): the weeks in a row as one huge number, its words under it, and the mark, all white on an
+/// emerald card (the user picked the card over paper). Home's rule for the number, uncapped.
+struct StreakView: View {
+  let snapshot: WidgetSnapshot?
+  let date: Date
+  /// systemMedium: the number beside a big mark; otherwise the mark above it.
+  let medium: Bool
+  @Environment(\.widgetTone) private var tone
+  /// The card behind it, in full colour only (tinted, Lock and StandBy draw it like the others). Day
+  /// emerald at night too: the night emerald is too light for white type.
+  static func card(_ tone: WidgetTone) -> Color? { tone.fullColor ? Paper.signal.light.color : nil }
+  private var ink: Color { Self.card(tone) == nil ? tone.ink : .white }
+  private var secondary: Color { Self.card(tone) == nil ? tone.secondary : .white.opacity(0.8) }
+  var body: some View {
+    let g = WidgetGlance(snapshot, at: date)
+    if g.phase == .setup {
+      GlanceSetup(glance: g)
+    } else {
+      let n = g.streak
+      Group {
+        if medium {
+          HStack(alignment: .center, spacing: 12) {
+            count(g, n, size: 76)
+            Spacer(minLength: 0)
+            mark(100)
+          }
+        } else {
+          VStack(alignment: .leading, spacing: 0) {
+            mark(34)
+            Spacer(minLength: 8)
+            count(g, n, size: 58)
+          }
+        }
+      }
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(g.sample ? g.labels.sampleData : "\(n) " + words(g, n))
+    }
+  }
+
+  private func count(_ g: WidgetGlance, _ n: Int, size: CGFloat) -> some View {
+    VStack(alignment: .leading, spacing: 0) {
+      Text(verbatim: "\(n)").font(WidgetType.words(size, .bold)).tracking(-size * 0.04).foregroundStyle(ink)
+        .lineLimit(1).minimumScaleFactor(0.6)
+      Text(g.sample ? g.labels.sampleData : words(g, n)).font(WidgetType.words(15, .medium)).foregroundStyle(secondary)
+        .lineLimit(1).minimumScaleFactor(0.85)
+    }
+  }
+
+  /// On the card the iron is white with the keyhole cut through to the emerald; elsewhere the usual mark.
+  @ViewBuilder private func mark(_ size: CGFloat) -> some View {
+    if Self.card(tone) != nil {
+      KettlebellShape(part: .ironCut).fill(.white, style: FillStyle(eoFill: true))
+        .frame(width: size, height: size).accessibilityHidden(true)
+    } else {
+      WidgetMark(size)
+    }
+  }
+
+  /// "week streak" under the number; for one week, "1 week streak" without its "1 " ("semana de racha").
+  private func words(_ g: WidgetGlance, _ n: Int) -> String {
+    n == 1 ? String(g.labels.weekStreakOne.trimmingPrefix("1 ")) : g.labels.weekStreak
+  }
+}

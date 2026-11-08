@@ -27,10 +27,15 @@ extension GymStore {
       "curl": 15, "hammer": 12.5, "triceps": 17.5, "bench": 60, "dumbbell-press": 15, "lateral": 5,
       "squat": 80, "deadlift": 90, "lunge": 12.5,
     ]
-    for week in 0..<6 {
-      for (day, split) in [(1, arms), (3, push), (5, legs)] {
+    // Three days a week for six weeks; for the streak screenshot (`-denseDemo YES`, Debug only),
+    // every split twice a week for seven, so last month's calendar is full.
+    let weeks = StoreShots.dense ? 7 : 6
+    let schedule = StoreShots.dense
+      ? [(1, arms), (2, push), (3, legs), (4, arms), (5, push), (6, legs)] : [(1, arms), (3, push), (5, legs)]
+    for week in 0..<weeks {
+      for (day, split) in schedule {
         guard
-          let dayDate = calendar.date(byAdding: .day, value: -7 * (5 - week) + day, to: weekStart),
+          let dayDate = calendar.date(byAdding: .day, value: -7 * (weeks - 1 - week) + day, to: weekStart),
           dayDate <= now
         else { continue }
         let date = calendar.date(bySettingHour: 7, minute: 0, second: 0, of: dayDate)!

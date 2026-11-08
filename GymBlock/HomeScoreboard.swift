@@ -109,7 +109,6 @@ struct ProgressCard: View {
         }.allowsHitTesting(false)
       }
       .frame(height: 150)
-      .background(DotField())
     }
     .accessibilityElement(children: .ignore).accessibilityIdentifier("home.progress")
     .accessibilityLabel(store.t(trend.exercise.name) + " " + trend.constant + ", " + gainText(points, trend) + ", " + value(values.last ?? 0, trend))
@@ -122,7 +121,7 @@ struct ProgressCard: View {
         Image(systemName: "chart.line.uptrend.xyaxis").font(.system(.title3, weight: .semibold)).foregroundStyle(JourneyColor.signal)
         Text(store.t(hasHistory ? "Repeat a workout to see your progress" : "Start a workout to see your progress"))
           .font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
-      }.frame(maxWidth: .infinity).frame(height: 132).background(DotField(hole: CGSize(width: 330, height: 96)))
+      }.frame(maxWidth: .infinity).frame(height: 132)
     }
     .accessibilityElement(children: .combine).accessibilityIdentifier("home.progress.empty")
   }
@@ -188,43 +187,6 @@ struct ProgressCarousel: View {
         withAnimation(.spring(duration: 0.7, bounce: 0.08)) { page = (page + 1) % trends.count }
       }
     }
-  }
-}
-
-/// The page's own dot grid, a little darker, inside these bounds: the chart's scale without drawing lines. The
-/// dots sit exactly on `DotGrid`'s 22-pt lattice (screen-anchored, columns centred) and ease in over
-/// three dots from the edges, so the page's dots darken into the field with no border. Assumes the view is centred horizontally, as Home is.
-struct DotField: View {
-  /// A soft oval gap in the middle, so a line of text over the field stays clean.
-  var hole: CGSize? = nil
-  var body: some View {
-    GeometryReader { g in
-      let frame = g.frame(in: .global)
-      Canvas { context, size in
-        let step: CGFloat = 22, radius: CGFloat = 1.2, feather: CGFloat = 66
-        let screenWidth = frame.maxX + frame.minX
-        let originX = screenWidth.truncatingRemainder(dividingBy: step) / 2
-        var y = (((frame.minY - step / 2) / step).rounded(.up)) * step + step / 2
-        while y <= frame.maxY {
-          var x = (((frame.minX - originX) / step).rounded(.up)) * step + originX
-          while x <= frame.maxX {
-            let edge = min(x - frame.minX, frame.maxX - x, y - frame.minY, frame.maxY - y)
-            // Smoothstep from the page's own dots at the edge to the field's full tone inside.
-            let ramp = min(1, max(0, edge / feather))
-            var fade = ramp * ramp * (3 - 2 * ramp)
-            let local = CGPoint(x: x - frame.minX, y: y - frame.minY)
-            if let hole {
-              let dx = (local.x - size.width / 2) / (hole.width / 2), dy = (local.y - size.height / 2) / (hole.height / 2)
-              fade *= min(1, max(0, (hypot(dx, dy) - 1) / 0.35))
-            }
-            context.fill(Path(ellipseIn: CGRect(x: local.x - radius, y: local.y - radius, width: radius * 2, height: radius * 2)),
-                         with: .color(JourneyColor.ink(0.17 * fade)))
-            x += step
-          }
-          y += step
-        }
-      }
-    }.allowsHitTesting(false).accessibilityHidden(true)
   }
 }
 

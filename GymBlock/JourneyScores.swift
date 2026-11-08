@@ -73,14 +73,6 @@ enum JourneyScores {
   })
   static func notification(strength: Double) -> JourneyScore { JourneyScore(haptics: ping(0, strength)) }
 
-  /// Welcome: four notifications land, each with the Messages ding and the message double tap; the
-  /// kettlebell lands on the phone with a thud and the iPhone's lock click; then the arm flexes on a
-  /// rising buzz and peaks with a firm hit (WelcomeScene).
-  static let welcome = JourneyScore(
-    haptics: LockPhone.arrivals.flatMap { ping($0, 0.4) } + thud(LockPhone.land, 1) + [.tap(LockPhone.land + 0.03, 0.5, 0.95)]
-      + [.swell(WelcomeScene.flex, WelcomeScene.peak - WelcomeScene.flex, 0.1, 0.55, 0.4), .tap(WelcomeScene.peak, 0.8, 0.5)],
-    sounds: LockPhone.arrivals.map { cue($0, .notification, 0.28) } + [cue(LockPhone.land, .lock, 0.5), cue(WelcomeScene.peak, .plateMedium, 0.4)])
-
   /// The year in extra workouts: crisp ticks that follow the dots as they light (eased, like the
   /// fill), each a touch firmer, then a heavy thud and plate drop as the last dot lights
   /// (ExtraWorkoutsStage draws the dots from this score's clock).

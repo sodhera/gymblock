@@ -328,6 +328,11 @@
           }
         }
         if surface != .standby { plate(metrics.medium) { UpNextMediumView(snapshot: row.snapshot, date: now) } }
+        HStack(spacing: gap) {
+          plate(square, card: StreakView.card(surface.tone)) { StreakView(snapshot: row.snapshot, date: now, medium: false) }
+          Color.clear.frame(width: metrics.small, height: metrics.small)
+        }
+        if surface != .standby { plate(metrics.medium, card: StreakView.card(surface.tone)) { StreakView(snapshot: row.snapshot, date: now, medium: true) } }
       }
     }
 
@@ -352,12 +357,12 @@
     }
 
     /// A Home Screen widget: content margins, the surface's container background, the system's corners.
-    private func plate<V: View>(_ size: CGSize, @ViewBuilder _ content: () -> V) -> some View {
+    private func plate<V: View>(_ size: CGSize, card: Color? = nil, @ViewBuilder _ content: () -> V) -> some View {
       let shape = RoundedRectangle(cornerRadius: metrics.radius(size.height), style: .continuous)
       return content()
         .padding(WidgetMetrics.margin)
         .frame(width: size.width, height: size.height)
-        .background(surface.plate, in: shape)
+        .background(card ?? surface.plate, in: shape)
         .clipShape(shape)
     }
   }

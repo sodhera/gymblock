@@ -73,50 +73,376 @@ struct DesignFit<Content: View>: View {
 
 // MARK: - Welcome
 
-/// One message under the old story (20 Oct 2026, at the user's request): notifications pile onto a lock
-/// screen, the kettlebell falls and locks it, the arm flexes and turns green, then "Focused workouts."
-/// The words that used to frame it ("Stop scrolling → Stay focused", "Record everything → Get
-/// jacked") are gone. Everything moves from one clock (JourneyScores.welcome).
+/// The first screen, as Speaking Coach opens (8 Nov 2026, at the user's request): GymBlock itself
+/// running in a phone, then "Focused workouts." and the two doors. The phone swells in, the words
+/// follow, and Get started appears with them; the phone keeps looping underneath.
 struct WelcomeScene: View {
   let done: () -> Void
   @EnvironmentObject private var store: GymStore
-  /// One thing moves at a time: the phone fills and locks, the arm flexes (its spring peaks 0.315 s
-  /// after it starts), then the words.
-  static let flex = LockPhone.land + 0.42, peak = flex + 0.315
-  static let words = peak + 0.1
-  static let duration = words + 0.6
+  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+  @State private var heroSettled = false
+  @State private var wordsShown = false
   var body: some View {
-    SceneClock(duration: Self.duration, score: JourneyScores.welcome, done: done) { t in
-      let words = Ease.out(Ease.seg(t, Self.words, Self.words + 0.45))
-      VStack(spacing: JourneyLayout.compact ? 18 : 28) {
-        Spacer(minLength: 0)
-        // Small screens keep air around it rather than filling edge to edge.
-        DesignFit(size: CGSize(width: 388, height: 360), maxScale: JourneyLayout.compact ? 0.74 : 1.1) {
-          HStack(spacing: 0) {
-            LockPhone(t: t)
-            Spacer(minLength: 0)
-            arm(t)
-          }
-        }.frame(maxHeight: 400)
-        Text(store.t("Focused workouts.")).font(.app(size: JourneyLayout.compact ? 34 : 40, weight: .bold)).tracking(-1)
-          .foregroundStyle(JourneyColor.text).multilineTextAlignment(.center).lineLimit(1).minimumScaleFactor(0.7)
-          .opacity(words).offset(y: (1 - words) * 10)
-        Spacer(minLength: 0)
-      }.frame(maxWidth: .infinity)
+    VStack(spacing: 0) {
+      WelcomePhone()
+        .frame(maxWidth: JourneyLayout.compact ? 230 : 280, maxHeight: .infinity)
+        .padding(.top, JourneyLayout.compact ? 8 : 20)
+        .scaleEffect(heroSettled ? 1 : 0.9)
+        .opacity(heroSettled ? 1 : 0)
+      Text(store.t("Focused workouts.")).font(.app(size: JourneyLayout.compact ? 34 : 40, weight: .bold)).tracking(-1)
+        .foregroundStyle(JourneyColor.text).multilineTextAlignment(.center).lineLimit(1).minimumScaleFactor(0.7)
+        .padding(.top, JourneyLayout.compact ? 18 : 28).padding(.bottom, 8)
+        .opacity(wordsShown ? 1 : 0).offset(y: wordsShown ? 0 : 10)
+        .accessibilityAddTraits(.isHeader)
     }
+    .frame(maxWidth: .infinity)
     .accessibilityElement(children: .ignore).accessibilityIdentifier("journey.phone")
     .accessibilityLabel(store.t("Focused workouts. Your apps lock while you train."))
+    .task {
+      if JourneyMotion.reduced(systemReduceMotion) { heroSettled = true; wordsShown = true; done(); return }
+      try? await Task.sleep(for: .milliseconds(120))
+      JourneyHaptic.play(.medium, store.profile)
+      withAnimation(.spring(duration: 1.1, bounce: 0.1)) { heroSettled = true }
+      try? await Task.sleep(for: .milliseconds(320))
+      withAnimation(.easeOut(duration: 0.9)) { wordsShown = true }
+      try? await Task.sleep(for: .milliseconds(300))
+      done()
+    }
   }
-  private func arm(_ t: Double) -> some View {
-    let flex = t < Self.flex ? 0 : Ease.spring(t - Self.flex, 11, 0.42)
-    // Settles exactly on the last pose, so the resting arm is one clean frame, not two blended.
-    let curl = min(1, 0.12 + 0.88 * flex)
-    let glow = t < Self.flex + 0.15 ? 0 : Ease.spring(t - Self.flex - 0.15, 8, 0.5)
-    return ZStack {
-      Circle().fill(RadialGradient(colors: [JourneyColor.accent.opacity(0.24), .clear], center: .center, startRadius: 0, endRadius: 125))
-        .frame(width: 250, height: 250).scaleEffect(0.75 + 0.25 * glow).opacity(Ease.out(Ease.seg(t, Self.flex + 0.15, Self.flex + 0.65)))
-      ArmView(curl: curl, warmth: Ease.inOut(Ease.seg(t, Self.flex, Self.flex + 0.6))).frame(width: 206, height: 206)
-    }.frame(width: 206)
+}
+
+/// What they're getting, before the first question: a loop of about ten seconds through the real app,
+/// each loop a new phone that swings in from the right and away to the left round a wheel below the
+/// screen (Speaking Coach's welcome, after Cal AI's). In the order the user set on 8 Nov 2026: the home
+/// screen, a finger taps TikTok, GymBlock's shield lands over it, the finger taps Back to training,
+/// and on the workout screen it logs set 2 of bench press and the rest starts. Drawn at a fixed
+/// design size and scaled to fit. Under Reduce Motion it holds on the shield.
+struct WelcomePhone: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
+  @State private var logFinger = false
+  @State private var logTapped = false
+  @State private var rest = 90
+  @State private var locked = false
+  /// The finger taps TikTok, it opens, the shield lands; Back to training opens the workout.
+  @State private var tiktokFinger = false
+  @State private var tiktokTapped = false
+  @State private var tiktokOpen = false
+  @State private var shieldShown = false
+  @State private var backFinger = false
+  @State private var backTapped = false
+  @State private var workoutShown = false
+  /// Where the phone is on its wheel, in degrees: `swingFrom` waiting off to the right, 0 in place,
+  /// `-swingFrom` gone off to the left.
+  @State private var swing = WelcomePhone.swingFrom
+
+  private static let design = CGSize(width: 236, height: 486)
+  private static let swingFrom = 32.0
+  private static let hub = UnitPoint(x: 0.5, y: 2.3)
+  private var weight: String { store.profile.unit == "lb" ? "135 lb" : "60 kg" }
+
+  var body: some View {
+    GeometryReader { proxy in
+      let scale = min(proxy.size.width / Self.design.width, proxy.size.height / Self.design.height)
+      phone
+        .frame(width: Self.design.width, height: Self.design.height)
+        .scaleEffect(scale)
+        .frame(width: proxy.size.width, height: proxy.size.height)
+    }
+    .aspectRatio(Self.design.width / Self.design.height, contentMode: .fit)
+    // One layer, so fading the phone never shows the screens stacked under the shield.
+    .compositingGroup()
+    // Smaller the further round the wheel it is: it grows as it arrives and shrinks as it goes.
+    .scaleEffect(1 - 0.5 * min(abs(swing) / Self.swingFrom, 1))
+    .rotationEffect(.degrees(swing), anchor: Self.hub)
+    .opacity(1 - 0.85 * min(abs(swing) / Self.swingFrom, 1))
+    .task { await loop() }
+  }
+
+  // MARK: The loop
+
+  private func loop() async {
+    if JourneyMotion.reduced(systemReduceMotion) {
+      swing = 0; tiktokOpen = true; shieldShown = true; locked = true
+      return
+    }
+    try? await Task.sleep(for: .milliseconds(300))
+    while !Task.isCancelled {
+      // A fresh phone swings in from the right, on the home screen.
+      withAnimation(.spring(duration: 1.0, bounce: 0.16)) { swing = 0 }
+      await pause(0.35)
+      buzz(.soft, 0.35)
+      await pause(0.75)
+
+      // The finger reaches for TikTok; it opens.
+      await pause(0.2)
+      withAnimation(.spring(duration: 0.4, bounce: 0.2)) { tiktokFinger = true }
+      await pause(0.6)
+      withAnimation(.easeOut(duration: 0.14)) { tiktokTapped = true }
+      buzz(.light, 0.6)
+      await pause(0.2)
+      withAnimation(.easeOut(duration: 0.35)) { tiktokOpen = true }
+      await pause(0.55)
+
+      // GymBlock's shield lands over it.
+      withAnimation(.easeOut(duration: 0.25)) { shieldShown = true }
+      await pause(0.2)
+      withAnimation(.spring(duration: 0.5, bounce: 0.35)) { locked = true }
+      buzz(.rigid, 1)
+      await pause(1.6)
+
+      // Back to training: the finger taps it and the workout opens.
+      withAnimation(.spring(duration: 0.4, bounce: 0.2)) { backFinger = true }
+      await pause(0.6)
+      withAnimation(.easeOut(duration: 0.14)) { backTapped = true }
+      buzz(.light, 0.6)
+      await pause(0.2)
+      withAnimation(.easeInOut(duration: 0.45)) { workoutShown = true }
+      await pause(1.0)
+
+      // Set 2 is ready; the finger logs it and the rest starts counting.
+      withAnimation(.spring(duration: 0.4, bounce: 0.2)) { logFinger = true }
+      await pause(0.65)
+      withAnimation(.easeOut(duration: 0.14)) { logTapped = true }
+      buzz(.medium, 0.8)
+      for _ in 0..<3 {
+        await pause(0.8)
+        withAnimation(.linear(duration: 0.8)) { rest -= 1 }
+        buzz(.rigid, 0.3)
+      }
+      await pause(0.6)
+
+      // Off it goes to the left, round the wheel; out of sight before the swing ends.
+      withAnimation(.easeIn(duration: 0.75)) { swing = -Self.swingFrom }
+      await pause(0.58)
+
+      var reset = Transaction()
+      reset.disablesAnimations = true
+      withTransaction(reset) {
+        swing = Self.swingFrom
+        logFinger = false; logTapped = false
+        rest = 90; locked = false
+        tiktokFinger = false; tiktokTapped = false; tiktokOpen = false; shieldShown = false
+        backFinger = false; backTapped = false; workoutShown = false
+      }
+      await pause(0.05)
+    }
+  }
+
+  private func pause(_ seconds: Double) async {
+    try? await Task.sleep(for: .seconds(seconds))
+  }
+
+  /// The loop's haptics, on its taps: the phone arriving, each fingertip press, the shield's lock,
+  /// the set logged and the rest's seconds. Silent once the page has gone.
+  private func buzz(_ kind: JourneyHaptic, _ intensity: CGFloat) {
+    guard !Task.isCancelled else { return }
+    JourneyHaptic.play(kind, store.profile, intensity: intensity)
+  }
+
+  // MARK: The phone
+
+  private var phone: some View {
+    ZStack(alignment: .top) {
+      RoundedRectangle(cornerRadius: 40, style: .continuous)
+        .fill(Color(red: 0.09, green: 0.09, blue: 0.1))
+        .shadow(color: .black.opacity(0.2), radius: 30, y: 18)
+      ZStack {
+        springboard
+        // TikTok opens out of its icon, its corners easing from the icon's to the screen's (the
+        // radius is in the full-size frame: 50 × 0.18 is the icon's 9).
+        tiktokApp
+          .clipShape(RoundedRectangle(cornerRadius: tiktokOpen ? Self.screenRadius : 50, style: .continuous))
+          .scaleEffect(tiktokOpen ? 1 : 0.18, anchor: UnitPoint(x: Self.tiktokIcon.x / Self.screen.width, y: Self.tiktokIcon.y / Self.screen.height))
+          .opacity(tiktokOpen ? 1 : 0)
+        shieldScreen
+          .padding(.horizontal, 16).padding(.top, 44).padding(.bottom, 18)
+          .background(Color.white)
+          .scaleEffect(shieldShown ? 1 : 1.04)
+          .opacity(shieldShown ? 1 : 0)
+        // Back to training opens the workout, sliding in over the shield.
+        workoutScreen
+          .padding(.horizontal, 16)
+          .padding(.top, 44)
+          .padding(.bottom, 18)
+          .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+          .background(Color.white)
+          .clipShape(RoundedRectangle(cornerRadius: Self.screenRadius, style: .continuous))
+          .offset(x: workoutShown ? 0 : Self.screen.width)
+      }
+      .clipShape(RoundedRectangle(cornerRadius: Self.screenRadius, style: .continuous))
+      .padding(6)
+      Capsule().fill(Color(red: 0.09, green: 0.09, blue: 0.1)).frame(width: 70, height: 20).padding(.top, 15)
+    }
+  }
+
+  /// A fingertip: lands, presses, lifts.
+  private func finger(shown: Bool, pressed: Bool) -> some View {
+    Circle()
+      .fill(JourneyColor.ink(0.16))
+      .overlay(Circle().strokeBorder(.white.opacity(0.9), lineWidth: 2))
+      .frame(width: 30, height: 30)
+      .shadow(color: .black.opacity(0.2), radius: 6, y: 3)
+      .scaleEffect(pressed ? 0.78 : 1)
+      .opacity(shown ? 1 : 0)
+      .offset(y: shown ? 0 : 14)
+      .allowsHitTesting(false)
+  }
+
+  private func button(_ title: String, pressed: Bool) -> some View {
+    Text(title).font(.app(size: 12, weight: .semibold)).foregroundStyle(.white)
+      .frame(maxWidth: .infinity).frame(height: 36)
+      .background(Capsule().fill(JourneyColor.button))
+      .scaleEffect(pressed ? 0.96 : 1)
+  }
+
+  // MARK: Scene 3 — the workout
+
+  /// The workout screen: set 2 of bench press ready, a tap on Log set, the set lands under set 1 and
+  /// the rest counts down. The apps are locked the whole time.
+  private var workoutScreen: some View {
+    VStack(alignment: .leading, spacing: 0) {
+      HStack {
+        Text(store.t("Push")).font(.app(size: 11, weight: .semibold)).foregroundStyle(JourneyColor.secondary)
+        Spacer()
+        Label(String(format: store.t("%@ apps locked"), "3"), systemImage: "lock.fill")
+          .font(.app(size: 9.5, weight: .semibold)).foregroundStyle(JourneyColor.signalText)
+      }
+      .padding(.top, 8)
+      Text(store.t("Bench press")).font(.app(size: 20, weight: .bold)).foregroundStyle(JourneyColor.text).padding(.top, 16)
+      Text(String(format: store.t("Set %@ of %@"), logTapped ? "3" : "2", "3")).font(.app(size: 11)).foregroundStyle(JourneyColor.secondary).padding(.top, 2)
+      VStack(spacing: 6) {
+        logRow(1)
+        logRow(2).opacity(logTapped ? 1 : 0).offset(y: logTapped ? 0 : 10)
+      }
+      .padding(.top, 14)
+      HStack(spacing: 8) {
+        ZStack {
+          Circle().stroke(JourneyColor.signal.opacity(0.2), lineWidth: 4)
+          Circle().trim(from: 0, to: Double(rest) / 90).stroke(JourneyColor.signal, style: StrokeStyle(lineWidth: 4, lineCap: .round)).rotationEffect(.degrees(-90))
+        }
+        .frame(width: 34, height: 34)
+        VStack(alignment: .leading, spacing: 0) {
+          Text(TimeWords.clock(Double(rest) / 60)).font(.app(size: 16, weight: .bold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+            .contentTransition(.numericText(countsDown: true))
+          Text(store.t("Rest")).font(.app(size: 9.5)).foregroundStyle(JourneyColor.secondary)
+        }
+      }
+      .padding(.top, 16)
+      .opacity(logTapped ? 1 : 0)
+      Spacer(minLength: 0)
+      HStack(spacing: 8) { field(weight); field("8 " + store.t("reps")) }
+        .opacity(logTapped ? 0 : 1)
+      button(store.t("Log set"), pressed: logTapped && logFinger)
+        .overlay { finger(shown: logFinger, pressed: logTapped).offset(x: 30, y: 6).opacity(logTapped ? 0 : 1) }
+        .padding(.top, 8)
+        .padding(.bottom, 22)
+    }
+  }
+
+  private func logRow(_ n: Int) -> some View {
+    HStack {
+      Text(String(format: store.t("Set %@"), "\(n)")).font(.app(size: 11, weight: .medium)).foregroundStyle(JourneyColor.text)
+      Spacer()
+      Text(weight + " × 8").font(.app(size: 11, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+      Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(JourneyColor.signalText)
+    }
+    .padding(.horizontal, 11).frame(height: 32)
+    .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(JourneyColor.ink(0.04)))
+  }
+
+  private func field(_ text: String) -> some View {
+    Text(text).font(.app(size: 14, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+      .frame(maxWidth: .infinity, minHeight: 38)
+      .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(JourneyColor.ink(0.04)))
+  }
+
+  // MARK: Scene 1 — the home screen and TikTok
+
+  /// The phone's screen inside the bezel.
+  private static let screen = CGSize(width: 224, height: 474)
+  /// The screen's corner radius inside the bezel.
+  private static let screenRadius: CGFloat = 34
+  /// TikTok's icon on the home screen (third row, second column).
+  private static let tiktokIcon = CGPoint(x: 85, y: 214)
+  private static let apps: [String] = ["Calendar", "Photos", "Reminders", "News", "Maps", "Health", "Wallet", "Settings", "Instagram", "TikTok", "YouTube", "GymBlock"]
+  private static let dock: [String] = ["Safari", "Messages", "X"]
+
+  /// The home screen, by the apps' real icons (the ones the shield stage uses).
+  private var springboard: some View {
+    ZStack(alignment: .topLeading) {
+      LinearGradient(colors: [Color(red: 0.85, green: 0.81, blue: 0.77), Color(red: 0.73, green: 0.69, blue: 0.65), Color(red: 0.56, green: 0.55, blue: 0.56)],
+                     startPoint: .topLeading, endPoint: .bottom)
+      ForEach(Array(Self.apps.enumerated()), id: \.offset) { i, app in
+        VStack(spacing: 4) {
+          tile(app).scaleEffect(app == "TikTok" && tiktokTapped ? 0.88 : 1)
+          Text(app).font(.system(size: 7.5, weight: .medium)).foregroundStyle(.white).lineLimit(1).fixedSize()
+        }
+        .position(x: 31 + Double(i % 4) * 54, y: 78 + Double(i / 4) * 68)
+      }
+      HStack(spacing: 18) { ForEach(Self.dock, id: \.self) { tile($0) } }
+        .padding(9).background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.white.opacity(0.28)))
+        .position(x: Self.screen.width / 2, y: Self.screen.height - 44)
+      finger(shown: tiktokFinger, pressed: tiktokTapped)
+        .position(x: Self.tiktokIcon.x + 7, y: Self.tiktokIcon.y + 4)
+    }
+    .frame(width: Self.screen.width, height: Self.screen.height)
+  }
+
+  /// The apps the workout has locked: in full colour (the user rolled back greying them, 8 Nov 2026),
+  /// with a small lock badge on the corner.
+  private static let locked: Set<String> = ["Instagram", "TikTok"]
+
+  private func tile(_ app: String) -> some View {
+    let shape = RoundedRectangle(cornerRadius: 9, style: .continuous)
+    return Group {
+      if app == "GymBlock" {
+        shape.fill(Color.white).overlay { BrandMark(size: 26) }
+      } else {
+        Image("app." + app.lowercased()).resizable().scaledToFill().clipShape(shape)
+      }
+    }
+    .frame(width: 40, height: 40)
+    .overlay(alignment: .topTrailing) {
+      if Self.locked.contains(app) {
+        Image(systemName: "lock.fill").font(.system(size: 7, weight: .bold)).foregroundStyle(.white)
+          .frame(width: 15, height: 15)
+          .background(Circle().fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
+          .overlay(Circle().strokeBorder(.white, lineWidth: 1.2))
+          .offset(x: 5, y: -5)
+      }
+    }
+  }
+
+  private var tiktokApp: some View {
+    ZStack {
+      Color.black
+      VStack(spacing: 10) {
+        Image("app.tiktok").resizable().scaledToFit().frame(width: 64, height: 64).clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+        Text("TikTok").font(.system(size: 17, weight: .bold)).foregroundStyle(.white)
+      }
+    }
+    .frame(width: Self.screen.width, height: Self.screen.height)
+  }
+
+  // MARK: Scene 2 — the shield
+
+  /// TikTok, opened mid-workout: the real shield's words (GymBlockShield), the mark clicking shut,
+  /// and Back to training, which the finger taps.
+  private var shieldScreen: some View {
+    VStack(spacing: 7) {
+      Spacer().frame(height: 96)
+      BrandMark(size: 46).scaleEffect(locked ? 1 : 0.8).opacity(locked ? 1 : 0.4)
+      Text(store.t("You’re mid-workout.")).font(.app(size: 17, weight: .bold)).foregroundStyle(JourneyColor.text).padding(.top, 6)
+      Text(String(format: store.t("%@ opens when you finish your workout in GymBlock."), "TikTok"))
+        .font(.app(size: 11)).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 10)
+      Spacer(minLength: 0)
+      button(store.t("Back to training"), pressed: backTapped)
+        .overlay { finger(shown: backFinger, pressed: backTapped).offset(x: 30, y: 6) }
+        .padding(.bottom, 22)
+    }
+    .frame(maxWidth: .infinity)
   }
 }
 
@@ -364,7 +690,7 @@ struct ShieldStage: View {
     let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
     return Group {
       if app == "GymBlock" {
-        shape.fill(Color(red: 0.961, green: 0.953, blue: 0.937)).overlay { BrandMark(size: 34) }
+        shape.fill(Color.white).overlay { BrandMark(size: 34) }
       } else {
         Image("app." + app.lowercased()).resizable().scaledToFill().clipShape(shape)
       }
@@ -383,7 +709,7 @@ struct ShieldStage: View {
   private func shieldScreen(_ t: Double) -> some View {
     let click = t < Self.lands ? 1 : 1 - 0.14 * Ease.bump(t, Self.lands, 0.18) + 0.08 * Ease.bump(t, Self.lands + 0.14, 0.2)
     return ZStack {
-      Color(red: 0.961, green: 0.953, blue: 0.937)
+      Color.white
       VStack(spacing: 10) {
         Spacer().frame(height: 170)
         BrandMark(size: 62).scaleEffect(click)
@@ -407,7 +733,7 @@ struct ShieldStage: View {
     let rest = max(0, 90 - (time - Self.logTap))
     let weight = store.profile.unit == "lb" ? "135 lb" : "60 kg"
     return ZStack(alignment: .topLeading) {
-      Color(red: 0.961, green: 0.953, blue: 0.937)
+      Color.white
       VStack(alignment: .leading, spacing: 0) {
         HStack {
           Text(store.t("Push")).font(.system(size: 15, weight: .semibold)).foregroundStyle(JourneyColor.secondary)

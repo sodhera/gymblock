@@ -1,8 +1,7 @@
 import SwiftUI
 import UIKit
 
-/// One look everywhere: *paper*. A warm off-white stage with a faint peach light in the middle and
-/// quiet ink dots, white Liquid Glass, ink type, an ink primary action, and one emerald signal that is
+/// One look everywhere: *paper*. A plain white stage, white Liquid Glass, ink type, an ink primary action, and one emerald signal that is
 /// ≤2% of a screen and always the one thing to look at. Never a coloured background.
 struct JourneyTheme {
   enum Backdrop { case solid, gradient(top: Color, bottom: Color) }
@@ -225,74 +224,13 @@ enum JourneyMotion {
 
 // MARK: - Stage
 
-/// The graphite stage, drawn once into a cached bitmap so it costs nothing while anything above it animates.
-/// A wide cool wash, a tighter core behind the stage area, dots that brighten towards the glow, and a soft
-/// vignette at the edges: enough light for glass to refract, never a coloured background.
+/// The stage: plain white (at night the warm charcoal), no glow and no dots (8 Nov 2026, at the user's
+/// request). Kept as one view so every page still draws the same background.
 struct DotGrid: View {
-  @Environment(\.colorScheme) private var scheme
-  /// Multiplies the dots' opacity (Home runs it a touch darker).
+  /// Unused since the dots went; kept so callers needn't change.
   var strength: CGFloat = 1
   var body: some View {
-    GeometryReader { g in Image(uiImage: Self.image(g.size, dark: scheme == .dark, strength: strength)).resizable() }
-      .ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
-  }
-  @MainActor private static var cache: [String: UIImage] = [:]
-  @MainActor static func image(_ size: CGSize, dark: Bool = false, strength: CGFloat = 1) -> UIImage {
-    let size = CGSize(width: max(1, size.width.rounded()), height: max(1, size.height.rounded()))
-    let key = JourneyTheme.current.name + (dark ? "-dark" : "") + "-\(size.width)x\(size.height)-\(strength)"
-    if let cached = cache[key] { return cached }
-    let image = UIGraphicsImageRenderer(size: size).image { r in
-      let c = r.cgContext
-      Self.draw(in: c, size: size, dark: dark, strength: strength)
-    }
-    cache[key] = image
-    return image
-  }
-  /// Shared with the app icon so every surface is the same stage.
-  static func draw(in c: CGContext, size: CGSize, glowScale: CGFloat = 1, dark: Bool = false, strength: CGFloat = 1) {
-    let t = JourneyTheme.current
-    let space = CGColorSpaceCreateDeviceRGB()
-    let traits = UITraitCollection(userInterfaceStyle: dark ? .dark : .light)
-    func ui(_ color: Color) -> UIColor { UIColor(color).resolvedColor(with: traits) }
-    c.setFillColor(ui(t.stage).cgColor); c.fill(CGRect(origin: .zero, size: size))
-    if case .gradient(let top, let bottom) = t.backdrop,
-       let g = CGGradient(colorsSpace: space, colors: [UIColor(top).cgColor, UIColor(bottom).cgColor] as CFArray, locations: [0, 1]) {
-      c.drawLinearGradient(g, start: .zero, end: CGPoint(x: 0, y: size.height), options: [])
-    }
-    let center = CGPoint(x: size.width / 2, y: size.height * 0.40)
-    func radial(_ alpha: CGFloat, _ radius: CGFloat, at point: CGPoint) {
-      let glow = ui(t.glow).withAlphaComponent(alpha * t.glowAlpha)
-      let colors = [glow.cgColor, glow.withAlphaComponent(alpha * t.glowAlpha * 0.35).cgColor, glow.withAlphaComponent(0).cgColor] as CFArray
-      if let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 0.45, 1]) {
-        c.drawRadialGradient(gradient, startCenter: point, startRadius: 0, endCenter: point, endRadius: radius, options: [])
-      }
-    }
-    // A wide wash, then a tighter core, so the middle of the page carries the light.
-    radial(dark ? 0.07 : 0.55, size.width * 1.05 * glowScale, at: center)
-    radial(dark ? 0.10 : 0.45, size.width * 0.50 * glowScale, at: center)
-    // Dots, brightening towards the core.
-    let step: CGFloat = 22, radius: CGFloat = 1.0
-    let reach = hypot(size.width, size.height) * 0.56
-    var y = step / 2
-    while y < size.height {
-      var x = size.width.truncatingRemainder(dividingBy: step) / 2
-      while x < size.width {
-        let d = min(1, hypot(x - center.x, y - center.y) / reach)
-        c.setFillColor(ui(t.dot).withAlphaComponent((dark ? 0.07 : t.dotAlpha) * strength * (0.25 + 0.75 * pow(1 - d, 1.6))).cgColor)
-        c.fillEllipse(in: CGRect(x: x - radius, y: y - radius, width: 2 * radius, height: 2 * radius))
-        x += step
-      }
-      y += step
-    }
-    // A soft vignette keeps the edges quiet and the content in the middle (dark themes only).
-    if t.vignette > 0 {
-      let edge = UIColor.black
-      let vignette = [edge.withAlphaComponent(0).cgColor, edge.withAlphaComponent(t.vignette).cgColor] as CFArray
-      if let gradient = CGGradient(colorsSpace: space, colors: vignette, locations: [0.55, 1]) {
-        let corner = CGPoint(x: size.width / 2, y: size.height / 2)
-        c.drawRadialGradient(gradient, startCenter: corner, startRadius: 0, endCenter: corner, endRadius: hypot(size.width, size.height) * 0.62, options: [])
-      }
-    }
+    JourneyColor.stage.ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
   }
 }
 

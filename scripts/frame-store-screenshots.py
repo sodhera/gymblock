@@ -15,6 +15,8 @@ bottom edge, cut above each screen's bottom button.
 Reads screenshots/store-2026-10-20/ (and the newer captures named by path), writes
 screenshots/store-final/6.9/, 6.3/ and 6.1/. The 6.3-inch set is the 6.9-inch frame scaled down;
 the 6.1-inch one is scaled to its width and trimmed at the foot, where the phone runs off the edge.
+--white writes the same set on the white stage (`white-clean`) to screenshots/store-final-white/, with
+store-final-white-overview.png (8 Nov 2026, at the user's request, as an alternative to the ink set).
 --custom-pages writes the custom product pages (docs/listing.md#custom-product-pages) instead: one
 folder per page under screenshots/store-cpp/, numbered in upload order, with an overview strip.
 """
@@ -54,8 +56,14 @@ STYLES = {
                           accent=(20, 20, 22), highlight=(255, 214, 10), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
     "emerald-yellow": dict(top=(16, 128, 90), bottom=(5, 52, 37), glow=((255, 230, 120), 50), text=(255, 255, 255),
                            accent=(255, 214, 10), sub=(196, 236, 218), shadow=((0, 20, 12), 0.5)),
+    # 8 Nov 2026, at the user's request: no green halo and no yellow. Flat ink, white type, one emerald
+    # word, the icon's own colours; or the same on white, to match the app's white screens.
+    "ink-clean": dict(top=(22, 22, 24), bottom=(10, 10, 11), glow=((0, 0, 0), 0), text=(255, 255, 255),
+                      accent=(46, 214, 150), sub=(168, 168, 174), shadow=((0, 0, 0), 0.6)),
+    "white-clean": dict(top=(255, 255, 255), bottom=(242, 242, 245), glow=((0, 0, 0), 0), text=(20, 20, 22),
+                        accent=(15, 154, 107), sub=(110, 110, 116), shadow=((30, 30, 40), 0.22)),
 }
-STYLE = "ink-yellow-deep"  # chosen 23 Oct 2026: ink into emerald, a yellow word (after ink, emerald and paper)
+STYLE = "ink-clean"  # 8 Nov 2026 (was ink-yellow-deep, 23 Oct): flat ink, white type, one emerald word
 
 # Apple's own iPhone frame (Bezel-iPhone-18.dmg from developer.apple.com/design/resources, under the
 # Apple Design Resources license: used here only to show the app, never redistributed, so the PNGs
@@ -72,13 +80,16 @@ BODY = (6, 6, 7)
 SLIDES = [
     # Slide 1 is real blocking (23 Oct 2026, at the user's request): Sulav's own Home Screen mid-workout,
     # the chosen apps dimmed under Screen Time's hourglass, GymBlock bright, the rest in the Dynamic
-    # Island. Status bar cleaned to 9:41 and a full battery (store-2026-10-23/blocked-home-original.png
-    # is the untouched capture).
-    ("Stop scrolling in the gym", "scrolling", None, "../store-2026-10-23/blocked-home.png"),
-    ("Track your workouts", "workouts", None, "2-workout-rest.png"),
-    ("Plan your progress", "progress", None, "3-home.png"),
-    ("Beat your record", "record", None, "4-squat-record.png"),
-    ("Keep your streak alive", "streak", None, "5-profile-month.png"),
+    # Island. Status bar cleaned to 9:41 and a full battery (store-2026-11-02/blocked-home-original.png
+    # is the untouched capture). Retaken on 2 Nov 2026 with Spotify left open: the 23 Oct one had it locked.
+    ("Stop scrolling in the gym", "scrolling", None, "../store-2026-11-02/blocked-home.png"),
+    # Slides 2–5 retaken on 8 Nov 2026 on the white app (the paper captures of 20 Oct went with it).
+    ("Track your workouts", "workouts", None, "../store-2026-11-08/workout-rest.png"),
+    ("Plan your progress", "progress", None, "../store-2026-11-08/home.png"),
+    ("Beat your record", "record", None, "../store-2026-11-08/record.png"),
+    # Profile with October's calendar (`--demo -storeShots YES -calendarMonthsBack 1 -denseDemo YES`):
+    # the sample history six days a week, Sundays off, where November had four days so far.
+    ("Keep your streak alive", "streak", None, "../store-2026-11-08/profile.png"),
 ]
 
 # The custom product pages' own first cards. A capture outside store-2026-10-20 is given as its path
@@ -88,8 +99,8 @@ SLIDES = [
 LOCK = "../store-2026-10-17/rest-lock-screen.png"
 NEW_SLIDES = {
     # The shield iOS shows over a blocked app, GymBlock's design rebuilt for the simulator (`-shieldPreview TikTok`).
-    "shield": dict(headline="TikTok? Not mid-workout", accent="Not", sub=None,
-                   capture="../store-2026-10-22/shield-tiktok.png"),
+    "shield": dict(headline="TikTok can wait", accent="wait", sub=None,
+                   capture="../store-2026-11-08/shield-tiktok.png"),
     "reels": dict(headline="Block reels between sets", accent="reels", sub="Shorts and feeds too",
                   capture="1-blocking-apps.png"),
     "rest": dict(headline="Rest on your Lock Screen", accent="Rest", sub="No unlocking, no scrolling",
@@ -110,24 +121,32 @@ NEW_SLIDES = {
                      capture="3-home.png"),
     "streak": dict(headline="Never miss gym day", accent="gym", sub="Your streak, week by week",
                    capture="5-profile-month.png", popout=((48, 440, 1272, 1130), 1.1)),
+    # Apple's app picker with the feeds ticked and Spotify left open (2 Nov 2026, at the user's request:
+    # people took "blocks your apps" to mean all of them, music too). A rebuild (`-pickerPreview YES`).
+    "choose": dict(headline="Choose apps to lock", accent="Choose", sub=None,
+                   capture="../store-2026-11-02/choose-apps.png"),
 }
 
-# The default page: real blocking, the shield, then the workout, plans, records and the streak.
-DEFAULT = [1, "shield", 2, 3, 4, 5]
+# The default page: real blocking, which apps (your pick), the shield, then the workout, plans,
+# records and the streak.
+DEFAULT = [1, "choose", "shield", 2, 3, 4, 5]
 
 # Real cards lifted out of the phone, Bumble-style (23 Oct 2026, at the user's request), only where the
 # app has a self-contained card: the box in capture pixels. Drawn as a card of the screen's own colour,
 # a little wider than the phone, with padding, round corners and a soft shadow; the phone stays undimmed.
 # Behind a card the screen is blurred, so the card is the only sharp thing on the phone (23 Oct 2026).
-# A fifth number is the padding (default 44).
+# A fifth number is the padding (default 44); a sixth, the card's centre on the slide, for a box that sits
+# too low on the screen to stay where it is without running off the foot.
 CARDS = {
     # The locked apps, as a pane of the Home Screen's own wallpaper (no padding: the wallpaper is the card).
     1: (14, 222, 1165, 812, 0),
-    2: (40, 365, 1290, 1070),            # Bench press: a set done, the rest counting down, the next set
-    "shield": (60, 600, 1260, 1500),     # "You're mid-workout." and Back to training
-    3: (40, 805, 1290, 1390),            # the strength chart
-    4: (40, 505, 1280, 1060),            # before → after, +20 kg
-    5: (48, 450, 1272, 1120),            # the month of training days
+    # The 8 Nov 2026 captures (white app):
+    2: (40, 370, 1290, 1130),            # Dumbbell curl: a set done, the rest counting down, the next set
+    "shield": (60, 560, 1260, 1520),     # "You're mid-workout." and Back to training
+    3: (40, 800, 1290, 1460),            # Bench press, +20 kg, the strength line
+    4: (40, 500, 1290, 1060),            # before → after, +20 kg
+    5: (48, 440, 1272, 1125),            # October: 27 days trained, every split twice a week, one dot per split colour
+    "choose": (60, 842, 1260, 2022, 44, 1880),  # Social and Entertainment open: feeds ticked, Spotify not
 }
 USE_CARDS = True
 
@@ -392,7 +411,8 @@ def frame(headline, accent, sub, capture, phone=None, popout=None, card=None):
         ch = inner_h + 2 * pad
         sheet = Image.new("RGB", (cw, ch), full.getpixel((x0 + 6, y0 + 6)))
         sheet.paste(full.crop((x0, y0, x1, y1)).resize((inner_w, inner_h), Image.LANCZOS), (pad, pad))
-        cx, cy = (W - cw) // 2, round(sy + (y0 + y1) / 2 * k_cap - ch / 2)
+        mid = card[5] if len(card) > 5 else sy + (y0 + y1) / 2 * k_cap
+        cx, cy = (W - cw) // 2, round(mid - ch / 2)
         # Blur below the status bar only: blurring it smeared the Dynamic Island into a dark halo.
         below = screen.copy()
         ImageDraw.Draw(below).rectangle((0, 0, sw, round(sh * 0.066)), fill=0)
@@ -422,17 +442,17 @@ def slug(headline):
     return re.sub(r"[^a-z0-9]+", "-", headline.lower()).strip("-")
 
 
-def main():
-    shutil.rmtree(OUT, ignore_errors=True)
+def main(out=OUT, overview_path=os.path.join(ROOT, "screenshots", "store-final-overview.png")):
+    shutil.rmtree(out, ignore_errors=True)
     for i, key in enumerate(DEFAULT, 1):
         slide = NEW_SLIDES.get(key) or dict(zip(("headline", "accent", "sub", "capture"), SLIDES[key - 1]))
         if USE_CARDS and key in CARDS:
             slide = dict(slide, card=CARDS[key])
         check_fits(slide["headline"], slide["sub"])
         name = f"{i}-{slug(slide['headline'])}.png"
-        save(frame(**slide), OUT, name)
+        save(frame(**slide), out, name)
         print(name)
-    overview(OUT, os.path.join(ROOT, "screenshots", "store-final-overview.png"))
+    overview(out, overview_path)
 
 
 def overview(folder, out=None):
@@ -463,4 +483,11 @@ def custom_pages():
 
 
 if __name__ == "__main__":
-    custom_pages() if "--custom-pages" in sys.argv else main()
+    if "--custom-pages" in sys.argv:
+        custom_pages()
+    elif "--white" in sys.argv:
+        STYLE = "white-clean"
+        main(os.path.join(ROOT, "screenshots", "store-final-white"),
+             os.path.join(ROOT, "screenshots", "store-final-white-overview.png"))
+    else:
+        main()

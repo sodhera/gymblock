@@ -4,6 +4,7 @@ import Foundation
 enum WidgetKind {
   static let upNext = "com.sodhera.gymblock.upnext", month = "com.sodhera.gymblock.month"
   static let week = "com.sodhera.gymblock.week", startControl = "com.sodhera.gymblock.control.start"
+  static let streak = "com.sodhera.gymblock.streak"
 }
 
 /// What the widgets know, written by the app into the App Group (the extension can't read the store).
@@ -86,7 +87,7 @@ extension WidgetSnapshot {
     let days: [Int], baseWeek: Int, priorRun: Int, goal: Int, hasHistory: Bool, lastFinished: Date?
     let sample: Bool, state: State, labels: Labels
   }
-  /// This month and This week.
+  /// This month, This week and Streak.
   var daysKey: DaysKey {
     DaysKey(days: days, baseWeek: baseWeek, priorRun: priorRun, goal: goal, hasHistory: hasHistory,
             lastFinished: lastFinished, sample: sample, state: state, labels: labels)

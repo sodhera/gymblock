@@ -18,8 +18,8 @@ struct PaperColor: Equatable {
 /// The paper stage's four widget tokens (the values in code; the docs round emerald to #0F9A6B).
 /// Tertiary and danger stay in `JourneyTheme`: widgets never use them.
 enum Paper {
-  /// #F5F3EF, at night #151412.
-  static let stage = PaperColor(light: .init(r: 0.961, g: 0.953, b: 0.937), dark: .init(r: 0.082, g: 0.078, b: 0.071))
+  /// White (#F5F3EF until 8 Nov 2026), at night #151412.
+  static let stage = PaperColor(light: .init(r: 1, g: 1, b: 1), dark: .init(r: 0.082, g: 0.078, b: 0.071))
   /// #141417, at night #F3F0EA.
   static let ink = PaperColor(light: .init(r: 0.08, g: 0.08, b: 0.09), dark: .init(r: 0.953, g: 0.941, b: 0.918))
   /// #66666B (5.15:1 on paper), at night #B0ADA8.
