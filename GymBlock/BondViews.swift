@@ -328,33 +328,44 @@ struct BondView: View {
 
 // MARK: - Onboarding
 
-/// The code page's field (after the account, before the wall): six letters, centred, as the name
-/// field is; what came back from the server under it.
+/// The code page's field (after the commit, before the wall), as Cal AI's referral page (8 Nov 2026,
+/// at the user's request): one glass row with the field on the left and Submit on the right, low on
+/// the page; the keyboard waits for a tap. What came back from the server sits under it.
 struct BondCodeStage: View {
   @Binding var code: String
   let status: String?
   let good: Bool
+  let busy: Bool
   let submit: () -> Void
   @EnvironmentObject private var store: GymStore
-  @FocusState private var focused: Bool
+  private var ready: Bool { GymBond.normalize(code).count == 6 && !busy }
   var body: some View {
     VStack(spacing: 12) {
       Spacer(minLength: 0)
-      TextField("", text: $code, prompt: Text("ABC123").foregroundColor(JourneyColor.tertiary))
-        .font(.app(size: 34, weight: .bold)).tracking(8).multilineTextAlignment(.center).foregroundStyle(JourneyColor.text)
-        .textInputAutocapitalization(.characters).autocorrectionDisabled().keyboardType(.asciiCapable)
-        .submitLabel(.continue).focused($focused).onSubmit(submit).tint(JourneyColor.accent)
-        // Kept as typed (rewriting it on every keystroke lost letters typed fast) and read normalised;
-        // only capped, so a pasted code with a dash still fits.
-        .onChange(of: code) { _, new in if new.count > 8 { code = String(new.prefix(8)) } }
-        .padding(.vertical, 14).padding(.horizontal, 18)
-        .journeyGlass(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .accessibilityIdentifier("bond.code")
+      HStack(spacing: 12) {
+        TextField("", text: $code, prompt: Text(store.t("Referral code")).foregroundColor(JourneyColor.tertiary))
+          .font(.app(.body, weight: .medium)).foregroundStyle(JourneyColor.text)
+          .textInputAutocapitalization(.characters).autocorrectionDisabled().keyboardType(.asciiCapable)
+          .submitLabel(.done).onSubmit { if ready { submit() } }.tint(JourneyColor.accent)
+          // Kept as typed (rewriting it on every keystroke lost letters typed fast) and read normalised;
+          // only capped, so a pasted code with a dash still fits.
+          .onChange(of: code) { _, new in if new.count > 8 { code = String(new.prefix(8)) } }
+          .accessibilityIdentifier("bond.code")
+        Button(action: { JourneyHaptic.press(); Analytics.tap("bond.submit"); submit() }) {
+          ZStack {
+            Text(store.t("Submit")).font(.app(.body, weight: .semibold)).opacity(busy ? 0 : 1)
+            if busy { ProgressView().tint(JourneyColor.onButton) }
+          }
+          .foregroundStyle(JourneyColor.onButton).padding(.horizontal, 18).frame(minHeight: 44)
+          .background(Capsule().fill(ready ? JourneyColor.button : JourneyColor.disabledButton))
+        }.buttonStyle(JourneyPressStyle()).disabled(!ready).animation(.smooth(duration: 0.3), value: ready)
+          .accessibilityIdentifier("bond.submit")
+      }
+      .padding(.leading, 18).padding(.trailing, 8).padding(.vertical, 8)
+      .journeyGlass(RoundedRectangle(cornerRadius: 22, style: .continuous))
       Text(status ?? " ").font(JourneyType.caption).foregroundStyle(good ? JourneyColor.signalText : JourneyColor.secondary)
         .multilineTextAlignment(.center).frame(minHeight: 20).padding(.horizontal, 8)
         .accessibilityHidden(status == nil).accessibilityIdentifier("bond.status")
-      Spacer(minLength: 0)
     }
-    .task { try? await Task.sleep(for: .seconds(JourneyMotion.settle)); focused = true }
   }
 }

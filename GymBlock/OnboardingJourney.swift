@@ -327,8 +327,7 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
           // The wall's first page has no way back to the account; inside the wall, Back steps to its
           // first page (as Brainrot's does, 1 Nov 2026).
-          // The code page comes after the account is made, so it has no way back either.
-          let noBack = step == wall.first || paid || step == .bondCode
+          let noBack = step == wall.first || paid
           JourneyBackButton(label: store.t("Go back"), action: back).disabled(account.busy)
             .opacity(noBack ? 0 : 1).allowsHitTesting(!noBack)
           if !onWall && !paid { JourneyProgress(value: progress, label: store.t("Progress")).padding(.horizontal, 8) } else { Spacer() }
@@ -440,7 +439,7 @@ struct OnboardingView: View {
     case .chooseApps: return "Now choose what to lock."
     case .commit: return "Ready to get your time back?"
     case .account: return "Save your progress."
-    case .bondCode: return "Got a code from a friend?"
+    case .bondCode: return "Enter referral code (optional)"
     case .trial1: return "Try GymBlock free for 7 days."
     case .trial2: return "We’ll remind you before your trial ends."
     case .splits: return "Let’s set up your training."
@@ -509,7 +508,7 @@ struct OnboardingView: View {
     case .chooseApps: return "Pick the apps that pull you in. They stay locked from your first set to your last."
     case .commit: return "Here’s what you’re signing."
     case .account: return account.message ?? "Every workout syncs to your account and comes back on any iPhone."
-    case .bondCode: return "They’re gifting you two weeks of GymBlock Pro."
+    case .bondCode: return "You can skip this step."
     case .splits: return "Pick one. Change it anytime."
     default: return nil
     }
@@ -587,7 +586,7 @@ struct OnboardingView: View {
         Spacer(minLength: 0)
       }
     // The first trial page shows the thing itself: the blocking, played on the phone as on the shield page (1 Nov 2026, at the user's request).
-    case .bondCode: BondCodeStage(code: $bondDraft, status: bondStatus, good: bondGood, submit: redeemBond)
+    case .bondCode: BondCodeStage(code: $bondDraft, status: bondStatus, good: bondGood, busy: bondBusy, submit: redeemBond)
     case .trial1: ShieldStage(done: {}, logFirst: true, small: true)
     case .trial2: TrialBellStage()
     case .youreIn: YoureInStage(name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), done: sceneDone)
@@ -640,12 +639,13 @@ struct OnboardingView: View {
           moveOn(from: .account)
         }
       case .bondCode:
-        JourneyButton(title: store.t("Continue"), id: "bond.continue", enabled: GymBond.normalize(bondDraft).count == 6 && !bondBusy, loading: bondBusy, action: redeemBond)
-        JourneyTextButton(title: store.t("I don’t have a code"), id: "bond.skip") {
+        // Submit sits in the field's row; Skip is the page's button, as Cal AI's (8 Nov 2026).
+        JourneyButton(title: store.t("Skip"), id: "bond.skip", enabled: !bondBusy) {
           Analytics.track("bond_skipped")
           dismissKeyboard()
           move(.trial1)
         }
+        Color.clear.frame(height: 44)
       case .commit:
         FingerprintHold(title: store.t("Hold to sign"), holdingTitle: store.t("Keep holding…"), doneTitle: store.t("Signed"), committed: committed,
                         onProgress: { p in
@@ -937,7 +937,7 @@ struct OnboardingView: View {
   }
   private func back() {
     // The wall's first page has no way back (its button is hidden; this covers a swipe).
-    guard step != wall.first, !paid, step != .bondCode else { return }
+    guard step != wall.first, !paid else { return }
     if step == .name { dismissKeyboard(); move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }
