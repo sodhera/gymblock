@@ -56,14 +56,21 @@ struct AccountSection: View {
   @State private var confirmDelete = false
   @State private var signingIn = false
   @State private var failed = false
-  private var cloud: Bool { account.user != nil }
+  /// A real account: Apple or Google linked. A silent account (8 Nov 2026) counts as none here.
+  private var cloud: Bool { account.user != nil && !account.isAnonymous }
   var body: some View {
     SettingsLabel(store.t("Account"))
     if !cloud && !AppConfig.offline {
-      Button { signingIn = true } label: { SettingRow(title: store.t("Sign in"), chevron: true) }
+      // On a silent account: link Apple or Google, so the workouts come back on any iPhone.
+      Button { signingIn = true } label: { SettingRow(title: store.t(account.isAnonymous ? "Save your progress" : "Sign in"), chevron: true) }
         .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.signin")
         .sheet(isPresented: $signingIn) { SignInSheet() }
     }
+    if account.isAnonymous {
+      SettingsNote(store.t("Your workouts are on this iPhone and a silent account. Save your progress to get them back on another iPhone."))
+    }
+    // A silent account has nothing to log out to: Delete account is its only exit.
+    if !account.isAnonymous {
     Button { confirmLogOut = true } label: {
       SettingRow(title: store.t(cloud || AppConfig.offline ? "Log out" : "Clear this iPhone"))
     }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.logout")
@@ -74,7 +81,8 @@ struct AccountSection: View {
         Text(store.t(cloud ? "Your workouts stay in your account. This iPhone is cleared." : "Your workouts and splits stay on this iPhone."))
       }
       .tint(GymColor.ink)
-    if cloud || AppConfig.offline {
+    }
+    if account.user != nil || AppConfig.offline {
       Button(role: .destructive) { confirmDelete = true } label: {
         Text(store.t("Delete account")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
           .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
@@ -84,7 +92,7 @@ struct AccountSection: View {
             .accessibilityIdentifier("settings.delete.confirm")
           Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
         } message: {
-          Text(store.t(cloud ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone."
+          Text(store.t(account.user != nil ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone."
                        : "This permanently deletes your workouts, splits, answers and settings. It can’t be undone."))
         }
         .alert(store.t("Could not delete the account"), isPresented: $failed) {
@@ -138,9 +146,11 @@ struct SignInSheet: View {
           AccountButtons().padding(.bottom, 8)
         }.padding(24)
       }
-      .navigationTitle(store.t("Sign in")).navigationBarTitleDisplayMode(.inline)
+      .navigationTitle(store.t(account.isAnonymous ? "Save your progress" : "Sign in")).navigationBarTitleDisplayMode(.inline)
       .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } } }
-      .onChange(of: account.userID) { _, id in if id != nil { dismiss() } }
+      // Linked (the id stays, the identity arrives) or signed in: done.
+      .onChange(of: account.userID) { _, id in if id != nil, !account.isAnonymous { dismiss() } }
+      .onChange(of: account.isAnonymous) { _, anonymous in if !anonymous, account.user != nil { dismiss() } }
     }.track(screen: "settings.signin")
   }
 }

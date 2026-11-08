@@ -44,7 +44,7 @@ enum OnboardingStep: String, CaseIterable {
     }
   }
   /// The account step or later: the answers are worth keeping in the account from here on.
-  var reachedAccount: Bool { [.account, .bondCode, .trial1, .trial2, .subscription, .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
+  var reachedAccount: Bool { [.bondCode, .trial1, .trial2, .subscription, .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
   var animated: Bool { [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .youreIn].contains(self) }
   /// Pages that answer on rows in the middle of the screen.
@@ -85,7 +85,10 @@ enum OnboardingRoute {
     let permissions: [OnboardingStep] = (restAlerts ? [] : [.notifications]) + (screenTime ? [] : [.screenTime]) + (appsChosen ? [] : [.chooseApps])
     // The GymBond code page (8 Nov 2026) right after the account: a friend's code is joined with the
     // account that now exists, and Pro from it skips the wall.
-    return steps + alerts + [.commit, .account, .bondCode, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
+    // No account page before the wall (8 Nov 2026, at the user's request, as Cal AI's flow): a silent
+    // account is made at the commit, and "Save your progress" (Apple or Google, or Not now) is the
+    // first setup page after the price.
+    return steps + alerts + [.commit, .bondCode, .trial1, .trial2, .subscription, .youreIn, .account] + permissions + [.splits, .firstWorkout]
   }
 }
 
@@ -343,13 +346,13 @@ struct OnboardingView: View {
     }
   }
   /// The pages after the price: no way back to it, and the setup's own progress line.
-  private var paid: Bool { [.youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(step) }
+  private var paid: Bool { [.youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(step) }
   /// The setup pages after You're in, as the route stood when they left it (a page iOS answers
   /// drops out of the route, which would make the line jump back).
   /// The page on screen always keeps its place, even when iOS has already answered it.
   private var setup: [OnboardingStep] {
     let base = setupSteps.isEmpty ? Array(route.drop { $0 != .youreIn }.dropFirst()) : setupSteps
-    return [OnboardingStep.notifications, .screenTime, .chooseApps, .splits, .firstWorkout].filter { base.contains($0) || $0 == step }
+    return [OnboardingStep.account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].filter { base.contains($0) || $0 == step }
   }
   private var setupProgress: Double? {
     guard paid, let i = setup.firstIndex(of: step) else { return nil }
@@ -576,12 +579,11 @@ struct OnboardingView: View {
     case .chooseApps: PickerPreview()
     case .commit: CommitPledgeStage(time: time, baseline: baseline, name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), committed: committed)
     case .account:
-      // Cal AI's "Save your progress": the buttons in the middle of the page, nothing else.
+      // "Save your progress", after the price (8 Nov 2026): Apple or Google link onto the silent
+      // account; the buttons in the middle of the page, Not now below.
       VStack(spacing: 0) {
         Spacer(minLength: 0)
-        AccountButtons(intent: .signUp, skip: { move(.bondCode) }) { found in
-          if found != .profile(onboarded: true) { move(.bondCode) }
-        }
+        AccountButtons(intent: .link, skip: { moveOn(from: .account) }) { _ in moveOn(from: .account) }
         Spacer(minLength: 0)
       }
     // The first trial page shows the thing itself: the blocking, played on the phone as on the shield page (1 Nov 2026, at the user's request).
@@ -631,9 +633,12 @@ struct OnboardingView: View {
         Color.clear.frame(height: 50)
         Color.clear.frame(height: 44)
       case .account:
-        // The buttons are on the stage; the footprint stays, so the page's bottom matches the others.
+        // The buttons are on the stage; Not now keeps the silent account (Settings offers the link again).
         Color.clear.frame(height: 50)
-        Color.clear.frame(height: 44)
+        JourneyTextButton(title: store.t("Not now"), id: "account.notNow") {
+          Analytics.track("onboarding_account", ["choice": "notNow"])
+          moveOn(from: .account)
+        }
       case .bondCode:
         JourneyButton(title: store.t("Continue"), id: "bond.continue", enabled: GymBond.normalize(bondDraft).count == 6 && !bondBusy, loading: bondBusy, action: redeemBond)
         JourneyTextButton(title: store.t("I don’t have a code"), id: "bond.skip") {
@@ -755,9 +760,13 @@ struct OnboardingView: View {
     store.updateProfile { $0.onboardingStoryStage = 1 }
     JourneyScorePlayer.shared.play(JourneyScores.committed, profile: store.profile)
     Task { @MainActor in
+      // The silent account is made while the signature is written (8 Nov 2026); offline, the phone
+      // carries on and RootView tries again at the next launch.
+      async let made = account.signInAnonymously()
       // Long enough to see the signature written and read it (1 Nov 2026).
       try? await Task.sleep(for: .milliseconds(reduceMotion ? 200 : 1900))
-      if step == .commit { move(.account) }
+      _ = await made
+      if step == .commit { move(.bondCode) }
     }
   }
 
@@ -990,7 +999,7 @@ struct OnboardingView: View {
   /// The permission pages in order; from one, the next still in the route (one iOS has already
   /// answered drops out of it), else the splits.
   private func moveOn(from page: OnboardingStep) {
-    let order: [OnboardingStep] = [.notifications, .screenTime, .chooseApps, .splits]
+    let order: [OnboardingStep] = [.account, .notifications, .screenTime, .chooseApps, .splits]
     let later = order.drop { $0 != page }.dropFirst()
     move(later.first { route.contains($0) } ?? .splits)
   }
@@ -1069,7 +1078,7 @@ struct OnboardingView: View {
     let p = store.profile
     OnboardingAnalytics.completed([
       "splits": store.data.workouts.count, "splits_skipped": skipped, "blocking": p.focusEnabled, "rest_alerts": p.restAlerts,
-      "subscribed": subscription.hasAccess, "signed_in": account.state == .signedIn, "pages": route.count + 1,
+      "subscribed": subscription.hasAccess, "signed_in": account.state == .signedIn && !account.isAnonymous, "anonymous": account.isAnonymous, "pages": route.count + 1,
     ])
     store.updateProfile {
       if $0.preferredSplitID == nil { $0.preferredSplitID = store.data.workouts.first?.id }

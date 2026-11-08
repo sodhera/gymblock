@@ -310,8 +310,8 @@ struct PaywallView: View {
         Link(destination: AppConfig.termsURL) { footerLink(store.t("Terms")) }
         Link(destination: AppConfig.privacyURL) { footerLink(store.t("Privacy")) }
         Button { Task { await subscription.restore() } } label: { footerLink(store.t("Restore")) }.accessibilityIdentifier("subscription.restore")
-        // The only way off a wall when signed in with the wrong account.
-        if account.user != nil {
+        // The only way off a wall when signed in with the wrong account (not for a silent account: there's no other).
+        if account.user != nil && !account.isAnonymous {
           Button { signOut() } label: { footerLink(store.t("Sign out")) }.accessibilityIdentifier("subscription.signOut")
         }
       }

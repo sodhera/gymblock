@@ -101,6 +101,7 @@ import SwiftUI
     .onChange(of: scenePhase) { _, phase in
       Analytics.scene(phase)
       if phase == .active {
+        ensureAccount()
         AppBlocking.shared.refresh()
         Task { await CloudSync.shared.push() }
         Task { await GymBond.shared.refresh() }
@@ -119,6 +120,12 @@ import SwiftUI
         if AppRoute(url: url) != nil { AppRouter.shared.openURL(url) } else { account.handle(url) }
       }
       .task { wire() }
+  }
+  /// A phone past the commit with no account (the silent sign-in failed offline, 8 Nov 2026): made now.
+  private func ensureAccount() {
+    guard !AppConfig.offline, account.state == .signedOut,
+          store.profile.onboarded || OnboardingStep.restored(store.profile).reachedAccount else { return }
+    Task { await account.signInAnonymously() }
   }
   /// The account drives everything that is per user: sync, purchases and analytics identity.
   private func wire() {

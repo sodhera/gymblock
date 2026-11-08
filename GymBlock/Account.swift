@@ -48,6 +48,10 @@ enum AuthFailure: LocalizedError, Equatable {
   private var auth: AuthClient { Backend.supabase.auth }
 
   var userID: UUID? { user?.id }
+  /// A silent account (8 Nov 2026): made at the commit page with no sheet, as Cal AI's flow does, so
+  /// the wall, the gift and sync work before anyone taps Apple or Google. "Save your progress" after
+  /// the price (or Settings) links a real identity onto it, keeping the same id.
+  var isAnonymous: Bool { user?.isAnonymous == true }
   var email: String? { user?.email }
   var displayName: String? {
     let meta = user?.userMetadata ?? [:]
@@ -99,6 +103,8 @@ enum AuthFailure: LocalizedError, Equatable {
   @discardableResult
   func signIn(_ provider: Provider, intent: Intent) async -> CloudSync.Found? {
     guard loading == nil else { return nil }
+    // On a silent account, Apple or Google is linked onto it rather than signed in afresh.
+    if isAnonymous, intent != .signIn { return await link(provider, intent: intent) }
     loading = provider; message = nil; notice = nil
     defer { loading = nil }
     Analytics.track("sign_in_started", ["provider": provider.rawValue, "intent": intent.rawValue])
@@ -122,6 +128,88 @@ enum AuthFailure: LocalizedError, Equatable {
       Analytics.track("sign_in", ["provider": provider.rawValue, "intent": intent.rawValue, "found": found.label])
       // No GymBlock profile yet: a new account (the standalone sign-in into one is signed out by its notice).
       if found == .none, intent != .signIn { GymTikTok.reportRegistration() }
+      return found
+    } catch {
+      fail(error, provider: provider.rawValue)
+      return nil
+    }
+  }
+
+  // MARK: Silent account
+
+  /// The account made at the commit page, with no sheet. False when it couldn't be made (offline):
+  /// the phone carries on and tries again at the next launch (`RootView`).
+  @discardableResult
+  func signInAnonymously() async -> Bool {
+    guard !AppConfig.offline, loading == nil else { return false }
+    if state == .signedIn { return true }
+    do {
+      let session = try await auth.signInAnonymously()
+      set(session.user)
+      _ = await CloudSync.shared.awaitPull()
+      Analytics.track("sign_in", ["provider": "anonymous", "intent": Intent.signUp.rawValue, "found": "none"])
+      GymTikTok.reportRegistration()
+      return true
+    } catch {
+      AppLog.error("Anonymous sign-in failed: \(error.localizedDescription)")
+      Analytics.error("sign_in_anonymous", error)
+      return false
+    }
+  }
+
+  /// Links Apple or Google onto the silent account: the id, the workouts, the subscription and the
+  /// bonds all stay. When that identity already belongs to another account, we sign in to that one
+  /// instead and this phone's workouts join it (the silent account is left behind).
+  private func link(_ provider: Provider, intent: Intent) async -> CloudSync.Found? {
+    loading = provider; message = nil; notice = nil
+    Analytics.track("link_started", ["provider": provider.rawValue, "intent": intent.rawValue])
+    do {
+      switch provider {
+      case .apple:
+        let nonce = Self.randomNonce()
+        let credential = try await AppleSignInSheet.present(hashedNonce: Self.sha256(nonce))
+        guard let data = credential.identityToken, let idToken = String(data: data, encoding: .utf8) else {
+          throw AuthFailure.message("Apple didn’t return a sign-in token. Please try again.")
+        }
+        var session = try await auth.linkIdentityWithIdToken(credentials: .init(provider: .apple, idToken: idToken, nonce: nonce))
+        if let given = credential.fullName?.givenName, !given.isEmpty,
+           let updated = try? await auth.update(user: UserAttributes(data: ["full_name": .string(given)])) {
+          session.user = updated
+        }
+        set(session.user)
+      case .google:
+        let url = try await auth.getLinkIdentityURL(provider: .google, redirectTo: AppConfig.authCallback).url
+        let callback = try await WebAuthSheet.present(url, scheme: AppConfig.authCallback.scheme ?? "gymblock")
+        let session = try await auth.session(from: callback)
+        set(session.user)
+      }
+      loading = nil
+      Analytics.track("linked", ["provider": provider.rawValue, "intent": intent.rawValue])
+      return .profile(onboarded: GymStore.live?.profile.onboarded ?? false)
+    } catch {
+      loading = nil
+      if let api = error as? AuthError, api.errorCode == .identityAlreadyExists {
+        Analytics.track("link_existing", ["provider": provider.rawValue])
+        return await signInSwitching(provider, intent: intent)
+      }
+      fail(error, provider: provider.rawValue)
+      return nil
+    }
+  }
+  /// The identity is another account's: sign in to it (the ordinary path, which merges this phone's copy).
+  private func signInSwitching(_ provider: Provider, intent: Intent) async -> CloudSync.Found? {
+    loading = provider
+    defer { loading = nil }
+    do {
+      let session = provider == .apple ? try await apple() : try await google()
+      set(session.user)
+      let found = await CloudSync.shared.awaitPull() ?? .failed
+      if found == .failed {
+        await signOut()
+        message = "Couldn’t reach your account. Check your connection and try again."
+        return nil
+      }
+      Analytics.track("sign_in", ["provider": provider.rawValue, "intent": intent.rawValue, "found": found.label, "switched": true])
       return found
     } catch {
       fail(error, provider: provider.rawValue)
@@ -223,6 +311,31 @@ enum AuthFailure: LocalizedError, Equatable {
   }
   private static func sha256(_ input: String) -> String {
     SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+  }
+}
+
+/// Presents a web sign-in (Google, when linking onto the silent account) and returns the callback URL.
+@MainActor private final class WebAuthSheet: NSObject, ASWebAuthenticationPresentationContextProviding {
+  private static var current: WebAuthSheet?
+  private var session: ASWebAuthenticationSession?
+  static func present(_ url: URL, scheme: String) async throws -> URL {
+    let sheet = WebAuthSheet()
+    current = sheet
+    defer { current = nil }
+    return try await withCheckedThrowingContinuation { continuation in
+      let session = ASWebAuthenticationSession(url: url, callbackURLScheme: scheme) { url, error in
+        if let url { continuation.resume(returning: url) } else { continuation.resume(throwing: error ?? AuthFailure.cancelled) }
+      }
+      session.presentationContextProvider = sheet
+      session.prefersEphemeralWebBrowserSession = false
+      sheet.session = session
+      session.start()
+    }
+  }
+  nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+    MainActor.assumeIsolated {
+      UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first ?? ASPresentationAnchor()
+    }
   }
 }
 

@@ -137,6 +137,13 @@ select date_trunc('week', logged_at) as week, percentile_cont(0.5) within group 
 select name, count(*) from gb_events where name like 'purchase_%' or name in ('entitled', 'restore') group by 1;
 ```
 
+## 5b. Anonymous sign-ins (8 November 2026): the silent account
+
+Authentication → Sign In / Providers → User Signups → **Allow anonymous sign-ins** → on. The commit
+page makes one for every new user (`Account.signInAnonymously`); "Save your progress" after the
+price links Apple or Google onto it. Optional: Authentication → Rate Limits → anonymous sign-ins
+(the default, 30 an hour per IP, is fine). **Not done yet.**
+
 ## 6. GymBond (8 November 2026): friends, the two-week gift, pushes
 
 Everything the feature needs is in `supabase/migrations/20261108000100_gymbond.sql` (the tables,

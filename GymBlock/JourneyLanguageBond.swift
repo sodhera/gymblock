@@ -43,5 +43,8 @@ extension Spanish {
     "them": "esa persona",
     "Couldn’t send the nudge. Try again later.": "No pudimos enviar el toque. Inténtalo más tarde.",
     "One nudge a day.": "Un toque al día.",
+    "Save your progress": "Guarda tu progreso",
+    "Your workouts are on this iPhone and a silent account. Save your progress to get them back on another iPhone.":
+      "Tus entrenamientos están en este iPhone y en una cuenta silenciosa. Guarda tu progreso para recuperarlos en otro iPhone.",
   ]
 }

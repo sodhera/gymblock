@@ -55,6 +55,13 @@
 
 Paths: Rarely, or a phone that fits inside the rest, reads page 9's fitting line and goes to 15; 18 reads "Keep every rest on time." with no bars and 19 is skipped. Answers that don't fit an earlier gym time keep V8's per-rest promise. The splits template page stays after the paywall, before the first workout, as today.
 
+## 8 Nov 2026: no account page before the wall
+
+At Sulav's request, after Cal AI: the commit makes a silent (anonymous Supabase) account, the GymBond
+code page ("Got a code from a friend?") follows, then the wall. "Save your progress" (Apple or
+Google, linked onto the same account; Not now) is the first setup page after the price, before the
+permissions. See docs/GYMBOND-PLAN.md and VALIDATION.md.
+
 ## What goes
 
 The welcome scene (lock screen, kettlebell, arm), the sucked-in phone, the stopwatch, the feed phone and wheel, the rack, the tally log, the two-bar lanes on the question pages, the year page and its dots, the plan page, the apps page in onboarding, and their scores. The haptics stay where a thing happens (a pick, Continue, the lock on page 7, the alert on 20, the loader's ticks, the hold); the sounds stay only on the lock, the alert and the commit.
