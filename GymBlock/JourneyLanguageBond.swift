@@ -44,7 +44,11 @@ extension Spanish {
     "Couldn’t send the nudge. Try again later.": "No pudimos enviar el toque. Inténtalo más tarde.",
     "One nudge a day.": "Un toque al día.",
     "Save your progress": "Guarda tu progreso",
-    "Your workouts are on this iPhone and a silent account. Save your progress to get them back on another iPhone.":
-      "Tus entrenamientos están en este iPhone y en una cuenta silenciosa. Guarda tu progreso para recuperarlos en otro iPhone.",
+    "Your workouts are on this iPhone and a silent account. Set up your account to get them back on another iPhone.":
+      "Tus entrenamientos están en este iPhone y en una cuenta silenciosa. Configura tu cuenta para recuperarlos en otro iPhone.",
+    "Account": "Cuenta", "Not set up": "Sin configurar",
+    "Your account isn’t set up. Your workouts, splits and subscription live on this iPhone only. Connect Apple or Google and they come back on any iPhone.":
+      "Tu cuenta no está configurada. Tus entrenamientos, rutinas y suscripción viven solo en este iPhone. Conecta Apple o Google y volverán en cualquier iPhone.",
+    "Nothing is lost: the same account, with a way back in.": "No se pierde nada: la misma cuenta, con una forma de volver a entrar.",
   ]
 }

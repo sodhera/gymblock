@@ -51,7 +51,13 @@ enum AuthFailure: LocalizedError, Equatable {
   /// A silent account (8 Nov 2026): made at the commit page with no sheet, as Cal AI's flow does, so
   /// the wall, the gift and sync work before anyone taps Apple or Google. "Save your progress" after
   /// the price (or Settings) links a real identity onto it, keeping the same id.
-  var isAnonymous: Bool { user?.isAnonymous == true }
+  var isAnonymous: Bool {
+    #if DEBUG
+      // Development only: Settings' "not set up" row and page on a phone with no account (`-anonymousPreview YES`).
+      if ProcessInfo.processInfo.arguments.contains("-anonymousPreview") { return true }
+    #endif
+    return user?.isAnonymous == true
+  }
   var email: String? { user?.email }
   var displayName: String? {
     let meta = user?.userMetadata ?? [:]

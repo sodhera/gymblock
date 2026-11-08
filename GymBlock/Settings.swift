@@ -30,6 +30,20 @@ struct PreferencesView: View {
         }.padding(.top, 22).padding(.bottom, 4).pageRow().listRowSeparator(.hidden)
 
         SettingsLabel(store.t("You"))
+        // A silent account (8 Nov 2026, at the user's request): the first row says it isn't set up, with
+        // a red mark, and opens the page that links Apple or Google.
+        if account.isAnonymous {
+          NavigationLink { AccountSetupView() } label: {
+            HStack(spacing: 10) {
+              Text(store.t("Account")).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
+              Spacer(minLength: 12)
+              Text(store.t("Not set up")).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+              Image(systemName: "exclamationmark.circle.fill").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.dangerText)
+                .accessibilityHidden(true)
+            }.frame(minHeight: 50).contentShape(Rectangle())
+          }.tapHaptic().pageRow().accessibilityIdentifier("settings.accountSetup")
+            .accessibilityLabel(store.t("Account") + ", " + store.t("Not set up"))
+        }
         Button { draftName = store.profile.name; renaming = true } label: {
           SettingRow(title: store.t("Name"), value: store.profile.name.isEmpty ? store.t("Optional") : store.profile.name, chevron: true)
         }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.name")

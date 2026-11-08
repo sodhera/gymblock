@@ -60,14 +60,14 @@ struct AccountSection: View {
   private var cloud: Bool { account.user != nil && !account.isAnonymous }
   var body: some View {
     SettingsLabel(store.t("Account"))
-    if !cloud && !AppConfig.offline {
-      // On a silent account: link Apple or Google, so the workouts come back on any iPhone.
-      Button { signingIn = true } label: { SettingRow(title: store.t(account.isAnonymous ? "Save your progress" : "Sign in"), chevron: true) }
+    if !cloud && !AppConfig.offline && !account.isAnonymous {
+      Button { signingIn = true } label: { SettingRow(title: store.t("Sign in"), chevron: true) }
         .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.signin")
         .sheet(isPresented: $signingIn) { SignInSheet() }
     }
     if account.isAnonymous {
-      SettingsNote(store.t("Your workouts are on this iPhone and a silent account. Save your progress to get them back on another iPhone."))
+      // The link itself is the "Account · Not set up" row at the top of Settings (`AccountSetupView`).
+      SettingsNote(store.t("Your workouts are on this iPhone and a silent account. Set up your account to get them back on another iPhone."))
     }
     // A silent account has nothing to log out to: Delete account is its only exit.
     if !account.isAnonymous {
@@ -126,6 +126,41 @@ struct AccountSection: View {
       try? await Task.sleep(for: .milliseconds(350))
       action()
     }
+  }
+}
+
+/// The page behind Settings' "Account · Not set up" row (8 Nov 2026): what the silent account means
+/// and the two ways to make it a real one. Linking keeps the same account; the page closes once done.
+struct AccountSetupView: View {
+  @EnvironmentObject private var store: GymStore
+  @EnvironmentObject private var account: Account
+  @Environment(\.dismiss) private var dismiss
+  var body: some View {
+    ZStack {
+      DotGrid()
+      VStack(alignment: .leading, spacing: 0) {
+        Text(store.t("Account")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          .accessibilityAddTraits(.isHeader)
+        HStack(alignment: .top, spacing: 12) {
+          Image(systemName: "exclamationmark.circle.fill").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.dangerText)
+            .padding(.top, 2).accessibilityHidden(true)
+          Text(store.t("Your account isn’t set up. Your workouts, splits and subscription live on this iPhone only. Connect Apple or Google and they come back on any iPhone."))
+            .font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
+        }.padding(.top, 12)
+        Spacer(minLength: 24)
+        if let message = account.message {
+          Text(message).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity).padding(.bottom, 8)
+        }
+        AccountButtons(intent: .link)
+        Text(store.t("Nothing is lost: the same account, with a way back in.")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
+          .frame(maxWidth: .infinity).multilineTextAlignment(.center).padding(.top, 12)
+      }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 24)
+    }
+    .navigationBarTitleDisplayMode(.inline)
+    .onChange(of: account.isAnonymous) { _, anonymous in if !anonymous, account.user != nil { dismiss() } }
+    .onChange(of: account.userID) { _, id in if id != nil, !account.isAnonymous { dismiss() } }
+    .track(screen: "settings.accountSetup")
   }
 }
 
