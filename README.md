@@ -42,6 +42,10 @@ Screens follow the same shape as SleepBlock: one switch in `RootView` picks the 
 
 The schema is `supabase/migrations/20261008000100_gymblock.sql`; the dashboard steps still to do (run the SQL, enable the Apple and Google providers, create the RevenueCat app and products, the App Store subscriptions) are in `supabase/README.md`. Until they are done the app says so on its pages rather than pretending.
 
+## GymBond (train with a friend)
+
+Since 8 Nov 2026 (`docs/GYMBOND-PLAN.md`): every account has a six-letter invite code (Profile → GymBond, Share sends it with the App Store link). A friend who joins with it, on onboarding's "Got a code from a friend?" page after the account or on the GymBond page, is bonded to you and both get two weeks of GymBlock Pro (a RevenueCat promotional entitlement granted by the server: theirs at once, yours when your current plan ends). Friends see each other's first name, this week's days (under Home's week line, and on Profile) and finished workouts, and get a push when the other finishes a workout, is about to lose a streak (Sunday afternoon, their time zone) or nudges them (one a day). Nothing else: no feed, no chat. The server side is `supabase/migrations/20261108000100_gymbond.sql` and the `gymbond-push` Edge Function; the dashboard steps (extensions, the RevenueCat secret key and the APNs key in the Vault and the function's secrets) are `supabase/README.md` §6 and are not done yet, so bonds, gifts and pushes are not live. The push token is kept only while the account has a bond.
+
 ## App Store and Apple Ads
 
 The listing (name, subtitle, keyword fields for the US and the nine other languages the US store searches, custom product pages, search demand) is [docs/listing.md](docs/listing.md); the US Apple Ads plan is [docs/strategy/apple-ads-us-campaign.md](docs/strategy/apple-ads-us-campaign.md). Search demand comes from Apple's own autocomplete (`scripts/aso_autocomplete.py`) and the apps ranking for each search (`scripts/aso_competition.py`).

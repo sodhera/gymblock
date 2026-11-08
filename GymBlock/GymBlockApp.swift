@@ -5,6 +5,8 @@ import SwiftUI
   @StateObject private var store: GymStore
   @StateObject private var account = Account()
   @StateObject private var subscription = GymSubscription()
+  /// Receives the push token for GymBond (the only remote notifications the app gets).
+  @UIApplicationDelegateAdaptor(PushDelegate.self) private var pushDelegate
   @Environment(\.scenePhase) private var scenePhase
   init() {
     // First: TikTok times its install and launch events off this (a no-op without keys or offline).
@@ -72,6 +74,8 @@ import SwiftUI
       }
       // Development only: open a sample Push workout in one state (`-workoutStage rest`).
       if let stage = UserDefaults.standard.string(forKey: "workoutStage") { store.debugWorkout(stage) }
+      // Development only: sample GymBond friends on a phone with no account (`-bondPreview friends`).
+      if let kind = UserDefaults.standard.string(forKey: "bondPreview") { GymBond.shared.loadPreview(kind) }
     #endif
     GymStore.live = store
     // The widgets, now: the development launches above saved before `live` was set.
@@ -99,6 +103,7 @@ import SwiftUI
       if phase == .active {
         AppBlocking.shared.refresh()
         Task { await CloudSync.shared.push() }
+        Task { await GymBond.shared.refresh() }
         // The snapshot's week and six weeks of days move with the date, with nothing saved.
         WidgetSync.sync(store)
       }
@@ -120,6 +125,7 @@ import SwiftUI
     account.onUserChange = { user in
       Analytics.identify(user?.id)
       CloudSync.shared.setUser(user?.id)
+      GymBond.shared.setUser(user?.id)
       Task { await subscription.identify(user?.id) }
     }
     subscription.onEntitlement = { CloudSync.shared.snapshot($0) }
@@ -220,6 +226,7 @@ struct RootView: View {
     .overlay {
       #if DEBUG
         if let app = StoreShots.shieldApp { ShieldPreview(app: app) }
+        if StoreShots.picker { AppPickerShot() }
       #endif
     }
     .task(id: screen) {

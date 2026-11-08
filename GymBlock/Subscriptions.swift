@@ -81,6 +81,14 @@ import SwiftUI
     }
   }
 
+  /// Asks RevenueCat again, after the server granted something (a GymBond gift).
+  func refresh() async {
+    guard configured, userID != nil else { return }
+    Purchases.shared.invalidateCustomerInfoCache()
+    do { apply(try await Purchases.shared.customerInfo()) }
+    catch { AppLog.error("RevenueCat refresh failed: \(error.localizedDescription)") }
+  }
+
   private func apply(_ info: CustomerInfo) {
     let entitlement = info.entitlements[AppConfig.entitlement]
     let active = entitlement?.isActive == true

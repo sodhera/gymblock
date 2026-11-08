@@ -20,6 +20,8 @@ struct ProfileTab: View {
             if let recent { summary(recent).padding(.top, 40) }
             NavigationLink { BlockedAppsView() } label: { BlockedAppsCard() }
               .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("profile.blocking").padding(.top, 26)
+            // GymBond (8 Nov 2026): a friend or two, or the invite, under the blocking card.
+            BondSection().padding(.top, 26)
             if sessions.isEmpty {
               empty.padding(.top, 40)
             } else {
@@ -187,18 +189,20 @@ private struct MonthDots: View {
     var calendar = Calendar.current
     calendar.firstWeekday = 2
     let today = calendar.startOfDay(for: Date())
-    let first = calendar.dateInterval(of: .month, for: today)?.start ?? today
-    let length = calendar.range(of: .day, in: .month, for: today)?.count ?? 30
+    // The month shown: this one, or an earlier one for store screenshots (`StoreShots.monthsBack`).
+    let month = calendar.date(byAdding: .month, value: -StoreShots.monthsBack, to: today) ?? today
+    let first = calendar.dateInterval(of: .month, for: month)?.start ?? month
+    let length = calendar.range(of: .day, in: .month, for: month)?.count ?? 30
     let lead = (calendar.component(.weekday, from: first) + 5) % 7
     let monday = calendar.date(byAdding: .day, value: -lead, to: first) ?? first
     let rows = (lead + length + 6) / 7
     let trained = Set(sessions.map { calendar.startOfDay(for: $0.started) })
     let colors = store.dayColors
-    let count = sessions.filter { calendar.isDate($0.started, equalTo: today, toGranularity: .month) }.count
+    let count = sessions.filter { calendar.isDate($0.started, equalTo: month, toGranularity: .month) }.count
     let tally = "\(count) " + store.t(count == 1 ? "workout" : "workouts")
     return VStack(alignment: .leading, spacing: 8) {
       HStack(alignment: .firstTextBaseline) {
-        PageLabel(text: today.formatted(.dateTime.month(.wide)))
+        PageLabel(text: month.formatted(.dateTime.month(.wide)))
         Text(tally).font(.app(.caption, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).fixedSize()
       }
       HStack(spacing: 0) {
@@ -228,7 +232,7 @@ private struct MonthDots: View {
       }
     }
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(today.formatted(.dateTime.month(.wide)) + ", " + tally)
+    .accessibilityLabel(month.formatted(.dateTime.month(.wide)) + ", " + tally)
     .accessibilityIdentifier("profile.calendar")
   }
 }

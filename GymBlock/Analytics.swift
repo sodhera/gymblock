@@ -141,27 +141,18 @@ import UserNotifications
     Task { await registerDevice() }
   }
 
-  private struct DeviceRow: Encodable {
-    let install_id: UUID
-    let user_id: UUID?
-    let model: String
-    let os_version: String
-    let app_version: String
-    let build: String
-    let locale: String
-    let time_zone: String
-    let notifications: String?
-    let reduce_motion: Bool
-    let last_seen_at: Date
-  }
+  /// Through `gb_register_device` (8 Nov 2026): the app can't read the table, and an upsert needs to
+  /// read the row it would update, so every launch since October had failed here ("permission denied").
   private static func registerDevice() async {
     let settings = await UNUserNotificationCenter.current().notificationSettings()
-    let status: String? = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional ? "authorized"
+    let status = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional ? "authorized"
       : settings.authorizationStatus == .denied ? "denied" : "not_determined"
-    let row = DeviceRow(install_id: installID, user_id: userID, model: deviceModel, os_version: osVersion, app_version: appVersion,
-                        build: build, locale: locale, time_zone: timeZone, notifications: status,
-                        reduce_motion: UIAccessibility.isReduceMotionEnabled, last_seen_at: Date())
-    do { try await Backend.supabase.from("gb_devices").upsert(row, onConflict: "install_id").execute() }
+    let params: [String: AnyJSON] = [
+      "p_install": .string(installID.uuidString.lowercased()), "p_model": .string(deviceModel), "p_os_version": .string(osVersion),
+      "p_app_version": .string(appVersion), "p_build": .string(build), "p_locale": .string(locale), "p_time_zone": .string(timeZone),
+      "p_notifications": .string(status), "p_reduce_motion": .bool(UIAccessibility.isReduceMotionEnabled),
+    ]
+    do { try await Backend.supabase.rpc("gb_register_device", params: params).execute() }
     catch { AppLog.error("Device register failed: \(error.localizedDescription)") }
   }
 

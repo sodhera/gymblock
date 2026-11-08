@@ -4,7 +4,7 @@ Everything the app needs from the dashboards, in the order to do it, with what i
 
 | Step | State (last updated 10 Oct 2026) |
 | --- | --- |
-| 1. Schema | **Done** (run in the SQL editor; 7 tables, 3 views, `gb_delete_account`). |
+| 1. Schema | **Done** (run in the SQL editor; 7 tables, 3 views, `gb_delete_account`). Since 8 Nov 2026 the CLI is linked and later migrations go with `supabase db push`: GymBond (`20261108000100`), `gb_notify` (`…0200`), and `gb_register_device` / `gb_set_push_token` (`…0300`, which fixed device rows never landing: the app had no read right on `gb_devices`, which an upsert needs). |
 | 2. Apple provider | **Done** (enabled, client id `com.sodhera.gymblock`). Apple Developer capability: pending until the App ID exists. |
 | 3. Google provider | **Done**: Google Cloud project `gymblock` (org sodhera.com, account authuser=2), consent screen "GymBlock" (External, admin@sodhera.com), web client "GymBlock Supabase" with the Supabase callback; ID and secret saved in Supabase → Google. |
 | 3b. Redirect URL | **Done** (`gymblock://auth/callback`). |
@@ -136,3 +136,49 @@ select date_trunc('week', logged_at) as week, percentile_cont(0.5) within group 
 -- Purchases
 select name, count(*) from gb_events where name like 'purchase_%' or name in ('entitled', 'restore') group by 1;
 ```
+
+## 6. GymBond (8 November 2026): friends, the two-week gift, pushes
+
+Everything the feature needs is in `supabase/migrations/20261108000100_gymbond.sql` (the tables,
+the functions the app calls, the gift through RevenueCat, the hourly cron, the push trigger) and
+`supabase/functions/gymbond-push/` (the APNs sender). The app works without any of this being set up:
+the section on Profile asks the server, gets nothing, and shows the invite card. Design and copy:
+`docs/GYMBOND-PLAN.md`. **State (8 Nov 2026): steps 1 to 6 done** (the migrations and the function from this Mac, with the CLI linked to the project and the three earlier migrations recorded as applied in its history; the APNs key, the RevenueCat key and the three Vault entries by the user in the dashboards); 7 (the two-account test) and 8 (the privacy policy) still to do.
+
+1. **Extensions.** Done by the migration's `create extension if not exists` lines (`http` in schema `extensions`, `pg_net`, `pg_cron`).
+2. **Migration.** Done 8 Nov 2026 (`supabase db push`, applied without error). Checked from here: the five
+   `gb_bond_*` tables exist and `gb_devices` has `apns_token`. Still worth a look in the dashboard:
+   Database → Functions shows the `gb_bond_*` functions, Integrations → Cron shows `gymbond-hourly`.
+3. **RevenueCat secret key** (the gift). RevenueCat → project GymBlock → API keys → a *secret* key
+   (v1, `sk_…`) with permission to grant promotional entitlements. Supabase → Integrations → Vault →
+   Add secret: name `revenuecat_secret_key`, the key. Until it's there, bonds form and `gb_bond_grants`
+   rows wait with `last_error = 'no revenuecat_secret_key in the Vault'`; the hourly run grants them
+   once it is.
+4. **APNs key** (the pushes). Apple Developer → Keys → new key with *Apple Push Notifications service*
+   → download the `.p8` (Key ID on the page; Team ID `6LYZDNCM4M`). Apple Developer → Identifiers →
+   `com.sodhera.gymblock` → Push Notifications on (Xcode's automatic signing adds it on the next device
+   build, since the entitlement is now in `GymBlock.entitlements`).
+5. **Edge Function.** Deployed 8 Nov 2026 (`gymbond-push`, version 1, ACTIVE; JWT verification off; it answers 403 to any call without the shared secret, checked). Secrets set 8 Nov 2026 from this Mac (APNs key GSFT458HU5, Sandbox & Production, team scoped; the shared secret generated with `openssl rand -hex 32` and kept in `~/Downloads/gymbond_push_key.txt` for the Vault step). With the CLI linked to the project:
+   ```bash
+   supabase secrets set APNS_TEAM_ID=6LYZDNCM4M APNS_KEY_ID=<key id> APNS_TOPIC=com.sodhera.gymblock GYMBOND_PUSH_KEY=<a long random string>
+   supabase secrets set APNS_PRIVATE_KEY="$(cat AuthKey_<key id>.p8)"
+   supabase functions deploy gymbond-push --no-verify-jwt
+   ```
+   (`--no-verify-jwt` because the database calls it with its own shared secret, not a user's token;
+   the function refuses anything without that secret.)
+6. **Vault, for the trigger.** Two more secrets: `gymbond_push_url` =
+   `https://tlcmpgxuyngsbjuhring.supabase.co/functions/v1/gymbond-push` and `gymbond_push_key` = the
+   same string as `GYMBOND_PUSH_KEY`. Until both exist, rows wait in `gb_bond_notifications`
+   (`sent_at` null); calling the function with no body sends them all.
+7. **Check.** `select * from gb_bond_summary;` (service role). Two sandbox accounts: share a code from
+   one, join from the other at onboarding's code page; the joiner's Pro should appear within a minute
+   (`gb_bond_grants.granted_at`), the inviter should get "… joined your GymBond" on a device that
+   allowed notifications and has a bond (its `gb_devices.apns_token` set). A Debug build registers
+   with APNs' sandbox (`apns_environment = 'development'`); the App Store build with production.
+8. **Privacy policy.** A line for the bond: a friend you bond with sees your first name, the days you
+   trained this week and when you finish a workout. And one for pushes: a push token is kept for a
+   signed-in iPhone while notifications are allowed.
+9. **A message to one account** (`supabase/migrations/20261108000200_notify.sql`, 8 Nov 2026; pushed the same day). From the SQL editor, service role: `select gb_notify('<user id>', 'Title',
+   'Body');` queues it; the trigger and the function send it to that account's iPhones that have a
+   token (signed in, notifications allowed, launched since the build that registers them). Check
+   `gb_bond_notifications` for `sent_at` and `error`.

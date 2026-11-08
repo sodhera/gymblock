@@ -27,6 +27,8 @@ enum AppConfig {
   static let supportURL = URL(string: "https://www.orecci.com/gymblock/support.html")!
   static let deletionURL = URL(string: "https://www.orecci.com/gymblock/user-data-deletion.html")!
   static let supportEmail = "admin@sodhera.com"
+  /// The App Store page (Apple ID 6821339641), sent with a GymBond invite.
+  static let appStoreURL = URL(string: "https://apps.apple.com/app/id6821339641")!
 
   private static func infoString(_ key: String) -> String {
     (Bundle.main.object(forInfoDictionaryKey: key) as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -41,7 +43,7 @@ enum AppConfig {
       // A personal-team copy for trying the app on a phone without the Sodhera team (bundle id
       // `….devtest`, no Screen Time, Sign in with Apple or widgets) always runs offline.
       if Bundle.main.bundleIdentifier?.hasSuffix(".devtest") == true { return true }
-      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") }
+      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") || $0.hasPrefix("-bondPreview") }
     #else
       return false
     #endif

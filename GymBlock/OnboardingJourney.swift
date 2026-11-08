@@ -8,7 +8,8 @@ import SwiftUI
 enum OnboardingStep: String, CaseIterable {
   case welcome, name, trainingDays, source, scrolling, cost, restNeed, scrollMinutes, perRest
   case exerciseCount, setCount, workoutTime, age, yearDots, yearPhone, life, tried, whyFails, shield, promise, words
-  case alerts, commit, account, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
+  // The GymBond code page (8 Nov 2026) sits after the account, before the wall.
+  case alerts, commit, account, bondCode, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
   // V8/V9 pages (20 Oct–1 Nov 2026) replaced by V10; saved progress on them resumes at the nearest page.
   case yearTime, blocking, ahead, gymTime
   // Sulav's note, removed on 5 Nov 2026 at the user's request; saved progress on it resumes at the rest alerts.
@@ -43,7 +44,7 @@ enum OnboardingStep: String, CaseIterable {
     }
   }
   /// The account step or later: the answers are worth keeping in the account from here on.
-  var reachedAccount: Bool { [.account, .trial1, .trial2, .subscription, .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
+  var reachedAccount: Bool { [.account, .bondCode, .trial1, .trial2, .subscription, .youreIn, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
   var animated: Bool { [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .youreIn].contains(self) }
   /// Pages that answer on rows in the middle of the screen.
@@ -82,7 +83,9 @@ enum OnboardingRoute {
     // notifications if still off, then Screen Time and the apps, each left out once iOS has the answer.
     let alerts: [OnboardingStep] = restAlerts ? [] : [.alerts]
     let permissions: [OnboardingStep] = (restAlerts ? [] : [.notifications]) + (screenTime ? [] : [.screenTime]) + (appsChosen ? [] : [.chooseApps])
-    return steps + alerts + [.commit, .account, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
+    // The GymBond code page (8 Nov 2026) right after the account: a friend's code is joined with the
+    // account that now exists, and Pro from it skips the wall.
+    return steps + alerts + [.commit, .account, .bondCode, .trial1, .trial2, .subscription, .youreIn] + permissions + [.splits, .firstWorkout]
   }
 }
 
@@ -105,6 +108,11 @@ struct OnboardingView: View {
   @State private var triedChoice: Set<TriedAnswer> = []
   @State private var nameDraft = ""
   @State private var trainingDays: Int?
+  /// The GymBond code page: the code as typed, and what the server said about it.
+  @State private var bondDraft = ""
+  @State private var bondStatus: String?
+  @State private var bondGood = false
+  @State private var bondBusy = false
   @State private var template: SplitTemplate?
   @ObservedObject private var blocking = AppBlocking.shared
   @State private var requestingScreenTime = false
@@ -316,7 +324,8 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
           // The wall's first page has no way back to the account; inside the wall, Back steps to its
           // first page (as Brainrot's does, 1 Nov 2026).
-          let noBack = step == wall.first || paid
+          // The code page comes after the account is made, so it has no way back either.
+          let noBack = step == wall.first || paid || step == .bondCode
           JourneyBackButton(label: store.t("Go back"), action: back).disabled(account.busy)
             .opacity(noBack ? 0 : 1).allowsHitTesting(!noBack)
           if !onWall && !paid { JourneyProgress(value: progress, label: store.t("Progress")).padding(.horizontal, 8) } else { Spacer() }
@@ -428,6 +437,7 @@ struct OnboardingView: View {
     case .chooseApps: return "Now choose what to lock."
     case .commit: return "Ready to get your time back?"
     case .account: return "Save your progress."
+    case .bondCode: return "Got a code from a friend?"
     case .trial1: return "Try GymBlock free for 7 days."
     case .trial2: return "We’ll remind you before your trial ends."
     case .splits: return "Let’s set up your training."
@@ -496,6 +506,7 @@ struct OnboardingView: View {
     case .chooseApps: return "Pick the apps that pull you in. They stay locked from your first set to your last."
     case .commit: return "Here’s what you’re signing."
     case .account: return account.message ?? "Every workout syncs to your account and comes back on any iPhone."
+    case .bondCode: return "They’re gifting you two weeks of GymBlock Pro."
     case .splits: return "Pick one. Change it anytime."
     default: return nil
     }
@@ -568,12 +579,13 @@ struct OnboardingView: View {
       // Cal AI's "Save your progress": the buttons in the middle of the page, nothing else.
       VStack(spacing: 0) {
         Spacer(minLength: 0)
-        AccountButtons(intent: .signUp, skip: { move(.trial1) }) { found in
-          if found != .profile(onboarded: true) { move(.trial1) }
+        AccountButtons(intent: .signUp, skip: { move(.bondCode) }) { found in
+          if found != .profile(onboarded: true) { move(.bondCode) }
         }
         Spacer(minLength: 0)
       }
     // The first trial page shows the thing itself: the blocking, played on the phone as on the shield page (1 Nov 2026, at the user's request).
+    case .bondCode: BondCodeStage(code: $bondDraft, status: bondStatus, good: bondGood, submit: redeemBond)
     case .trial1: ShieldStage(done: {}, logFirst: true, small: true)
     case .trial2: TrialBellStage()
     case .youreIn: YoureInStage(name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), done: sceneDone)
@@ -622,6 +634,13 @@ struct OnboardingView: View {
         // The buttons are on the stage; the footprint stays, so the page's bottom matches the others.
         Color.clear.frame(height: 50)
         Color.clear.frame(height: 44)
+      case .bondCode:
+        JourneyButton(title: store.t("Continue"), id: "bond.continue", enabled: GymBond.normalize(bondDraft).count == 6 && !bondBusy, loading: bondBusy, action: redeemBond)
+        JourneyTextButton(title: store.t("I don’t have a code"), id: "bond.skip") {
+          Analytics.track("bond_skipped")
+          dismissKeyboard()
+          move(.trial1)
+        }
       case .commit:
         FingerprintHold(title: store.t("Hold to sign"), holdingTitle: store.t("Keep holding…"), doneTitle: store.t("Signed"), committed: committed,
                         onProgress: { p in
@@ -701,6 +720,32 @@ struct OnboardingView: View {
   private var sceneDone: () -> Void {
     let page = step
     return { markReady(page) }
+  }
+
+  /// A friend's code: joined, their two weeks of Pro are asked for again from RevenueCat, and the
+  /// wall is skipped once Pro has landed; otherwise on to the trial pages (the gift lands with the
+  /// hourly run and the price page steps aside by itself).
+  private func redeemBond() {
+    guard !bondBusy, !moving, GymBond.normalize(bondDraft).count == 6 else { return }
+    bondBusy = true
+    dismissKeyboard()
+    Task { @MainActor in
+      switch await GymBond.shared.redeem(bondDraft, from: "onboarding", t: store.t) {
+      case .bonded(let name, _):
+        bondGood = true
+        bondStatus = String(format: store.t("You’re bonded with %@."), name)
+        JourneyHaptic.play(.success, store.profile)
+        await subscription.refresh()
+        bondBusy = false
+        try? await Task.sleep(for: .seconds(1.4))
+        guard step == .bondCode else { return }
+        move(subscription.hasAccess ? .youreIn : .trial1)
+      case .failed(let message):
+        bondGood = false
+        bondStatus = message
+        bondBusy = false
+      }
+    }
   }
 
   private func commit() {
@@ -823,6 +868,7 @@ struct OnboardingView: View {
     case .cost: costChoice = Set(baseline.costs ?? [])
     case .tried: triedChoice = Set(baseline.tried ?? [])
     case .commit: pledged = 0; committed = false; holdProgress = 0; flooding = false
+    case .bondCode: bondDraft = ""; bondStatus = nil; bondGood = false; bondBusy = false
     default: break
     }
   }
@@ -882,7 +928,7 @@ struct OnboardingView: View {
   }
   private func back() {
     // The wall's first page has no way back (its button is hidden; this covers a swipe).
-    guard step != wall.first, !paid else { return }
+    guard step != wall.first, !paid, step != .bondCode else { return }
     if step == .name { dismissKeyboard(); move(.welcome); return }
     if let index = route.firstIndex(of: step), index > 0 { move(route[index - 1]) }
   }

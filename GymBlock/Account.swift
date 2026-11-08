@@ -161,6 +161,8 @@ enum AuthFailure: LocalizedError, Equatable {
   func signOut() async {
     notice = nil
     guard !AppConfig.offline else { set(nil); return }
+    // While still signed in: this iPhone stops receiving GymBond's pushes.
+    await GymBond.shared.forgetToken()
     do {
       try await auth.signOut(scope: .local)
     } catch {
@@ -174,6 +176,7 @@ enum AuthFailure: LocalizedError, Equatable {
   /// Deletes the server account and everything in it, then signs this device out.
   func deleteAccount() async -> Bool {
     guard !AppConfig.offline else { set(nil); return true }
+    await GymBond.shared.forgetToken()
     do {
       try await Backend.supabase.rpc("gb_delete_account").execute()
       Analytics.track("account_deleted")

@@ -176,6 +176,8 @@ struct HomeView: View {
       // The week and its streak on top (12 Oct 2026, decluttered: no greeting or carousel), then one
       // exercise's progress, or the empty chart that says how it fills in.
       WeekLine(stats: store.homeStats()).padding(.top, 24).reveal(appeared, 0)
+      // GymBond (8 Nov 2026): each friend's week under yours, in the same columns, with their name.
+      BondWeekLines().padding(.top, 10).reveal(appeared, 0)
       // No apps card here (1 Nov 2026, at the user's request): onboarding asks for them after the
       // price, and the plan's line under Let's go offers them until they're chosen.
       Spacer(minLength: 28)
