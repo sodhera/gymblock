@@ -2,7 +2,7 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** October 14, 2026
+**Last Updated:** November 9, 2026
 
 Please read these Terms of Service ("**Terms**") carefully before using the GymBlock application for iPhone (the "**App**") operated by Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**"), Satdobato, Lalitpur, Bagmati Province 44700, Nepal.
 
@@ -31,9 +31,11 @@ GymBlock is a strength-training companion that provides:
 - **Like-for-like progress:** comparisons of the same exercise within the same split, with reps or load held constant, calculated from what you log.
 - **App blocking:** the apps, categories, and websites you choose are blocked through Apple's Screen Time while a workout runs. See Section 4.
 - **Lock Screen Live Activity** showing the current rest or set during a workout.
-- **Account sync** between your iPhone and your account, and the optional **GymBlock Pro** subscription (Section 6).
+- **GymBuddy:** connecting with friends by code to see each other's workout weeks and streaks, nudge each other, and get push notifications about each other's workouts. See Section 7.5.
+- **Streak card** that you can save to Photos or share to apps you choose.
+- **Account sync** between your iPhone and your account, and the **GymBlock Pro** subscription that using the App requires (Section 6).
 
-Some features may require an active subscription, and we may change features over time as described in Section 11.
+We may change features over time as described in Section 11.
 
 ---
 
@@ -70,8 +72,8 @@ We make no representations or warranties regarding the accuracy, completeness, o
 
 GymBlock can block the apps, app categories, and websites you choose while a workout runs, using Apple's Screen Time. You understand and agree that:
 
-- Blocking works only after you allow Screen Time access on your iPhone and choose what to block in Apple's picker, and only while a workout is running and not paused;
-- Blocking is provided by iOS, and GymBlock cannot guarantee it: iOS may not apply it, and you can lift it by pausing or finishing the workout, taking a one-minute pass when Strict mode is off, turning off Screen Time access, or deleting the App;
+- Blocking works only after you allow Screen Time access on your iPhone and choose what to block in Apple's picker, and only while a workout is running;
+- Blocking is provided by iOS, and GymBlock cannot guarantee it: iOS may not apply it, and you can lift it by finishing the workout, taking a one-minute pass when Strict mode is off, turning off Screen Time access, or deleting the App;
 - Blocking is a tool to help you keep a commitment you make to yourself. It is for your own device only and must not be used to restrict anyone else's device use; and
 - You remain responsible for being reachable in an emergency. Phone calls and emergency features are provided by iOS and are not blocked by GymBlock.
 
@@ -83,7 +85,7 @@ How blocking handles your data is described in Section 3 of the [Privacy Policy]
 
 ### 5.1 Creating an Account
 
-GymBlock requires an account, created with Sign in with Apple or Sign in with Google. We receive the account identifier, email address (which may be an Apple private relay address), and the name that Apple or Google shares. We do not create or store a password for you. Your account with Apple or Google is governed by their terms.
+GymBlock creates an account for you automatically during setup, without a name, email address, or password. You can save it with Sign in with Apple or Sign in with Google ("Save your progress"), which lets you sign in to it again on another iPhone; we then receive the email address (which may be an Apple private relay address) and the name that Apple or Google shares. Until you save it, the account can be reached only from the iPhone it was created on. We do not create or store a password for you. Your account with Apple or Google is governed by their terms.
 
 ### 5.2 Your Responsibilities
 
@@ -91,7 +93,7 @@ You are responsible for maintaining the security of your Apple or Google account
 
 ### 5.3 Logging Out and Deleting Your Account
 
-**Log out** ends your session on that iPhone and keeps your account and its data so you can sign in again. **Delete account** (Settings → Delete account) permanently deletes your account and all of its data from our systems and wipes the local copy from that iPhone. You can also request deletion by email from the account's email address. See [User Data Deletion](user-data-deletion.md). Deleting your account does **not** cancel an active subscription; cancel it with Apple as described in Section 6.
+**Log out** ends your session on that iPhone and clears the copy on it; your account and its data stay, so you can sign in again. An account you have not saved with Apple or Google cannot be signed in to again after you log out, so the App asks you to save it first. An account that was never saved, has no finished workout, and has not been opened for 30 days may be deleted automatically. **Delete account** (Settings → Delete account) permanently deletes your account and all of its data from our systems and wipes the local copy from that iPhone. You can also request deletion by email from the account's email address. See [User Data Deletion](user-data-deletion.md). Deleting your account does **not** cancel an active subscription; cancel it with Apple as described in Section 6.
 
 ### 5.4 Suspension or Termination by Us
 
@@ -103,11 +105,13 @@ We may suspend or terminate your account, with or without notice, if you breach 
 
 ### 6.1 GymBlock Pro
 
-GymBlock Pro is an optional auto-renewing subscription, currently offered at **USD 4.99 per month** or **USD 49.99 per year**. Prices in your local currency are set by Apple, and the plans and prices that apply to you are those shown on the subscription screen in the App at the time of purchase.
+Using GymBlock requires **GymBlock Pro**, an auto-renewing subscription offered **weekly, monthly, or yearly**. Prices are set in your local currency through Apple, and the plans and prices that apply to you are those shown on the subscription screen in the App at the time of purchase.
+
+**Free trial.** New subscribers may be offered a free trial on the yearly plan, as shown on the subscription screen. Each Apple Account can use the trial once. Unless you cancel at least 24 hours before the trial ends, the yearly subscription starts automatically at the end of the trial and your Apple Account is charged.
 
 ### 6.2 Billing Through Apple
 
-All purchases are made through the App Store and billed by Apple to your Apple Account. Payment is charged at confirmation of purchase. We never receive or store your payment card details. We use RevenueCat to validate purchases and keep your subscription status current across devices, as described in the Privacy Policy.
+All purchases are made through the App Store and billed by Apple to your Apple Account. Payment is charged at confirmation of purchase or, with a free trial, when the trial ends. We never receive or store your payment card details. We use RevenueCat to validate purchases and keep your subscription status current across devices, as described in the Privacy Policy.
 
 ### 6.3 Automatic Renewal
 
@@ -125,6 +129,10 @@ Purchases are processed by Apple and are subject to Apple's refund policies. We 
 
 If you reinstall the App or sign in on a new iPhone, use **Restore purchases** in the App to reactivate GymBlock Pro under the same Apple Account. We may change subscription prices for future periods; Apple will notify you in advance of any increase and, depending on your region, may ask you to agree to the new price before it applies. If you do not agree, your subscription ends at the close of the current period.
 
+### 6.7 Two Weeks of Pro Through GymBuddy
+
+When a friend enters your GymBuddy code (or you enter theirs), each of you gets two weeks of GymBlock Pro at no charge. If you already pay for Pro, your two weeks start when your current paid period ends. These two weeks are a promotional gift: they do not renew, have no cash value, cannot be transferred or exchanged, and do not change a paid subscription, which you still manage with Apple. You can have up to five GymBuddies at a time. We may limit, withhold, or withdraw the gift, or end the offer, where it is abused (for example, through accounts created to collect it).
+
 ---
 
 ## 7. Your Content and Data
@@ -135,7 +143,7 @@ You retain ownership of the information you enter into the App, including your p
 
 ### 7.2 License to Us
 
-To operate the App, you grant us a limited, non-exclusive, worldwide, royalty-free license to store, process, transmit, back up, and display your User Content solely to provide, maintain, secure, and improve the App, including syncing it to your account through our service providers. This license ends when your User Content is deleted from our systems, except for backups during the roll-off period and aggregated statistics that cannot identify you.
+To operate the App, you grant us a limited, non-exclusive, worldwide, royalty-free license to store, process, transmit, back up, and display your User Content solely to provide, maintain, secure, and improve the App, including syncing it to your account through our service providers and showing the parts described in Section 7.5 to the friends you connect with. This license ends when your User Content is deleted from our systems, except for backups during the roll-off period and aggregated statistics that cannot identify you.
 
 ### 7.3 Privacy
 
@@ -144,6 +152,10 @@ Our collection and use of your information, including first-party product analyt
 ### 7.4 Your Local Copy
 
 The App keeps a copy of your data on your iPhone and syncs it to your account. Sync depends on connectivity and may be delayed. You are responsible for keeping your iPhone backed up through iOS; we do not guarantee that any particular record will be recoverable if it was never synced.
+
+### 7.5 GymBuddy
+
+GymBuddy is optional and starts only when you or a friend enters the other's code. Your friends see your first name, the days you finished workouts in the last ten weeks, your last workout's name and time, and your streak, and may get push notifications when you finish a workout or nudge them, as described in Section 1.6 of the [Privacy Policy](privacy-policy.md). Connect only with people you are happy to share that with. You can remove a friend at any time. You agree not to use nudges or GymBuddy to harass anyone, and not to create accounts or share codes in bulk to collect the gift in Section 6.7.
 
 ---
 
@@ -175,12 +187,14 @@ The App, including its design, code, graphics, icons, illustrations, text, user 
 
 ## 10. Third-Party Services
 
-The App relies on third-party services, including Apple (Sign in with Apple, the App Store, and iOS features such as notifications and Live Activities), Google (Sign in with Google), Supabase (authentication, database, and hosting), and RevenueCat (purchase validation). Your use of those services may be subject to their own terms and privacy policies, including:
+The App relies on third-party services, including Apple (Sign in with Apple, the App Store, Apple Push Notification service, and iOS features such as notifications and Live Activities), Google (Sign in with Google), Supabase (authentication, database, hosting, and sending push notifications), RevenueCat (purchase validation and the GymBuddy gift), PostHog (product analytics), and TikTok (measuring our ads). When you share your streak card, the app you choose (for example Instagram or Messages) receives the image under its own terms. Your use of those services may be subject to their own terms and privacy policies, including:
 
 - Apple — [Apple Media Services Terms and Conditions](https://www.apple.com/legal/internet-services/itunes/) and [Licensed Application End User License Agreement](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/)
 - Google — [Google Terms of Service](https://policies.google.com/terms)
 - Supabase — [Terms of Service](https://supabase.com/terms) and [Privacy Policy](https://supabase.com/privacy)
 - RevenueCat — [Terms of Service](https://www.revenuecat.com/terms) and [Privacy Policy](https://www.revenuecat.com/privacy)
+- PostHog — [Privacy Policy](https://posthog.com/privacy)
+- TikTok — [Privacy Policy](https://www.tiktok.com/legal/privacy-policy)
 
 We are not responsible for the acts, omissions, or content of third parties, and their availability may affect the App's functionality.
 

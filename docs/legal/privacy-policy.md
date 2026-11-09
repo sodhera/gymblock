@@ -2,13 +2,13 @@
 
 **GymBlock**
 **Effective Date:** October 8, 2026
-**Last Updated:** November 2, 2026
+**Last Updated:** November 9, 2026
 
 Sodhera Intelligence Private Limited ("**Sodhera**," "**we**," "**us**," or "**our**") operates the GymBlock application for iPhone (the "**App**"). GymBlock helps you keep your phone away between sets, time your rests, log your sets, and see like-for-like strength progress. This Privacy Policy explains what information we collect when you use the App, why we collect it, where it is stored, who processes it on our behalf, and the choices you have. By using GymBlock, you agree to the practices described in this Privacy Policy.
 
 We are committed to transparency and to safeguarding your personal data. Please read this Privacy Policy carefully. If you do not agree with any part of it, please do not use the App.
 
-> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. We record how the App is used (screens, taps, workout events) in that same database and with PostHog, the product analytics service that processes those events for us. We advertise GymBlock on TikTok, so the App tells TikTok when it is installed and opened and when an account, a free trial, or a subscription starts, to measure those ads (Section 1.5); never your name, email address, workouts, or anything you type. There are no ads in the App, we never use the advertising identifier, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
+> **At a glance.** Everything you log is kept on your iPhone and synced to your account in our own database. If you add a friend as your GymBuddy, they see your first name and your workout days, and we send push notifications about each other's workouts (Sections 1.6 and 4). We record how the App is used (screens, taps, workout events) in that same database and with PostHog, the product analytics service that processes those events for us. We advertise GymBlock on TikTok, so the App tells TikTok when it is installed and opened and when an account, a free trial, or a subscription starts, to measure those ads (Section 1.5); never your name, email address, workouts, or anything you type. There are no ads in the App, we never use the advertising identifier, and your data is never sold. Blocking uses Apple's Screen Time: the apps you choose stay on your iPhone in a form Apple keeps unreadable to us, so we never learn which apps they are or how you use them.
 
 ---
 
@@ -16,13 +16,13 @@ We are committed to transparency and to safeguarding your personal data. Please 
 
 ### 1.1 Account Information
 
-GymBlock uses Sign in with Apple or Sign in with Google to create your account. Authentication is handled by Supabase Auth on our behalf. We never see or store a password.
+GymBlock creates an account for you automatically near the end of setup, without asking for a name, email address, or password, so your workouts are saved from the start. You can then save that account with Sign in with Apple or Sign in with Google ("Save your progress," during setup or in Settings), which lets you sign in to it again on another iPhone. If the Apple or Google identity you choose already belongs to a GymBlock account, you are signed in to that account and the workouts on your iPhone are added to it. Authentication is handled by Supabase Auth on our behalf. We never see or store a password.
 
 | Data Category | Specific Data | Purpose |
 |---|---|---|
-| **Account identifier** | A unique account ID assigned when you first sign in | Link your workouts, settings, and subscription to your account |
-| **Email address** | The email address Apple or Google shares with us. If you use Apple's "Hide My Email," this is a private relay address rather than your real email | Identify your account, let you sign in again on another iPhone, and let us verify requests you send us |
-| **Name** | The name Apple or Google shares at sign-in (Apple lets you edit or withhold it) | Pre-fill your profile name |
+| **Account identifier** | A unique account ID assigned when your account is created | Link your workouts, settings, and subscription to your account |
+| **Email address** | Only if you save your account with Apple or Google: the email address they share with us. If you use Apple's "Hide My Email," this is a private relay address rather than your real email | Identify your account, let you sign in again on another iPhone, and let us verify requests you send us |
+| **Name** | Only if you save your account with Apple or Google: the name they share (Apple lets you edit or withhold it) | Pre-fill your profile name |
 | **Session tokens** | Access and refresh tokens issued by Supabase Auth, stored on your iPhone | Keep you signed in and authorize sync requests |
 
 ### 1.2 Information You Provide Directly
@@ -32,7 +32,8 @@ GymBlock uses Sign in with Apple or Sign in with Google to create your account. 
 | **Profile** | Name, gender, height, weight, preferred units (metric or imperial), language | Personalize the App and show weights and heights in your units |
 | **Onboarding answers** | How you use your phone between sets, estimated minutes per rest, whether blocking is on, your preferred rest length, alert preferences, and the pledge you make at the end of onboarding | Set up your rest timer and alerts, and show you the estimate of time spent on your phone |
 | **Splits** | Named lists of exercises you create or edit (for example "Push," "Pull," "Legs") | Rotate your training days and compare progress within the same split |
-| **Workouts and sets** | For every set you log: the exercise, weight, reps, minutes (for timed exercises), start and end timestamps, set duration, rest and gap durations, and warm-up or unsuccessful flags; plus the workout's start, finish, and pause times | Keep your training log, time your rests, and calculate like-for-like progress |
+| **Workouts and sets** | For every set you log: the exercise, weight, reps, minutes (for timed exercises), start and end timestamps, set duration, rest and gap durations, and warm-up or unsuccessful flags; plus the workout's name, start, and finish times | Keep your training log, time your rests, and calculate like-for-like progress |
+| **GymBuddy** | Your GymBuddy code, any code you enter, the friends you are connected with and when, the nudges you send and receive, and how often you want a push when a friend finishes a workout (every workout, rarely, or none) | Connect you with friends and run the features in Section 1.6 |
 
 ### 1.3 Information Generated Automatically
 
@@ -40,7 +41,8 @@ GymBlock uses Sign in with Apple or Sign in with Google to create your account. 
 |---|---|---|
 | **Install ID** | A random identifier created when the App is first installed on an iPhone | Tell one installation from another, including before you sign in |
 | **Device record** | Device model, iOS version, App version, locale, time zone, and the install ID | Support, compatibility, and understanding which devices and versions are in use |
-| **Subscription status snapshot** | Whether GymBlock Pro is active, the plan (monthly or yearly), expiry and renewal state, and Apple transaction identifiers | Unlock Pro features, restore purchases, and resolve billing questions |
+| **Push token** | The address Apple's push service gives your iPhone for GymBlock, and whether it is for a test or App Store build. Kept only while you are signed in and have allowed notifications | Send the push notifications in Section 4 |
+| **Subscription status snapshot** | Whether GymBlock Pro is active, the plan (weekly, monthly, or yearly), expiry and renewal state, Apple transaction identifiers, and any two weeks of Pro given through GymBuddy | Unlock GymBlock Pro, restore purchases, and resolve billing questions |
 | **Product analytics events** | Described in Section 1.4 | Understand how the App is used and improve it |
 | **Ad measurement events** | Described in Section 1.5 | Measure and improve our ads on TikTok |
 | **Error reports** | The type of error, where in the App it happened, and the device and version information above | Find and fix bugs |
@@ -52,7 +54,8 @@ GymBlock records how the App is used. The events are written by the App to our o
 - **Screens:** every screen you view and how long you stay on it.
 - **Interactions:** every button tap, toggle, and choice you make, including the option you selected.
 - **Blocking:** whether Screen Time access was allowed, how many apps, categories, and websites you chose (counts only, never which ones), and how many one-minute passes were used.
-- **Workouts:** when a workout starts, pauses, resumes, and finishes; each set logged, edited, or deleted; each rest started, skipped, or completed, with durations.
+- **Workouts:** when a workout starts and finishes; each set logged, edited, or deleted; each rest started, skipped, or completed, with durations.
+- **GymBuddy and sharing:** codes shared or entered, friends added or removed, nudges sent, and where you chose to share your streak card (for example Instagram, Messages, or Save), never the friend's name or the message.
 - **Onboarding:** each onboarding step you reach, the answer you give, and where you stop if you do not finish.
 - **Purchases:** paywall views, purchase attempts, completions, failures, and restores.
 - **Account:** sign-in and sign-out.
@@ -75,14 +78,25 @@ Installs from TikTok ads are also reported through **SKAdNetwork**, Apple's attr
 
 TikTok uses these events to measure our ads and to show them to people more likely to find GymBlock useful. It handles them under its own [privacy policy](https://www.tiktok.com/legal/privacy-policy) and business terms.
 
-### 1.6 Information We Do NOT Collect
+### 1.6 GymBuddy (Training With a Friend)
+
+GymBuddy is optional. You become someone's GymBuddy only when one of you enters the other's code. Once connected:
+
+- **What your friend sees:** your first name (the first word of the name in your profile, or "Your friend" if you left it empty), the days you finished a workout in the last ten weeks, the name of your last workout and when you finished it, and your streak.
+- **What your friend's notifications say:** when you finish a workout, a push such as "Alex just finished Push. 52 min · 18 sets." (how often depends on their setting); when your streak is about to end, a reminder that they can nudge you; and when you nudge them, that you did.
+- **What your friend never sees:** your weights, reps, exercises, body measurements, onboarding answers, the apps you block, your email address, or your subscription.
+- **The two weeks of Pro:** when a friend enters your code (or you enter theirs), each of you gets two weeks of GymBlock Pro. We give it through RevenueCat under your account ID (your two weeks start when your current paid plan ends).
+- **Ending it:** Remove a friend in the App at any time, and they stop seeing your weeks; the two weeks of Pro stay. Deleting your account removes all of your GymBuddy connections.
+
+### 1.7 Information We Do NOT Collect
 
 We want to be explicit about what GymBlock **does not** collect or access:
 
 - ❌ **Passwords** — sign-in goes through Apple or Google; we never receive or store a password
 - ❌ **Information about other apps** — GymBlock never learns which apps or websites you choose to block, which apps are installed, which apps you open, or how long you use them (see Section 3)
 - ❌ **Apple Health / HealthKit data** — the App does not read from or write to Apple Health
-- ❌ **Camera or photos** — the App does not access your camera or photo library
+- ❌ **Camera or photos** — the App does not use your camera or read your photo library. If you tap Save on your streak card, iOS asks whether GymBlock may add photos, and only that image is added; GymBlock cannot see your other photos
+- ❌ **Social media accounts** — sharing your streak card hands the image to the app you choose (for example Instagram Stories or Messages) only when you tap it; GymBlock does not connect to your social media accounts or receive anything back
 - ❌ **Microphone** — the App does not record audio
 - ❌ **Location** — the App never requests or uses your location
 - ❌ **Contacts** — the App does not access your address book
@@ -100,10 +114,11 @@ We use the information we collect for the following purposes:
 1. **Providing the App:** storing your splits, workouts, and sets; keeping a copy on your iPhone and in your account; and restoring your data when you sign in on another iPhone.
 2. **Timing rests and alerts:** your rest length and alert preferences drive the rest timer, local notifications, and the Lock Screen Live Activity. These run on your iPhone.
 3. **Showing progress:** like-for-like progress is calculated from the sets you log, comparing the same exercise within the same split with reps or load held constant. The "time on your phone" figure is calculated from your onboarding answers. These are calculations from what you entered, not measurements of you.
-4. **Subscriptions:** confirming whether GymBlock Pro is active and restoring purchases.
-5. **Understanding and improving the App:** the product analytics described in Section 1.4.
-6. **Measuring our ads:** the TikTok events described in Section 1.5.
-7. **Support, security, and legal obligations:** answering your questions, verifying requests, protecting accounts and systems, complying with applicable law, and enforcing our [Terms of Service](terms-of-service.md).
+4. **Subscriptions:** confirming whether GymBlock Pro is active, restoring purchases, and giving the two weeks of Pro that come with GymBuddy.
+5. **GymBuddy and push notifications:** showing your friends' weeks and sending the push notifications in Section 4.
+6. **Understanding and improving the App:** the product analytics described in Section 1.4.
+7. **Measuring our ads:** the TikTok events described in Section 1.5.
+8. **Support, security, and legal obligations:** answering your questions, verifying requests, protecting accounts and systems, complying with applicable law, and enforcing our [Terms of Service](terms-of-service.md).
 
 We do **not** show ads in the App, sell your data, or rent it. Apart from the TikTok events in Section 1.5, which measure our own ads, we do not share it with third parties for advertising or marketing. We do not make decisions about you that have legal or similarly significant effects.
 
@@ -116,7 +131,7 @@ GymBlock blocks the apps you choose while a workout runs, using Apple's Screen T
 - **Permission.** GymBlock asks for Screen Time access for your own iPhone. iOS shows its own prompt, and you approve it with Face ID, Touch ID, or your passcode. You can turn it off at any time in iOS Settings → Screen Time, and deleting GymBlock removes it.
 - **Choosing apps.** You choose apps, app categories, and websites in Apple's own picker. Apple gives GymBlock only opaque tokens for your choice. GymBlock cannot turn those tokens into app names, icons, or websites, and never learns what you picked.
 - **Where the choice is kept.** The tokens are stored only on your iPhone, in GymBlock and its Screen Time extensions. They are never synced to your account, sent to us, or included in analytics. Deleting your account in the App clears them.
-- **When apps are blocked.** From Start workout to Finish, iOS shows a GymBlock screen over the apps you chose. Pausing a workout lifts the block, and resuming puts it back. iOS keeps the block if GymBlock is closed, and removes it if GymBlock is deleted.
+- **When apps are blocked.** From Start workout to Finish, iOS shows a GymBlock screen over the apps you chose. iOS keeps the block if GymBlock is closed, and removes it if GymBlock is deleted.
 - **The one-minute pass.** With Strict mode off, the block screen offers one minute per exercise. During that minute, iOS tells GymBlock's extension when a minute's use of the blocked apps has been reached so the block can return; iOS does not tell GymBlock which app was used or what you did in it.
 - **What we record.** Only the counts listed in Section 1.4: whether access was allowed, how many apps, categories, and websites were chosen, and how many passes were used.
 
@@ -126,7 +141,9 @@ GymBlock does **not** read which apps are installed on your iPhone, which apps y
 
 ## 4. Notifications and Live Activities
 
-- **Local notifications:** GymBlock can notify you when a rest ends and remind you if a workout has been left running. These are scheduled by the App on your iPhone; we run no push notification server, and notification content never leaves your device. Turn them off in iOS Settings → Notifications → GymBlock.
+- **Local notifications:** GymBlock can notify you when a rest ends and remind you if a workout has been left running. These are scheduled by the App on your iPhone, and their content never leaves your device.
+- **Push notifications:** if you allow notifications and are signed in, the App registers a push token with our database. Our server (a Supabase function) then sends pushes through **Apple Push Notification service**: when a friend joins with your code, nudges you, or finishes a workout (every workout, rarely, or none: choose in Settings → Buddy workouts or on the GymBuddy page), when a friend's streak is about to end, and occasionally a message from us about GymBlock, such as a new feature. The text of each push is stored in our database with the time it was sent. The token is removed when you log out or delete your account.
+- **Turning them off:** iOS Settings → Notifications → GymBlock turns off all of them.
 - **Live Activity:** during a workout, GymBlock can show the current rest or set on your Lock Screen and in the Dynamic Island, rendered by iOS from data already on your iPhone.
 
 ---
@@ -149,12 +166,13 @@ We share your data only with the service providers below, each acting on our ins
 
 | Provider | Role | What they receive | Their policy |
 |---|---|---|---|
-| **Supabase** | Processor. Authentication, database, and hosting | Everything in Sections 1 and 5: account, profile, settings, splits, workouts, sets, device records, subscription snapshot, and analytics events | [supabase.com/privacy](https://supabase.com/privacy) |
-| **RevenueCat** | Processor. Validates App Store purchases and reports whether GymBlock Pro is active | An app user ID (your account ID, not your name or email), App Store receipts and transaction identifiers, product identifiers, and entitlement status | [revenuecat.com/privacy](https://www.revenuecat.com/privacy) |
+| **Supabase** | Processor. Authentication, database, hosting, and sending push notifications | Everything in Sections 1 and 5: account, profile, settings, splits, workouts, sets, GymBuddy connections, device records and push tokens, push messages, subscription snapshot, and analytics events | [supabase.com/privacy](https://supabase.com/privacy) |
+| **RevenueCat** | Processor. Validates App Store purchases, reports whether GymBlock Pro is active, and records the two weeks of Pro from GymBuddy | An app user ID (your account ID, not your name or email), App Store receipts and transaction identifiers, product identifiers, entitlement status, and any GymBuddy grant | [revenuecat.com/privacy](https://www.revenuecat.com/privacy) |
 | **PostHog** | Processor. Product analytics | The analytics events in Section 1.4, with the install ID, a session ID, your account ID when you are signed in, device model, iOS and App version, locale, time zone, screen size, and your IP address when an event arrives (not used to find your location). Never your name, email address, or anything you type | [posthog.com/privacy](https://posthog.com/privacy) |
 | **TikTok** | Measures our ads on TikTok, and uses the events under its own terms | The events in Section 1.5, with the identifier for vendor, IP address, device model, iOS and App version, language and region, and user agent; the price and currency of a paid subscription. Never your name, email address, account ID, workouts, or anything you type | [tiktok.com/legal/privacy-policy](https://www.tiktok.com/legal/privacy-policy) |
-| **Apple** | Independent controller. Sign in with Apple and App Store billing | Your Apple Account and purchase records; Apple shares your name and email (or a relay address) with us at sign-in | [apple.com/legal/privacy](https://www.apple.com/legal/privacy/) |
-| **Google** | Independent controller. Sign in with Google, only if you choose it | Google shares your name and email with us at sign-in | [policies.google.com/privacy](https://policies.google.com/privacy) |
+| **Apple** | Independent controller. Sign in with Apple, App Store billing, and Apple Push Notification service | Your Apple Account and purchase records; Apple shares your name and email (or a relay address) with us if you save your account with Apple; the push token and the text of each push notification sent to you | [apple.com/legal/privacy](https://www.apple.com/legal/privacy/) |
+| **Google** | Independent controller. Sign in with Google, only if you choose it | Google shares your name and email with us when you save your account with Google | [policies.google.com/privacy](https://policies.google.com/privacy) |
+| **Your GymBuddies** | Other GymBlock users you connect with (Section 1.6) | Your first name, the days you finished workouts in the last ten weeks, your last workout's name and time, your streak, and the pushes in Section 4 | — |
 
 ### 6.1 No Other Third Parties
 
@@ -173,7 +191,7 @@ We may disclose personal data if required by law, court order, or a lawful reque
 
 ## 7. Subscriptions and Payment Data
 
-GymBlock Pro is an optional auto-renewing subscription, currently USD 4.99 per month or USD 49.99 per year (local prices are set by Apple and shown in the App before you buy). All payments are processed by **Apple** through the App Store under your Apple Account. We never receive or store your payment card details. Apple and RevenueCat provide us with transaction identifiers, the product purchased, and the subscription's status and expiry, which we keep as your subscription status snapshot. Cancellation and refunds are handled by Apple: open iOS Settings → Apple Account → Subscriptions, or see our [Terms of Service](terms-of-service.md).
+Using GymBlock requires GymBlock Pro, an auto-renewing subscription offered weekly, monthly, or yearly; new subscribers may get a free trial on the yearly plan. Prices are set in your local currency through Apple and shown in the App before you buy. All payments are processed by **Apple** through the App Store under your Apple Account. We never receive or store your payment card details. Apple and RevenueCat provide us with transaction identifiers, the product purchased, and the subscription's status and expiry, which we keep as your subscription status snapshot. Cancellation and refunds are handled by Apple: open iOS Settings → Apple Account → Subscriptions, or see our [Terms of Service](terms-of-service.md).
 
 ---
 
@@ -195,9 +213,10 @@ While we take reasonable measures to protect your data, no method of electronic 
 
 ## 9. Data Retention
 
-- **While your account exists:** we keep your account information, profile, settings, splits, workouts, sets, device records, subscription snapshot, and analytics events so the App can work and restore your data.
-- **Log out:** logging out ends your session on that iPhone but keeps your account and its data, and keeps the local copy on the device, so you can sign in again.
-- **Delete account:** Settings → Delete account in the App deletes your account and all of its data from our database **immediately** and wipes the local copy from that iPhone. You can also email **admin@sodhera.com** from the account's email address. See [User Data Deletion](user-data-deletion.md).
+- **While your account exists:** we keep your account information, profile, settings, splits, workouts, sets, GymBuddy connections, push messages, device records, subscription snapshot, and analytics events so the App can work and restore your data.
+- **Log out:** logging out ends your session on that iPhone, removes its push token, and clears the local copy from the device; your account and its data stay, and come back when you sign in again. An account you have not saved with Apple or Google cannot be signed in to again, so the App asks you to save it before you log out.
+- **Unused accounts:** an account that was never saved with Apple or Google, has no finished workout, and has not been opened for 30 days is deleted automatically, with all of its data.
+- **Delete account:** Settings → Delete account in the App deletes your account and all of its data from our database **immediately**, including your GymBuddy connections, and wipes the local copy from that iPhone. Analytics events and device records stay in our database without your account ID (they keep the random install ID). If you saved your account with Apple or Google, you can also email **admin@sodhera.com** from that email address. See [User Data Deletion](user-data-deletion.md).
 - **Analytics in PostHog:** kept for as long as our PostHog plan retains them. Deleting your account in the App does not reach PostHog on its own; email **admin@sodhera.com** and we will delete the events linked to your account there within **30 days**.
 - **Ad measurement events at TikTok:** kept by TikTok under its own retention rules. They are not linked to your account, so deleting your account does not reach them; the identifier for vendor they carry changes once GymBlock and any other apps of ours are deleted from your iPhone.
 - **Backups:** encrypted database backups held by our hosting provider roll off within **30 days** after deletion.
@@ -213,7 +232,8 @@ While we take reasonable measures to protect your data, no method of electronic 
 - **Access and correction:** your profile, settings, splits, and workouts are visible and editable in the App.
 - **Deletion:** delete your account in Settings → Delete account, or email us.
 - **Export:** email **admin@sodhera.com** for a machine-readable (JSON) copy of your data within 30 days.
-- **Notifications:** manage or turn off notifications and Live Activities in iOS Settings.
+- **Notifications:** choose how often a friend's workout reaches you in Settings → Buddy workouts, and turn off all notifications and Live Activities in iOS Settings.
+- **GymBuddy:** remove a friend at any time on the GymBuddy page, and they stop seeing your weeks.
 - **Sign-in privacy:** Sign in with Apple lets you hide your email behind a private relay address.
 - **Analytics:** email us to object to, or request deletion of, the analytics events linked to you, in our database and in PostHog.
 - **Ad measurement:** the App never asks to track you, and TikTok never receives the advertising identifier. To object to the TikTok events in Section 1.5, email us; for data TikTok already holds, you can also contact TikTok through its privacy policy.
@@ -293,13 +313,13 @@ The following summary aligns with Apple's App Store privacy label categories:
 
 | Data Type | Purpose |
 |---|---|
-| Contact Info (name, email address) | App Functionality |
+| Contact Info (name, email address; only if you save your account with Apple or Google) | App Functionality |
 | Fitness (workouts, sets, exercises, height, weight) | App Functionality |
-| Identifiers (account ID, install ID, identifier for vendor) | App Functionality, Analytics, Developer's Advertising or Marketing |
+| Identifiers (account ID, install ID, identifier for vendor, push token) | App Functionality, Analytics, Developer's Advertising or Marketing |
 | Purchases (subscription status and transaction identifiers; trial and paid subscription events) | App Functionality, Analytics, Developer's Advertising or Marketing |
 | Usage Data (product interaction; install, open, and new account events) | Analytics, App Functionality, Developer's Advertising or Marketing |
 | Diagnostics (error reports) | App Functionality, Analytics |
-| Other Data (onboarding answers, splits, preferences) | App Functionality |
+| Other Data (onboarding answers, splits, preferences, GymBuddy connections and nudges) | App Functionality |
 
 ### Data Not Collected
 
