@@ -59,7 +59,7 @@ extension Spanish {
     "Train with a friend and see who keeps the longer streak.": "Entrena con un amigo y ve quién mantiene la racha más larga.",
     "Gift them two weeks of Pro.": "Regálale dos semanas de Pro.",
     "Focused workouts with": "Entrenamientos enfocados con", "Share": "Compartir",
-    "day streak": "días de racha", "Miss two days in a row and it starts over.": "Falla dos días seguidos y empieza de cero.", "Messages": "Mensajes", "Save": "Guardar", "Saved": "Guardado", "More": "Más", "Copy": "Copiar", "Copied": "Copiado",
+    "day streak": "días de racha", "Miss two days in a row and it starts over.": "Falla dos días seguidos y empieza de cero.", "Messages": "Mensajes", "Save": "Guardar", "Saved": "Guardado", "More": "Más", "Copy": "Copiar",
     "Referral code": "Código", "Submit": "Enviar", "Skip": "Saltar",
     "You’re bonded with %@.": "Ya estás en GymBuddy con %@.",
     "Two weeks of Pro are on.": "Tus dos semanas de Pro están activas.",
