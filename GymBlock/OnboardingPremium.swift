@@ -310,6 +310,11 @@ extension View {
   func tapHaptic() -> some View {
     simultaneousGesture(TapGesture().onEnded { JourneyHaptic.pressLight() })
   }
+  /// For a `NavigationLink` inside a `List`, where a simultaneous tap gesture swallows the push
+  /// (found 9 Nov 2026: every Settings link was dead): the tap is felt as the page arrives.
+  func pushHaptic() -> some View {
+    onAppear { JourneyHaptic.pressLight() }
+  }
 }
 
 /// The primary action: bright, prominent Liquid Glass. Disabled, it stays in place at low opacity

@@ -33,15 +33,15 @@ struct PreferencesView: View {
         // A silent account (8 Nov 2026, at the user's request): the first row says it isn't set up, with
         // a red mark, and opens the page that links Apple or Google.
         if account.isAnonymous {
-          NavigationLink { AccountSetupView() } label: {
+          NavigationLink { AccountSetupView().pushHaptic() } label: {
             HStack(spacing: 10) {
               Text(store.t("Account")).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
-              Spacer(minLength: 12)
-              Text(store.t("Not set up")).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
               Image(systemName: "exclamationmark.circle.fill").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.dangerText)
                 .accessibilityHidden(true)
+              Spacer(minLength: 12)
+              Text(store.t("Not set up")).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
             }.frame(minHeight: 50).contentShape(Rectangle())
-          }.tapHaptic().pageRow().accessibilityIdentifier("settings.accountSetup")
+          }.pageRow().accessibilityIdentifier("settings.accountSetup")
             .accessibilityLabel(store.t("Account") + ", " + store.t("Not set up"))
         }
         Button { draftName = store.profile.name; renaming = true } label: {
@@ -50,8 +50,8 @@ struct PreferencesView: View {
         if let email = account.email {
           SettingRow(title: store.t("Email"), value: email).pageRow()
         }
-        NavigationLink { BodySettingsView() } label: { SettingRow(title: store.t("Body")) }
-          .tapHaptic().pageRow().accessibilityIdentifier("settings.body")
+        NavigationLink { BodySettingsView().pushHaptic() } label: { SettingRow(title: store.t("Body")) }
+          .pageRow().accessibilityIdentifier("settings.body")
 
         SubscriptionSettingsSection()
 
@@ -66,8 +66,8 @@ struct PreferencesView: View {
         SettingsNote(store.t(store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
 
         SettingsLabel(store.t("Blocking"))
-        NavigationLink { BlockedAppsView() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
-          .tapHaptic().pageRow().accessibilityIdentifier("settings.blockedApps")
+        NavigationLink { BlockedAppsView().pushHaptic() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
+          .pageRow().accessibilityIdentifier("settings.blockedApps")
         SettingToggle(title: store.t("Strict mode"), id: "settings.strict",
                       isOn: Binding(get: { strict }, set: { on in strict = on; Analytics.tap("settings.strict", ["on": on]) }))
         SettingsNote(store.t(strict ? "No way past the block until you finish." : "The block screen offers 1 minute, once per exercise."))
@@ -100,10 +100,10 @@ struct PreferencesView: View {
                       isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } }))
 
         SettingsLabel(store.t("Your data"))
-        NavigationLink { TrainingAnswersForm() } label: { SettingRow(title: store.t("Training answers")) }
-          .tapHaptic().pageRow().accessibilityIdentifier("settings.baseline")
-        NavigationLink { DataSettingsView() } label: { SettingRow(title: store.t("Data")) }
-          .tapHaptic().pageRow().accessibilityIdentifier("settings.data")
+        NavigationLink { TrainingAnswersForm().pushHaptic() } label: { SettingRow(title: store.t("Training answers")) }
+          .pageRow().accessibilityIdentifier("settings.baseline")
+        NavigationLink { DataSettingsView().pushHaptic() } label: { SettingRow(title: store.t("Data")) }
+          .pageRow().accessibilityIdentifier("settings.data")
 
         LegalSection()
         AccountSection { dismiss() }
