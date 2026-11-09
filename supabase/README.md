@@ -142,7 +142,7 @@ select name, count(*) from gb_events where name like 'purchase_%' or name in ('e
 Authentication → Sign In / Providers → User Signups → **Allow anonymous sign-ins** → on. The commit
 page makes one for every new user (`Account.signInAnonymously`); "Save your progress" after the
 price links Apple or Google onto it. Optional: Authentication → Rate Limits → anonymous sign-ins
-(the default, 30 an hour per IP, is fine). **Done 9 Nov 2026** (anonymous sign-ins and manual linking on, saved; checked from a fresh simulator: a silent account made at the referral page, a random code answered "not found"). Stale silent accounts (no sign-in for 30 days, no finished workout) are deleted every Monday by `gb_delete_stale_anonymous` (`20261109000100_anonymous_cleanup.sql`, cron `gymblock-anonymous-cleanup`; push it with `supabase db push`).
+(the default, 30 an hour per IP, is fine). **Done 9 Nov 2026** (anonymous sign-ins and manual linking on, saved; checked from a fresh simulator: a silent account made at the referral page, a random code answered "not found"). Stale silent accounts (no sign-in for 30 days, no finished workout) are deleted every Monday by `gb_delete_stale_anonymous` (`20261109000100_anonymous_cleanup.sql`, cron `gymblock-anonymous-cleanup`; pushed 9 Nov 2026).
 
 ## 6. GymBond (8 November 2026): friends, the two-week gift, pushes
 

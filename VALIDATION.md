@@ -12,7 +12,7 @@ Seven new slides in `screenshots/store-emerald/` (1320×2868, 1206×2622, 1179×
 ## Silent accounts live, and their cleanup (9 November 2026)
 
 - The user turned on "Allow anonymous sign-ins" and "Allow manual linking" in Supabase. Before the save took, a fresh iPhone 17 Pro simulator (`--online -journeyStep bondCode`) logged "Anonymous sign-in failed: Anonymous sign-ins are disabled" and the referral page said it couldn't reach the account; after it, the same tap made the silent account, synced, and answered a random code with "That code wasn't found." (`bond_redeem`, `sign_in`, `sync_pulled`, `sync_pushed` in the log).
-- At the user's request, stale silent accounts are deleted weekly: `gb_delete_stale_anonymous` (anonymous, no sign-in for 30 days, no finished workout; everything they own goes, events and devices keep their rows without the id) on cron `gymblock-anonymous-cleanup`, Mondays 03:10 UTC. **Not pushed yet** (held for the user's go-ahead). **Not checked:** a run of the job (nothing is 30 days old yet).
+- At the user's request, stale silent accounts are deleted weekly: `gb_delete_stale_anonymous` (anonymous, no sign-in for 30 days, no finished workout; everything they own goes, events and devices keep their rows without the id) on cron `gymblock-anonymous-cleanup`, Mondays 03:10 UTC. Pushed at the user's go-ahead (`supabase db push`, applied without error; the first attempt reported "up to date" before the CLI had seen the new file, the second applied it). **Not checked:** a run of the job (nothing is 30 days old yet).
 
 ## Silent account, Save your progress after the price (8 November 2026)
 
