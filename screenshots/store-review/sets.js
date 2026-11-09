@@ -1,0 +1,41 @@
+// The sets the review page shows, oldest first. `slides` are paths relative to this folder.
+window.SETS = [
+  {
+    id: 'live',
+    label: 'Live now (1.0.4)',
+    name: 'GymBlock: Block Apps & Workout',
+    subtitle: 'Focus & Train Better',
+    rating: 'No ratings',
+    ratingsShort: '—',
+    note: 'What the App Store shows today (downloaded from Apple, 9 Nov 2026).',
+    slides: [1, 2, 3, 4, 5, 6, 7].map(i => `live/live-${i}.jpg`),
+    captions: ['Stop scrolling in the gym', 'Choose apps to lock', 'Track your workouts', 'TikTok can wait', 'Beat your record', 'Plan your progress', 'Keep your streak alive'],
+  },
+  {
+    id: 'white',
+    label: 'White set (8 Nov, not uploaded)',
+    name: 'GymBlock: Block Apps & Workout',
+    subtitle: 'Focus & Train Better',
+    rating: 'No ratings',
+    ratingsShort: '—',
+    note: 'Sulav’s white set of 8 Nov 2026 (screenshots/store-final-white), never uploaded.',
+    slides: ['1-stop-scrolling-in-the-gym', '2-choose-apps-to-lock', '3-tiktok-can-wait', '4-track-your-workouts', '5-plan-your-progress', '6-beat-your-record', '7-keep-your-streak-alive'].map(n => `../store-final-white/6.9/${n}.png`),
+    captions: ['Stop scrolling in the gym', 'Choose apps to lock', 'TikTok can wait', 'Track your workouts', 'Plan your progress', 'Beat your record', 'Keep your streak alive'],
+  },
+  {
+    id: 'emerald',
+    label: 'New set (9 Nov)',
+    name: 'GymBlock: Block Apps & Workout',
+    subtitle: 'Focus & Train Better',
+    rating: 'No ratings',
+    ratingsShort: '—',
+    note: 'The new set (screenshots/store-emerald, made by scripts/store-slides.py). Shown under today’s name and subtitle; nothing else on the page has changed.',
+    slides: ['1-no-scrolling-between-sets', '2-rest-on-your-lock-screen', '3-log-a-set-in-seconds', '4-feeds-off-music-on', '5-same-reps-more-weight', '6-watch-your-month-fill-up', '7-lock-in-for-push-day'].map(n => `../store-emerald/6.9/${n}.png`),
+    captions: ['No scrolling between sets', 'Rest on your Lock Screen', 'Log a set in seconds', 'Feeds off. Music on.', 'Same reps. More weight.', 'Watch your month fill up', 'Lock in for push day'],
+  },
+];
+// Other apps under ours in the search mock: what a 'gym block' search shows next to GymBlock (9 Nov 2026).
+window.NEIGHBOURS = [
+  { name: 'ScrollToll: Exam App Blocker', subtitle: 'Block apps until you work out', rating: '★★★★★ 882', icon: 'neighbours/scrolltoll-icon.jpg', slides: [1, 2, 3].map(i => `neighbours/scrolltoll-${i}.jpg`) },
+  { name: 'GYMTIME: App Blocker', subtitle: 'Gym first. Scroll later.', rating: '★★★★★ 9', icon: 'neighbours/gymtime-icon.jpg', slides: [1, 2, 3].map(i => `neighbours/gymtime-${i}.jpg`) },
+];

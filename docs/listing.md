@@ -91,6 +91,28 @@ Privacy Policy: https://www.orecci.com/gymblock/privacy-policy
 
 ## Screenshots
 
+### Screenshots, 9 Nov 2026 (the emerald set, not uploaded yet)
+
+People reach the page from TikTok, Instagram and YouTube (14 of the last 21 days' installers who answered: TikTok 5, Instagram 4, YouTube 3, Google 1, App Store 1), search the name, and decide on the search row, where three slides show about 118 pt wide. A review of the live set (dark green, yellow words) found that only its headlines could be read at that size, two-thirds of each slide was background, blur or bezel, the lock was shown only by Screen Time's tiny hourglasses, the shield people know from the carousels sat at slide 4, and the captions were labels any tracker uses. The 8 Nov white set has the same layout problems and a white stage that disappears on the white App Store.
+
+The new set, in `screenshots/store-emerald/` (6.9, 6.3 and 6.1 inch; strip `screenshots/store-emerald-overview.png`), made by `python3 scripts/store-slides.py` (drawing in `scripts/store_kit.py`):
+
+| # | Headline (boxed word) | Second line | Shows |
+|---|---|---|---|
+| 1 | No **scrolling** between sets | Your apps lock until you tap Finish. | The real iPhone Home Screen mid-workout (store-2026-11-02), lock badges over the hourglassed feeds, Spotify open; under it the shield ("You're mid-workout.") |
+| 2 | Rest on your **Lock Screen** | Nothing to unlock. Nothing to scroll. | The rest Live Activity on the Lock Screen (new capture, `store-2026-11-09/lock-rest.png`), lifted out larger |
+| 3 | Log a set in **seconds** | Last time's weight and reps, filled in. | The workout mid-rest, set 2 filled in |
+| 4 | Feeds off. **Music** on. | You choose the apps. We never see which. | Apple's picker, Spotify unticked; "Locks only during workouts", "Works offline in the gym" |
+| 5 | Same reps. **More** weight. | Every lift compared like for like. | Bench press before and after, same reps |
+| 6 | Watch your month **fill up** | Every gym day in its split's color. | October's calendar in split colors |
+| 7 | **Lock in** for push day | Home shows the split that's up next. | Home: Up next Push, Start workout |
+
+Rules it keeps: an emerald stage that is never flat (the user, 9 Nov: "emerald but it shouldn't be a flat color"): deep emerald, darker at the edges, a bright mint glow behind each phone with pulse rings spreading from it (`glow` in `scripts/store_bg.py`; the other looks tried that day (after a flat emerald first version), emerald depth, gym photo, ink to emerald, aurora, giant kettlebell, spotlight, ripple, weight plates, light streaks and giant type, are side by side in the sheets in `screenshots/store-options/`; re-render any of them with `python3 scripts/store-slides.py --bg <look> --only 1,2,3 --out store-options/<look>`). White headlines with one word in a yellow box with black type (the user's call), one headline size for the set (180 px). The phone is Apple's own iPhone 18 Pro Max outline, side buttons and display corners, from the Simulator's vector artwork on this Mac (`place_device` in `scripts/store_kit.py`, rendered into the git-ignored `scripts/bezels/sim/`), with the iPhone 18 Pro's Dynamic Island proportions. Real screens enlarged and sharp, no blur; other apps' names and icons only inside real screens; no ratings, user counts, prices or outcome numbers; every number is sample data. The Snapchat icon on slide 1 is its Halloween icon, as it was on the real iPhone on 2 Nov.
+
+To ship it: the default page's screenshots change with a new version, or now through a Product Page Optimization treatment that is then applied to the original page (screenshots only, can't be undone). Compare by source in App Analytics after two to three weeks. `screenshots/store-review/index.html` (served by the `mockups` launch config) shows each set in the search row and on the product page, light and dark, next to ScrollToll and GYMTIME.
+
+### Earlier sets
+
 Captions chosen 11 Oct 2026 after a look at Hevy, Strong, Fitbod, RepCount, Setgraph, Opal, ScreenZen, one sec, Brick and others: a verb-led headline with a short second line, one word in red. Search results show the first three. Recaptured 12 Oct 2026 after the workout, Home, Profile and DM Sans redesign: recaptured again 13 Oct 2026 after the tab bar and Home changes, and on 18 Oct 2026 after onboarding V7's blocking page, split colours and the workout clock (slide 1 again later that day, when the blocking page became two): captures are 1320×2868 (iPhone 18 Pro Max, iOS 27.0, simulator `GymBlock Store CPP`) in `screenshots/store-2026-10-18/`; the framed versions (deep blue stage, white headline with one red word, a thick phone running off the bottom edge) are in `screenshots/store-final/6.9/` (1320×2868) and `screenshots/store-final/6.3/` (1206×2622), made by `python3 scripts/frame-store-screenshots.py`.
 
 | # | Headline | Second line | Screen |

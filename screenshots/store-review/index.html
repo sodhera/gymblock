@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store Screenshot Review</title>
+<style>
+  :root {
+    --page: #f2f2f4; --ink: #141416; --muted: #6b6b70; --rule: #dcdcE0;
+    --as-bg: #ffffff; --as-text: #000000; --as-sub: #8a8a8e; --as-get: #eeeef0; --as-blue: #0a84ff; --as-card: #f5f5f7;
+  }
+  .dark { --as-bg: #000000; --as-text: #ffffff; --as-sub: #8d8d93; --as-get: #2c2c2e; --as-blue: #0a84ff; --as-card: #1c1c1e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  header.top { padding: 20px 16px 8px; max-width: 1400px; margin: 0 auto; }
+  header.top h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header.top p { margin: 0; color: var(--muted); max-width: 70ch; }
+  nav.sets { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; max-width: 1400px; margin: 0 auto; }
+  nav.sets button { font: inherit; font-size: 14px; border: 1px solid var(--rule); background: #fff; color: var(--ink); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  nav.sets button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  main { max-width: 1400px; margin: 0 auto; padding: 0 16px 48px; }
+  h2 { font-size: 13px; text-transform: none; color: var(--muted); font-weight: 600; margin: 28px 0 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .phone { width: 393px; max-width: 100%; border-radius: 44px; padding: 14px 0 22px; background: var(--as-bg); color: var(--as-text); box-shadow: 0 0 0 10px #1a1a1c, 0 18px 40px rgba(0,0,0,.18); overflow: hidden; }
+  .phone .cap { font-size: 12px; color: var(--as-sub); padding: 0 20px 10px; }
+  .result { padding: 6px 20px 18px; border-bottom: 0.5px solid rgba(128,128,128,.25); }
+  .result:last-child { border-bottom: 0; }
+  .app { display: flex; gap: 12px; align-items: center; }
+  .app img.icon { width: 62px; height: 62px; border-radius: 14px; border: 0.5px solid rgba(128,128,128,.3); object-fit: cover; flex: none; }
+  .app .t { flex: 1; min-width: 0; }
+  .app .n { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app .s { font-size: 13px; color: var(--as-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .app .r { font-size: 11px; color: var(--as-sub); }
+  .get { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+  .get span { background: var(--as-get); color: var(--as-blue); font-weight: 700; font-size: 15px; border-radius: 999px; padding: 5px 20px; }
+  .get small { font-size: 9px; color: var(--as-sub); }
+  .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+  .three img { width: 100%; aspect-ratio: 1320 / 2868; object-fit: cover; border-radius: 10px; display: block; }
+  .pp { padding: 6px 0 0; }
+  .pp .head { display: flex; gap: 14px; padding: 0 20px; align-items: center; }
+  .pp .head img { width: 112px; height: 112px; border-radius: 25px; border: 0.5px solid rgba(128,128,128,.3); }
+  .pp .head .n { font-size: 21px; font-weight: 700; line-height: 1.15; }
+  .pp .head .s { font-size: 14px; color: var(--as-sub); margin: 2px 0 10px; }
+  .pp .head .get { align-items: flex-start; }
+  .pp .facts { display: flex; justify-content: space-between; padding: 14px 20px; margin-top: 14px; border-top: 0.5px solid rgba(128,128,128,.25); border-bottom: 0.5px solid rgba(128,128,128,.25); font-size: 10px; color: var(--as-sub); text-align: center; }
+  .pp .facts b { display: block; font-size: 17px; color: var(--as-sub); }
+  .gallery { display: flex; gap: 10px; overflow-x: auto; padding: 16px 20px 4px; scroll-snap-type: x mandatory; }
+  .gallery img { width: 226px; flex: none; aspect-ratio: 1320 / 2868; object-fit: cover; border-radius: 16px; scroll-snap-align: start; }
+  .strip { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .strip figure { margin: 0; flex: none; width: 300px; }
+  .strip img { width: 100%; border-radius: 14px; display: block; box-shadow: 0 1px 0 rgba(0,0,0,.06), 0 6px 18px rgba(0,0,0,.08); }
+  .strip figcaption { font-size: 12px; color: var(--muted); padding: 6px 2px 0; }
+  .note { color: var(--muted); font-size: 13px; max-width: 80ch; }
+  @media (max-width: 860px) { .row { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>GymBlock App Store screenshots</h1>
+  <p>Each set as people meet it: three slides under the app in search results, the gallery on the product page, then every slide large. Light and dark App Store side by side.</p>
+</header>
+<nav class="sets" id="sets"></nav>
+<main id="view"></main>
+<script src="sets.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  let current = params.get('set') || (window.SETS[window.SETS.length - 1] || {}).id;
+  const nav = document.getElementById('sets');
+  const view = document.getElementById('view');
+  const others = window.NEIGHBOURS || [];
+
+  function appRow(set, slides) {
+    return `<div class="result">
+      <div class="app"><img class="icon" src="${set.icon || 'icon.png'}" alt="">
+        <div class="t"><div class="n">${set.name}</div><div class="s">${set.subtitle}</div><div class="r">${set.rating || ''}</div></div>
+        <div class="get"><span>Get</span><small>In-App Purchases</small></div></div>
+      <div class="three">${slides.slice(0, 3).map(s => `<img src="${s}" alt="">`).join('')}</div>
+    </div>`;
+  }
+
+  function searchPhone(set, dark) {
+    const rows = [appRow(set, set.slides)].concat(others.map(o => appRow(o, o.slides))).join('');
+    return `<div class="phone ${dark ? 'dark' : ''}"><div class="cap">Search results · ${dark ? 'dark' : 'light'}</div>${rows}</div>`;
+  }
+
+  function pagePhone(set, dark) {
+    return `<div class="phone ${dark ? 'dark' : ''}"><div class="cap">Product page · ${dark ? 'dark' : 'light'}</div>
+      <div class="pp"><div class="head"><img src="${set.icon || 'icon.png'}" alt="">
+        <div><div class="n">${set.name}</div><div class="s">${set.subtitle}</div><div class="get"><span>Get</span></div></div></div>
+        <div class="facts"><div>RATINGS<b>${set.ratingsShort || '—'}</b></div><div>AGES<b>4+</b></div><div>CATEGORY<b>Fitness</b></div><div>DEVELOPER<b>Sulav</b></div></div>
+        <div class="gallery">${set.slides.map(s => `<img src="${s}" alt="">`).join('')}</div></div></div>`;
+  }
+
+  function render() {
+    nav.innerHTML = window.SETS.map(s => `<button class="${s.id === current ? 'on' : ''}" data-id="${s.id}">${s.label}</button>`).join('');
+    nav.querySelectorAll('button').forEach(b => b.onclick = () => { current = b.dataset.id; history.replaceState(null, '', '?set=' + current); render(); });
+    const set = window.SETS.find(s => s.id === current) || window.SETS[0];
+    view.innerHTML = `
+      ${set.note ? `<p class="note">${set.note}</p>` : ''}
+      <h2>In search results (what most visitors see first)</h2>
+      <div class="row">${searchPhone(set, false)}${searchPhone(set, true)}</div>
+      <h2>On the product page</h2>
+      <div class="row">${pagePhone(set, false)}${pagePhone(set, true)}</div>
+      <h2>Every slide</h2>
+      <div class="strip">${set.slides.map((s, i) => `<figure><img src="${s}" alt=""><figcaption>${i + 1}. ${(set.captions || [])[i] || ''}</figcaption></figure>`).join('')}</div>`;
+  }
+  render();
+</script>
+</body>
+</html>
