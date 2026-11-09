@@ -735,6 +735,8 @@ struct OnboardingView: View {
     bondBusy = true
     dismissKeyboard()
     Task { @MainActor in
+      // The silent account from the commit page may have failed (offline then); one more try now.
+      if account.state != .signedIn { await account.signInAnonymously() }
       switch await GymBond.shared.redeem(bondDraft, from: "onboarding", t: store.t) {
       case .bonded(let name, _):
         bondGood = true

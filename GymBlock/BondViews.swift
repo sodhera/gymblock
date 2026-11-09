@@ -329,8 +329,8 @@ struct BondView: View {
 // MARK: - Onboarding
 
 /// The code page's field (after the commit, before the wall), as Cal AI's referral page (8 Nov 2026,
-/// at the user's request): one glass row with the field on the left and Submit on the right, low on
-/// the page; the keyboard waits for a tap. What came back from the server sits under it.
+/// at the user's request): one glass row with the field on the left and Submit on the right, in the
+/// middle of the page (9 Nov 2026); the keyboard waits for a tap. What came back from the server sits under it.
 struct BondCodeStage: View {
   @Binding var code: String
   let status: String?
@@ -366,6 +366,7 @@ struct BondCodeStage: View {
       Text(status ?? " ").font(JourneyType.caption).foregroundStyle(good ? JourneyColor.signalText : JourneyColor.secondary)
         .multilineTextAlignment(.center).frame(minHeight: 20).padding(.horizontal, 8)
         .accessibilityHidden(status == nil).accessibilityIdentifier("bond.status")
+      Spacer(minLength: 0)
     }
   }
 }

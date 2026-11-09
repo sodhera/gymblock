@@ -147,7 +147,9 @@ import UserNotifications
   func redeem(_ raw: String, from source: String, t: (String) -> String) async -> RedeemResult {
     let clean = Self.normalize(raw)
     guard clean.count == 6 else { return .failed(t("Codes are six characters.")) }
-    guard live else { return .failed(t("Sign in to use a code.")) }
+    // No account yet: offline development runs can't have one; online, the silent account wasn't made
+    // (the caller tries again first), so it reads as a connection problem, which it usually is.
+    guard live else { return .failed(t(AppConfig.offline ? "Sign in to use a code." : "Couldn’t reach your account. Check your connection and try again.")) }
     guard !busy else { return .failed(t("One moment…")) }
     busy = true; defer { busy = false }
     do {
