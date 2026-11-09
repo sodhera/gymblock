@@ -85,6 +85,8 @@ def _wrap(draw, text, f, max_w=TEXT_W):
 def fitted_size(text, size=204, min_size=150, lines=2):
     """The largest headline size (in 4-px steps) that sets `text` in `lines` lines inside the margins."""
     draw = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    if HIGHLIGHT == "all":
+        text = " ".join("*" + w.replace("*", "") + "*" for w in text.split(" ") if w)
     s = size
     while s >= min_size:
         f = k.sf(s, weight=820)
@@ -96,12 +98,17 @@ def fitted_size(text, size=204, min_size=150, lines=2):
 
 
 HEAD_SIZE = None  # set in main(): one size for the whole set, the largest every headline fits
+HIGHLIGHT = "all"  # the whole headline on one yellow shape (the user, 9 Nov 2026); "word" boxes one word (--highlight word)
 
 
 def headline(canvas, text, y, size=None, min_size=150, align="left", lines=2):
     """White display type with *accent* words set in a paper box (consecutive accent words share one
     box, which sits inside the margins and clear of its neighbours). Returns the bottom y."""
     draw = ImageDraw.Draw(canvas)
+    whole = HIGHLIGHT == "all"
+    if whole:
+        # Every line in its own yellow box, like TikTok's caption style.
+        text = " ".join("*" + w.replace("*", "") + "*" if w != "\n" else w for w in text.replace("\n", " \n ").split(" ") if w)
     s = size or HEAD_SIZE or 200
     while True:
         f = k.sf(s, weight=820)
@@ -111,10 +118,14 @@ def headline(canvas, text, y, size=None, min_size=150, align="left", lines=2):
         s -= 4
         if s < min_size:
             raise ValueError(f"{text!r} doesn't fit in {lines} lines")
-    lh = round(f.size * 1.06)
+    lh = round(f.size * (1.08 if whole else 1.06))
     space = draw.textlength(" ", font=f)
     padx, pady = round(f.size * 0.13), round(f.size * 0.10)
     cap_top, base = f.getbbox("H")[1], f.getbbox("H")[3]
+    if whole:
+        return _headline_block(canvas, rows, y, f, lh, space, cap_top, base, align)
+    top_pad, bottom_pad = pady, pady
+    last_bottom = y
     cy = y
     for words in rows:
         lw = _line_width(draw, words, f)
@@ -135,15 +146,57 @@ def headline(canvas, text, y, size=None, min_size=150, align="left", lines=2):
                 j = i
                 while j + 1 < len(xs) and xs[j + 1][2]:
                     j += 1
-                box = (xs[i][0] - padx, cy + cap_top - pady, xs[j][1] + padx, cy + base + pady)
-                draw.rounded_rectangle(box, round(f.size * 0.16), fill=YELLOW)
+                box = (xs[i][0] - padx, cy + cap_top - top_pad, xs[j][1] + padx, cy + base + bottom_pad)
+                draw.rounded_rectangle(box, round(f.size * (0.13 if whole else 0.16)), fill=YELLOW)
+                last_bottom = max(last_bottom, box[3])
                 i = j + 1
             else:
                 i += 1
         for (x0, _, acc), (w, _) in zip(xs, words):
             draw.text((x0, cy), w, font=f, fill=INK if acc else WHITE)
         cy += lh
-    return cy
+    return max(cy, last_bottom + 10) if whole else cy
+
+
+def _headline_block(canvas, rows, y, f, lh, space, cap_top, base, align):
+    """The whole headline on ONE yellow shape: each line's box, overlapping the next, merged and
+    smoothed into a single polygon (rounded outside corners, a soft curve where a shorter line meets
+    a longer one), with the words in black on top. Returns the shape's bottom."""
+    draw = ImageDraw.Draw(canvas)
+    padx = round(f.size * 0.15)
+    top_pad, bottom_pad = round(f.size * 0.16), round(f.size * 0.27)
+    lines, cy = [], y
+    for words in rows:
+        widths = [draw.textlength(w, font=f) for w, _ in words]
+        lw = sum(widths) + space * (len(words) - 1)
+        x = MARGIN + padx if align == "left" else MARGIN + (TEXT_W - lw) / 2
+        lines.append((x, cy, lw, words, widths))
+        cy += lh
+    # The union of the line boxes, drawn 3x for smooth edges.
+    k3 = 3
+    x_min = min(x for x, *_ in lines) - padx
+    x_max = max(x + lw for x, _, lw, *_ in lines) + padx
+    y_min = lines[0][1] + cap_top - top_pad
+    y_max = lines[-1][1] + base + bottom_pad
+    pad = round(f.size * 0.4)
+    bw, bh = round(x_max - x_min) + 2 * pad, round(y_max - y_min) + 2 * pad
+    m = Image.new("L", (bw * k3, bh * k3), 0)
+    dm = ImageDraw.Draw(m)
+    for x, ly, lw, _, _ in lines:
+        dm.rectangle(((x - padx - x_min + pad) * k3, (ly + cap_top - top_pad - y_min + pad) * k3,
+                      (x + lw + padx - x_min + pad) * k3, (ly + base + bottom_pad - y_min + pad) * k3), fill=255)
+    # Blur and threshold: convex corners round off, concave corners fill with a matching curve.
+    r = f.size * 0.11 * k3
+    m = m.filter(ImageFilter.GaussianBlur(r)).point(lambda v: 255 if v >= 128 else 0)
+    m = m.filter(ImageFilter.GaussianBlur(k3 * 0.6)).resize((bw, bh), Image.LANCZOS)
+    ox, oy = round(x_min - pad), round(y_min - pad)
+    canvas.paste(Image.new("RGB", (bw, bh), YELLOW), (ox, oy), m)
+    for x, ly, lw, words, widths in lines:
+        cx = x
+        for (w, _), ww in zip(words, widths):
+            draw.text((cx, ly), w, font=f, fill=INK)
+            cx += ww + space
+    return round(y_max) + 12
 
 
 def subline(canvas, text, y, align="left", size=58, min_size=50):
@@ -157,7 +210,7 @@ def subline(canvas, text, y, align="left", size=58, min_size=50):
     return bottom
 
 
-BG = "glow"  # 9 Nov 2026: emerald, never flat (scripts/store_bg.py)
+BG = "studio"  # 9 Nov 2026: emerald, never flat, no line patterns (scripts/store_bg.py)
 SLIDE_NO = 1
 # Gym photos for the 'photo' stage: crops of the Unsplash photos the carousels already use
 # (docs/marketing/carousels/*/SOURCES.md), the parts no caption covers. (path, box)
@@ -179,10 +232,16 @@ def _grain(img, amount=10, seed=0):
     return ImageChops.add(img, ImageChops.subtract(noise, Image.new("RGB", (W, H), (128, 128, 128))), 1, 0)
 
 
+LAST_STAGE = None
+POST = []  # drawn after the foot's mist (things that must stay crisp, like slide 4's fact pills)
+
+
 def base_stage():
+    global LAST_STAGE
     import store_bg
     if BG in store_bg.STYLES:
-        return store_bg.STYLES[BG](SLIDE_NO)
+        LAST_STAGE = store_bg.STYLES[BG](SLIDE_NO)
+        return LAST_STAGE.copy()
     if BG == "depth":
         # Emerald with depth: lighter at the top left, deep at the foot, a soft light behind the
         # phone and fine grain.
@@ -275,7 +334,7 @@ def slide_lock():
     # What opening one shows (the shield), lifted over the Home Screen's empty lower half.
     box = (60, 560, 1260, 1520)
     cw = W - 2 * 64
-    card(c, shield, box, 64, top + round(860 * s), cw, r=60, op=0.55)
+    card(c, shield, box, 64, top + round(800 * s), cw, r=60, op=0.55)
     return c
 
 
@@ -346,7 +405,7 @@ def slide_choose():
     # Apple's app picker, in the phone; the facts float over its lower part.
     sw, top = 1080, 790
     phone(c, shot, (W - sw) // 2, top, sw)
-    fact_rows(c, ["Locks only during workouts", "Works offline in the gym"], 2584, size=52, h=106)
+    POST.append(lambda img: fact_rows(img, ["Locks only during workouts", "Works offline in the gym"], 2584, size=52, h=106))
     return c
 
 
@@ -415,7 +474,9 @@ HEADLINES = ["No *scrolling* between sets", "Rest on your *Lock Screen*", "Log a
 
 
 def main():
-    global HEAD_SIZE, BG, SLIDE_NO, OUT
+    global HEAD_SIZE, BG, SLIDE_NO, OUT, HIGHLIGHT
+    if "--highlight" in sys.argv:
+        HIGHLIGHT = sys.argv[sys.argv.index("--highlight") + 1]
     if "--bg" in sys.argv:
         BG = sys.argv[sys.argv.index("--bg") + 1]
     if "--out" in sys.argv:
@@ -432,6 +493,15 @@ def main():
             continue
         SLIDE_NO = i
         img = fn()
+        if BG == "studio" and LAST_STAGE is not None:
+            # The phone rises out of the stage's own light at the foot instead of being cut by the edge.
+            mist_h = 420
+            g = Image.linear_gradient("L").resize((W, mist_h)).point(lambda v: round(255 * (v / 255) ** 1.7))
+            mask = Image.new("L", (W, H), 0)
+            mask.paste(g, (0, H - mist_h))
+            img = Image.composite(LAST_STAGE, img, mask)
+        while POST:
+            POST.pop(0)(img)
         if only:
             os.makedirs(os.path.join(OUT, "6.9"), exist_ok=True)
             img.save(os.path.join(OUT, "6.9", name + ".png"))

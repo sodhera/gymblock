@@ -385,5 +385,41 @@ def giant_type(slide_no):
     return grain(img, 7, slide_no)
 
 
+# ---------- studio (fourth round, after the user called the rings 'low effort and sloppy') ----------
+#
+# What the best sets do (Opal, Liftoff, Ladder, Hevy, ScreenZen): no line patterns at all. A smooth stage
+# lit like a photo studio, and depth from light, shadow and mist: the phone rises out of a soft haze at
+# the foot instead of being cut by the slide's edge.
+
+def _soft(size, box, blur):
+    m = Image.new("L", size, 0)
+    ImageDraw.Draw(m).ellipse(box, fill=255)
+    return m.filter(ImageFilter.GaussianBlur(blur))
+
+
+def studio(slide_no):
+    sw, sh = W // S, H // S
+    img = _vgrad(sw, sh, (12, 112, 80), (3, 36, 25))
+    # A softbox above: the light falls on the headline and fades down the slide.
+    img = _light(img, _soft((sw, sh), (-sw * 0.25, -sh * 0.42, sw * 1.25, sh * 0.30), 60), (40, 186, 134), 0.62)
+    # Haze behind the phone, wide and soft.
+    img = _light(img, _soft((sw, sh), (-sw * 0.10, sh * 0.42, sw * 1.10, sh * 0.80), 70), (70, 220, 165), 0.38)
+    # A pool of light on the floor beneath it.
+    img = _light(img, _soft((sw, sh), (sw * 0.02, sh * 0.88, sw * 0.98, sh * 1.10), 40), (60, 215, 160), 0.45)
+    # Darker corners, like a lens.
+    v = Image.new("L", (sw, sh), 255)
+    ImageDraw.Draw(v).ellipse((-sw * 0.30, -sh * 0.12, sw * 1.30, sh * 1.12), fill=0)
+    img = Image.composite(Image.new("RGB", (sw, sh), (1, 24, 16)), img, v.filter(ImageFilter.GaussianBlur(45)).point(lambda x: round(x * 0.55)))
+    img = img.resize((W, H), Image.BICUBIC)
+    return grain(img, 6, slide_no)
+
+
+def studio_mist(canvas, height=520, colour=(6, 64, 45)):
+    """Over the finished slide: the foot fades into an emerald mist, so the phone rises out of it."""
+    g = Image.linear_gradient("L").resize((W, height)).point(lambda v: round(255 * (v / 255) ** 1.6))
+    canvas.paste(Image.new("RGB", (W, height), colour), (0, H - height), g)
+    return canvas
+
+
 STYLES = {"aurora": aurora, "mark": mark, "spot": spot, "ripple": ripple, "aurora_bold": aurora_bold, "plates": plates,
-          "glow": glow, "streaks": streaks, "giant_type": giant_type}
+          "glow": glow, "streaks": streaks, "giant_type": giant_type, "studio": studio}
