@@ -5,7 +5,7 @@ import SwiftUI
 /// are marked seen the first time Home shows. `-whatsNew` on a development run forces it.
 enum WhatsNew {
   /// The version these notes are for. Bump it with the notes; an older "seen" shows them again.
-  static let version = "1.0.4"
+  static let version = "1.1.0"
   private static let key = "gymblock.whatsNew.seen"
   /// Whether the phone was onboarded when this launch began: set once by the root before anything moves.
   private(set) static var onboardedAtLaunch: Bool?
