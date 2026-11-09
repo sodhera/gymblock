@@ -24,7 +24,7 @@ window.SETS = [
   },
   {
     id: 'emerald',
-    label: 'New set (9 Nov)',
+    label: 'Emerald set (9 Nov)',
     name: 'GymBlock: Block Apps & Workout',
     subtitle: 'Focus & Train Better',
     rating: 'No ratings',
@@ -32,6 +32,28 @@ window.SETS = [
     note: 'The new set (screenshots/store-emerald, made by scripts/store-slides.py). Shown under today’s name and subtitle; nothing else on the page has changed.',
     slides: ['1-no-scrolling-between-sets', '2-rest-on-your-lock-screen', '3-log-a-set-in-seconds', '4-feeds-off-music-on', '5-same-reps-more-weight', '6-watch-your-month-fill-up', '7-lock-in-for-push-day'].map(n => `../store-emerald/6.9/${n}.png`),
     captions: ['No scrolling between sets', 'Rest on your Lock Screen', 'Log a set in seconds', 'Feeds off. Music on.', 'Same reps. More weight.', 'Watch your month fill up', 'Lock in for push day'],
+  },
+  {
+    id: 'clean-white',
+    label: 'Clean set, white (9 Nov)',
+    name: 'GymBlock: Block Apps & Workout',
+    subtitle: 'Focus & Train Better',
+    rating: 'No ratings',
+    ratingsShort: '—',
+    note: 'After Cal AI, on white with black type; slide 1 after PushUp Time (screenshots/store-clean-white, GB_THEME=white python3 scripts/store-clean.py).',
+    slides: ['1-stop-scrolling-between-sets', '2-just-tap-start-workout', '3-then-your-chosen-apps-stay-locked', '4-rest-on-your-lock-screen', '5-log-every-set-in-seconds', '6-your-progress-lift-by-lift'].map(n => `../store-clean-white/6.9/${n}.png`),
+    captions: ['Stop scrolling between sets', 'Just tap Start workout', 'Then your chosen apps stay locked', 'Rest on your Lock Screen', 'Log every set in seconds', 'Your progress, lift by lift'],
+  },
+  {
+    id: 'clean-black',
+    label: 'Clean set, black (9 Nov)',
+    name: 'GymBlock: Block Apps & Workout',
+    subtitle: 'Focus & Train Better',
+    rating: 'No ratings',
+    ratingsShort: '—',
+    note: 'The same set on black with white type (screenshots/store-clean-black, GB_THEME=black python3 scripts/store-clean.py).',
+    slides: ['1-stop-scrolling-between-sets', '2-just-tap-start-workout', '3-then-your-chosen-apps-stay-locked', '4-rest-on-your-lock-screen', '5-log-every-set-in-seconds', '6-your-progress-lift-by-lift'].map(n => `../store-clean-black/6.9/${n}.png`),
+    captions: ['Stop scrolling between sets', 'Just tap Start workout', 'Then your chosen apps stay locked', 'Rest on your Lock Screen', 'Log every set in seconds', 'Your progress, lift by lift'],
   },
 ];
 // Other apps under ours in the search mock: what a 'gym block' search shows next to GymBlock (9 Nov 2026).

@@ -91,6 +91,21 @@ Privacy Policy: https://www.orecci.com/gymblock/privacy-policy
 
 ## Screenshots
 
+### The clean set, after Cal AI, in white and in black (9 Nov 2026, later; not uploaded)
+
+At the user's request ("inspired by Cal AI, clean, no yellow highlights, no subtext, designed from the ground up with the user experience in mind"), a second set in two themes to compare, `screenshots/store-clean-white/` (the user's pick: pure white with centred black headlines; a faint mint #F3F8F5 was tried and dropped) and `screenshots/store-clean-black/` (black, white type), with strips `screenshots/store-clean-white-overview.png` and `screenshots/store-clean-black-overview.png`, made by `GB_THEME=white python3 scripts/store-clean.py` (or `black`). Cal AI's system, measured on its slides: one flat dark colour, a plain white headline in two lines at the top left, one whole phone, centred, and one real element of that screen lifted out a little larger, overhanging the phone on both sides. Its slides tell one story: the promise, the action, the result, then progress. GymBlock's story is one workout:
+
+| # | Headline | Shows |
+|---|---|---|
+| 1 | Stop scrolling between sets | After PushUp Time's first slide (the user's pick): TikTok, Instagram, Reddit, YouTube and X floating with a lock on each, Spotify and GymBlock open; no phone, no laurel. (`GB_POSTER=phone` brings back the rebuilt real Home Screen if App Review objects to other apps' icons this large.) |
+| 2 | Just tap Start workout | Home, with Up next Push and Start workout lifted |
+| 3 | Then your chosen apps stay locked | The shield, "You're mid-workout." (the app's rebuild), lifted |
+| 4 | Rest on your Lock Screen | The rest Live Activity, lifted |
+| 5 | Log every set in seconds | The workout mid-rest, set 2 filled in, lifted |
+| 6 | Your progress, lift by lift | Bench press before and after, same reps, lifted |
+
+Reviewed by three independent critics (polish against Cal AI, first impression at search size, honesty and App Review) and fixed: the cards overhang the phone as Cal AI's do, with a light shadow and inner padding, never over the status bar; the locked icons lead (slide 1) and the shield follows (slide 3); "your feeds" became "the apps you chose"; other companies' icons are not enlarged or marked. Then, at the user's word ("the first SS is bad and really off color"), slide 1's Home Screen was rebuilt from the real capture's own icons (Screen Time's dimming and hourglasses included), labels, status bar and workout clock, on a clean emerald wallpaper in place of the grey one, without the dock. And one capture session (9 Nov, `screenshots/store-2026-11-09/`, US region so clocks read 9:41) made slides 2, 4, 5 and 6 one Push workout on one morning: Home with Up next Push and Bench press +10 kg, the workout mid-rest after Bench press set 1 at 70 kg x 5, the same rest on the Lock Screen (Thu Nov 9), and Bench press 60 to 70 kg at 5 reps. For that, the sample history's big lifts now rise 2.5 kg a week, not 5 (`DemoData.swift`), and the shield rebuild puts its button at the foot, where iOS draws it (`StoreShots.swift`).
+
 ### Screenshots, 9 Nov 2026 (the emerald set, not uploaded yet)
 
 People reach the page from TikTok, Instagram and YouTube (14 of the last 21 days' installers who answered: TikTok 5, Instagram 4, YouTube 3, Google 1, App Store 1), search the name, and decide on the search row, where three slides show about 118 pt wide. A review of the live set (dark green, yellow words) found that only its headlines could be read at that size, two-thirds of each slide was background, blur or bezel, the lock was shown only by Screen Time's tiny hourglasses, the shield people know from the carousels sat at slide 4, and the captions were labels any tracker uses. The 8 Nov white set has the same layout problems and a white stage that disappears on the white App Store.

@@ -106,8 +106,8 @@ enum StoreShots {
 
 #if DEBUG
   /// The shield as `WorkoutShield` configures it: white, the brand mark, "You're mid-workout.",
-  /// the app's name in the subtitle and one ink button. A rebuild, not a capture. For store
-  /// screenshots the button sits right under the words, so the top half of the screen carries it all.
+  /// the app's name in the subtitle and one ink button. A rebuild, not a capture, laid out as iOS
+  /// draws a shield: the mark and the words a little above the middle, the buttons at the foot.
   struct ShieldPreview: View {
     let app: String
     private let paper = Color.white
@@ -124,20 +124,20 @@ enum StoreShots {
               .font(.app(.body)).foregroundStyle(secondary).multilineTextAlignment(.center)
               .fixedSize(horizontal: false, vertical: true)
           }.padding(.horizontal, 12)
+        }.padding(.horizontal, 24)
+        Spacer(minLength: 0)
+        Spacer(minLength: 0)
+        VStack(spacing: 12) {
           Text("Back to training").font(.app(.headline)).foregroundStyle(.white)
             .frame(maxWidth: .infinity).frame(height: 54)
             .background(Capsule().fill(ink))
-            .padding(.top, 18)
           // Strict mode off: the once-per-exercise minute, as iOS draws the second button (a white pill).
           if !BlockingPass.strict {
             Text("Give me 1 minute").font(.app(.body)).foregroundStyle(ink)
               .frame(maxWidth: .infinity).frame(height: 54)
               .background(Capsule().fill(.white))
           }
-        }.padding(.horizontal, 24)
-        Spacer(minLength: 0)
-        Spacer(minLength: 0)
-        Spacer(minLength: 0)
+        }.padding(.horizontal, 24).padding(.bottom, 24)
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity)
       .background(paper.ignoresSafeArea())

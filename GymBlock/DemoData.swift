@@ -49,7 +49,8 @@ extension GymStore {
         session.stage = .rest
         for exercise in split.exercises {
           let heavy = ["bench", "squat", "deadlift"].contains(exercise.id)
-          let weight = (base[exercise.id] ?? 10) + Double(week) * (heavy ? 5 : 1)
+          // A plate a week on the big lifts (2.5 kg), not two: +10 kg over a month reads as real.
+          let weight = (base[exercise.id] ?? 10) + Double(week) * (heavy ? 2.5 : 1)
           for setIndex in 0..<3 {
             let elapsed = Double(35 + setIndex * 5)
             let previous = session.sets.last
