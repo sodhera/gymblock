@@ -53,6 +53,9 @@ struct AccountSection: View {
   @EnvironmentObject private var subscription: GymSubscription
   let close: () -> Void
   @State private var confirmLogOut = false
+  /// Logging out of a silent account first offers to connect Apple or Google (9 Nov 2026, at the
+  /// user's request), so the workouts aren't left behind on this iPhone.
+  @State private var saveFirst = false
   @State private var confirmDelete = false
   /// Deleting is permanent, so the alert asks for the word DELETE (9 Nov 2026, at the user's request).
   @State private var deleteWord = ""
@@ -74,9 +77,10 @@ struct AccountSection: View {
     // Logging out of a silent account (9 Nov 2026, as Cal AI) keeps the workouts on this iPhone and
     // starts onboarding again, which makes a fresh silent account; the old one is swept in a month.
     let signedIn = account.user != nil || AppConfig.offline
-    Button { confirmLogOut = true } label: {
+    Button { if account.isAnonymous { saveFirst = true } else { confirmLogOut = true } } label: {
       SettingRow(title: store.t(signedIn ? "Log out" : "Clear this iPhone"))
     }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.logout")
+      .sheet(isPresented: $saveFirst) { SaveFirstSheet(logOut: logOut) }
       .confirmationDialog(store.t(signedIn ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
         Button(store.t(signedIn ? "Log out" : "Clear")) { JourneyHaptic.pressLight(); logOut() }.accessibilityIdentifier("settings.logout.confirm")
         Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
@@ -111,7 +115,7 @@ struct AccountSection: View {
   }
   /// With an account the device copy is cleared (it comes back at the next sign-in); without one,
   /// workouts stay here and only onboarding starts again.
-  private func logOut() {
+  func logOut() {
     let hadCloud = cloud
     run {
       Task { @MainActor in
@@ -135,6 +139,47 @@ struct AccountSection: View {
       try? await Task.sleep(for: .milliseconds(350))
       action()
     }
+  }
+}
+
+/// Before logging out of a silent account: connect Apple or Google so the workouts follow the
+/// account, or log out anyway. Once linked, the log out goes ahead as a normal one.
+struct SaveFirstSheet: View {
+  @EnvironmentObject private var store: GymStore
+  @EnvironmentObject private var account: Account
+  @Environment(\.dismiss) private var dismiss
+  let logOut: () -> Void
+  var body: some View {
+    NavigationStack {
+      ZStack {
+        DotGrid()
+        VStack(alignment: .leading, spacing: 0) {
+          Text(store.t("Save your progress first?")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+            .accessibilityAddTraits(.isHeader)
+          Text(store.t("Your workouts and splits are on this iPhone only. Connect Apple or Google and they follow your account, so you can log out and come back to them."))
+            .font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 12)
+          Spacer(minLength: 24)
+          if let message = account.message {
+            Text(message).font(JourneyType.caption).foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+              .frame(maxWidth: .infinity).padding(.bottom, 8)
+          }
+          AccountButtons(intent: .link)
+          Button {
+            JourneyHaptic.pressLight()
+            dismiss()
+            logOut()
+          } label: {
+            Text(store.t("Log out anyway")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
+              .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
+          }.buttonStyle(.hapticPlain).padding(.top, 8).accessibilityIdentifier("settings.logout.anyway")
+        }.padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 16)
+      }
+      .toolbar { ToolbarItem(placement: .cancellationAction) { Button(store.t("Cancel")) { JourneyHaptic.pressLight(); dismiss() } } }
+      // Linked: the workouts are in the account now, so the log out they asked for goes ahead.
+      .onChange(of: account.isAnonymous) { _, anonymous in
+        if !anonymous, account.user != nil { dismiss(); logOut() }
+      }
+    }.track(screen: "settings.saveFirst")
   }
 }
 
