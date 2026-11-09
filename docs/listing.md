@@ -97,7 +97,7 @@ At the user's request ("inspired by Cal AI, clean, no yellow highlights, no subt
 
 | # | Headline | Shows |
 |---|---|---|
-| 1 | Stop scrolling between sets | After PushUp Time's first slide (the user's pick): TikTok, Instagram, Reddit, YouTube and X floating with a lock on each, Spotify and GymBlock open; no phone, no laurel. (`GB_POSTER=phone` brings back the rebuilt real Home Screen if App Review objects to other apps' icons this large.) |
+| 1 | Stop scrolling between sets | After PushUp Time's first slide (the user's pick): TikTok, Instagram, Reddit, Facebook, YouTube and X floating with a lock on each, under the set's largest headline; no phone, no laurel. (`GB_POSTER=phone` brings back the rebuilt real Home Screen if App Review objects to other apps' icons this large.) |
 | 2 | Just tap Start workout | Home, with Up next Push and Start workout lifted |
 | 3 | Then your chosen apps stay locked | The shield, "You're mid-workout." (the app's rebuild), lifted |
 | 4 | Rest on your Lock Screen | The rest Live Activity, lifted |

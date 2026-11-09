@@ -48,10 +48,23 @@ def cap(path):
     return Image.open(os.path.join(SHOTS, path)).convert("RGB")
 
 
-def headline(c, text):
-    f = k.sf(HEAD, weight=HEAD_WEIGHT)
-    # Centred (the user, 9 Nov), over the centred phone.
-    k.text_block(c, text, MARGIN, 150, TEXT_W, f, FG, align="center", leading=1.17)
+def headline(c, text, size=HEAD, top=150, margin=MARGIN):
+    """The headline, centred (the user, 9 Nov) over the centred phone. Returns its bottom y."""
+    f = k.sf(size, weight=HEAD_WEIGHT)
+    bottom, _ = k.text_block(c, text, margin, top, W - 2 * margin, f, FG, align="center", leading=1.13)
+    return bottom
+
+
+def biggest(text, margin, start=260, floor=134):
+    """The largest headline size (in 2 px steps) whose every line fits between the margins."""
+    d = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    s = start
+    while s > floor:
+        f = k.sf(s, weight=HEAD_WEIGHT)
+        if all(d.textlength(line, font=f) <= W - 2 * margin for line in text.split("\n")):
+            return s
+        s -= 2
+    return floor
 
 
 def phone(c, shot):
@@ -238,22 +251,22 @@ def _icon_tile(name, size, rot, locked, theme):
 
 def slide_stop_poster(theme):
     """1. The promise as a poster, after PushUp Time's first slide: the feeds people scroll between
-    sets float with a lock on each; Spotify and GymBlock stay open (music keeps playing)."""
-    bg, fg = BG, FG
-    c = Image.new("RGB", (W, H), bg)
-    headline(c, "Stop scrolling\nbetween sets")
-    # (name, centre x, centre y, size, rotation, locked)
+    sets float with a lock on each. Its headline is the set's largest (the user, 9 Nov: "it's gotta
+    be bigger on the first slide")."""
+    c = Image.new("RGB", (W, H), BG)
+    text = "Stop scrolling\nbetween sets"
+    bottom = headline(c, text, size=biggest(text, margin=72), top=150, margin=72)
+    # (name, centre x, centre y, size, rotation): six feeds, zig-zagging down the slide.
     cloud = [
-        ("tiktok", 390, 960, 430, -9, True),
-        ("instagram", 1010, 880, 350, 10, True),
-        ("reddit", 700, 1440, 280, -6, True),
-        ("youtube", 1030, 1760, 370, 7, True),
-        ("x", 330, 1840, 330, 9, True),
-        ("spotify", 400, 2470, 290, -6, False),
-        ("gymblock", 930, 2420, 400, 4, False),
+        ("tiktok", 380, bottom + 420, 420, -9),
+        ("instagram", 990, bottom + 340, 350, 10),
+        ("reddit", 690, bottom + 900, 290, -6),
+        ("facebook", 330, bottom + 1380, 350, 8),
+        ("youtube", 1000, bottom + 1440, 370, 7),
+        ("x", 660, bottom + 1930, 330, -6),
     ]
-    for name, cx, cy, size, rot, locked in cloud:
-        tile = _icon_tile(name, size, rot, locked, theme)
+    for name, cx, cy, size, rot in cloud:
+        tile = _icon_tile(name, size, rot, True, theme)
         c.paste(tile, (round(cx - tile.width / 2), round(cy - tile.height / 2)), tile)
     return c
 
