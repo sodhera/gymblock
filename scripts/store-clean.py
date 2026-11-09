@@ -19,7 +19,7 @@ Slides 2, 4, 5 and 6 are one Push workout on one morning (store-2026-11-09, US r
 import os
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import store_kit as k  # noqa: E402
@@ -51,6 +51,8 @@ def cap(path):
 def headline(c, text, size=HEAD, top=150, margin=MARGIN):
     """The headline, centred (the user, 9 Nov) over the centred phone. Returns its bottom y."""
     f = k.sf(size, weight=HEAD_WEIGHT)
+    if "\n" not in text:
+        top += round(size * 1.13 / 2)   # one line sits in the middle of the two-line band (the user, 9 Nov)
     bottom, _ = k.text_block(c, text, margin, top, W - 2 * margin, f, FG, align="center", leading=1.13)
     return bottom
 
@@ -281,8 +283,19 @@ def slide_stop():
     return c
 
 
+def slide_choose():
+    """2. The setup: Apple's picker, the apps to lock (the capture of 2 Nov, as the 20 Oct set's
+    "Choose apps to lock"). The rows from Social to YouTube lifted out; Spotify stays unticked."""
+    c = Image.new("RGB", (W, H), BG)
+    headline(c, "Choose apps\nto lock")
+    shot = cap("store-2026-11-02/choose-apps.png")
+    scr = phone(c, shot)
+    lift(c, shot, (64, 860, 1256, 2010), scr)
+    return c
+
+
 def slide_start():
-    """2. The action: Start workout."""
+    """3. The action: Start workout."""
     c = Image.new("RGB", (W, H), BG)
     headline(c, "Just tap\nStart workout")
     shot = cap("store-2026-11-09/home.png")
@@ -294,7 +307,7 @@ def slide_start():
 def slide_locked():
     """3. The result: what a chosen app shows mid-workout."""
     c = Image.new("RGB", (W, H), BG)
-    headline(c, "Then your chosen\napps stay locked")
+    headline(c, "Chosen apps\nstay locked")
     shot = cap("store-2026-11-09/shield-tiktok.png")
     scr = phone(c, shot)
     # The mark and the words; the button stays on the phone, at its foot, where iOS draws it.
@@ -307,17 +320,24 @@ def slide_rest():
     headline(c, "Rest on your\nLock Screen")
     shot = cap("store-2026-11-09/lock-rest.png")
     scr = phone(c, shot)
-    # The Live Activity's own platter, to its edges, with its own corner (no wallpaper at the corners).
-    box = (42, 1722, 1164, 2228)
-    lift(c, shot, box, scr, pad=0, r=round(66 * CARD_W / (box[2] - box[0])))
+    # The Live Activity's own platter (measured: x 42-1163, y 1722-2227, a continuous corner about
+    # 120 px deep), cropped 6 px inside its edge with a 110 px corner so no wallpaper shows at the corners.
+    box = (48, 1728, 1158, 2222)
+    lift(c, shot, box, scr, pad=0, r=round(110 * CARD_W / (box[2] - box[0])))
     return c
+
+
+def blurred(shot, radius=7):
+    """The whole capture softened a little, status bar included, so the lifted card is the only sharp
+    thing on the phone (the user, 9 Nov: a subtle blur behind Log every set, nothing left sharp)."""
+    return shot.filter(ImageFilter.GaussianBlur(radius))
 
 
 def slide_log():
     c = Image.new("RGB", (W, H), BG)
-    headline(c, "Log every set\nin seconds")
+    headline(c, "Log every set")
     shot = cap("store-2026-11-09/workout-rest.png")
-    scr = phone(c, shot)
+    scr = phone(c, blurred(shot))
     # From the workout's title row (Push, its clock, End) to set 3, so no title is cut.
     lift(c, shot, (36, 190, 1170, 1125), scr)
     return c
@@ -325,7 +345,7 @@ def slide_log():
 
 def slide_progress():
     c = Image.new("RGB", (W, H), BG)
-    headline(c, "Your progress,\nlift by lift")
+    headline(c, "Track your\nprogress")
     shot = cap("store-2026-11-09/record.png")
     scr = phone(c, shot)
     # From the split's label (Push) down to "Same reps", so no label is cut by the card's edge.
@@ -335,11 +355,12 @@ def slide_progress():
 
 SLIDES = [
     ("1-stop-scrolling-between-sets", slide_stop),
-    ("2-just-tap-start-workout", slide_start),
-    ("3-then-your-chosen-apps-stay-locked", slide_locked),
-    ("4-rest-on-your-lock-screen", slide_rest),
-    ("5-log-every-set-in-seconds", slide_log),
-    ("6-your-progress-lift-by-lift", slide_progress),
+    ("2-choose-apps-to-lock", slide_choose),
+    ("3-just-tap-start-workout", slide_start),
+    ("4-chosen-apps-stay-locked", slide_locked),
+    ("5-rest-on-your-lock-screen", slide_rest),
+    ("6-log-every-set", slide_log),
+    ("7-track-your-progress", slide_progress),
 ]
 
 
