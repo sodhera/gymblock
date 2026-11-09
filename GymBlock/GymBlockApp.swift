@@ -213,6 +213,7 @@ struct RootView: View {
     ZStack {
       GymColor.ground.ignoresSafeArea()
       Group {
+        let _ = WhatsNew.noteLaunch(onboarded: store.profile.onboarded)
         switch base {
         case .launch: Color.clear
         case .onboarding: OnboardingView(onSignIn: openSignIn).transition(.opacity)

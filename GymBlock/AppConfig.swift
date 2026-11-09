@@ -43,7 +43,7 @@ enum AppConfig {
       // A personal-team copy for trying the app on a phone without the Sodhera team (bundle id
       // `….devtest`, no Screen Time, Sign in with Apple or widgets) always runs offline.
       if Bundle.main.bundleIdentifier?.hasSuffix(".devtest") == true { return true }
-      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") || $0.hasPrefix("-bondPreview") || $0.hasPrefix("-anonymousPreview") }
+      return args.contains { ["--ui-reset", "--demo", "--skip-onboarding", "--offline"].contains($0) || $0.hasPrefix("-journeyStep") || $0.hasPrefix("-workoutStage") || $0.hasPrefix("-widgetPreview") || $0.hasPrefix("-bondPreview") || $0.hasPrefix("-anonymousPreview") || $0 == "-whatsNew" }
     #else
       return false
     #endif

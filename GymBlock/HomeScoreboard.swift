@@ -1,6 +1,105 @@
 import Charts
 import SwiftUI
 
+/// Home's head, after Cal AI's (9 Nov 2026, at the user's request): the mark and the name on the
+/// left, the week streak in a glass pill on the right, and under them this week as seven dated
+/// circles, Monday first. A trained day is filled in its split's colour, today sits lifted on a
+/// white glass card with an ink ring, a past day missed is a dashed ring, and a day still to come
+/// is faint. It replaces the quiet dots line at the top of Home.
+struct HomeHeader: View {
+  @EnvironmentObject private var store: GymStore
+  let stats: HomeStats
+  var body: some View {
+    // Compact (9 Nov 2026, "it feels a bit large"): a 22-pt name, a 36-pt pill, 32-pt day rings.
+    VStack(alignment: .leading, spacing: 16) {
+      HStack(spacing: 8) {
+        BrandMark(size: 24)
+        Text("GymBlock").font(.app(size: 22, weight: .bold)).tracking(-0.5).foregroundStyle(JourneyColor.text)
+        Spacer(minLength: 12)
+        streakPill
+      }
+      weekStrip
+    }
+  }
+
+  /// The streak: a flame and the days in the run (since 9 Nov 2026, days as Cal AI counts them; two
+  /// missed days in a row end it), 0 until there is one. It opens the streak page (`StreakPage`).
+  private var streakPill: some View {
+    NavigationLink { StreakPage() } label: { streakLabel }
+      .buttonStyle(JourneyPressStyle())
+      .accessibilityIdentifier("home.streak")
+      .accessibilityLabel("\(stats.streakDays) " + store.t("day streak"))
+  }
+  private var streakLabel: some View {
+    HStack(spacing: 6) {
+      StreakFlame(size: 18)
+      Text("\(stats.streakDays)").font(.app(.subheadline, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+    }
+    .padding(.horizontal, 12).frame(height: 36)
+    .journeyGlass(Capsule())
+    .accessibilityElement(children: .ignore)
+  }
+
+  private var weekStrip: some View {
+    let calendar = TrainingDays.calendar
+    let monday = TrainingDays.monday(of: Date())
+    let keys = TrainingDays.weekKeys(at: Date())
+    let colors = store.dayColors
+    let names = DateFormatter()
+    names.locale = Locale(identifier: store.profile.language == "es" ? "es" : "en_US")
+    names.setLocalizedDateFormatFromTemplate("EEE")
+    return HStack(spacing: 0) {
+      ForEach(0..<7, id: \.self) { d in
+        let date = calendar.date(byAdding: .day, value: d, to: monday) ?? monday
+        let on = stats.grid.last?[d] ?? false
+        let today = d == stats.todayIndex
+        let future = d > stats.todayIndex
+        DayCell(name: names.string(from: date), number: calendar.component(.day, from: date),
+                color: on ? Color.paper((colors[keys[d]] ?? .emerald).paper) : nil, today: today, future: future)
+          .frame(maxWidth: .infinity)
+      }
+    }
+    .accessibilityElement(children: .ignore).accessibilityIdentifier("home.week")
+    .accessibilityLabel("\(stats.thisWeek) \(store.t("of")) \(stats.goal) \(store.t("this week"))")
+  }
+
+  /// One day: its name over its number in a ring; today on its own white card.
+  private struct DayCell: View {
+    let name: String
+    let number: Int
+    let color: Color?
+    let today: Bool
+    let future: Bool
+    var body: some View {
+      VStack(spacing: 7) {
+        Text(name).font(.app(.footnote, weight: today ? .semibold : .medium))
+          .foregroundStyle(today ? JourneyColor.text : future ? JourneyColor.ink(0.3) : JourneyColor.secondary)
+          .lineLimit(1).minimumScaleFactor(0.8)
+        ZStack {
+          if let color {
+            Circle().fill(color)
+          } else if today {
+            Circle().strokeBorder(JourneyColor.ink(0.22), lineWidth: 2)
+          } else if future {
+            Circle().strokeBorder(JourneyColor.ink(0.1), lineWidth: 1.5)
+          } else {
+            Circle().strokeBorder(JourneyColor.ink(0.22), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
+          }
+          Text("\(number)").font(.app(.subheadline, weight: color != nil ? .semibold : .regular)).monospacedDigit()
+            .foregroundStyle(color != nil ? Color.white : future ? JourneyColor.ink(0.3) : JourneyColor.text)
+        }
+        .frame(width: 32, height: 32)
+      }
+      .padding(.vertical, 8).padding(.horizontal, 4)
+      .background {
+        if today { RoundedRectangle(cornerRadius: 18, style: .continuous).fill(JourneyColor.raised)
+            .shadow(color: JourneyColor.ink(0.08), radius: 10, y: 4) }
+      }
+    }
+  }
+}
+
+
 /// This week as one quiet line: seven small dots (emerald for a day trained, an ink ring on today)
 /// and the streak beside them. Back at the top of Home on 12 Oct 2026, above the progress card.
 struct WeekLine: View {

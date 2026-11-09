@@ -28,6 +28,7 @@ struct WorkoutView: View {
   @State private var editingFrom = ""
   @State private var guardUntil = Date.distantPast
   @State private var screenHeight: CGFloat = 800
+  @State private var screenWidth: CGFloat = 390
   /// Hold an exercise's name to lift it; drag to reorder in a compact list of names.
   @State private var lifted: String?
   @State private var reorder: Reorder?
@@ -91,6 +92,7 @@ struct WorkoutView: View {
       }
       .overlay { if let reorder { reorderLayer(reorder) } }
       .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { screenHeight = $0 }
+      .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { screenWidth = $0 }
       .coordinateSpace(name: "screen")
       .safeAreaInset(edge: .bottom, spacing: 0) { dock }
       // The native Liquid Glass bar: the workout's name on the left, the whole workout's time then End
@@ -590,8 +592,13 @@ struct WorkoutView: View {
   private var workoutTitle: some View {
     // The split's dot beside its name, as on Home's week line.
     HStack(alignment: .center, spacing: 10) {
+      // The bar gives a flexible leading item no room (it collapsed to "…"), so the name keeps its
+      // own size, capped at what's left beside the clock, Cancel and the bar's margins, and scales
+      // down (to 70%) inside that: on a 14 Pro "Free workout" squeezed Cancel to "Can…" (9 Nov 2026).
       Text(store.t(session.name)).font(.app(size: 28, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
-        .lineLimit(1).fixedSize().accessibilityAddTraits(.isHeader).accessibilityIdentifier("session.title")
+        .lineLimit(1).minimumScaleFactor(0.7)
+        .frame(maxWidth: max(120, screenWidth - 235), alignment: .leading).fixedSize()
+        .accessibilityAddTraits(.isHeader).accessibilityIdentifier("session.title")
       Circle().fill(accent).frame(width: 10, height: 10).accessibilityHidden(true)
     }
   }
@@ -600,7 +607,7 @@ struct WorkoutView: View {
   /// summary, nothing in Profile) and unlocks the apps. After that it's End.
   private var endButton: some View {
     Button { JourneyHaptic.pressLight(); end() } label: {
-      Text(store.t(session.sets.isEmpty && !active ? "Cancel" : "End")).font(.app(.body))
+      Text(store.t(session.sets.isEmpty && !active ? "Cancel" : "End")).font(.app(.body)).fixedSize()
         .foregroundStyle(JourneyColor.secondary).padding(.leading, 8).frame(minHeight: 44).contentShape(Rectangle())
     }.buttonStyle(.plain)
       .accessibilityIdentifier("session.finish")

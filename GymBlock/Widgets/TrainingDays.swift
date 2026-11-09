@@ -66,6 +66,25 @@ enum TrainingDays {
     return 0
   }
 
+  /// The day streak (9 Nov 2026, at the user's request, as Cal AI counts days): the trained days in
+  /// the current run, counting back from today. One missed day is forgiven; two missed days in a
+  /// row end the run. Today doesn't count as missed while it's still on.
+  static func dayStreak(at d: Date, days: Set<Int>, _ c: Calendar = TrainingDays.calendar) -> Int {
+    var day = c.startOfDay(for: d)
+    var count = 0
+    var missed = 0
+    if days.contains(key(day, c)) { count += 1 }
+    for _ in 0..<3660 {
+      guard let prev = c.date(byAdding: .day, value: -1, to: day) else { break }
+      day = prev
+      if days.contains(key(day, c)) { count += 1; missed = 0 } else {
+        missed += 1
+        if missed >= 2 { break }
+      }
+    }
+    return count
+  }
+
   /// Distinct trained days in the week of `d` (two workouts on one day make one dot).
   static func thisWeek(at d: Date, days: Set<Int>, _ c: Calendar = TrainingDays.calendar) -> Int {
     week(at: d, days: days, c).filter { $0 == .trained }.count

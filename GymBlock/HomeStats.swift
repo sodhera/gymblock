@@ -7,6 +7,8 @@ struct HomeStats {
   let grid: [[Bool]]
   let weekStarts: [Date]
   let streakWeeks: Int
+  /// Trained days in the current run; two missed days in a row end it (`TrainingDays.dayStreak`).
+  let streakDays: Int
   let thisWeek: Int
   let goal: Int
   /// Share of measured rests that ended within the rest length (plus a 30-second grace), over 28 days.
@@ -68,6 +70,7 @@ extension GymStore {
     // The widgets' function, uncapped: the grid stays `weeks` long, a 20-week run reads 20.
     let weeksTrained = Set(finished.map { TrainingDays.key(TrainingDays.monday(of: $0.started)) })
     let streak = TrainingDays.streak(at: now, weeks: weeksTrained)
+    let streakDays = TrainingDays.dayStreak(at: now, days: Set(trainedDays.map { TrainingDays.key($0) }))
 
     // Rests on time, last 28 days.
     let since = calendar.date(byAdding: .day, value: -28, to: now) ?? now
@@ -94,7 +97,7 @@ extension GymStore {
         lastPR = (session.ended ?? session.started, gain.exercise, session.splitID, text); break
       }
     }
-    return HomeStats(grid: grid, weekStarts: weekStarts, streakWeeks: streak, thisWeek: thisWeek, goal: goal,
+    return HomeStats(grid: grid, weekStarts: weekStarts, streakWeeks: streak, streakDays: streakDays, thisWeek: thisWeek, goal: goal,
                      restsOnTime: onTime, averageRest: average, restCount: gaps.count, liftsUp: lifts, workoutsInWindow: recent.count,
                      totalWorkouts: finished.count, totalVolumeKG: finished.reduce(0) { $0 + $1.volumeKG }, todayIndex: todayIndex,
                      totalMinutes: totalMinutes, lastPR: lastPR)

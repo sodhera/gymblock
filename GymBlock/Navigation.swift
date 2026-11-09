@@ -54,6 +54,8 @@ struct MainTabs: View {
   @State private var place = Place.home
   /// The tab was moved by a widget or the control, not tapped.
   @State private var routed = false
+  /// What's new, once per version, to an existing phone (`WhatsNew`).
+  @State private var whatsNew = false
   var body: some View {
     TabView(selection: $place) {
       // Ink inside each page, so its questions, menus and back buttons aren't emerald.
@@ -78,6 +80,10 @@ struct MainTabs: View {
       go(r.route == .profile ? .profile : .home)
       if r.route != .start { router.consume(r) }
     }
+    .onAppear {
+      if WhatsNew.pending { whatsNew = true } else { WhatsNew.markSeen() }
+    }
+    .sheet(isPresented: $whatsNew, onDismiss: { WhatsNew.markSeen() }) { WhatsNewSheet() }
   }
   private func go(_ p: Place) {
     guard place != p else { return }

@@ -37,6 +37,7 @@ import UserNotifications
     func streak(at now: Date = Date()) -> Int {
       TrainingDays.streak(at: now, weeks: Set(workouts.map { TrainingDays.key(TrainingDays.monday(of: $0)) }))
     }
+    func dayStreak(at now: Date = Date()) -> Int { TrainingDays.dayStreak(at: now, days: days) }
     func canNudge(at now: Date = Date()) -> Bool { nudgedAt.map { now.timeIntervalSince($0) >= 24 * 3600 } ?? true }
   }
 

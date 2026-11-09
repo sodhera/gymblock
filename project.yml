@@ -42,6 +42,10 @@ targets:
           UIColorName: LaunchBackground
         UIAppFonts: [DMSans.ttf]
         NSSupportsLiveActivities: true
+        # Save on the streak card's share sheet (9 Nov 2026): add-only, never reads the library.
+        NSPhotoLibraryAddUsageDescription: GymBlock saves your streak card to Photos when you tap Save.
+        # Instagram Stories on the streak card's share sheet: only asks whether Instagram is installed.
+        LSApplicationQueriesSchemes: [instagram-stories]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false

@@ -75,6 +75,7 @@ import Supabase
     var unit: String
     var rest_seconds: Int?
     var rest_alerts: Bool?
+    var buddy_alerts: String?
     var time_sets: Bool?
     var haptics_enabled: Bool?
     var sound_enabled: Bool?
@@ -91,7 +92,7 @@ import Supabase
     init(_ p: Profile, id: UUID) {
       self.id = id; name = p.name; language = p.language.isEmpty ? "en" : p.language; gender = p.gender
       height_cm = p.heightCM; body_weight_kg = p.bodyWeightKG; unit = p.unit; rest_seconds = p.restSeconds
-      rest_alerts = p.restAlerts; time_sets = p.timeSets; haptics_enabled = p.hapticsEnabled; sound_enabled = p.soundEnabled
+      rest_alerts = p.restAlerts; buddy_alerts = p.buddyAlerts ?? "every"; time_sets = p.timeSets; haptics_enabled = p.hapticsEnabled; sound_enabled = p.soundEnabled
       focus_enabled = p.focusEnabled; block_whole_phone = p.blockWholePhone; blocked_apps = p.blockedApps
       preferred_split_id = p.preferredSplitID; onboarded = p.onboarded; onboarding_step = p.onboardingStepID
       onboarding_version = p.onboardingVersion; pledged = (p.onboardingStoryStage ?? 0) > 0 || p.onboarded; baseline = p.baseline
@@ -99,7 +100,7 @@ import Supabase
     func applied(to local: Profile) -> Profile {
       var p = local
       p.name = name; p.language = language; p.gender = gender; p.heightCM = height_cm; p.bodyWeightKG = body_weight_kg
-      p.unit = unit; p.restSeconds = rest_seconds; p.restAlerts = rest_alerts; p.timeSets = time_sets
+      p.unit = unit; p.restSeconds = rest_seconds; p.restAlerts = rest_alerts; p.buddyAlerts = buddy_alerts; p.timeSets = time_sets
       p.hapticsEnabled = haptics_enabled; p.soundEnabled = sound_enabled; p.focusEnabled = focus_enabled
       p.blockWholePhone = block_whole_phone; p.blockedApps = blocked_apps; p.preferredSplitID = preferred_split_id
       p.onboarded = onboarded; p.onboardingVersion = onboarding_version; p.baseline = baseline

@@ -341,7 +341,7 @@
     private var lock: some View {
       VStack(spacing: 12) {
         HStack(spacing: 16) {
-          WeekCircularView(snapshot: row.snapshot, date: now)
+          StreakCircularView(snapshot: row.snapshot, date: now)
             .frame(width: metrics.circular, height: metrics.circular)
             .background(Circle().fill(.white.opacity(0.15)))
             .clipShape(Circle())

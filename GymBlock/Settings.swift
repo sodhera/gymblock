@@ -16,6 +16,7 @@ struct PreferencesView: View {
   @ObservedObject private var blocking = AppBlocking.shared
   @State private var renaming = false
   @State private var draftName = ""
+  @State private var recentUpdates = false
   @AppStorage(Appearance.key) private var appearance = Appearance.standard.rawValue
   /// Strict mode lives with the blocked apps on this iPhone (the App Group), where the shield reads it.
   @AppStorage(BlockingPass.strictKey, store: BlockingPass.defaults) private var strict = true
@@ -56,6 +57,8 @@ struct PreferencesView: View {
 
         SubscriptionSettingsSection()
 
+        WidgetsSettingsSection()
+
         SettingsLabel(store.t("Workout"))
         SettingMenu(title: store.t("Rest length"), symbol: "timer", value: clockString(store.restTarget), id: "settings.rest") {
           Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
@@ -80,6 +83,10 @@ struct PreferencesView: View {
         if store.profile.restAlerts == true && notifications.map(allowed) == false {
           SettingsNote(store.t("Notifications are off, so rest alerts can’t reach you."))
         }
+        SettingMenu(title: store.t("Buddy workouts"), symbol: "person.2", value: store.t(BuddyAlerts.current(store.profile).title), id: "settings.buddyAlerts") {
+          BuddyAlertsPicker(id: "settings.buddyAlerts")
+        }
+        SettingsNote(store.t("A push when a GymBuddy finishes a workout."))
 
         SettingsLabel(store.t("App"))
         SettingMenu(title: store.t("Appearance"), symbol: "circle.lefthalf.filled", value: store.t((Appearance(rawValue: appearance) ?? .standard).title), id: "settings.appearance") {
@@ -99,6 +106,10 @@ struct PreferencesView: View {
         }
         SettingToggle(title: store.t("Sound"), symbol: "speaker.wave.2", id: "settings.sound",
                       isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } }))
+        // What's new, on demand (9 Nov 2026, at the user's request): the same pager the update shows once.
+        Button { JourneyHaptic.pressLight(); Analytics.tap("settings.recentUpdates"); recentUpdates = true } label: {
+          SettingRow(title: store.t("Recent updates"), symbol: "sparkles", chevron: true)
+        }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.recentUpdates")
 
         SettingsLabel(store.t("Your data"))
         NavigationLink { TrainingAnswersForm().pushHaptic() } label: { SettingRow(title: store.t("Training answers"), symbol: "list.clipboard") }
@@ -112,6 +123,7 @@ struct PreferencesView: View {
       .listStyle(.plain).scrollContentBackground(.hidden).background(DotGrid())
       .contentMargins(.bottom, 32, for: .scrollContent)
       .toolbar(.hidden, for: .navigationBar)
+      .sheet(isPresented: $recentUpdates) { WhatsNewSheet() }
       .alert(store.t("Your name"), isPresented: $renaming) {
         TextField(store.t("Your name"), text: $draftName).textInputAutocapitalization(.words)
         Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
@@ -392,5 +404,102 @@ struct TrainingAnswersForm: View {
       if !unit.isEmpty { Text(unit).font(.app(.body)).foregroundStyle(JourneyColor.secondary) }
     }.frame(minHeight: 50).pageRow()
     if invalid.contains(label) { SettingsNote(store.t("Check this value.")) }
+  }
+}
+
+
+// MARK: - Widgets
+
+/// The app's widgets after the subscription (9 Nov 2026, at the user's request, as Cal AI's Profile
+/// lists them): Up next, Streak and This month on plates in a row, drawn from the snapshot the app
+/// last wrote, and "How to add?" opening the steps for the Home Screen and the Lock Screen.
+struct WidgetsSettingsSection: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.colorScheme) private var colorScheme
+  @State private var howTo = false
+  var body: some View {
+    HStack(alignment: .firstTextBaseline) {
+      PageLabel(text: store.t("Widgets"))
+      Button { JourneyHaptic.pressLight(); Analytics.tap("settings.widgets.howTo"); howTo = true } label: {
+        Text(store.t("How to add?")).font(.app(.subheadline, weight: .medium)).foregroundStyle(JourneyColor.signal)
+          .frame(minHeight: 28).contentShape(Rectangle())
+      }.buttonStyle(.hapticPlain).accessibilityIdentifier("settings.widgets.howTo")
+    }
+    .padding(.top, 22).pageRow().listRowSeparator(.hidden, edges: .top)
+    ScrollView(.horizontal) {
+      HStack(spacing: 12) {
+        let snapshot = WidgetSnapshot.load()
+        plate { UpNextSmallView(snapshot: snapshot, date: Date()) }
+        plate { StreakView(snapshot: snapshot, date: Date(), medium: false) }
+        plate { MonthSmallView(snapshot: snapshot, date: Date()) }
+        plate(width: 338) { WeekStripView(snapshot: snapshot, date: Date()) }
+      }
+      .padding(.horizontal, 24).padding(.vertical, 12)
+    }
+    .scrollIndicators(.hidden).scrollClipDisabled()
+    .listRowInsets(EdgeInsets()).listRowBackground(Color.clear).listRowSeparator(.hidden)
+    .accessibilityIdentifier("settings.widgets")
+    .sheet(isPresented: $howTo) { WidgetHowToSheet() }
+  }
+  /// A small widget's plate at its Home Screen size, on white with a hairline, as iOS draws it on paper.
+  private func plate<V: View>(width: CGFloat = 158, @ViewBuilder _ content: () -> V) -> some View {
+    let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+    return content()
+      .padding(16)
+      .frame(width: width, height: 158)
+      .environment(\.widgetTone, WidgetTone(mode: .paper, dark: colorScheme == .dark))
+      .background(JourneyColor.raised, in: shape)
+      .overlay(shape.strokeBorder(JourneyColor.hairline, lineWidth: 1))
+      .clipShape(shape)
+      .allowsHitTesting(false)
+  }
+}
+
+/// How to add a widget, Home Screen or Lock Screen, as numbered steps in Apple's own words.
+struct WidgetHowToSheet: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  @State private var lock = false
+  var body: some View {
+    VStack(spacing: 0) {
+      Picker("", selection: $lock.ticking) {
+        Text(store.t("Home Screen")).tag(false)
+        Text(store.t("Lock Screen")).tag(true)
+      }
+      .pickerStyle(.segmented).padding(.horizontal, 24).padding(.top, 22)
+      ScrollView {
+        VStack(spacing: 10) {
+          ForEach(Array(steps.enumerated()), id: \.offset) { i, step in
+            HStack(alignment: .top, spacing: 14) {
+              Text("\(i + 1)").font(.app(.subheadline, weight: .semibold)).foregroundStyle(JourneyColor.onButton)
+                .frame(width: 28, height: 28).background(Circle().fill(JourneyColor.button))
+              Text(store.t(step)).font(.app(.body)).foregroundStyle(JourneyColor.text).fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(18).journeySurface(cornerRadius: 18)
+          }
+        }
+        .padding(.horizontal, 24).padding(.top, 20).padding(.bottom, 24)
+      }
+      .scrollIndicators(.hidden)
+      JourneyButton(title: store.t("Done"), id: "widgets.howTo.done") { dismiss() }
+        .padding(.horizontal, 24).padding(.bottom, 12)
+    }
+    .background(JourneyColor.stage.ignoresSafeArea())
+    .presentationDragIndicator(.visible)
+    .track(screen: "widgets_how_to", ["lock": lock])
+  }
+  private var steps: [String] {
+    lock
+      ? ["Touch and hold your Lock Screen, then tap Customise.",
+         "Tap Lock Screen.",
+         "Tap the box below the time.",
+         "Choose GymBlock.",
+         "Tap a widget to add it, then tap Done."]
+      : ["Touch and hold an empty space on your Home Screen until the icons jiggle.",
+         "Tap Edit at the top left, then Add Widget.",
+         "Search for GymBlock.",
+         "Pick a widget and tap Add Widget.",
+         "Tap Done at the top right."]
   }
 }

@@ -4,7 +4,7 @@ import Foundation
 enum WidgetKind {
   static let upNext = "com.sodhera.gymblock.upnext", month = "com.sodhera.gymblock.month"
   static let week = "com.sodhera.gymblock.week", startControl = "com.sodhera.gymblock.control.start"
-  static let streak = "com.sodhera.gymblock.streak"
+  static let streak = "com.sodhera.gymblock.streak", weekStrip = "com.sodhera.gymblock.weekstrip"
 }
 
 /// What the widgets know, written by the app into the App Group (the extension can't read the store).
@@ -28,6 +28,8 @@ struct WidgetSnapshot: Codable, Equatable {
   struct Labels: Codable, Equatable {
     var upNext, paused, stillWorkingOut, chooseExercise, training, sampleData, openGymBlock: String
     var weekStreak, weekStreakOne, week1, of, thisWeek, workout, workouts, startWorkout: String
+    /// "day streak" (9 Nov 2026); nil in older snapshots, the widget then says it in English.
+    var dayStreak: String? = nil
   }
   var version = 1
   var state: State
@@ -70,7 +72,7 @@ extension WidgetSnapshot.Labels {
       chooseExercise: t("Choose an exercise"), training: t("Training"), sampleData: t("Sample data"),
       openGymBlock: t("Open GymBlock"), weekStreak: t("week streak"), weekStreakOne: t("1 week streak"),
       week1: t("Week 1"), of: t("of"), thisWeek: t("this week"), workout: t("workout"), workouts: t("workouts"),
-      startWorkout: t("Start workout"))
+      startWorkout: t("Start workout"), dayStreak: t("day streak"))
   }
 }
 

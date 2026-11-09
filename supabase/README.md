@@ -189,3 +189,11 @@ the section on Profile asks the server, gets nothing, and shows the invite card.
    'Body');` queues it; the trigger and the function send it to that account's iPhones that have a
    token (signed in, notifications allowed, launched since the build that registers them). Check
    `gb_bond_notifications` for `sent_at` and `error`.
+11. **Buddy workout pushes, every / rarely / none** (`supabase/migrations/20261109000300_buddy_alerts.sql`, 9 Nov 2026;
+   pushed the same day, applied without error): `gb_profiles.buddy_alerts`, set from the app, read by the workout trigger before it queues a push
+   (rarely is a random one in three). Until it is pushed, the app's profile sync fails on the unknown column.
+10. **A message to every account** (`supabase/migrations/20261109000200_notify_all.sql`, 9 Nov 2026; pushed the same day, applied
+   without error). From the SQL editor, service role:
+   `select gb_notify_all('Title', 'Body');` queues one push per account with a push token and returns the
+   count. The same words are never queued twice for an account, so a repeat needs new words. Try
+   `gb_notify` on your own account first: a message arriving on a phone has not been checked yet.

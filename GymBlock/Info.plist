@@ -38,6 +38,12 @@
 	<string>https://www.orecci.com/gymblock/terms-of-service.html</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>GymBlock saves your streak card to Photos when you tap Save.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>PostHogAPIKey</key>

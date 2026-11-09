@@ -185,12 +185,16 @@ private struct MonthDots: View {
   @EnvironmentObject private var store: GymStore
   let sessions: [Session]
   private let dot: CGFloat = 12
+  /// Months back from this one (9 Nov 2026, at the user's request: earlier months were out of
+  /// reach): the chevrons step it, back as far as the month of the first workout.
+  @State private var monthsBack = StoreShots.monthsBack
   var body: some View {
     var calendar = Calendar.current
     calendar.firstWeekday = 2
     let today = calendar.startOfDay(for: Date())
-    // The month shown: this one, or an earlier one for store screenshots (`StoreShots.monthsBack`).
-    let month = calendar.date(byAdding: .month, value: -StoreShots.monthsBack, to: today) ?? today
+    let month = calendar.date(byAdding: .month, value: -monthsBack, to: today) ?? today
+    let earliest = sessions.map(\.started).min() ?? today
+    let canGoBack = calendar.compare(earliest, to: month, toGranularity: .month) == .orderedAscending
     let first = calendar.dateInterval(of: .month, for: month)?.start ?? month
     let length = calendar.range(of: .day, in: .month, for: month)?.count ?? 30
     let lead = (calendar.component(.weekday, from: first) + 5) % 7
@@ -201,10 +205,14 @@ private struct MonthDots: View {
     let count = sessions.filter { calendar.isDate($0.started, equalTo: month, toGranularity: .month) }.count
     let tally = "\(count) " + store.t(count == 1 ? "workout" : "workouts")
     return VStack(alignment: .leading, spacing: 8) {
-      HStack(alignment: .firstTextBaseline) {
-        PageLabel(text: month.formatted(.dateTime.month(.wide)))
-        Text(tally).font(.app(.caption, weight: .medium)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).fixedSize()
+      HStack(alignment: .center, spacing: 8) {
+        PageLabel(text: calendar.isDate(month, equalTo: today, toGranularity: .year)
+                  ? month.formatted(.dateTime.month(.wide)) : month.formatted(.dateTime.month(.wide).year()))
+        Spacer(minLength: 8)
+        monthButton("chevron.left", enabled: canGoBack, id: "profile.calendar.back") { monthsBack += 1 }
+        monthButton("chevron.right", enabled: monthsBack > 0, id: "profile.calendar.forward") { monthsBack -= 1 }
       }
+      .animation(nil, value: monthsBack)
       HStack(spacing: 0) {
         ForEach(0..<7, id: \.self) { column in
           Text((calendar.date(byAdding: .day, value: column, to: monday) ?? monday).formatted(.dateTime.weekday(.narrow)))
@@ -231,9 +239,16 @@ private struct MonthDots: View {
         }
       }
     }
-    .accessibilityElement(children: .ignore)
+    .accessibilityElement(children: .contain)
     .accessibilityLabel(month.formatted(.dateTime.month(.wide)) + ", " + tally)
     .accessibilityIdentifier("profile.calendar")
+  }
+  private func monthButton(_ symbol: String, enabled: Bool, id: String, _ action: @escaping () -> Void) -> some View {
+    Button { Analytics.tap(id); withAnimation(.smooth(duration: 0.2)) { action() } } label: {
+      Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(enabled ? JourneyColor.text : JourneyColor.ink(0.2))
+        .frame(width: 32, height: 32).contentShape(Rectangle())
+    }.buttonStyle(.hapticPlain).disabled(!enabled).accessibilityIdentifier(id)
   }
 }
 

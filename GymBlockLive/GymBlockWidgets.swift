@@ -164,21 +164,19 @@ struct MonthEntryView: View {
 }
 
 /// Opens Home; a running workout shows first anyway, because the app puts it there.
-struct WeekEntryView: View {
-  let entry: GlanceEntry
-  var body: some View {
-    WeekCircularView(snapshot: entry.snapshot, date: entry.date)
-      .modifier(GlanceChrome(url: AppRoute.url(.home, from: "circular")))
-  }
-}
-
 /// Opens Profile, where the weeks are.
 struct StreakEntryView: View {
   let entry: GlanceEntry
   @Environment(\.widgetFamily) private var family
   var body: some View {
-    StreakView(snapshot: entry.snapshot, date: entry.date, medium: family == .systemMedium)
-      .modifier(GlanceChrome(url: AppRoute.url(.profile, from: "streak"), card: StreakView.card))
+    Group {
+      switch family {
+      case .accessoryCircular: StreakCircularView(snapshot: entry.snapshot, date: entry.date)
+      case .accessoryRectangular: StreakRectView(snapshot: entry.snapshot, date: entry.date)
+      default: StreakView(snapshot: entry.snapshot, date: entry.date, medium: family == .systemMedium)
+      }
+    }
+    .modifier(GlanceChrome(url: AppRoute.url(.profile, from: "streak"), card: StreakView.card))
   }
 }
 
@@ -212,24 +210,33 @@ struct MonthWidget: Widget {
   }
 }
 
-/// This week round the kettlebell on the Lock Screen, at every pickup.
-struct WeekWidget: Widget {
+/// Home's head: the name, the day streak and this week's dated circles (9 Nov 2026).
+struct WeekStripWidget: Widget {
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: WidgetKind.week, provider: WeekProvider()) { WeekEntryView(entry: $0) }
-      .configurationDisplayName("This week")
-      .description("The days you trained this week.")
-      .supportedFamilies([.accessoryCircular])
-      .disfavoredLocations(WidgetPlacement.disfavored, for: [.systemSmall])
+    StaticConfiguration(kind: WidgetKind.weekStrip, provider: WeekProvider()) { WeekStripEntryView(entry: $0) }
+      .configurationDisplayName("Your week")
+      .description("Your streak and the days you trained this week.")
+      .supportedFamilies([.systemMedium])
+      .disfavoredLocations(WidgetPlacement.disfavored, for: [.systemMedium])
   }
 }
 
-/// The weeks in a row, as one big number. Same midnights as This week: a week only breaks once it's over.
+struct WeekStripEntryView: View {
+  let entry: GlanceEntry
+  var body: some View {
+    WeekStripView(snapshot: entry.snapshot, date: entry.date)
+      .modifier(GlanceChrome(url: AppRoute.url(.profile, from: "weekstrip")))
+  }
+}
+
+/// The days in a row (two missed days in a row end it), in the flame.
 struct StreakWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: WidgetKind.streak, provider: WeekProvider()) { StreakEntryView(entry: $0) }
       .configurationDisplayName("Streak")
-      .description("The weeks in a row you've trained.")
-      .supportedFamilies([.systemSmall, .systemMedium])
+      .description("The days in a row you've trained.")
+      // The Lock Screen sizes since 9 Nov 2026, in place of the week's circle of dots.
+      .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
       .disfavoredLocations(WidgetPlacement.disfavored, for: [.systemSmall, .systemMedium])
   }
 }
@@ -289,10 +296,4 @@ private enum CanvasFixture {
   CanvasFixture.entries[1]
 }
 
-#Preview("This week", as: .accessoryCircular) {
-  WeekWidget()
-} timeline: {
-  CanvasFixture.entries[0]
-  CanvasFixture.entries[1]
-}
 #endif

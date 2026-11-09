@@ -1,3 +1,4 @@
+import MessageUI
 import SwiftUI
 
 // GymBond's screens (8 Nov 2026, docs/GYMBOND-PLAN.md): the Profile section and its page, Home's
@@ -20,7 +21,7 @@ struct BondSection: View {
       } else {
         VStack(alignment: .leading, spacing: 12) {
           HStack(alignment: .firstTextBaseline) {
-            PageLabel(text: "GymBond")
+            PageLabel(text: "GymBuddy")
             Spacer(minLength: 8)
             NavigationLink { BondView() } label: {
               Text(store.t("Invite")).font(.app(.caption, weight: .semibold)).foregroundStyle(JourneyColor.signal)
@@ -106,8 +107,8 @@ extension GymStore {
   /// A friend's week in one short line: their streak once it's more than a week (the dots beside it
   /// show this week), else "2 this week", else "Nothing yet this week".
   func bondWeekLine(_ friend: GymBond.Friend) -> String {
-    let n = friend.thisWeek(), streak = friend.streak()
-    if streak > 1 { return "\(streak) " + t("week streak") }
+    let n = friend.thisWeek(), streak = friend.dayStreak()
+    if streak > 1 { return "\(streak) " + t("day streak") }
     if n == 0 { return t("Nothing yet this week") }
     return "\(n) " + t("this week")
   }
@@ -155,20 +156,32 @@ struct BondView: View {
       DotGrid()
       ScrollView {
         VStack(alignment: .leading, spacing: 0) {
-          Text("GymBond").font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
+          // Cut down on 9 Nov 2026 (the user: "too much text"): no intro (the gift is on the invite
+          // page and the Streak page), no label over the code, "Have a code?" as the field's own
+          // prompt, no gift line under a friend, one short footer.
+          Text("GymBuddy").font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
             .accessibilityAddTraits(.isHeader)
-          Text(store.t("Train with a friend. When they join with your code, you both get two weeks of GymBlock Pro."))
-            .font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 8)
-          PageLabel(text: store.t("Your code")).padding(.top, 32)
-          codeCard.padding(.top, 12)
-          PageLabel(text: store.t("Have a code?")).padding(.top, 32)
-          codeField.padding(.top, 12)
+          codeCard.padding(.top, 20)
+          codeField.padding(.top, 16)
           if !bond.friends.isEmpty {
-            PageLabel(text: store.t("Your friends")).padding(.top, 32)
+            HStack(alignment: .center, spacing: 8) {
+              PageLabel(text: store.t("Friends"))
+              // Friend-workout pushes: every, rarely or none, beside the label (9 Nov 2026).
+              Menu { BuddyAlertsPicker(id: "bond.alerts") } label: {
+                HStack(spacing: 5) {
+                  Image(systemName: "bell").font(.system(size: 13, weight: .semibold))
+                  Text(store.t(BuddyAlerts.current(store.profile).title)).font(.app(.subheadline, weight: .medium))
+                  Image(systemName: "chevron.up.chevron.down").font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundStyle(JourneyColor.signal).frame(minHeight: 28).contentShape(Rectangle())
+              }
+              .simultaneousGesture(TapGesture().onEnded { JourneyHaptic.pressLight() })
+              .accessibilityIdentifier("bond.alerts")
+            }.padding(.top, 32)
             VStack(spacing: 12) { ForEach(bond.friends) { friendRow($0) } }.padding(.top, 12)
           }
-          Text(store.t("Friends see your first name, your week and when you finish a workout. Nothing else."))
-            .font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).fixedSize(horizontal: false, vertical: true).padding(.top, 32)
+          Text(store.t("Friends see your first name and your week."))
+            .font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).fixedSize(horizontal: false, vertical: true).padding(.top, 28)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 24).padding(.top, 8).padding(.bottom, 40)
       }.scrollIndicators(.hidden).scrollDismissesKeyboard(.interactively)
     }
@@ -200,8 +213,13 @@ struct BondView: View {
           VStack(spacing: 6) {
             // The tracking adds its space after the last letter; nudged right so the code sits centred.
             Text(code).font(.app(size: 40, weight: .bold)).tracking(8).monospacedDigit().foregroundStyle(JourneyColor.text).padding(.leading, 8)
-            Text(store.t(copied ? "Copied" : "Tap to copy")).font(.app(.footnote)).foregroundStyle(copied ? JourneyColor.signalText : JourneyColor.tertiary)
-              .animation(.smooth(duration: 0.25), value: copied)
+            // The gift, said once on this page (9 Nov 2026), in the brand colour; "Copied" takes its place for a moment.
+            ZStack {
+              Text(store.t("A friend joins with it and you both get two weeks of Pro.")).opacity(copied ? 0 : 1)
+              Text(store.t("Copied")).opacity(copied ? 1 : 0)
+            }
+            .font(.app(.footnote, weight: .medium)).foregroundStyle(JourneyColor.signalText).multilineTextAlignment(.center)
+            .animation(.smooth(duration: 0.25), value: copied)
           }.frame(maxWidth: .infinity).contentShape(Rectangle())
         }.buttonStyle(.hapticPlain).accessibilityIdentifier("bond.code.copy")
           .accessibilityLabel(store.t("Your code") + ", " + code.map(String.init).joined(separator: " "))
@@ -220,8 +238,8 @@ struct BondView: View {
   private var codeField: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 12) {
-        TextField("", text: $draft, prompt: Text("ABC123").foregroundColor(JourneyColor.tertiary))
-          .font(.app(.title3, weight: .semibold)).tracking(3).foregroundStyle(JourneyColor.text)
+        TextField("", text: $draft, prompt: Text(store.t("Have a code?")).foregroundColor(JourneyColor.tertiary))
+          .font(.app(.title3, weight: .semibold)).tracking(draft.isEmpty ? 0 : 3).foregroundStyle(JourneyColor.text)
           .textInputAutocapitalization(.characters).autocorrectionDisabled().keyboardType(.asciiCapable).submitLabel(.join)
           .onSubmit(add).tint(JourneyColor.accent)
           .onChange(of: draft) { _, new in if new.count > 8 { draft = String(new.prefix(8)) } }
@@ -265,9 +283,6 @@ struct BondView: View {
       VStack(alignment: .leading, spacing: 3) {
         Text(friend.name).font(.app(.title3, weight: .semibold)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Text(store.bondWeekLine(friend)).font(.app(.subheadline)).monospacedDigit().foregroundStyle(JourneyColor.tertiary).lineLimit(1)
-        if let gift = giftLine(friend) {
-          Text(gift).font(.app(.footnote)).foregroundStyle(JourneyColor.tertiary).fixedSize(horizontal: false, vertical: true)
-        }
       }.frame(maxWidth: .infinity, alignment: .leading)
       VStack(alignment: .trailing, spacing: 6) {
         BondDots(week: friend.week())
@@ -302,10 +317,6 @@ struct BondView: View {
   }
   /// Your gift on this bond, while it waits for your plan to end. Once granted it shows as the
   /// subscription in Settings.
-  private func giftLine(_ friend: GymBond.Friend) -> String? {
-    guard friend.giftGrantedAt == nil, let due = friend.giftDueAt, due > Date().addingTimeInterval(3600) else { return nil }
-    return store.t("Two weeks of Pro for you, when your plan ends.")
-  }
 }
 
 /// The share sheet as the ink primary button (the GymBond page and onboarding's invite page). With
@@ -420,6 +431,299 @@ struct BondCodeStage: View {
         .multilineTextAlignment(.center).frame(minHeight: 20).padding(.horizontal, 8)
         .accessibilityHidden(status == nil).accessibilityIdentifier("bond.status")
       Spacer(minLength: 0)
+    }
+  }
+}
+
+
+// MARK: - The streak page
+
+/// Opened from Home's streak pill (9 Nov 2026, at the user's request): the flame and the week streak
+/// in the middle, then friends ranked by their streaks (you among them), or, with no friend yet, the
+/// invite as the button. Plain rows on the paper, no cards.
+struct StreakPage: View {
+  @EnvironmentObject private var store: GymStore
+  @ObservedObject private var bond = GymBond.shared
+  var body: some View {
+    let stats = store.homeStats()
+    let mine = stats.streakDays
+    ScrollView {
+      VStack(spacing: 0) {
+        VStack(spacing: 14) {
+          StreakFlame(count: mine, size: 120)
+          Text(store.t("day streak")).font(.app(.title3, weight: .medium)).foregroundStyle(JourneyColor.secondary)
+          Text(store.t("Miss two days in a row and it starts over.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
+            .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).padding(.top, 36).padding(.bottom, 40)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(mine) " + store.t("day streak"))
+
+        if bond.friends.isEmpty {
+          VStack(spacing: 14) {
+            Text(store.t("Train with a friend and see who keeps the longer streak.")).font(.app(.body))
+              .foregroundStyle(JourneyColor.secondary).multilineTextAlignment(.center)
+            BondShareButton(title: store.t("Invite a friend"), id: "streak.invite")
+            Text(store.t("Gift them two weeks of Pro.")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
+          }
+          .padding(.top, 8)
+        } else {
+          HStack(alignment: .center) {
+            PageLabel(text: store.t("Friends"))
+            // Rank by the streak, or by workouts over the last ten weeks (as far back as a friend's
+            // list goes), 9 Nov 2026, at the user's request.
+            Picker("", selection: $byWorkouts.ticking) {
+              Text(store.t("Streak")).tag(false)
+              Text(store.t("Workouts")).tag(true)
+            }
+            .pickerStyle(.segmented).fixedSize().accessibilityIdentifier("streak.rank")
+          }
+          ForEach(Array(ranked(mine).enumerated()), id: \.element.id) { i, row in
+            HStack(alignment: .firstTextBaseline, spacing: 14) {
+              Text("\(i + 1)").font(.app(.subheadline, weight: .medium)).monospacedDigit()
+                .foregroundStyle(JourneyColor.tertiary).frame(width: 20, alignment: .leading)
+              Text(row.name).font(.app(.body, weight: row.me ? .semibold : .regular)).foregroundStyle(JourneyColor.text).lineLimit(1)
+              Spacer(minLength: 8)
+              HStack(spacing: 5) {
+                if byWorkouts {
+                  Image(systemName: "dumbbell.fill").font(.system(size: 12, weight: .semibold)).foregroundStyle(JourneyColor.signal).accessibilityHidden(true)
+                  Text("\(row.workouts)").font(.app(.body, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+                } else {
+                  StreakFlame(size: 15)
+                  Text("\(row.streak)").font(.app(.body, weight: .semibold)).monospacedDigit().foregroundStyle(JourneyColor.text)
+                }
+              }
+            }
+            .frame(minHeight: 52)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(i + 1), " + row.name + ", " + (byWorkouts ? "\(row.workouts) " + store.t("workouts") : "\(row.streak) " + store.t("day streak")))
+            SettingsDivider()
+          }
+          NavigationLink { BondView() } label: {
+            HStack(spacing: 8) {
+              Image(systemName: "plus").font(.system(.subheadline, weight: .semibold))
+              Text(store.t("Invite a friend")).font(.app(.body, weight: .medium))
+            }.foregroundStyle(JourneyColor.signal).frame(minHeight: 44).contentShape(Rectangle())
+          }.buttonStyle(.hapticPlain).padding(.top, 8).accessibilityIdentifier("streak.bond")
+        }
+      }
+      .padding(.horizontal, 24).padding(.bottom, 32)
+    }
+    .scrollIndicators(.hidden)
+    .background(DotGrid().ignoresSafeArea())
+    .navigationTitle(store.t("Streak")).navigationBarTitleDisplayMode(.inline)
+    // Share: the streak as a card (the flame, WEEK STREAK, "Get focused with GymBlock"), as Cal AI's.
+    .toolbar {
+      ToolbarItem(placement: .topBarTrailing) {
+        Button {
+          JourneyHaptic.pressLight(); Analytics.tap("streak.share")
+          if let image = card ?? shareImage(mine) { sharing = ShareCard(image: image) }
+        } label: {
+          Image(systemName: "square.and.arrow.up").accessibilityLabel(store.t("Share"))
+        }.accessibilityIdentifier("streak.share")
+      }
+    }
+    // The card on its own sheet with Messages, Save, More and Copy under it, as Cal AI's (9 Nov 2026).
+    // The image rides on the sheet's item: a `card` read inside the sheet's closure stayed nil.
+    .sheet(item: $sharing) { StreakShareSheet(card: $0.image) }
+    .track(screen: "streak", ["friends": bond.friends.count])
+    .task(id: mine) { card = shareImage(mine) }
+    .task { await bond.fetchCode(); await bond.refresh() }
+  }
+
+  @State private var byWorkouts = false
+  private struct ShareCard: Identifiable { let id = UUID(); let image: UIImage }
+  @State private var sharing: ShareCard?
+  /// The card, 1080 x 1920, rendered once per streak value.
+  @State private var card: UIImage?
+  @MainActor private func shareImage(_ streak: Int) -> UIImage? {
+    let renderer = ImageRenderer(content: StreakShareCard(streak: streak, label: store.t("day streak"), tagline: store.t("Focused workouts with")))
+    renderer.scale = 3
+    return renderer.uiImage
+  }
+
+  private struct Row: Identifiable { let id: String; let name: String; let streak: Int; let workouts: Int; let thisWeek: Int; let me: Bool }
+  /// You and your friends, by the longest streak (or the most workouts over the last ten weeks, the
+  /// window a friend's list covers), then the most workouts this week, then by name.
+  private func ranked(_ mine: Int) -> [Row] {
+    let stats = store.homeStats()
+    let since = Calendar.current.date(byAdding: .day, value: -70, to: Date()) ?? Date()
+    let myWorkouts = store.data.history.filter { !$0.completedSets.isEmpty && $0.started >= since }.count
+    var rows = bond.friends.map { Row(id: $0.id.uuidString, name: $0.name, streak: $0.dayStreak(), workouts: $0.workouts.count, thisWeek: $0.thisWeek(), me: false) }
+    rows.append(Row(id: "me", name: store.t("You"), streak: mine, workouts: myWorkouts, thisWeek: stats.thisWeek, me: true))
+    return rows.sorted { a, b in
+      let (x, y) = byWorkouts ? (a.workouts, b.workouts) : (a.streak, b.streak)
+      if x != y { return x > y }
+      if a.thisWeek != b.thisWeek { return a.thisWeek > b.thisWeek }
+      return a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+    }
+  }
+}
+
+/// The shareable streak card (9 Nov 2026, after Cal AI's): orange from the top right fading to white
+/// at the foot, the flame with the count, the label in orange capitals, and the app's name at the
+/// bottom with its mark. 360 x 640 pt, rendered at 3x.
+struct StreakShareCard: View {
+  let streak: Int
+  let label: String
+  let tagline: String
+  var body: some View {
+    ZStack {
+      LinearGradient(stops: [.init(color: StreakFlame.orange, location: 0), .init(color: Color(red: 0.99, green: 0.86, blue: 0.62), location: 0.35),
+                             .init(color: .white, location: 0.72)], startPoint: .topTrailing, endPoint: .bottomLeading)
+      VStack(spacing: 28) {
+        StreakFlame(count: streak, size: 150)
+        Text(label.uppercased()).font(.system(size: 44, weight: .bold, design: .rounded)).tracking(1)
+          .foregroundStyle(StreakFlame.deep)
+      }
+      .offset(y: -40)
+      VStack {
+        Spacer()
+        HStack(spacing: 8) {
+          Text(tagline).font(.system(size: 20, weight: .medium))
+          BrandMark(size: 22)
+          Text("GymBlock").font(.system(size: 22, weight: .bold)).tracking(-0.4)
+        }.foregroundStyle(Color(white: 0.1)).padding(.bottom, 120)
+      }
+    }
+    .frame(width: 360, height: 640)
+    .environment(\.colorScheme, .light)
+  }
+}
+
+
+/// The streak card on its own sheet, laid out as Cal AI's (9 Nov 2026, from the user's screenshot):
+/// the card edge to edge from the sheet's top down to a hairline, and under it a row of targets that
+/// scrolls sideways: Instagram (Stories, through Instagram's own share scheme), Messages, Save (to
+/// Photos, add-only), More (the system share sheet) and Copy. X and Snapchat take only their SDKs
+/// for an image, and the app takes no other SDKs, so they are not here.
+struct StreakShareSheet: View {
+  @EnvironmentObject private var store: GymStore
+  @Environment(\.dismiss) private var dismiss
+  let card: UIImage
+  @State private var messaging = false
+  @State private var saved = false
+  @State private var copied = false
+  private static let instagramStories = URL(string: "instagram-stories://share?source_application=com.sodhera.gymblock")!
+  var body: some View {
+    VStack(spacing: 0) {
+      Image(uiImage: card).resizable().scaledToFill()
+        .frame(maxWidth: .infinity, maxHeight: .infinity).clipped()
+        .accessibilityLabel(store.t("Streak"))
+      Divider()
+      ScrollView(.horizontal) {
+        HStack(alignment: .top, spacing: 22) {
+          if UIApplication.shared.canOpenURL(Self.instagramStories) {
+            target(id: "streak.share.instagram", title: "Instagram") { Image("app.instagram").resizable().scaledToFill() } action: {
+              // Instagram reads the image off the pasteboard; it stays there five minutes at most.
+              UIPasteboard.general.setItems([["com.instagram.sharedSticker.backgroundImage": card.pngData() ?? Data()]],
+                                            options: [.expirationDate: Date().addingTimeInterval(300)])
+              UIApplication.shared.open(Self.instagramStories)
+            }
+          }
+          if MessageComposer.canSend {
+            target(id: "streak.share.messages", title: store.t("Messages")) { Image("app.messages").resizable().scaledToFill() } action: { messaging = true }
+          }
+          target(id: "streak.share.save", title: store.t(saved ? "Saved" : "Save")) { glyph(saved ? "checkmark" : "square.and.arrow.down") } action: {
+            UIImageWriteToSavedPhotosAlbum(card, nil, nil, nil)
+            withAnimation(.smooth(duration: 0.25)) { saved = true }
+          }
+          ShareLink(item: Image(uiImage: card), preview: SharePreview(store.t("Streak"), image: Image(uiImage: card))) {
+            targetLabel(title: store.t("More")) { glyph("ellipsis") }
+          }
+          .buttonStyle(JourneyPressStyle())
+          .simultaneousGesture(TapGesture().onEnded { Analytics.tap("streak.share.more") })
+          .accessibilityIdentifier("streak.share.more")
+          target(id: "streak.share.copy", title: store.t(copied ? "Copied" : "Copy")) { glyph(copied ? "checkmark" : "doc.on.doc") } action: {
+            UIPasteboard.general.image = card
+            withAnimation(.smooth(duration: 0.25)) { copied = true }
+          }
+        }
+        .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 8)
+      }
+      .scrollIndicators(.hidden)
+      .background(JourneyColor.stage)
+    }
+    .background(JourneyColor.stage.ignoresSafeArea())
+    .presentationDragIndicator(.visible)
+    .sheet(isPresented: $messaging) { MessageComposer(image: card, text: nil) }
+    .track(screen: "streak_share")
+  }
+
+  private func target<Icon: View>(id: String, title: String, @ViewBuilder icon: @escaping () -> Icon, action: @escaping () -> Void) -> some View {
+    Button { Analytics.tap(id); action() } label: { targetLabel(title: title, icon: icon) }
+      .buttonStyle(JourneyPressStyle()).accessibilityIdentifier(id)
+  }
+  private func targetLabel<Icon: View>(title: String, @ViewBuilder icon: () -> Icon) -> some View {
+    VStack(spacing: 8) {
+      icon().frame(width: 60, height: 60).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+      Text(title).font(.app(.footnote)).foregroundStyle(JourneyColor.secondary).lineLimit(1)
+    }
+    .frame(width: 72)
+  }
+  /// Save, More and Copy: a symbol on a white square with a hairline, as Cal AI draws them.
+  private func glyph(_ symbol: String) -> some View {
+    Image(systemName: symbol).font(.system(size: 22, weight: .medium)).foregroundStyle(JourneyColor.text)
+      .frame(width: 60, height: 60)
+      .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(JourneyColor.raised))
+      .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(JourneyColor.hairline, lineWidth: 1))
+  }
+}
+
+/// Apple's Messages composer with the card attached. Nothing is sent until they tap Send.
+struct MessageComposer: UIViewControllerRepresentable {
+  let image: UIImage
+  let text: String?
+  @Environment(\.dismiss) private var dismiss
+  static var canSend: Bool { MFMessageComposeViewController.canSendText() && MFMessageComposeViewController.canSendAttachments() }
+  func makeUIViewController(context: Context) -> MFMessageComposeViewController {
+    let vc = MFMessageComposeViewController()
+    vc.messageComposeDelegate = context.coordinator
+    if let text { vc.body = text }
+    if let data = image.pngData() { vc.addAttachmentData(data, typeIdentifier: "public.png", filename: "streak.png") }
+    return vc
+  }
+  func updateUIViewController(_ vc: MFMessageComposeViewController, context: Context) {}
+  func makeCoordinator() -> Coordinator { Coordinator(dismiss: { dismiss() }) }
+  @MainActor final class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
+    let dismiss: () -> Void
+    init(dismiss: @escaping () -> Void) { self.dismiss = dismiss }
+    nonisolated func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
+      let outcome = result == .sent ? "sent" : result == .cancelled ? "cancelled" : "failed"
+      Task { @MainActor in
+        Analytics.track("streak_share_messages", ["result": outcome])
+        dismiss()
+      }
+    }
+  }
+}
+
+
+/// How often a GymBuddy's finished workout reaches you (9 Nov 2026, at the user's request): every
+/// workout, rarely (a random one in three, decided by the server), or none. The same menu sits
+/// beside Friends on the GymBuddy page and in Settings under Notifications.
+enum BuddyAlerts: String, CaseIterable {
+  case every, rarely, none
+  var title: String {
+    switch self {
+    case .every: "Every workout"
+    case .rarely: "Rarely"
+    case .none: "None"
+    }
+  }
+  static func current(_ profile: Profile) -> BuddyAlerts { BuddyAlerts(rawValue: profile.buddyAlerts ?? "") ?? .every }
+}
+
+/// The menu's choices, for a `Picker` inside a `Menu`.
+struct BuddyAlertsPicker: View {
+  @EnvironmentObject private var store: GymStore
+  let id: String
+  var body: some View {
+    Picker(store.t("Buddy workouts"), selection: Binding(get: { BuddyAlerts.current(store.profile) }, set: { choice in
+      store.updateProfile { $0.buddyAlerts = choice.rawValue }
+      Analytics.tap(id, ["value": choice.rawValue])
+    }).ticking) {
+      ForEach(BuddyAlerts.allCases, id: \.self) { Text(store.t($0.title)).tag($0) }
     }
   }
 }

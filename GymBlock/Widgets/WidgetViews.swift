@@ -269,13 +269,11 @@ struct UpNextRectView: View {
           Text(g.heroShort ?? g.hero).lineLimit(1).minimumScaleFactor(0.7)
         }
         .font(.system(size: 22, weight: .bold)).foregroundStyle(tone.ink)
-        if let caption = g.caption {
-          Text(caption).font(.system(size: 13)).foregroundStyle(tone.secondary).lineLimit(1)
-        }
+        // No "48 min last time" here (9 Nov 2026, the user: redundant on the Lock Screen).
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel([g.statusWord, g.hero, g.caption ?? ""].filter { !$0.isEmpty }.joined(separator: ", "))
+      .accessibilityLabel([g.statusWord, g.hero].filter { !$0.isEmpty }.joined(separator: ", "))
     }
   }
 
@@ -411,68 +409,193 @@ struct WeekCircularView: View {
   }
 }
 
-/// Streak, systemSmall and systemMedium (8 Nov 2026, at the user's request, after Duolingo's streak
-/// card): the weeks in a row as one huge number, its words under it, and the mark, all white on an
-/// emerald card (the user picked the card over paper). Home's rule for the number, uncapped.
+/// Streak, systemSmall and systemMedium (9 Nov 2026, at the user's request, after Cal AI's streak
+/// widget; the emerald card of 8 Nov is gone): the orange flame with the days in a row inside it,
+/// on paper, the mark small and grey at the bottom left. The medium one says the words beside it.
+/// The day streak counts the snapshot's days (the last 42), so it tops out at 42 here.
 struct StreakView: View {
   let snapshot: WidgetSnapshot?
   let date: Date
-  /// systemMedium: the number beside a big mark; otherwise the mark above it.
   let medium: Bool
   @Environment(\.widgetTone) private var tone
-  /// The card behind it, in full colour only (tinted, Lock and StandBy draw it like the others). Day
-  /// emerald at night too: the night emerald is too light for white type.
-  static func card(_ tone: WidgetTone) -> Color? { tone.fullColor ? Paper.signal.light.color : nil }
-  private var ink: Color { Self.card(tone) == nil ? tone.ink : .white }
-  private var secondary: Color { Self.card(tone) == nil ? tone.secondary : .white.opacity(0.8) }
+  /// No card: the flame sits on the paper plate.
+  static func card(_ tone: WidgetTone) -> Color? { nil }
   var body: some View {
     let g = WidgetGlance(snapshot, at: date)
     if g.phase == .setup {
       GlanceSetup(glance: g)
     } else {
-      let n = g.streak
-      Group {
+      let n = TrainingDays.dayStreak(at: date, days: Set(snapshot?.days ?? []))
+      let words = g.sample ? g.labels.sampleData : (g.labels.dayStreak ?? "day streak")
+      ZStack(alignment: .bottomLeading) {
         if medium {
-          HStack(alignment: .center, spacing: 12) {
-            count(g, n, size: 76)
+          HStack(spacing: 16) {
+            StreakFlame(count: n, size: 84)
+            VStack(alignment: .leading, spacing: 2) {
+              Text(verbatim: "\(n)").font(WidgetType.words(44, .bold)).tracking(-1).foregroundStyle(tone.ink).lineLimit(1)
+              Text(words).font(WidgetType.words(15, .medium)).foregroundStyle(tone.secondary).lineLimit(2)
+            }
             Spacer(minLength: 0)
-            mark(100)
           }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-          VStack(alignment: .leading, spacing: 0) {
-            mark(34)
-            Spacer(minLength: 8)
-            count(g, n, size: 58)
+          StreakFlame(count: n, size: 74).frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        WidgetMark(18).opacity(0.45)
+      }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(g.sample ? g.labels.sampleData : "\(n) " + words)
+    }
+  }
+}
+
+
+/// Home's head as a widget, systemMedium (9 Nov 2026, at the user's request): the mark and the name
+/// on the left, the flame with the day streak on the right, and this week as seven dated circles
+/// under them, Monday first: a trained day filled in its split's colour, today ringed, a missed day
+/// a dashed ring, a day to come faint. The day names follow the phone's language.
+struct WeekStripView: View {
+  let snapshot: WidgetSnapshot?
+  let date: Date
+  @Environment(\.widgetTone) private var tone
+  var body: some View {
+    let g = WidgetGlance(snapshot, at: date)
+    if g.phase == .setup {
+      GlanceSetup(glance: g)
+    } else {
+      let streak = TrainingDays.dayStreak(at: date, days: g.days)
+      let calendar = TrainingDays.calendar
+      let monday = TrainingDays.monday(of: date)
+      let marks = g.week, colors = g.weekColors
+      let names = Self.dayNames
+      // Sized to fill the medium plate (the user, 9 Nov: space at the top and bottom).
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(spacing: 7) {
+          WidgetMark(24)
+          Text(verbatim: "GymBlock").font(WidgetType.words(21, .bold)).tracking(-0.4).foregroundStyle(tone.ink)
+          Spacer(minLength: 0)
+          HStack(spacing: 5) {
+            StreakFlame(size: 19)
+            Text(verbatim: "\(streak)").font(WidgetType.words(17, .semibold)).foregroundStyle(tone.ink)
+          }
+        }
+        Spacer(minLength: 10)
+        HStack(spacing: 0) {
+          ForEach(0..<7, id: \.self) { d in
+            let day = calendar.date(byAdding: .day, value: d, to: monday) ?? monday
+            WeekStripDay(name: names.string(from: day), number: calendar.component(.day, from: day), mark: marks[d], color: colors[d])
+              .frame(maxWidth: .infinity)
           }
         }
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel(g.sample ? g.labels.sampleData : "\(n) " + words(g, n))
+      .accessibilityLabel(spoken(g, streak: streak))
     }
   }
+  private static let dayNames: DateFormatter = {
+    let f = DateFormatter()
+    f.setLocalizedDateFormatFromTemplate("EEE")
+    return f
+  }()
+  private func spoken(_ g: WidgetGlance, streak: Int) -> String {
+    var out = g.sample ? g.labels.sampleData + ", " : ""
+    out += "\(streak) " + (g.labels.dayStreak ?? "day streak")
+    out += ", \(g.thisWeek) " + g.labels.of + " \(snapshot?.goal ?? 0) " + g.labels.thisWeek
+    return out
+  }
+}
 
-  private func count(_ g: WidgetGlance, _ n: Int, size: CGFloat) -> some View {
-    VStack(alignment: .leading, spacing: 0) {
-      Text(verbatim: "\(n)").font(WidgetType.words(size, .bold)).tracking(-size * 0.04).foregroundStyle(ink)
-        .lineLimit(1).minimumScaleFactor(0.6)
-      Text(g.sample ? g.labels.sampleData : words(g, n)).font(WidgetType.words(15, .medium)).foregroundStyle(secondary)
-        .lineLimit(1).minimumScaleFactor(0.85)
+/// One day of the strip: its name over its number in a ring.
+private struct WeekStripDay: View {
+  let name: String
+  let number: Int
+  let mark: DayMark
+  let color: SplitColor?
+  @Environment(\.widgetTone) private var tone
+  var body: some View {
+    let today = mark == .today
+    let faint = mark == .future
+    VStack(spacing: 7) {
+      Text(name).font(WidgetType.words(12, today ? .semibold : .medium))
+        .foregroundStyle(nameColor(today: today, faint: faint))
+        .lineLimit(1).minimumScaleFactor(0.7)
+      ZStack {
+        ring
+        Text(verbatim: "\(number)").font(WidgetType.words(15, mark == .trained ? .semibold : .regular))
+          .foregroundStyle(numberColor(faint: faint))
+      }
+      .frame(width: 36, height: 36)
     }
   }
-
-  /// On the card the iron is white with the keyhole cut through to the emerald; elsewhere the usual mark.
-  @ViewBuilder private func mark(_ size: CGFloat) -> some View {
-    if Self.card(tone) != nil {
-      KettlebellShape(part: .ironCut).fill(.white, style: FillStyle(eoFill: true))
-        .frame(width: size, height: size).accessibilityHidden(true)
-    } else {
-      WidgetMark(size)
+  private func nameColor(today: Bool, faint: Bool) -> Color {
+    if today { return tone.ink }
+    return faint ? tone.ink.opacity(0.3) : tone.secondary
+  }
+  private func numberColor(faint: Bool) -> Color {
+    if mark == .trained { return .white }
+    return faint ? tone.ink.opacity(0.3) : tone.ink
+  }
+  @ViewBuilder private var ring: some View {
+    switch mark {
+    case .trained:
+      let fill: Color = tone.fullColor ? (color ?? .emerald).paper.color(dark: tone.dark) : tone.signal
+      Circle().fill(fill).widgetAccentable()
+    case .today: Circle().strokeBorder(tone.ink.opacity(0.25), lineWidth: 2)
+    case .future: Circle().strokeBorder(tone.ink.opacity(0.1), lineWidth: 1.5)
+    case .past: Circle().strokeBorder(tone.ink.opacity(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [3, 3]))
     }
   }
+}
 
-  /// "week streak" under the number; for one week, "1 week streak" without its "1 " ("semana de racha").
-  private func words(_ g: WidgetGlance, _ n: Int) -> String {
-    n == 1 ? String(g.labels.weekStreakOne.trimmingPrefix("1 ")) : g.labels.weekStreak
+
+/// Streak on the Lock Screen, accessoryCircular (9 Nov 2026, at the user's request, in place of the
+/// week's seven dots, which read as nothing): the flame over the days in a row, one colour as the
+/// Lock Screen draws everything.
+struct StreakCircularView: View {
+  let snapshot: WidgetSnapshot?
+  let date: Date
+  @Environment(\.widgetTone) private var tone
+  var body: some View {
+    let g = WidgetGlance(snapshot, at: date)
+    GeometryReader { box in
+      let side = min(box.size.width, box.size.height)
+      VStack(spacing: -side * 0.02) {
+        Image(systemName: "flame.fill").font(.system(size: side * 0.34, weight: .semibold)).foregroundStyle(tone.ink)
+        Text(verbatim: g.phase == .setup ? "–" : "\(TrainingDays.dayStreak(at: date, days: g.days))")
+          .font(WidgetType.words(side * 0.36, .bold)).foregroundStyle(tone.ink).lineLimit(1).minimumScaleFactor(0.6)
+      }
+      .frame(width: box.size.width, height: box.size.height)
+    }
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(label(g))
+  }
+  private func label(_ g: WidgetGlance) -> String {
+    if g.phase == .setup { return g.labels.openGymBlock }
+    if g.sample { return g.labels.sampleData }
+    return "\(TrainingDays.dayStreak(at: date, days: g.days)) " + (g.labels.dayStreak ?? "day streak")
+  }
+}
+
+/// Streak on the Lock Screen, accessoryRectangular: the flame, the number large, "day streak" under it.
+struct StreakRectView: View {
+  let snapshot: WidgetSnapshot?
+  let date: Date
+  @Environment(\.widgetTone) private var tone
+  var body: some View {
+    let g = WidgetGlance(snapshot, at: date)
+    let n = TrainingDays.dayStreak(at: date, days: g.days)
+    HStack(spacing: 10) {
+      Image(systemName: "flame.fill").font(.system(size: 26, weight: .semibold)).foregroundStyle(tone.ink)
+      VStack(alignment: .leading, spacing: 0) {
+        Text(verbatim: g.phase == .setup ? "–" : "\(n)").font(WidgetType.words(26, .bold)).foregroundStyle(tone.ink).lineLimit(1)
+        Text(g.phase == .setup ? g.labels.openGymBlock : g.sample ? g.labels.sampleData : (g.labels.dayStreak ?? "day streak"))
+          .font(WidgetType.words(13, .medium)).foregroundStyle(tone.secondary).lineLimit(1)
+      }
+      Spacer(minLength: 0)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(g.phase == .setup ? g.labels.openGymBlock : "\(n) " + (g.labels.dayStreak ?? "day streak"))
   }
 }

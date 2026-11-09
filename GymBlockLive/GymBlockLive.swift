@@ -7,8 +7,8 @@ import WidgetKit
     WorkoutLiveActivity()
     UpNextWidget()
     MonthWidget()
-    WeekWidget()
     StreakWidget()
+    WeekStripWidget()
     if #available(iOS 18.0, *) { StartWorkoutControl() }
   }
 }

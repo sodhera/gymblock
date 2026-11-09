@@ -13,3 +13,4 @@ Secrets.local.xcconfig
 scripts/bezels/
 # Supabase CLI link state (project ref, pooler URL), per machine.
 supabase/.temp/
+__pycache__/

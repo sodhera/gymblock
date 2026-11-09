@@ -91,6 +91,8 @@ struct Profile: Codable {
   var heightCM: Double?
   var bodyWeightKG: Double?
   var restAlerts: Bool?
+  /// How often a GymBuddy's finished workout reaches you: "every", "rarely" or "none"; nil is every.
+  var buddyAlerts: String?
   /// Off: one tap logs a set and starts the rest (no set clock). Timed exercises always use the clock.
   var timeSets: Bool?
 }
