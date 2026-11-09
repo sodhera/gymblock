@@ -71,19 +71,19 @@ struct AccountSection: View {
       // The link itself is the "Account · Not set up" row at the top of Settings (`AccountSetupView`).
       SettingsNote(store.t("Your workouts are on this iPhone and a silent account. Set up your account to get them back on another iPhone."))
     }
-    // A silent account has nothing to log out to: Delete account is its only exit.
-    if !account.isAnonymous {
+    // Logging out of a silent account (9 Nov 2026, as Cal AI) keeps the workouts on this iPhone and
+    // starts onboarding again, which makes a fresh silent account; the old one is swept in a month.
+    let signedIn = account.user != nil || AppConfig.offline
     Button { confirmLogOut = true } label: {
-      SettingRow(title: store.t(cloud || AppConfig.offline ? "Log out" : "Clear this iPhone"))
+      SettingRow(title: store.t(signedIn ? "Log out" : "Clear this iPhone"))
     }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.logout")
-      .confirmationDialog(store.t(cloud ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
-        Button(store.t(cloud || AppConfig.offline ? "Log out" : "Clear")) { JourneyHaptic.pressLight(); logOut() }.accessibilityIdentifier("settings.logout.confirm")
+      .confirmationDialog(store.t(signedIn ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
+        Button(store.t(signedIn ? "Log out" : "Clear")) { JourneyHaptic.pressLight(); logOut() }.accessibilityIdentifier("settings.logout.confirm")
         Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
       } message: {
         Text(store.t(cloud ? "Your workouts stay in your account. This iPhone is cleared." : "Your workouts and splits stay on this iPhone."))
       }
       .tint(GymColor.ink)
-    }
     if account.user != nil || AppConfig.offline {
       Button(role: .destructive) { confirmDelete = true } label: {
         Text(store.t("Delete account")).font(.app(.subheadline)).foregroundStyle(JourneyColor.tertiary)
