@@ -1,5 +1,9 @@
 # Validation — 8 October 2026
 
+## App Store 1.1.0 build 13 (9 November 2026): uploaded
+
+1.1.0 (13) is `04cc47e` on `main`: everything since 1.0.4 (12) (GymBond, the silent account, What's new, the streak flame and card, buddy alerts, widgets in Settings), the version bump, and one fix. The first unit-test run crashed: `Spanish.bond` listed "Copied" twice, and a duplicate key in a Swift dictionary literal traps when it's first read, so any phone set to Spanish would have crashed at its first translation. Removed; a scan of all 17 `[String: String]` literals found no other duplicates. Rerun: 101 tests, 1 skipped, 1 failure: `testContinueWaitsOnlyOnAnimatedPages`, stale since `37073a3` made the words page wait for its animation (the test is updated after the build). Archived in Release from a clean worktree with this Mac's `Secrets.local.xcconfig`, exported and the IPA checked: every bundle 1.1.0 (13), Apple Distribution (6LYZDNCM4M), `get-task-allow` false, family-controls in the app and the three Screen Time extensions, `aps-environment` production in the app (new since GymBond), all five keys set, `TikTokAppID` 7704933808763781128. Uploaded with `xcodebuild -exportArchive` (destination upload) at 15:01 local time ("Upload succeeded"). The user submits it in App Store Connect. **Not done:** the Privacy Policy (it still says there's no push server and doesn't mention GymBond) and the Terms (Pro "optional" at the old prices); the user chose to fix them after submitting. **Not checked:** this build on a device, GymBond with two accounts, pushes from the production APNs host.
+
 
 ## App Store screenshots, the clean white set revised (9 November 2026, not uploaded)
 

@@ -90,9 +90,9 @@ import XCTest
     }
   }
   func testContinueWaitsOnlyOnAnimatedPages() {
-    for step: OnboardingStep in [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise] { XCTAssertTrue(step.animated, "\(step)") }
+    for step: OnboardingStep in [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .words] { XCTAssertTrue(step.animated, "\(step)") }
     // Questions: Continue is there as soon as there's an answer.
-    for step: OnboardingStep in [.name, .trainingDays, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .perRest, .workoutTime, .alerts, .commit, .words] { XCTAssertFalse(step.animated, "\(step)") }
+    for step: OnboardingStep in [.name, .trainingDays, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .perRest, .workoutTime, .alerts, .commit] { XCTAssertFalse(step.animated, "\(step)") }
   }
   func testSoundsAndTapsLandOnTheSameBeat() {
     func taps(_ score: JourneyScore) -> [Double] { score.haptics.compactMap { if case let .tap(t, _, _) = $0 { t } else { nil } } }
