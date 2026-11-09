@@ -178,7 +178,7 @@ import XCTest
     let route: [OnboardingStep] = [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest,
                                    .exerciseCount, .setCount, .workoutTime, .age, .yearDots, .yearPhone, .life, .promise, .words, .tried, .shield,
                                    .alerts, .commit, .bondCode, .trial1, .trial2, .subscription,
-                                   .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout]
+                                   .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .bondInvite, .firstWorkout]
     XCTAssertEqual(OnboardingRoute.steps(b), route)  // No gym-time question since 28 Oct 2026.
     // "Rarely" asks the minutes too: the "Be honest" answer changes nothing.
     b.scrollFrequency = .no

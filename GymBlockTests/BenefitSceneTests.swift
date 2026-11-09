@@ -12,7 +12,7 @@ import XCTest
     // V10 (1 Nov 2026): the shield sits with the why page; the apps picker is on Home; the trial pages before the price.
     // After the price (1 Nov 2026): You're in, then the permissions iOS hasn't answered, then the splits.
     let tail: [OnboardingStep] = [.alerts, .commit, .bondCode, .trial1, .trial2, .subscription,
-                                  .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout]
+                                  .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .bondInvite, .firstWorkout]
     // Since 28 Oct 2026 the "Be honest" answer changes nothing, and there's no gym-time question.
     // V9 (1 Nov 2026): the cost question after "Be honest", and what they've tried before the promise.
     let full: [OnboardingStep] = [.name, .trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .perRest,

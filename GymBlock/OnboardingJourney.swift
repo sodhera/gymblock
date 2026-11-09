@@ -9,7 +9,8 @@ enum OnboardingStep: String, CaseIterable {
   case welcome, name, trainingDays, source, scrolling, cost, restNeed, scrollMinutes, perRest
   case exerciseCount, setCount, workoutTime, age, yearDots, yearPhone, life, tried, whyFails, shield, promise, words
   // The GymBond code page (8 Nov 2026) sits after the account, before the wall.
-  case alerts, commit, account, bondCode, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
+  // The GymBuddy invite page (9 Nov 2026) is the setup page after Save your progress.
+  case alerts, commit, account, bondCode, bondInvite, trial1, trial2, subscription, youreIn, notifications, screenTime, chooseApps, splits, firstWorkout
   // V8/V9 pages (20 Oct–1 Nov 2026) replaced by V10; saved progress on them resumes at the nearest page.
   case yearTime, blocking, ahead, gymTime
   // Sulav's note, removed on 5 Nov 2026 at the user's request; saved progress on it resumes at the rest alerts.
@@ -44,9 +45,9 @@ enum OnboardingStep: String, CaseIterable {
     }
   }
   /// The account step or later: the answers are worth keeping in the account from here on.
-  var reachedAccount: Bool { [.bondCode, .trial1, .trial2, .subscription, .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(current) }
+  var reachedAccount: Bool { [.bondCode, .trial1, .trial2, .subscription, .youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .bondInvite, .firstWorkout].contains(current) }
   /// Pages whose animation must finish before Continue appears.
-  var animated: Bool { [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .youreIn].contains(self) }
+  var animated: Bool { [.welcome, .yearDots, .yearPhone, .whyFails, .shield, .promise, .words, .youreIn].contains(self) }
   /// Pages that answer on rows in the middle of the screen.
   var question: Bool { [.trainingDays, .source, .scrolling, .cost, .restNeed, .scrollMinutes, .exerciseCount, .setCount, .age, .tried].contains(self) }
   /// Pages whose headline and content are centred (the interstitials), as Cal AI's are.
@@ -88,7 +89,8 @@ enum OnboardingRoute {
     // No account page before the wall (8 Nov 2026, at the user's request, as Cal AI's flow): a silent
     // account is made at the commit, and "Save your progress" (Apple or Google, or Not now) is the
     // first setup page after the price.
-    return steps + alerts + [.commit, .bondCode, .trial1, .trial2, .subscription, .youreIn, .account] + permissions + [.splits, .firstWorkout]
+    // The GymBuddy invite (9 Nov 2026, at the user's request) comes after the split is chosen: their code as a gift of two weeks of Pro, or Skip.
+    return steps + alerts + [.commit, .bondCode, .trial1, .trial2, .subscription, .youreIn, .account] + permissions + [.splits, .bondInvite, .firstWorkout]
   }
 }
 
@@ -345,13 +347,13 @@ struct OnboardingView: View {
     }
   }
   /// The pages after the price: no way back to it, and the setup's own progress line.
-  private var paid: Bool { [.youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].contains(step) }
+  private var paid: Bool { [.youreIn, .account, .notifications, .screenTime, .chooseApps, .splits, .bondInvite, .firstWorkout].contains(step) }
   /// The setup pages after You're in, as the route stood when they left it (a page iOS answers
   /// drops out of the route, which would make the line jump back).
   /// The page on screen always keeps its place, even when iOS has already answered it.
   private var setup: [OnboardingStep] {
     let base = setupSteps.isEmpty ? Array(route.drop { $0 != .youreIn }.dropFirst()) : setupSteps
-    return [OnboardingStep.account, .notifications, .screenTime, .chooseApps, .splits, .firstWorkout].filter { base.contains($0) || $0 == step }
+    return [OnboardingStep.account, .notifications, .screenTime, .chooseApps, .splits, .bondInvite, .firstWorkout].filter { base.contains($0) || $0 == step }
   }
   private var setupProgress: Double? {
     guard paid, let i = setup.firstIndex(of: step) else { return nil }
@@ -439,6 +441,7 @@ struct OnboardingView: View {
     case .chooseApps: return "Now choose what to lock."
     case .commit: return "Ready to get your time back?"
     case .account: return "Save your progress."
+    case .bondInvite: return "Invite a friend to be your GymBuddy."
     case .bondCode: return "Enter referral code (optional)"
     case .trial1: return "Try GymBlock free for 7 days."
     case .trial2: return "We’ll remind you before your trial ends."
@@ -509,6 +512,7 @@ struct OnboardingView: View {
     case .commit: return "Here’s what you’re signing."
     case .account: return account.message ?? "Every workout syncs to your account and comes back on any iPhone."
     case .bondCode: return "You can skip this step."
+    case .bondInvite: return "Gift them two weeks of GymBlock Pro. When they join with your code, you get two weeks too."
     case .splits: return "Pick one. Change it anytime."
     default: return nil
     }
@@ -550,7 +554,7 @@ struct OnboardingView: View {
       if (time.lostPerRest ?? 0) == 0 { RestFitsStage(time: time, done: sceneDone) }
       else if time.perRestOnly { PerRestStage(time: time, giveBack: true, done: sceneDone) }
       else { WorkStripStage(time: time, giveBack: true, done: sceneDone) }
-    case .words: WordsStage()
+    case .words: WordsStage(done: sceneDone)
     // The same page in the sign-up and, if they didn't allow it there, again after the price.
     case .alerts, .notifications:
       VStack(spacing: 0) {
@@ -587,6 +591,7 @@ struct OnboardingView: View {
       }
     // The first trial page shows the thing itself: the blocking, played on the phone as on the shield page (1 Nov 2026, at the user's request).
     case .bondCode: BondCodeStage(code: $bondDraft, status: bondStatus, good: bondGood, busy: bondBusy, submit: redeemBond)
+    case .bondInvite: BondInviteStage()
     case .trial1: ShieldStage(done: {}, logFirst: true, small: true)
     case .trial2: TrialBellStage()
     case .youreIn: YoureInStage(name: store.profile.name.trimmingCharacters(in: .whitespacesAndNewlines), done: sceneDone)
@@ -638,6 +643,13 @@ struct OnboardingView: View {
           Analytics.track("onboarding_account", ["choice": "notNow"])
           moveOn(from: .account)
         }
+      case .bondInvite:
+        // The share sheet is the page's button; Skip keeps the code for Profile's GymBond page.
+        BondShareButton(title: store.t("Invite a friend"), id: "bond.invite.share")
+        JourneyTextButton(title: store.t("Skip"), id: "bond.invite.skip") {
+          Analytics.track("bond_invite_skipped")
+          move(.firstWorkout)
+        }
       case .bondCode:
         // Submit sits in the field's row; Skip is the page's button, as Cal AI's (8 Nov 2026).
         JourneyButton(title: store.t("Skip"), id: "bond.skip", enabled: !bondBusy) {
@@ -665,7 +677,8 @@ struct OnboardingView: View {
             Color.clear.preference(key: HoldCenterKey.self, value: CGPoint(x: g.frame(in: .named("onboarding")).midX, y: g.frame(in: .named("onboarding")).minY + (JourneyLayout.compact ? 52 : 58)))
           })
       case .words:
-        gated(JourneyButton(title: store.t("Let’s do this"), id: "onboarding.continue", enabled: ready, action: advance))
+        // Grey until the third word has shown (9 Nov 2026, at the user's request), not hidden.
+        JourneyButton(title: store.t("Let’s do this"), id: "onboarding.continue", enabled: ready, action: advance)
         Color.clear.frame(height: 44)
       // The wall's pages have no secondary, so the button sits lower, in its slot (1 Nov 2026, at the user's request).
       case .trial1:
@@ -1068,7 +1081,7 @@ struct OnboardingView: View {
     }
     if let first = store.data.workouts.first, template != SplitTemplate.none { store.updateProfile { $0.preferredSplitID = first.id } }
     Analytics.track("onboarding_answer", ["question": "splits", "value": template.rawValue, "splits": store.data.workouts.count])
-    move(.firstWorkout)
+    move(.bondInvite)
   }
   /// The end of onboarding: into the app, with the first split (if any) lined up on Home, or
   /// straight into it.

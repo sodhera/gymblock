@@ -256,8 +256,10 @@ struct LifeNumberStage: View {
 }
 
 /// "5 more months of" Living, Reading, Sleeping, Cooking, Lifting: one word at a time on a loop,
-/// the rest in grey under it.
+/// the rest in grey under it. Let's do this waits for the third word (9 Nov 2026, at the user's
+/// request), so the loop is seen before they move on; at once under Reduce Motion.
 struct WordsStage: View {
+  var done: () -> Void = {}
   @EnvironmentObject private var store: GymStore
   @Environment(\.accessibilityReduceMotion) private var systemReduceMotion
   @State private var index = 0
@@ -291,11 +293,14 @@ struct WordsStage: View {
     .animation(.smooth(duration: 0.45), value: index)
     .accessibilityElement(children: .ignore).accessibilityLabel(Self.words.map { store.t($0.word) }.joined(separator: ", "))
     .task {
-      guard !JourneyMotion.reduced(systemReduceMotion) else { return }
+      guard !JourneyMotion.reduced(systemReduceMotion) else { done(); return }
+      var flips = 0
       while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(1.4))
         guard !Task.isCancelled else { return }
         index = (index + 1) % Self.words.count
+        flips += 1
+        if flips == 2 { done() }
       }
     }
   }

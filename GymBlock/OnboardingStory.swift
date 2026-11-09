@@ -694,8 +694,21 @@ struct ShieldStage: View {
       } else {
         Image("app." + app.lowercased()).resizable().scaledToFill().clipShape(shape)
       }
-    }.frame(width: 52, height: 52)
+    }
+    .frame(width: 52, height: 52)
+    // The welcome loop's lock badge, on the apps the workout has locked (9 Nov 2026, at the user's request).
+    .overlay(alignment: .topTrailing) {
+      if Self.locked.contains(app) {
+        Image(systemName: "lock.fill").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
+          .frame(width: 19, height: 19)
+          .background(Circle().fill(Color(red: 0.09, green: 0.09, blue: 0.1)))
+          .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+          .offset(x: 6, y: -6)
+      }
+    }
   }
+  /// The apps the workout has locked, badged as on the welcome page.
+  private static let locked: Set<String> = ["Instagram", "TikTok"]
   private var app: some View {
     ZStack {
       Color.black

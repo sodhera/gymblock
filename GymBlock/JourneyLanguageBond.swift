@@ -28,6 +28,12 @@ extension Spanish {
     "Two weeks of Pro for you, when your plan ends.": "Dos semanas de Pro para ti, cuando termine tu plan.",
     "Enter referral code (optional)": "Código de un amigo (opcional)",
     "You can skip this step.": "Puedes saltarte este paso.",
+    "Invite a friend to be your GymBuddy.": "Invita a un amigo a ser tu GymBuddy.",
+    "Gift them two weeks of GymBlock Pro. When they join with your code, you get two weeks too.":
+      "Regálale dos semanas de GymBlock Pro. Cuando se una con tu código, tú también tienes dos semanas.",
+    "2 weeks of Pro": "2 semanas de Pro",
+    "For your friend, free.": "Para tu amigo, gratis.",
+    "Invite a friend": "Invitar a un amigo",
     "Referral code": "Código", "Submit": "Enviar", "Skip": "Saltar",
     "You’re bonded with %@.": "Ya estás en GymBond con %@.",
     "Two weeks of Pro are on.": "Tus dos semanas de Pro están activas.",

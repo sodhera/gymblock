@@ -150,7 +150,6 @@ struct BondView: View {
   @State private var copied = false
   @State private var removing: GymBond.Friend?
   @State private var nudging: UUID?
-  private var spanish: Bool { store.profile.language == "es" }
   var body: some View {
     ZStack {
       DotGrid()
@@ -206,7 +205,7 @@ struct BondView: View {
           }.frame(maxWidth: .infinity).contentShape(Rectangle())
         }.buttonStyle(.hapticPlain).accessibilityIdentifier("bond.code.copy")
           .accessibilityLabel(store.t("Your code") + ", " + code.map(String.init).joined(separator: " "))
-        if let text = bond.shareText(spanish: spanish) { share(text) }
+        if bond.code != nil { BondShareButton(title: store.t("Share your code"), id: "bond.share") }
       } else if bond.live {
         ProgressView().tint(JourneyColor.secondary).frame(maxWidth: .infinity, minHeight: 60)
       } else {
@@ -215,23 +214,6 @@ struct BondView: View {
       }
     }.padding(18).frame(maxWidth: .infinity).journeySurface(cornerRadius: 20)
   }
-  /// The share sheet, as the primary button.
-  @ViewBuilder private func share(_ text: String) -> some View {
-    let label = HStack(spacing: 8) {
-      Image(systemName: "square.and.arrow.up").font(.system(.headline, weight: .semibold)).accessibilityHidden(true)
-      Text(store.t("Share your code")).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
-    }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
-    let link = ShareLink(item: text) { label }
-      .simultaneousGesture(TapGesture().onEnded { JourneyHaptic.press(); Analytics.tap("bond.share") })
-      .accessibilityIdentifier("bond.share")
-    if #available(iOS 26.0, *) {
-      link.buttonStyle(.glassProminent).tint(JourneyColor.button).controlSize(.large).buttonBorderShape(.capsule)
-    } else {
-      ShareLink(item: text) { label.frame(minHeight: 50).background(Capsule().fill(JourneyColor.button)) }
-        .buttonStyle(JourneyPressStyle()).accessibilityIdentifier("bond.share")
-    }
-  }
-
   // MARK: A friend's code
 
   private var canAdd: Bool { GymBond.normalize(draft).count == 6 && !bond.busy }
@@ -326,7 +308,78 @@ struct BondView: View {
   }
 }
 
+/// The share sheet as the ink primary button (the GymBond page and onboarding's invite page). With
+/// no code yet (it's being fetched, or there's no account) it stays grey.
+struct BondShareButton: View {
+  let title: String
+  var id = "bond.share"
+  @EnvironmentObject private var store: GymStore
+  @ObservedObject private var bond = GymBond.shared
+  var body: some View {
+    let text = bond.shareText(spanish: store.profile.language == "es")
+    let label = HStack(spacing: 8) {
+      Image(systemName: "square.and.arrow.up").font(.system(.headline, weight: .semibold)).accessibilityHidden(true)
+      Text(title).font(JourneyType.button).lineLimit(1).minimumScaleFactor(0.8)
+    }.foregroundStyle(JourneyColor.onButton).frame(maxWidth: .infinity, minHeight: 22)
+    Group {
+      if let text {
+        let link = ShareLink(item: text) { label }
+          .simultaneousGesture(TapGesture().onEnded { JourneyHaptic.press(); Analytics.tap(id) })
+        if #available(iOS 26.0, *) {
+          link.buttonStyle(.glassProminent).tint(JourneyColor.button).controlSize(.large).buttonBorderShape(.capsule)
+        } else {
+          ShareLink(item: text) { label.frame(minHeight: 50).background(Capsule().fill(JourneyColor.button)) }
+            .buttonStyle(JourneyPressStyle())
+        }
+      } else {
+        label.frame(minHeight: 50).background(Capsule().fill(JourneyColor.disabledButton))
+      }
+    }
+    .animation(.smooth(duration: 0.3), value: text == nil)
+    .accessibilityIdentifier(id)
+  }
+}
+
 // MARK: - Onboarding
+
+/// The GymBuddy invite, the setup page after the split is chosen (9 Nov 2026, at the user's
+/// request): the gift in the middle of the page, their code under it, Invite a friend as the
+/// button, Skip below. The code is fetched here if the GymBond page hasn't yet.
+struct BondInviteStage: View {
+  @EnvironmentObject private var store: GymStore
+  @ObservedObject private var bond = GymBond.shared
+  var body: some View {
+    VStack(spacing: 0) {
+      Spacer(minLength: 0)
+      VStack(spacing: 18) {
+        Image(systemName: "gift.fill").font(.system(size: 30, weight: .semibold)).foregroundStyle(JourneyColor.signal)
+          .frame(width: 64, height: 64).background(Circle().fill(JourneyColor.signal.opacity(0.12))).accessibilityHidden(true)
+        VStack(spacing: 4) {
+          Text(store.t("2 weeks of Pro")).font(.app(size: 28, weight: .bold)).tracking(-0.5).foregroundStyle(JourneyColor.text)
+          Text(store.t("For your friend, free.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary)
+        }
+        VStack(spacing: 6) {
+          Text(store.t("Your code")).font(JourneyType.caption).foregroundStyle(JourneyColor.tertiary)
+          if let code = bond.code {
+            Text(code).font(.app(size: 26, weight: .bold)).tracking(6).monospacedDigit().foregroundStyle(JourneyColor.text).padding(.leading, 6)
+              .accessibilityLabel(store.t("Your code") + ", " + code.map(String.init).joined(separator: " "))
+          } else if bond.live {
+            ProgressView().tint(JourneyColor.secondary).frame(height: 32)
+          } else {
+            Text(store.t("Sign in to get your code.")).font(.app(.subheadline)).foregroundStyle(JourneyColor.secondary).frame(height: 32)
+          }
+        }
+        .padding(.horizontal, 24).padding(.vertical, 14).frame(maxWidth: .infinity)
+        .journeyGlass(RoundedRectangle(cornerRadius: 18, style: .continuous))
+      }
+      .padding(22).frame(maxWidth: .infinity).journeySurface(cornerRadius: 24)
+      Spacer(minLength: 0)
+    }
+    .accessibilityIdentifier("onboarding.bondInvite")
+    .task { await bond.fetchCode() }
+  }
+}
+
 
 /// The code page's field (after the commit, before the wall), as Cal AI's referral page (8 Nov 2026,
 /// at the user's request): one glass row with the field on the left and Submit on the right, in the
