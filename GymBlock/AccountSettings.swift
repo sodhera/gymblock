@@ -104,8 +104,7 @@ struct AccountSection: View {
             .accessibilityIdentifier("settings.delete.confirm")
           Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
         } message: {
-          Text(store.t(account.user != nil ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone. Type DELETE to confirm."
-                       : "This permanently deletes your workouts, splits, answers and settings. It can’t be undone. Type DELETE to confirm."))
+          Text(store.t("Everything is deleted for good. Type DELETE to confirm."))
         }
         .onChange(of: confirmDelete) { _, open in if open { deleteWord = "" } }
         .alert(store.t("Could not delete the account"), isPresented: $failed) {
@@ -156,7 +155,7 @@ struct SaveFirstSheet: View {
         VStack(alignment: .leading, spacing: 0) {
           Text(store.t("Save your progress first?")).font(.app(.largeTitle, weight: .bold)).tracking(-0.4).foregroundStyle(JourneyColor.text)
             .accessibilityAddTraits(.isHeader)
-          Text(store.t("Your workouts and splits are on this iPhone only. Connect Apple or Google and they follow your account, so you can log out and come back to them."))
+          Text(store.t("Connect Apple or Google so your workouts come back."))
             .font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true).padding(.top, 12)
           Spacer(minLength: 24)
           if let message = account.message {
@@ -198,7 +197,7 @@ struct AccountSetupView: View {
         HStack(alignment: .top, spacing: 12) {
           Image(systemName: "exclamationmark.circle.fill").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.dangerText)
             .padding(.top, 2).accessibilityHidden(true)
-          Text(store.t("Your account isn’t set up. Your workouts, splits and subscription live on this iPhone only. Connect Apple or Google and they come back on any iPhone."))
+          Text(store.t("Your workouts live on this iPhone only."))
             .font(.app(.body)).foregroundStyle(JourneyColor.secondary).fixedSize(horizontal: false, vertical: true)
         }.padding(.top, 12)
         Spacer(minLength: 24)
