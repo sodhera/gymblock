@@ -41,11 +41,15 @@ Checked and left out of this field: "rep counter" (suggested after 5 letters, bu
 
 170 characters. Not indexed for search. Can be changed without a new version.
 
+**Proposed replacement (9 Nov 2026, in review):** [APP-STORE-DESCRIPTION.md](APP-STORE-DESCRIPTION.md). The text below is the 20 Oct draft.
+
 ```
 Your feed stays locked from Start workout to Finish. Rest counts down on the Lock Screen, and every set is one tap, with last time already filled in.
 ```
 
 ## Description
+
+**Proposed replacement (9 Nov 2026, in review):** [APP-STORE-DESCRIPTION.md](APP-STORE-DESCRIPTION.md). The draft below is out of date: Pause and the PR timer are gone from the app, and the prices and plans changed.
 
 ```
 Stop scrolling between sets.
