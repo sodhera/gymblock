@@ -54,6 +54,8 @@ struct AccountSection: View {
   let close: () -> Void
   @State private var confirmLogOut = false
   @State private var confirmDelete = false
+  /// Deleting is permanent, so the alert asks for the word DELETE (9 Nov 2026, at the user's request).
+  @State private var deleteWord = ""
   @State private var signingIn = false
   @State private var failed = false
   /// A real account: Apple or Google linked. A silent account (8 Nov 2026) counts as none here.
@@ -88,13 +90,20 @@ struct AccountSection: View {
           .frame(maxWidth: .infinity, minHeight: 44).contentShape(Rectangle())
       }.buttonStyle(.hapticPlain).padding(.top, 8).pageRow().listRowSeparator(.hidden).accessibilityIdentifier("settings.delete")
         .alert(store.t("Delete your account?"), isPresented: $confirmDelete) {
-          Button(store.t("Delete account"), role: .destructive) { JourneyHaptic.pressLight(); deleteAccount() }
+          TextField("DELETE", text: $deleteWord).textInputAutocapitalization(.characters).autocorrectionDisabled()
+            .accessibilityIdentifier("settings.delete.word")
+          Button(store.t("Delete account"), role: .destructive) {
+            JourneyHaptic.pressLight()
+            guard deleteWord.trimmingCharacters(in: .whitespaces).uppercased() == "DELETE" else { return }
+            deleteAccount()
+          }.disabled(deleteWord.trimmingCharacters(in: .whitespaces).uppercased() != "DELETE")
             .accessibilityIdentifier("settings.delete.confirm")
           Button(store.t("Cancel"), role: .cancel) { JourneyHaptic.pressLight() }
         } message: {
-          Text(store.t(account.user != nil ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone."
-                       : "This permanently deletes your workouts, splits, answers and settings. It can’t be undone."))
+          Text(store.t(account.user != nil ? "This permanently deletes your account, workouts, splits, answers and settings everywhere. It can’t be undone. Type DELETE to confirm."
+                       : "This permanently deletes your workouts, splits, answers and settings. It can’t be undone. Type DELETE to confirm."))
         }
+        .onChange(of: confirmDelete) { _, open in if open { deleteWord = "" } }
         .alert(store.t("Could not delete the account"), isPresented: $failed) {
           Button("OK") { JourneyHaptic.pressLight() }
         } message: { Text(store.t("Check your connection and try again.")) }
