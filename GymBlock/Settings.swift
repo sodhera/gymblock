@@ -35,6 +35,7 @@ struct PreferencesView: View {
         if account.isAnonymous {
           NavigationLink { AccountSetupView().pushHaptic() } label: {
             HStack(spacing: 10) {
+              SettingSymbol("person.crop.circle")
               Text(store.t("Account")).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
               Image(systemName: "exclamationmark.circle.fill").font(.system(.body, weight: .semibold)).foregroundStyle(JourneyColor.dangerText)
                 .accessibilityHidden(true)
@@ -45,64 +46,64 @@ struct PreferencesView: View {
             .accessibilityLabel(store.t("Account") + ", " + store.t("Not set up"))
         }
         Button { draftName = store.profile.name; renaming = true } label: {
-          SettingRow(title: store.t("Name"), value: store.profile.name.isEmpty ? store.t("Optional") : store.profile.name, chevron: true)
+          SettingRow(title: store.t("Name"), symbol: "person", value: store.profile.name.isEmpty ? store.t("Optional") : store.profile.name, chevron: true)
         }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.name")
         if let email = account.email {
-          SettingRow(title: store.t("Email"), value: email).pageRow()
+          SettingRow(title: store.t("Email"), symbol: "envelope", value: email).pageRow()
         }
-        NavigationLink { BodySettingsView().pushHaptic() } label: { SettingRow(title: store.t("Body")) }
+        NavigationLink { BodySettingsView().pushHaptic() } label: { SettingRow(title: store.t("Body"), symbol: "figure.stand") }
           .pageRow().accessibilityIdentifier("settings.body")
 
         SubscriptionSettingsSection()
 
         SettingsLabel(store.t("Workout"))
-        SettingMenu(title: store.t("Rest length"), value: clockString(store.restTarget), id: "settings.rest") {
+        SettingMenu(title: store.t("Rest length"), symbol: "timer", value: clockString(store.restTarget), id: "settings.rest") {
           Picker(store.t("Rest length"), selection: Binding(get: { store.restTarget }, set: { store.setRestTarget($0) })) {
             ForEach(GymStore.restChoices, id: \.self) { Text(clockString($0)).tag($0) }
           }
         }
-        SettingToggle(title: store.t("Time each set"), id: "settings.timeSets",
+        SettingToggle(title: store.t("Time each set"), symbol: "stopwatch", id: "settings.timeSets",
                       isOn: Binding(get: { store.timesSets }, set: { v in store.updateProfile { $0.timeSets = v } }))
         SettingsNote(store.t(store.timesSets ? "Start and Finish each set to time it." : "One tap logs a set. Rest still counts."))
 
         SettingsLabel(store.t("Blocking"))
-        NavigationLink { BlockedAppsView().pushHaptic() } label: { SettingRow(title: store.t("Blocked apps"), value: blockingValue) }
+        NavigationLink { BlockedAppsView().pushHaptic() } label: { SettingRow(title: store.t("Blocked apps"), symbol: "shield", value: blockingValue) }
           .pageRow().accessibilityIdentifier("settings.blockedApps")
-        SettingToggle(title: store.t("Strict mode"), id: "settings.strict",
+        SettingToggle(title: store.t("Strict mode"), symbol: "lock", id: "settings.strict",
                       isOn: Binding(get: { strict }, set: { on in strict = on; Analytics.tap("settings.strict", ["on": on]) }))
         SettingsNote(store.t(strict ? "No way past the block until you finish." : "The block screen offers 1 minute, once per exercise."))
 
         SettingsLabel(store.t("Notifications"))
         notificationsRow
-        SettingToggle(title: store.t("Rest alert"), id: "settings.restAlert",
+        SettingToggle(title: store.t("Rest alert"), symbol: "bell.badge", id: "settings.restAlert",
                       isOn: Binding(get: { store.profile.restAlerts == true }, set: setAlerts))
         if store.profile.restAlerts == true && notifications.map(allowed) == false {
           SettingsNote(store.t("Notifications are off, so rest alerts can’t reach you."))
         }
 
         SettingsLabel(store.t("App"))
-        SettingMenu(title: store.t("Appearance"), value: store.t((Appearance(rawValue: appearance) ?? .standard).title), id: "settings.appearance") {
+        SettingMenu(title: store.t("Appearance"), symbol: "circle.lefthalf.filled", value: store.t((Appearance(rawValue: appearance) ?? .standard).title), id: "settings.appearance") {
           Picker(store.t("Appearance"), selection: $appearance) {
             ForEach(Appearance.allCases, id: \.self) { Text(store.t($0.title)).tag($0.rawValue) }
           }
         }
-        SettingMenu(title: store.t("Units"), value: store.profile.unit, id: "settings.units") {
+        SettingMenu(title: store.t("Units"), symbol: "scalemass", value: store.profile.unit, id: "settings.units") {
           Picker(store.t("Units"), selection: Binding(get: { store.profile.unit }, set: { v in store.updateProfile { $0.unit = v } })) {
             Text("kg").tag("kg"); Text("lb").tag("lb")
           }
         }
-        SettingMenu(title: store.t("Language"), value: store.profile.language == "es" ? "Español" : "English", id: "settings.language") {
+        SettingMenu(title: store.t("Language"), symbol: "globe", value: store.profile.language == "es" ? "Español" : "English", id: "settings.language") {
           Picker(store.t("Language"), selection: Binding(get: { store.profile.language }, set: { v in store.updateProfile { $0.language = v } })) {
             Text("English").tag("en"); Text("Español").tag("es")
           }
         }
-        SettingToggle(title: store.t("Sound"), id: "settings.sound",
+        SettingToggle(title: store.t("Sound"), symbol: "speaker.wave.2", id: "settings.sound",
                       isOn: Binding(get: { store.profile.soundEnabled ?? false }, set: { v in store.updateProfile { $0.soundEnabled = v } }))
 
         SettingsLabel(store.t("Your data"))
-        NavigationLink { TrainingAnswersForm().pushHaptic() } label: { SettingRow(title: store.t("Training answers")) }
+        NavigationLink { TrainingAnswersForm().pushHaptic() } label: { SettingRow(title: store.t("Training answers"), symbol: "list.clipboard") }
           .pageRow().accessibilityIdentifier("settings.baseline")
-        NavigationLink { DataSettingsView().pushHaptic() } label: { SettingRow(title: store.t("Data")) }
+        NavigationLink { DataSettingsView().pushHaptic() } label: { SettingRow(title: store.t("Data"), symbol: "tray.full") }
           .pageRow().accessibilityIdentifier("settings.data")
 
         LegalSection()
@@ -130,13 +131,14 @@ struct PreferencesView: View {
     if let notifications, !allowed(notifications) {
       Button(action: allowNotifications) {
         HStack(spacing: 10) {
+          SettingSymbol("bell")
           Text(store.t("Notifications")).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
           Spacer(minLength: 12)
           Text(store.t("Turn on")).font(.app(.body, weight: .semibold)).foregroundStyle(JourneyColor.signal).lineLimit(1)
         }.frame(minHeight: 50).contentShape(Rectangle())
       }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.notifications")
     } else {
-      SettingRow(title: store.t("Notifications"), value: notifications == nil ? nil : store.t("On")).pageRow()
+      SettingRow(title: store.t("Notifications"), symbol: "bell", value: notifications == nil ? nil : store.t("On")).pageRow()
         .accessibilityIdentifier("settings.notifications")
     }
   }
@@ -204,12 +206,14 @@ struct SettingsNote: View {
 /// web page) on the right.
 struct SettingRow: View {
   let title: String
+  var symbol: String? = nil
   var value: String? = nil
   var chevron = false
   var external = false
   var titleColor: Color = JourneyColor.text
   var body: some View {
     HStack(spacing: 10) {
+      SettingSymbol(symbol)
       Text(title).font(.app(.body)).foregroundStyle(titleColor).lineLimit(1)
       Spacer(minLength: 12)
       if let value { Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1) }
@@ -219,13 +223,29 @@ struct SettingRow: View {
   }
 }
 
+/// The small ink symbol at the front of a Settings row (9 Nov 2026, at the user's request): one
+/// fixed column so the titles line up; nothing when a row has none.
+struct SettingSymbol: View {
+  let name: String?
+  init(_ name: String?) { self.name = name }
+  var body: some View {
+    if let name {
+      Image(systemName: name).font(.system(.body, weight: .regular)).foregroundStyle(JourneyColor.text)
+        .frame(width: 24, alignment: .center).accessibilityHidden(true)
+    }
+  }
+}
+
 /// A switch as a ruled row, emerald when on.
 struct SettingToggle: View {
   let title: String
+  var symbol: String? = nil
   let id: String
   @Binding var isOn: Bool
   var body: some View {
-    Toggle(isOn: $isOn.ticking) { Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text) }
+    Toggle(isOn: $isOn.ticking) {
+      HStack(spacing: 10) { SettingSymbol(symbol); Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text) }
+    }
       .tint(JourneyColor.signal).frame(minHeight: 50).pageRow().accessibilityIdentifier(id)
   }
 }
@@ -233,12 +253,14 @@ struct SettingToggle: View {
 /// A choice as a ruled row: the current value in grey; tapping opens the system menu.
 struct SettingMenu<Choices: View>: View {
   let title: String
+  var symbol: String? = nil
   let value: String
   let id: String
   @ViewBuilder var choices: Choices
   var body: some View {
     Menu { choices } label: {
       HStack(spacing: 6) {
+        SettingSymbol(symbol).padding(.trailing, 4)
         Text(title).font(.app(.body)).foregroundStyle(JourneyColor.text).lineLimit(1)
         Spacer(minLength: 12)
         Text(value).font(.app(.body)).foregroundStyle(JourneyColor.secondary).lineLimit(1)

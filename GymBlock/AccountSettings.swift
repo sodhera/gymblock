@@ -66,7 +66,7 @@ struct AccountSection: View {
   var body: some View {
     SettingsLabel(store.t("Account"))
     if !cloud && !AppConfig.offline && !account.isAnonymous {
-      Button { signingIn = true } label: { SettingRow(title: store.t("Sign in"), chevron: true) }
+      Button { signingIn = true } label: { SettingRow(title: store.t("Sign in"), symbol: "person.crop.circle", chevron: true) }
         .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.signin")
         .sheet(isPresented: $signingIn) { SignInSheet() }
     }
@@ -78,7 +78,7 @@ struct AccountSection: View {
     // starts onboarding again, which makes a fresh silent account; the old one is swept in a month.
     let signedIn = account.user != nil || AppConfig.offline
     Button { if account.isAnonymous { saveFirst = true } else { confirmLogOut = true } } label: {
-      SettingRow(title: store.t(signedIn ? "Log out" : "Clear this iPhone"))
+      SettingRow(title: store.t(signedIn ? "Log out" : "Clear this iPhone"), symbol: "rectangle.portrait.and.arrow.right")
     }.buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.logout")
       .sheet(isPresented: $saveFirst) { SaveFirstSheet(logOut: logOut) }
       .confirmationDialog(store.t(signedIn ? "Log out of GymBlock?" : "Clear this iPhone?"), isPresented: $confirmLogOut, titleVisibility: .visible) {
@@ -248,9 +248,9 @@ struct LegalSection: View {
   @EnvironmentObject private var store: GymStore
   var body: some View {
     SettingsLabel(store.t("Help"))
-    Link(destination: AppConfig.supportURL) { SettingRow(title: store.t("Support"), external: true) }.pageRow()
-    Link(destination: AppConfig.privacyURL) { SettingRow(title: store.t("Privacy Policy"), external: true) }.pageRow()
-    Link(destination: AppConfig.termsURL) { SettingRow(title: store.t("Terms of Service"), external: true) }.pageRow()
+    Link(destination: AppConfig.supportURL) { SettingRow(title: store.t("Support"), symbol: "questionmark.circle", external: true) }.pageRow()
+    Link(destination: AppConfig.privacyURL) { SettingRow(title: store.t("Privacy Policy"), symbol: "hand.raised", external: true) }.pageRow()
+    Link(destination: AppConfig.termsURL) { SettingRow(title: store.t("Terms of Service"), symbol: "doc.text", external: true) }.pageRow()
   }
 }
 
@@ -263,8 +263,8 @@ struct SubscriptionSettingsSection: View {
   var body: some View {
     if subscription.hasAccess {
       SettingsLabel(store.t("Subscription"))
-      SettingRow(title: "Gym Block Pro", value: renewal).pageRow()
-      Button { managing = true } label: { SettingRow(title: store.t("Manage subscription"), chevron: true) }
+      SettingRow(title: "Gym Block Pro", symbol: "checkmark.seal", value: renewal).pageRow()
+      Button { managing = true } label: { SettingRow(title: store.t("Manage subscription"), symbol: "creditcard", chevron: true) }
         .buttonStyle(.hapticPlain).pageRow().accessibilityIdentifier("settings.manageSubscription")
         .manageSubscriptionsSheet(isPresented: $managing)
     }
